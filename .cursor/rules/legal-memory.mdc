@@ -1,0 +1,15 @@
+---
+description: Frozen corpus, retrieval eval gates, ACL before ranking, no answer LLM until Sprint 8
+alwaysApply: true
+---
+
+# Legal memory
+
+> **IP rule:** Mike (`/mike`) is AGPLv3 — product research only. See `agpl-cleanroom.mdc` for the mandatory clean-room protocol before implementing any Mike-inspired feature.
+
+- Do not regenerate `dummy-firm` documents to improve retrieval. Corpus is frozen (v2).
+- Retrieval quality is measured with `legal-memory-retrieval/evals/retrieval_eval.py` separately from answer quality.
+- Filter permissions in SQL before ranking. Never retrieve everything and ask the model to redact.
+- Do not add Kafka, Neo4j, or agents until the current sprint gate in `.cursor/skills/legal-memory/SKILL.md` says so. Answers (`POST /ask`) shipped in Sprint 8; citations must come from retrieved ids.
+- After a retrieval change, run eval and append `legal-memory-retrieval/docs/CHANGELOG.md`. Claim improvement only with numbers.
+- Embeddings are local MiniLM 384-d (`app/embeddings`). Keep an interface; do not hard-code a new provider in `semantic.py`.

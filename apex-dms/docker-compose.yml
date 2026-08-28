@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: apache/age:latest
+    environment:
+      POSTGRES_USER: apex
+      POSTGRES_PASSWORD: apex_dev_2026
+      POSTGRES_DB: apex_dms
+    ports:
+      - "55433:5432"
+    volumes:
+      - apex_pg:/var/lib/postgresql
+      - ./scripts/init-age.sql:/docker-entrypoint-initdb.d/01-age.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apex -d apex_dms"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6381:6379"
+    volumes:
+      - apex_redis:/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9002"
+    environment:
+      MINIO_ROOT_USER: apex_minio
+      MINIO_ROOT_PASSWORD: apex_minio_dev_2026
+    ports:
+      - "9010:9000"
+      - "9002:9002"
+    volumes:
+      - apex_minio:/data
+
+volumes:
+  apex_pg:
+  apex_redis:
+  apex_minio:

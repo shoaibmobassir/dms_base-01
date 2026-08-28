@@ -1,0 +1,8 @@
+{
+  "abstention_n": 38,
+  "abstention_accuracy": 1.0,
+  "exact_sample_n": 40,
+  "citation_grounded_n": 40,
+  "citation_grounding": 1.0,
+  "provider": "extractive"
+}

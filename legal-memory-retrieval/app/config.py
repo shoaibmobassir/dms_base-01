@@ -1,0 +1,26 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    database_url: str = "postgresql://legal:legal@localhost:55432/legal_memory"
+    corpus_dir: str = "../dummy-firm/data"
+    embedding_dim: int = 384
+    index_version: str = "corpus-v2-frozen"
+    retrieve_k: int = 20
+    retrieval_channels: str = "keyword,metadata,vector,graph"
+    rerank_enabled: bool = True
+    rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    rerank_candidates: int = 100
+    rerank_ce_weight: float = 0.55
+    groq_api_key: str = ""
+    gemini_api_key: str = ""
+    answer_provider: str = "auto"
+    groq_model: str = "llama3-70b-8192"
+    gemini_model: str = "gemini-1.5-flash"
+    redis_url: str = "redis://localhost:6380"
+    cache_ttl_seconds: int = 300
+
+
+settings = Settings()

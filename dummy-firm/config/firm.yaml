@@ -1,0 +1,162 @@
+firm:
+  name: "Apex Chambers"
+  full_name: "Apex Chambers Advocates & Solicitors"
+  founded: 1998
+  offices:
+    - Delhi
+    - Mumbai
+    - Bengaluru
+    - Singapore
+
+scale:
+  # starter | v1 | v2
+  profile: starter
+  starter:
+    lawyers: 16
+    support_staff: 4
+    clients: 30
+    matters: 100
+    min_docs_per_matter: 8
+    max_docs_per_matter: 14
+  v1:
+    lawyers: 30
+    support_staff: 10
+    clients: 50
+    matters: 200
+    min_docs_per_matter: 12
+    max_docs_per_matter: 28
+  v2:
+    lawyers: 80
+    support_staff: 20
+    clients: 500
+    matters: 1000
+    min_docs_per_matter: 20
+    max_docs_per_matter: 55
+
+seed: 42
+
+practice_areas:
+  - Corporate
+  - M&A
+  - Banking & Finance
+  - Disputes
+  - Arbitration
+  - Insolvency
+  - Employment
+  - Real Estate
+  - Tax
+  - Regulatory
+
+matter_types:
+  Corporate:
+    - Shareholder Dispute
+    - Share Purchase Agreement
+    - Joint Venture
+    - Corporate Restructuring
+  M&A:
+    - Share Purchase Agreement
+    - Merger
+    - Joint Venture
+    - Due Diligence
+  Banking & Finance:
+    - Loan Agreement
+    - Debt Restructuring
+    - Security Enforcement
+    - Facility Agreement
+  Disputes:
+    - Commercial Litigation
+    - Construction Dispute
+    - Contract Dispute
+    - Shareholder Dispute
+  Arbitration:
+    - Construction Arbitration
+    - Commercial Arbitration
+    - Investment Arbitration
+  Insolvency:
+    - CIRP
+    - Liquidation
+    - Personal Guarantee Enforcement
+  Employment:
+    - Wrongful Termination
+    - Non-Compete Dispute
+    - Wage Claim
+    - POSH Investigation
+  Real Estate:
+    - Title Diligence
+    - Development Agreement
+    - Lease Dispute
+  Tax:
+    - Transfer Pricing
+    - GST Dispute
+    - Assessment Appeal
+  Regulatory:
+    - SEBI Investigation
+    - Competition Commission
+    - Sectoral Licensing
+
+roles:
+  lawyers:
+    - Partner
+    - Counsel
+    - Senior Associate
+    - Associate
+    - Junior
+    - KM Lawyer
+  support:
+    - Knowledge Manager
+    - Clerk
+    - Stenographer
+    - Paralegal
+
+document_types:
+  legal:
+    - Legal Opinion
+    - Research Memo
+    - Case Note
+    - Pleading
+    - Written Submission
+    - Statement of Claim
+    - Statement of Defence
+    - Counterclaim
+    - Application
+    - Affidavit
+    - Witness Statement
+    - Judgment Summary
+    - Award Summary
+  transactional:
+    - Share Purchase Agreement
+    - Term Sheet
+    - Due Diligence Report
+    - Board Resolution
+    - Shareholders Agreement
+    - Loan Agreement
+    - Amendment
+    - Closing Checklist
+    - Engagement Letter
+  internal:
+    - Matter Strategy Note
+    - Partner Note
+    - Internal Email
+    - Client Email
+    - KM Note
+    - Handover Note
+    - Meeting Notes
+    - Call Notes
+    - Hearing Notes
+    - Draft Arguments
+    - Final Arguments
+    - Settlement Discussion
+    - Matter Closure Memo
+    - Initial Case Assessment
+    - Evidence Note
+
+restricted_matter_fraction: 0.08
+versioned_matter_fraction: 0.12
+similar_cluster_count: 8
+
+negative_topics:
+  - nuclear submarine licensing
+  - Antarctic mining concessions
+  - space debris liability treaties
+  - veterinary malpractice in equine surgery
+  - cryptocurrency mixer registration in Liechtenstein

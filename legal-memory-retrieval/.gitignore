@@ -1,0 +1,8 @@
+__pycache__/
+.venv/
+.env
+evals/last_retrieval_run.json
+evals/dataset.jsonl
+evals/runs/
+# Added by code-review-graph
+.code-review-graph/

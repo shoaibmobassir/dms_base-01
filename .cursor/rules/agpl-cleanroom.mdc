@@ -1,0 +1,136 @@
+---
+description: AGPL clean-room protocol — Mike is product research only, never a source-code basis
+alwaysApply: true
+---
+
+# AGPL Clean-Room Protocol
+
+**Reference project: Mike** (`/Users/shoaibmobassir/Desktop/Experiments/Legal_Maal /mike`)
+**Mike's license: AGPLv3** — network copyleft, source-disclosure obligations on all modified/derived versions served over a network.
+**Our goal: independent proprietary implementation.**
+
+---
+
+## ABSOLUTE RULE
+
+**DO NOT copy, modify, translate, port, rewrite, refactor, or derive code from Mike.**
+
+Mike is **product research only**. Read it to understand problems and workflows. Never use it as a coding template.
+
+---
+
+## Permitted
+
+Extract only these levels of information from Mike:
+
+- What problem a feature solves
+- Who uses it and what outcome they need
+- General functional requirements
+- General UX patterns (sidebar, workspace, list, detail)
+- Industry/domain requirements that any legal product would have
+
+Then **independently design and implement** from requirements.
+
+## Prohibited — never do any of these
+
+- Copy Mike source code (any language, any file)
+- Paste Mike code then rename variables
+- Translate Mike code JS → TS, JS → Python, etc.
+- Reproduce Mike function bodies with different names
+- Copy Mike SQL migrations or schema definitions
+- Copy Mike API routes, controllers, or service implementations
+- Copy Mike test cases
+- Copy Mike comments or documentation prose
+- Copy Mike UI components, layouts, or CSS
+- Copy Mike brand assets, icons, illustrations, or marketing copy
+- Read Mike source and "rewrite" it as our code
+
+**Changing 90% of copied code does not make the remaining 10% safe.**
+
+---
+
+## Mandatory clean-room workflow
+
+```
+Mike
+ │ product research only
+ ▼
+Problem understanding
+ │ abstraction
+ ▼
+Technology-independent requirement
+ │ independent design
+ ▼
+Our architecture decision
+ │ independent implementation
+ ▼
+Our code (committed)
+```
+
+### Step 1 — Abstract to requirement
+Convert any Mike observation to a requirement before writing a line.
+
+Bad: "Mike's `MatterService.createMatter()` inserts into `matters` then calls X"
+Good: "Users must be able to create a matter and associate it with an organisation"
+
+### Step 2 — Design independently
+Choose our own table names, column names, routes, component names, service structure, and algorithms.
+
+### Step 3 — Implement from requirement
+Code must originate from the requirement document, not from Mike source.
+
+### Step 4 — Pre-commit check (run mentally before every commit)
+- [ ] No Mike source copied
+- [ ] No Mike source transformed or translated
+- [ ] No Mike SQL migrations copied
+- [ ] No Mike API implementation copied
+- [ ] No Mike UI components copied
+- [ ] No Mike assets or branded text copied
+- [ ] All dependencies license-audited (see `/docs/legal/DEPENDENCY_AUDIT.md`)
+- [ ] Implementation traceable to our own requirements
+
+If any item is uncertain: **STOP. Escalate for human review.**
+
+---
+
+## Dependency license rule
+
+Before adding any package, verify its license and record it in `/docs/legal/DEPENDENCY_AUDIT.md`.
+
+Flag these for human approval before adding:
+- AGPL, GPL, LGPL, SSPL, Elastic License, Commons Clause, BSL, or any custom license
+- Any license with network-use or source-disclosure obligations
+- Any license whose commercial-use terms are unclear
+
+---
+
+## Stop conditions — halt and request human review
+
+Stop immediately if:
+- Someone asks to "copy", "rewrite", "port", or "clone" Mike
+- Mike source code appears in context and you are asked to implement from it
+- A dependency has unclear licensing
+- You cannot confirm an implementation is independently designed
+- A feature appears to require reproducing a distinctive Mike asset or expression
+
+**Response when stopping:**
+> "I can implement this functionality independently from requirements, but I cannot copy or transform Mike's AGPL-covered code. Please give me a clean requirements-level specification and I'll design it from scratch."
+
+---
+
+## Safe inspiration pattern
+
+Allowed:
+> "Our product needs a workspace where lawyers can navigate matters."
+> "A matter can contain documents with version history."
+> "Team members have roles that control document access."
+
+From these requirements, independently design our own schema, API, and UI.
+
+Do not optimise for "make it similar to Mike". Optimise for "best solution to the user problem".
+
+---
+
+## Disclaimer
+
+This rule is an engineering IP-risk-control procedure, not legal advice. For a commercially significant product closely inspired by an AGPL project, obtain review from qualified counsel before launch.

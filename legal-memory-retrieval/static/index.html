@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LEXOS — AI Institutional Memory & Legal DMS</title>
+  <link rel="stylesheet" href="/ui/styles.css">
+  <!-- Local fallback for direct file opening -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">L</div>
+      <span class="brand-title">LEXOS</span>
+      <span class="brand-sub">APEX CHAMBERS</span>
+    </div>
+
+    <div class="header-center">
+      <div id="cmd-palette-trigger" class="global-command-trigger">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="color:var(--accent-primary);font-size:11px;">✦</span>
+          <span>Search matters, projects, documents, clients, precedents...</span>
+        </div>
+        <span class="kbd-shortcut">⌘K</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="status-badge-live">
+        <span class="status-dot-pulse"></span>
+        <span>ACL ACTIVE</span>
+      </span>
+
+      <select id="persona-select" class="persona-switcher" title="Simulate Active Member & Ethical Wall Permissions">
+        <option value="MEM-00001">Aryan Maharaj (Lead Partner - Mumbai)</option>
+        <option value="MEM-00002">Udant Dewan (Partner - Delhi)</option>
+        <option value="MEM-00049">Alka Wable (Associate - Bengaluru)</option>
+        <option value="RESTRICTED_DEMO">🔒 Outside Counsel (Ethical Wall Filter Demo)</option>
+      </select>
+
+      <button id="theme-toggle-btn" class="btn btn-ghost btn-sm" title="Toggle Dark / Daylight Mode">☀️ Light</button>
+    </div>
+  </header>
+
+  <!-- BODY CONTAINER -->
+  <div class="app-body">
+    <!-- LEFT SIDEBAR -->
+    <aside class="app-sidebar">
+      <button id="sidebar-new-project-btn" class="sidebar-action-btn" style="background:var(--accent-primary-faint);border-color:var(--border-accent);color:var(--accent-primary);margin-top:10px;">
+        <span>＋</span>
+        <span>New Project / Workstream</span>
+      </button>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">WORKSPACE</div>
+        <nav>
+          <a class="nav-item active" data-view="home">
+            <div class="nav-item-left"><span>✦</span> <span>Home</span></div>
+            <span class="nav-badge">⌘1</span>
+          </a>
+          <a class="nav-item" data-view="ask">
+            <div class="nav-item-left"><span>🔍</span> <span>Ask Firm AI</span></div>
+            <span class="nav-badge">⌘2</span>
+          </a>
+          <a class="nav-item" data-view="matters">
+            <div class="nav-item-left"><span>⚖️</span> <span>Matters</span></div>
+            <span class="nav-badge">⌘3</span>
+          </a>
+          <a class="nav-item" data-view="projects">
+            <div class="nav-item-left"><span>📁</span> <span>Projects</span></div>
+            <span class="nav-badge">⌘4</span>
+          </a>
+          <a class="nav-item" data-view="clients">
+            <div class="nav-item-left"><span>🏛️</span> <span>Clients</span></div>
+            <span class="nav-badge">⌘5</span>
+          </a>
+          <a class="nav-item" data-view="documents">
+            <div class="nav-item-left"><span>📄</span> <span>Documents</span></div>
+            <span class="nav-badge">⌘6</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">INSTITUTION</div>
+        <nav>
+          <a class="nav-item" data-view="teams">
+            <div class="nav-item-left"><span>👥</span> <span>Teams</span></div>
+            <span class="nav-badge">⌘7</span>
+          </a>
+          <a class="nav-item" data-view="people">
+            <div class="nav-item-left"><span>👤</span> <span>People</span></div>
+            <span class="nav-badge">⌘8</span>
+          </a>
+          <a class="nav-item" data-view="knowledge">
+            <div class="nav-item-left"><span>📚</span> <span>Knowledge Vault</span></div>
+            <span class="nav-badge">⌘9</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">OPERATIONS</div>
+        <nav>
+          <a class="nav-item" data-view="activity">
+            <div class="nav-item-left"><span>⚡</span> <span>Live Activity</span></div>
+          </a>
+          <a class="nav-item" data-view="tasks">
+            <div class="nav-item-left"><span>✓</span> <span>Court Deadlines</span></div>
+          </a>
+        </nav>
+      </div>
+
+      <button id="sidebar-ingest-trigger" class="sidebar-action-btn" style="margin-top:auto;">
+        <span>⬆</span>
+        <span>Ingest Files / Sync</span>
+      </button>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-badge">
+          <div id="sidebar-user-avatar" class="user-avatar">AM</div>
+          <div class="user-info">
+            <div id="sidebar-user-name" class="user-name">Aryan Maharaj</div>
+            <div id="sidebar-user-role" class="user-role">Partner • Mumbai</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE -->
+    <main id="app-workspace" class="app-workspace">
+      <!-- Dynamic Workspace Views Rendered Here -->
+    </main>
+
+    <!-- RIGHT INSPECTOR PANE -->
+    <aside id="app-inspector-pane" class="app-inspector-pane">
+      <!-- Dynamic AI Inspector Drawer Rendered Here -->
+    </aside>
+  </div>
+
+  <!-- COMMAND PALETTE MODAL (⌘K) -->
+  <div id="command-palette-overlay" class="modal-overlay">
+    <div class="command-palette-modal">
+      <div class="palette-input-box">
+        <span style="color:var(--accent-primary)">✦</span>
+        <input type="text" id="palette-search-input" class="palette-input" placeholder="Type a command, question, matter, project, client, or doc..." autocomplete="off">
+        <span class="kbd-shortcut">ESC</span>
+      </div>
+      <div id="palette-results" class="palette-results-list">
+        <!-- Results rendered here -->
+      </div>
+      <div class="palette-footer">
+        <div><span>↑↓</span> to navigate &nbsp;•&nbsp; <span>ENTER</span> to select &nbsp;•&nbsp; <span>ESC</span> to close</div>
+        <span class="mono">LEXOS REASONING ENGINE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE NEW PROJECT MODAL -->
+  <div id="create-project-overlay" class="modal-overlay">
+    <div class="project-modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title"><span>📁</span> Create New Project / Workstream</div>
+        <button id="close-project-modal-btn" class="btn btn-ghost btn-sm">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Project Title *</label>
+          <input type="text" id="new-project-title" class="form-input" placeholder="e.g. Legal Due Diligence, CCI Antitrust Filing, SPA Negotiation...">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group">
+            <label class="form-label">Parent Matter *</label>
+            <select id="new-project-matter" class="form-select">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Practice Team *</label>
+            <select id="new-project-team" class="form-select">
+              <option value="Corporate & M&A">Corporate & M&A</option>
+              <option value="Dispute Resolution & Litigation">Dispute Resolution & Litigation</option>
+              <option value="International Arbitration">International Arbitration</option>
+              <option value="Tax & Structuring">Tax & Structuring</option>
+              <option value="Insolvency & Bankruptcy (NCLT)">Insolvency & Bankruptcy (NCLT)</option>
+              <option value="Regulatory & Competition (CCI)">Regulatory & Competition (CCI)</option>
+              <option value="Banking & Project Finance">Banking & Project Finance</option>
+              <option value="Employment & Labor">Employment & Labor</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group">
+            <label class="form-label">Lead Lawyer *</label>
+            <select id="new-project-lead" class="form-select">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Completion Date</label>
+            <input type="date" id="new-project-deadline" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Scope & Legal Deliverables</label>
+          <textarea id="new-project-scope" class="form-textarea" rows="3" placeholder="Define the objectives, key deliverables, and risk review framework for this project..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Initial Milestone Tasks (comma-separated)</label>
+          <input type="text" id="new-project-milestones" class="form-input" placeholder="e.g. Kickoff call with General Counsel, Document Room review, Red Flag Report drafting">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-project-modal-btn" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="submit-project-modal-btn" class="btn btn-primary btn-sm">Create Project</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Synchronous Core Data Bundle -->
+  <script src="/ui/firm_core_data.js"></script>
+  <script src="firm_core_data.js"></script>
+
+  <!-- Application Controller -->
+  <script src="/ui/app.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

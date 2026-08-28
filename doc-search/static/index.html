@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doc Search — Legal DMS</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242736;
+    --border: #2e3148;
+    --accent: #6c8fff;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --keyword: #3b82f6;
+    --vector: #8b5cf6;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* layout */
+  #app { display: flex; height: 100vh; overflow: hidden; }
+  #left { width: 420px; min-width: 320px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
+  #right { flex: 1; display: flex; flex-direction: column; background: #13151f; overflow: hidden; }
+
+  /* left panel */
+  #query-panel { padding: 20px 20px 12px; border-bottom: 1px solid var(--border); }
+  #query-panel h1 { font-size: 16px; font-weight: 600; color: var(--accent); margin-bottom: 14px; letter-spacing: 0.02em; }
+  #query { width: 100%; resize: none; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; line-height: 1.5; outline: none; transition: border 0.15s; }
+  #query:focus { border-color: var(--accent); }
+  #query::placeholder { color: var(--muted); }
+  .row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+  #ask-btn { flex: 1; background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  #ask-btn:hover { background: #5a7ef5; }
+  #ask-btn:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; }
+  #k-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 10px; font-size: 13px; outline: none; }
+  #hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* results scroll area */
+  #results { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* status / loading */
+  #status { text-align: center; color: var(--muted); font-size: 13px; padding: 20px 0; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* latency chips */
+  #latency { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .chip.fast { color: var(--green); border-color: var(--green); }
+
+  /* answer card */
+  .answer-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  .answer-text { line-height: 1.65; white-space: pre-wrap; color: var(--text); }
+  .answer-text cite { color: var(--accent); font-style: normal; cursor: pointer; text-decoration: underline dotted; }
+  .answer-text cite:hover { color: #fff; }
+  .abstained { color: var(--yellow); font-style: italic; }
+
+  /* citation list */
+  .citations-section .card-label { margin-bottom: 10px; }
+  .citation-chip { display: flex; align-items: center; justify-content: space-between; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; margin-bottom: 6px; }
+  .citation-chip:hover { border-color: var(--accent); background: #1e2135; }
+  .citation-chip.active { border-color: var(--accent); background: #1e2135; }
+  .cit-info { overflow: hidden; }
+  .cit-file { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .cit-page { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .cit-arrow { color: var(--accent); font-size: 16px; flex-shrink: 0; margin-left: 8px; }
+
+  /* hit list */
+  .hits-section details summary { cursor: pointer; color: var(--muted); font-size: 12px; padding: 4px 0; list-style: none; }
+  .hits-section details summary::before { content: '▶ '; font-size: 10px; }
+  .hits-section details[open] summary::before { content: '▼ '; }
+  .hit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 6px; cursor: pointer; transition: border-color 0.15s; }
+  .hit-card:hover { border-color: var(--accent); }
+  .hit-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+  .hit-file { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+  .hit-page { font-size: 11px; color: var(--muted); }
+  .channel-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+  .channel-keyword { background: rgba(59,130,246,0.2); color: var(--keyword); }
+  .channel-vector { background: rgba(139,92,246,0.2); color: var(--vector); }
+  .hit-text { font-size: 12px; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* right panel — PDF viewer */
+  #pdf-placeholder { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: var(--muted); }
+  #pdf-placeholder svg { opacity: 0.3; }
+  #pdf-placeholder p { font-size: 13px; }
+  #viewer-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #viewer-toolbar { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+  #viewer-toolbar .doc-title { font-size: 12px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #viewer-toolbar button { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+  #viewer-toolbar button:hover { background: var(--border); }
+  #viewer-toolbar button:disabled { opacity: 0.4; cursor: not-allowed; }
+  #page-info { font-size: 12px; color: var(--muted); min-width: 70px; text-align: center; }
+  #canvas-container { flex: 1; overflow: auto; display: flex; justify-content: center; align-items: flex-start; padding: 16px; background: #1c1e2b; }
+  #pdf-canvas { display: block; box-shadow: 0 4px 32px rgba(0,0,0,0.5); max-width: 100%; }
+  #find-bar { display: flex; align-items: center; gap: 6px; padding: 6px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  #find-bar input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 5px; padding: 4px 10px; font-size: 12px; flex: 1; outline: none; }
+  #find-bar input:focus { border-color: var(--accent); }
+  #find-status { font-size: 11px; color: var(--muted); min-width: 80px; }
+  .highlight-layer { position: absolute; top: 0; left: 0; pointer-events: none; }
+  .text-highlight { background: rgba(252,211,77,0.45); border-radius: 2px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ── LEFT PANEL ── -->
+  <div id="left">
+    <div id="query-panel">
+      <h1>⚖ Legal Doc Search</h1>
+      <textarea id="query" rows="4" placeholder="Ask a question about the legal documents…"></textarea>
+      <div class="row">
+        <button id="ask-btn" onclick="doAsk()">Ask</button>
+        <select id="k-select">
+          <option value="5">Top 5</option>
+          <option value="8" selected>Top 8</option>
+          <option value="12">Top 12</option>
+        </select>
+      </div>
+      <p id="hint">Ctrl + Enter to submit</p>
+    </div>
+    <div id="results">
+      <div id="status">Enter a query and press Ask.</div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ── -->
+  <div id="right">
+    <div id="pdf-placeholder">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      <p>Click a source citation to open the PDF</p>
+    </div>
+
+    <div id="viewer-wrap" class="hidden">
+      <div id="viewer-toolbar">
+        <span class="doc-title" id="doc-title"></span>
+        <button id="btn-prev" onclick="changePage(-1)">◀</button>
+        <span id="page-info">— / —</span>
+        <button id="btn-next" onclick="changePage(+1)">▶</button>
+        <button onclick="zoomIn()">+</button>
+        <button onclick="zoomOut()">−</button>
+        <button onclick="closeViewer()">✕</button>
+      </div>
+      <div id="find-bar">
+        <input type="text" id="find-input" placeholder="Find in document…" oninput="doFind()" onkeydown="findKeyDown(event)">
+        <span id="find-status"></span>
+        <button onclick="findNext()">↓</button>
+        <button onclick="findPrev()">↑</button>
+        <button onclick="clearFind()">✕</button>
+      </div>
+      <div id="canvas-container">
+        <div style="position:relative">
+          <canvas id="pdf-canvas"></canvas>
+          <div id="text-layer" class="highlight-layer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PDF.js ────────────────────────────────────────────────────────────────────
+const PDFJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let pdfjsLib = null;
+function loadPdfJs() {
+  return new Promise((resolve, reject) => {
+    if (pdfjsLib) return resolve(pdfjsLib);
+    const s = document.createElement('script');
+    s.src = PDFJS_CDN;
+    s.onload = () => {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+      pdfjsLib = window.pdfjsLib;
+      resolve(pdfjsLib);
+    };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// ── viewer state ─────────────────────────────────────────────────────────────
+let pdfDoc = null;
+let currentPage = 1;
+let totalPages = 0;
+let currentScale = 1.4;
+let currentFilename = '';
+let renderTask = null;
+let currentHighlightText = '';
+let textItems = [];  // [{str, x, y, w, h}]
+
+const canvas = document.getElementById('pdf-canvas');
+const ctx = canvas.getContext('2d');
+const textLayer = document.getElementById('text-layer');
+
+async function openPdf(filename, page, snippetText) {
+  currentFilename = filename;
+  currentHighlightText = snippetText || '';
+
+  document.getElementById('pdf-placeholder').classList.add('hidden');
+  document.getElementById('viewer-wrap').classList.remove('hidden');
+  document.getElementById('doc-title').textContent = filename;
+
+  try {
+    await loadPdfJs();
+    const url = '/doc/serve/' + encodeURIComponent(filename);
+    const loadingTask = pdfjsLib.getDocument(url);
+    pdfDoc = await loadingTask.promise;
+    totalPages = pdfDoc.numPages;
+
+    // jump to page (clamp)
+    currentPage = Math.max(1, Math.min(page, totalPages));
+    await renderPage(currentPage);
+
+    // auto-highlight snippet in find bar
+    if (snippetText) {
+      document.getElementById('find-input').value = snippetText.slice(0, 80);
+      setTimeout(() => doFind(), 300);
+    }
+  } catch (e) {
+    console.error('PDF load error', e);
+    alert('Could not load PDF: ' + filename);
+  }
+}
+
+async function renderPage(pageNum) {
+  if (!pdfDoc) return;
+  if (renderTask) { renderTask.cancel(); renderTask = null; }
+
+  currentPage = pageNum;
+  updatePageInfo();
+
+  const page = await pdfDoc.getPage(pageNum);
+  const viewport = page.getViewport({ scale: currentScale });
+
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  renderTask = page.render({ canvasContext: ctx, viewport });
+  try {
+    await renderTask.promise;
+  } catch (e) {
+    if (e && e.name === 'RenderingCancelledException') return;
+    throw e;
+  }
+  renderTask = null;
+
+  // extract text positions for highlight overlay
+  const textContent = await page.getTextContent();
+  textItems = textContent.items.map(item => {
+    const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+    return {
+      str: item.str,
+      x: tx[4],
+      y: tx[5] - item.height,
+      w: item.width * currentScale,
+      h: item.height,
+    };
+  });
+
+  applyHighlights();
+}
+
+function applyHighlights() {
+  textLayer.innerHTML = '';
+  const needle = (document.getElementById('find-input').value || '').trim().toLowerCase();
+  if (!needle || needle.length < 3) return;
+
+  // simple substring match across joined text positions
+  const fullText = textItems.map(t => t.str).join(' ').toLowerCase();
+  let occurrences = 0;
+  let idx = 0;
+  while ((idx = fullText.indexOf(needle, idx)) !== -1 && occurrences < 20) {
+    // find which textItems cover this range — approximate by char position
+    let charCount = 0;
+    for (const item of textItems) {
+      const start = charCount;
+      const end = charCount + item.str.length;
+      charCount += item.str.length + 1; // +1 for the space
+      if (start <= idx && idx < end) {
+        const div = document.createElement('div');
+        div.className = 'text-highlight';
+        div.style.cssText = `position:absolute;left:${item.x}px;top:${item.y}px;width:${item.w}px;height:${Math.max(item.h, 10)}px`;
+        textLayer.appendChild(div);
+        occurrences++;
+        break;
+      }
+    }
+    idx += needle.length;
+  }
+  document.getElementById('find-status').textContent =
+    occurrences > 0 ? `${occurrences} match${occurrences > 1 ? 'es' : ''}` : 'Not found';
+}
+
+function doFind() {
+  applyHighlights();
+}
+
+function findNext() { /* simple — re-apply */ applyHighlights(); }
+function findPrev() { applyHighlights(); }
+function clearFind() {
+  document.getElementById('find-input').value = '';
+  textLayer.innerHTML = '';
+  document.getElementById('find-status').textContent = '';
+}
+
+function findKeyDown(e) {
+  if (e.key === 'Enter') e.shiftKey ? findPrev() : findNext();
+}
+
+function changePage(delta) {
+  const next = currentPage + delta;
+  if (next >= 1 && next <= totalPages) renderPage(next);
+}
+
+function zoomIn()  { currentScale = Math.min(currentScale + 0.2, 3.0); renderPage(currentPage); }
+function zoomOut() { currentScale = Math.max(currentScale - 0.2, 0.6); renderPage(currentPage); }
+
+function closeViewer() {
+  document.getElementById('viewer-wrap').classList.add('hidden');
+  document.getElementById('pdf-placeholder').classList.remove('hidden');
+  pdfDoc = null;
+}
+
+function updatePageInfo() {
+  document.getElementById('page-info').textContent = `${currentPage} / ${totalPages}`;
+  document.getElementById('btn-prev').disabled = currentPage <= 1;
+  document.getElementById('btn-next').disabled = currentPage >= totalPages;
+}
+
+// keyboard navigation on right panel
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changePage(+1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changePage(-1);
+});
+
+// ── search ────────────────────────────────────────────────────────────────────
+let activeCitIdx = -1;
+
+async function doAsk() {
+  const query = document.getElementById('query').value.trim();
+  if (!query) return;
+  const k = parseInt(document.getElementById('k-select').value, 10);
+  const btn = document.getElementById('ask-btn');
+  btn.disabled = true;
+
+  const results = document.getElementById('results');
+  results.innerHTML = '<div id="status"><span class="spinner"></span>Searching &amp; asking LLM…</div>';
+  activeCitIdx = -1;
+
+  try {
+    const res = await fetch('/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, k }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderResults(data, query);
+  } catch (e) {
+    results.innerHTML = `<div id="status" style="color:var(--red)">Error: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderResults(data, query) {
+  const results = document.getElementById('results');
+  results.innerHTML = '';
+
+  // latency
+  const lat = data.latency_ms || {};
+  const latDiv = document.createElement('div');
+  latDiv.id = 'latency';
+  latDiv.innerHTML = [
+    chip(`Retrieve ${lat.retrieve_ms}ms`, lat.retrieve_ms < 500),
+    chip(`LLM ${lat.llm_ms}ms`, lat.llm_ms < 3000),
+    chip(`Total ${lat.total_ms}ms`, lat.total_ms < 4000),
+  ].join('');
+  if (data.provider) {
+    const providerColors = {groq:'#10b981', nvidia:'#76b900', gemini:'#4285f4', extractive:'#f59e0b'};
+    const col = providerColors[data.provider] || 'var(--muted)';
+    latDiv.innerHTML += `<span class="chip" style="color:${col};border-color:${col}">${escHtml(data.provider)}</span>`;
+  }
+  if (data.llm_errors && data.llm_errors.length) {
+    const errStr = data.llm_errors.join(' | ');
+    latDiv.innerHTML += `<span class="chip" style="color:var(--yellow)" title="${escHtml(errStr)}">⚠ fallback</span>`;
+  }
+  results.appendChild(latDiv);
+
+  // answer
+  const ansCard = document.createElement('div');
+  ansCard.className = 'answer-card';
+  ansCard.innerHTML = `<div class="card-label">Answer</div>`;
+  if (data.abstained || !data.answer) {
+    ansCard.innerHTML += `<p class="abstained">The documents do not contain sufficient information to answer this question.</p>`;
+  } else {
+    ansCard.innerHTML += `<div class="answer-text">${formatAnswer(data.answer, data.citations)}</div>`;
+  }
+  results.appendChild(ansCard);
+
+  // citations
+  if (data.citations && data.citations.length > 0) {
+    const citSec = document.createElement('div');
+    citSec.className = 'citations-section answer-card';
+    citSec.innerHTML = `<div class="card-label">Sources (${data.citations.length})</div>`;
+    data.citations.forEach((c, i) => {
+      const el = document.createElement('div');
+      el.className = 'citation-chip';
+      el.dataset.idx = i;
+      el.innerHTML = `
+        <div class="cit-info">
+          <div class="cit-file" title="${escHtml(c.file)}">${escHtml(shortName(c.file))}</div>
+          <div class="cit-page">Page ${c.page}${c.snippet ? ' · ' + escHtml(c.snippet.slice(0,60)) + '…' : ''}</div>
+        </div>
+        <span class="cit-arrow">↗</span>`;
+      el.onclick = () => {
+        document.querySelectorAll('.citation-chip').forEach(x => x.classList.remove('active'));
+        el.classList.add('active');
+        activeCitIdx = i;
+        openPdf(c.file, c.page, c.snippet || query.slice(0, 80));
+      };
+      citSec.appendChild(el);
+    });
+    results.appendChild(citSec);
+  }
+
+  // retrieved hits (collapsible)
+  if (data.hits && data.hits.length > 0) {
+    const hitsSec = document.createElement('div');
+    hitsSec.className = 'hits-section answer-card';
+    const det = document.createElement('details');
+    const sum = document.createElement('summary');
+    sum.textContent = `${data.hits.length} retrieved chunks`;
+    det.appendChild(sum);
+    data.hits.forEach(h => {
+      const card = document.createElement('div');
+      card.className = 'hit-card';
+      const badge = h.channel === 'vector' ? 'channel-vector' : 'channel-keyword';
+      card.innerHTML = `
+        <div class="hit-meta">
+          <span class="hit-file" title="${escHtml(h.filename)}">${escHtml(shortName(h.filename))}</span>
+          <span class="hit-page">p.${h.page_number}</span>
+          <span class="channel-badge ${badge}">${h.channel || 'hybrid'}</span>
+        </div>
+        <div class="hit-text">${escHtml(h.text)}</div>`;
+      card.onclick = () => openPdf(h.filename, h.page_number, h.text.slice(0, 80));
+      det.appendChild(card);
+    });
+    hitsSec.appendChild(det);
+    results.appendChild(hitsSec);
+  }
+}
+
+function chip(label, fast) {
+  return `<span class="chip${fast ? ' fast' : ''}">${escHtml(label)}</span>`;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function shortName(filename) {
+  const n = filename.replace(/\.pdf$/i, '');
+  return n.length > 40 ? n.slice(0, 38) + '…' : n;
+}
+
+function formatAnswer(answer, citations) {
+  // make inline citation refs clickable
+  let html = escHtml(answer);
+  if (citations && citations.length) {
+    citations.forEach((c, i) => {
+      const ref = escHtml(`[${c.file}, p.${c.page}]`);
+      const shortRef = escHtml(`[${shortName(c.file)}, p.${c.page}]`);
+      const clickable = `<cite onclick="(function(){document.querySelectorAll('.citation-chip')[${i}]&&document.querySelectorAll('.citation-chip')[${i}].click()})()">[${shortRef.slice(1,-1)}]</cite>`;
+      html = html.split(ref).join(clickable);
+    });
+  }
+  return html;
+}
+
+// keyboard shortcut
+document.getElementById('query').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    doAsk();
+  }
+});
+</script>
+</body>
+</html>

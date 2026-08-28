@@ -1,0 +1,1698 @@
+[
+  {
+    "member_id": "MEM-00001",
+    "name": "Aryan Maharaj",
+    "role": "Partner",
+    "practice_areas": [
+      "Corporate",
+      "Arbitration"
+    ],
+    "specializations": [
+      "Joint Ventures",
+      "SIAC Seats"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2021,
+    "email": "aryan.maharaj@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00002",
+    "name": "Udant Dewan",
+    "role": "Partner",
+    "practice_areas": [
+      "M&A",
+      "Employment"
+    ],
+    "specializations": [
+      "Private Equity Exits",
+      "Due Diligence",
+      "POSH",
+      "Restrictive Covenants"
+    ],
+    "office": "Delhi",
+    "joined_year": 2015,
+    "email": "udant.dewan@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00003",
+    "name": "Gagan Sami",
+    "role": "Partner",
+    "practice_areas": [
+      "Banking & Finance",
+      "Disputes"
+    ],
+    "specializations": [
+      "Security Enforcement",
+      "Acquisition Finance",
+      "Infrastructure Disputes"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2006,
+    "email": "gagan.sami@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00004",
+    "name": "Ayushman Chander",
+    "role": "Partner",
+    "practice_areas": [
+      "Disputes",
+      "Insolvency"
+    ],
+    "specializations": [
+      "Commercial Litigation",
+      "Shareholder Disputes",
+      "NCLT Practice"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2018,
+    "email": "ayushman.chander@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00005",
+    "name": "Viraj Tiwari",
+    "role": "Partner",
+    "practice_areas": [
+      "Arbitration",
+      "Corporate"
+    ],
+    "specializations": [
+      "Investment Arbitration",
+      "Joint Ventures",
+      "Restructuring"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2010,
+    "email": "viraj.tiwari@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00006",
+    "name": "Rushil Saini",
+    "role": "Partner",
+    "practice_areas": [
+      "Insolvency",
+      "Arbitration"
+    ],
+    "specializations": [
+      "CIRP Strategy",
+      "Resolution Plans",
+      "Investment Arbitration",
+      "SIAC Seats"
+    ],
+    "office": "Delhi",
+    "joined_year": 2005,
+    "email": "rushil.saini@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00007",
+    "name": "Saumya Mall",
+    "role": "Partner",
+    "practice_areas": [
+      "Employment",
+      "Arbitration"
+    ],
+    "specializations": [
+      "Restrictive Covenants",
+      "Wrongful Termination",
+      "Construction Arbitration"
+    ],
+    "office": "Delhi",
+    "joined_year": 2013,
+    "email": "saumya.mall@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00008",
+    "name": "Nathaniel Sami",
+    "role": "Partner",
+    "practice_areas": [
+      "Real Estate",
+      "Regulatory"
+    ],
+    "specializations": [
+      "Lease Disputes",
+      "RERA",
+      "FDI Policy"
+    ],
+    "office": "Singapore",
+    "joined_year": 2004,
+    "email": "nathaniel.sami@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00009",
+    "name": "Arunima Dugal",
+    "role": "Partner",
+    "practice_areas": [
+      "Tax",
+      "Arbitration"
+    ],
+    "specializations": [
+      "GST Litigation",
+      "Commercial Arbitration"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2020,
+    "email": "arunima.dugal@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00010",
+    "name": "Gayathri Chaudry",
+    "role": "Partner",
+    "practice_areas": [
+      "Regulatory",
+      "Corporate"
+    ],
+    "specializations": [
+      "Competition Law",
+      "Sectoral Licensing",
+      "Corporate Governance"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2022,
+    "email": "gayathri.chaudry@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00011",
+    "name": "Lajita Chatterjee",
+    "role": "Partner",
+    "practice_areas": [
+      "Employment"
+    ],
+    "specializations": [
+      "Restrictive Covenants",
+      "POSH"
+    ],
+    "office": "Singapore",
+    "joined_year": 2011,
+    "email": "lajita.chatterjee@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00012",
+    "name": "Hemangini Lalla",
+    "role": "Partner",
+    "practice_areas": [
+      "Regulatory",
+      "Arbitration"
+    ],
+    "specializations": [
+      "Competition Law",
+      "FDI Policy",
+      "Construction Arbitration"
+    ],
+    "office": "Delhi",
+    "joined_year": 2011,
+    "email": "hemangini.lalla@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00013",
+    "name": "Tripti Yadav",
+    "role": "Partner",
+    "practice_areas": [
+      "Insolvency"
+    ],
+    "specializations": [
+      "Resolution Plans"
+    ],
+    "office": "Delhi",
+    "joined_year": 2021,
+    "email": "tripti.yadav@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00014",
+    "name": "Kritika Brar",
+    "role": "Partner",
+    "practice_areas": [
+      "Real Estate"
+    ],
+    "specializations": [
+      "Lease Disputes"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2018,
+    "email": "kritika.brar@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00015",
+    "name": "Janaki Handa",
+    "role": "Partner",
+    "practice_areas": [
+      "Disputes",
+      "Arbitration"
+    ],
+    "specializations": [
+      "Contract Disputes",
+      "Infrastructure Disputes",
+      "Commercial Arbitration"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2006,
+    "email": "janaki.handa@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00016",
+    "name": "Chakradev Kari",
+    "role": "Partner",
+    "practice_areas": [
+      "Insolvency"
+    ],
+    "specializations": [
+      "NCLT Practice",
+      "CIRP Strategy"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2011,
+    "email": "chakradev.kari@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00017",
+    "name": "Fariq Kaul",
+    "role": "Counsel",
+    "practice_areas": [
+      "Insolvency",
+      "Regulatory"
+    ],
+    "specializations": [
+      "CIRP Strategy",
+      "Competition Law"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2013,
+    "email": "fariq.kaul@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00018",
+    "name": "Lajita Mall",
+    "role": "Counsel",
+    "practice_areas": [
+      "Disputes"
+    ],
+    "specializations": [
+      "Contract Disputes"
+    ],
+    "office": "Delhi",
+    "joined_year": 2021,
+    "email": "lajita.mall@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00019",
+    "name": "Janya Gaba",
+    "role": "Counsel",
+    "practice_areas": [
+      "Corporate"
+    ],
+    "specializations": [
+      "Corporate Governance",
+      "Joint Ventures"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2005,
+    "email": "janya.gaba@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00020",
+    "name": "Isha Kadakia",
+    "role": "Counsel",
+    "practice_areas": [
+      "Employment"
+    ],
+    "specializations": [
+      "Restrictive Covenants"
+    ],
+    "office": "Delhi",
+    "joined_year": 2015,
+    "email": "isha.kadakia@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00021",
+    "name": "Ekbal Garg",
+    "role": "Counsel",
+    "practice_areas": [
+      "M&A"
+    ],
+    "specializations": [
+      "Share Purchase Agreements"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2011,
+    "email": "ekbal.garg@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00022",
+    "name": "Nihal Shere",
+    "role": "Counsel",
+    "practice_areas": [
+      "Tax"
+    ],
+    "specializations": [
+      "Assessment Appeals",
+      "Transfer Pricing"
+    ],
+    "office": "Singapore",
+    "joined_year": 2005,
+    "email": "nihal.shere@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00023",
+    "name": "Anamika Kanda",
+    "role": "Counsel",
+    "practice_areas": [
+      "Tax",
+      "Insolvency"
+    ],
+    "specializations": [
+      "Assessment Appeals",
+      "Transfer Pricing",
+      "CIRP Strategy",
+      "Resolution Plans"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2004,
+    "email": "anamika.kanda@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00024",
+    "name": "Daksh Karnik",
+    "role": "Counsel",
+    "practice_areas": [
+      "Insolvency"
+    ],
+    "specializations": [
+      "Personal Guarantees",
+      "NCLT Practice"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2005,
+    "email": "daksh.karnik@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00025",
+    "name": "Diya Rattan",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Arbitration",
+      "M&A"
+    ],
+    "specializations": [
+      "Construction Arbitration",
+      "Share Purchase Agreements",
+      "Due Diligence"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2010,
+    "email": "diya.rattan@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00026",
+    "name": "Dominic Kakar",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Regulatory",
+      "Insolvency"
+    ],
+    "specializations": [
+      "SEBI Investigations",
+      "FDI Policy",
+      "CIRP Strategy",
+      "NCLT Practice"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2006,
+    "email": "dominic.kakar@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00027",
+    "name": "Simon Tata",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Disputes",
+      "Arbitration"
+    ],
+    "specializations": [
+      "Contract Disputes",
+      "Investment Arbitration"
+    ],
+    "office": "Singapore",
+    "joined_year": 2019,
+    "email": "simon.tata@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00028",
+    "name": "Tara Dhar",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Tax",
+      "Arbitration"
+    ],
+    "specializations": [
+      "International Tax",
+      "Construction Arbitration"
+    ],
+    "office": "Singapore",
+    "joined_year": 2023,
+    "email": "tara.dhar@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00029",
+    "name": "Liam Koshy",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Arbitration",
+      "M&A"
+    ],
+    "specializations": [
+      "Construction Arbitration",
+      "Investment Arbitration",
+      "Due Diligence"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2014,
+    "email": "liam.koshy@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00030",
+    "name": "Priya Rastogi",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Tax"
+    ],
+    "specializations": [
+      "Transfer Pricing",
+      "GST Litigation"
+    ],
+    "office": "Singapore",
+    "joined_year": 2005,
+    "email": "priya.rastogi@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00031",
+    "name": "Theodore Devi",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Banking & Finance"
+    ],
+    "specializations": [
+      "Debt Restructuring",
+      "Acquisition Finance"
+    ],
+    "office": "Singapore",
+    "joined_year": 2011,
+    "email": "theodore.devi@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00032",
+    "name": "Gavin Batta",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Insolvency",
+      "Tax"
+    ],
+    "specializations": [
+      "Resolution Plans",
+      "International Tax"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2005,
+    "email": "gavin.batta@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00033",
+    "name": "Michael Dutta",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Corporate",
+      "Arbitration"
+    ],
+    "specializations": [
+      "Corporate Governance",
+      "Restructuring",
+      "Commercial Arbitration"
+    ],
+    "office": "Delhi",
+    "joined_year": 2004,
+    "email": "michael.dutta@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00034",
+    "name": "Devansh Rajan",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Insolvency"
+    ],
+    "specializations": [
+      "NCLT Practice",
+      "CIRP Strategy"
+    ],
+    "office": "Delhi",
+    "joined_year": 2009,
+    "email": "devansh.rajan@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00035",
+    "name": "Upadhriti Wadhwa",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Regulatory",
+      "Tax"
+    ],
+    "specializations": [
+      "Sectoral Licensing",
+      "Assessment Appeals"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2006,
+    "email": "upadhriti.wadhwa@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00036",
+    "name": "Advay Contractor",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "M&A",
+      "Tax"
+    ],
+    "specializations": [
+      "Share Purchase Agreements",
+      "Due Diligence",
+      "Transfer Pricing",
+      "International Tax"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2011,
+    "email": "advay.contractor@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00037",
+    "name": "Harini Choudhury",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Banking & Finance"
+    ],
+    "specializations": [
+      "NBFC Lending",
+      "Security Enforcement"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2015,
+    "email": "harini.choudhury@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00038",
+    "name": "Radhika Dugar",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Disputes",
+      "Banking & Finance"
+    ],
+    "specializations": [
+      "Infrastructure Disputes",
+      "Commercial Litigation",
+      "Debt Restructuring",
+      "Acquisition Finance"
+    ],
+    "office": "Delhi",
+    "joined_year": 2013,
+    "email": "radhika.dugar@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00039",
+    "name": "Aarush Lall",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Corporate"
+    ],
+    "specializations": [
+      "Shareholder Disputes",
+      "Restructuring"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2013,
+    "email": "aarush.lall@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00040",
+    "name": "Yashica Cherian",
+    "role": "Senior Associate",
+    "practice_areas": [
+      "Real Estate",
+      "Employment"
+    ],
+    "specializations": [
+      "Title Diligence",
+      "Joint Development",
+      "POSH"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2009,
+    "email": "yashica.cherian@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00041",
+    "name": "Yashica Issac",
+    "role": "Associate",
+    "practice_areas": [
+      "M&A",
+      "Arbitration"
+    ],
+    "specializations": [
+      "Cross-border M&A",
+      "Private Equity Exits",
+      "Construction Arbitration",
+      "Investment Arbitration"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2005,
+    "email": "yashica.issac@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00042",
+    "name": "Kashvi Edwin",
+    "role": "Associate",
+    "practice_areas": [
+      "Regulatory",
+      "Banking & Finance"
+    ],
+    "specializations": [
+      "Competition Law",
+      "Sectoral Licensing",
+      "Acquisition Finance",
+      "NBFC Lending"
+    ],
+    "office": "Singapore",
+    "joined_year": 2018,
+    "email": "kashvi.edwin@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00043",
+    "name": "Ekiya Suresh",
+    "role": "Associate",
+    "practice_areas": [
+      "M&A",
+      "Banking & Finance"
+    ],
+    "specializations": [
+      "Private Equity Exits",
+      "Cross-border M&A",
+      "Security Enforcement"
+    ],
+    "office": "Singapore",
+    "joined_year": 2018,
+    "email": "ekiya.suresh@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00044",
+    "name": "Isaac Patil",
+    "role": "Associate",
+    "practice_areas": [
+      "M&A",
+      "Regulatory"
+    ],
+    "specializations": [
+      "Cross-border M&A",
+      "Share Purchase Agreements",
+      "Sectoral Licensing"
+    ],
+    "office": "Delhi",
+    "joined_year": 2005,
+    "email": "isaac.patil@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00045",
+    "name": "Wriddhish Bhardwaj",
+    "role": "Associate",
+    "practice_areas": [
+      "Employment"
+    ],
+    "specializations": [
+      "Restrictive Covenants",
+      "Senior Exits"
+    ],
+    "office": "Singapore",
+    "joined_year": 2014,
+    "email": "wriddhish.bhardwaj@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00046",
+    "name": "Farhan Chada",
+    "role": "Associate",
+    "practice_areas": [
+      "Real Estate",
+      "Tax"
+    ],
+    "specializations": [
+      "Title Diligence",
+      "Transfer Pricing",
+      "Assessment Appeals"
+    ],
+    "office": "Singapore",
+    "joined_year": 2006,
+    "email": "farhan.chada@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00047",
+    "name": "Ekapad Walia",
+    "role": "Associate",
+    "practice_areas": [
+      "Arbitration",
+      "Tax"
+    ],
+    "specializations": [
+      "Construction Arbitration",
+      "Commercial Arbitration",
+      "International Tax"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2014,
+    "email": "ekapad.walia@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00048",
+    "name": "Kabir Soman",
+    "role": "Associate",
+    "practice_areas": [
+      "M&A"
+    ],
+    "specializations": [
+      "Share Purchase Agreements",
+      "Private Equity Exits"
+    ],
+    "office": "Delhi",
+    "joined_year": 2010,
+    "email": "kabir.soman@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00049",
+    "name": "Alka Wable",
+    "role": "Associate",
+    "practice_areas": [
+      "M&A",
+      "Regulatory"
+    ],
+    "specializations": [
+      "Private Equity Exits",
+      "Competition Law",
+      "Sectoral Licensing"
+    ],
+    "office": "Singapore",
+    "joined_year": 2007,
+    "email": "alka.wable@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00050",
+    "name": "Siddharth Zacharia",
+    "role": "Associate",
+    "practice_areas": [
+      "Banking & Finance"
+    ],
+    "specializations": [
+      "NBFC Lending",
+      "Acquisition Finance"
+    ],
+    "office": "Delhi",
+    "joined_year": 2012,
+    "email": "siddharth.zacharia@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00051",
+    "name": "Devika Rastogi",
+    "role": "Associate",
+    "practice_areas": [
+      "Regulatory",
+      "M&A"
+    ],
+    "specializations": [
+      "SEBI Investigations",
+      "Share Purchase Agreements",
+      "Private Equity Exits"
+    ],
+    "office": "Singapore",
+    "joined_year": 2014,
+    "email": "devika.rastogi@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00052",
+    "name": "Raksha Varughese",
+    "role": "Associate",
+    "practice_areas": [
+      "Arbitration"
+    ],
+    "specializations": [
+      "Commercial Arbitration",
+      "Construction Arbitration"
+    ],
+    "office": "Singapore",
+    "joined_year": 2005,
+    "email": "raksha.varughese@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00053",
+    "name": "Jai Kota",
+    "role": "Associate",
+    "practice_areas": [
+      "Real Estate"
+    ],
+    "specializations": [
+      "Lease Disputes",
+      "RERA"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2014,
+    "email": "jai.kota@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00054",
+    "name": "Devansh Nigam",
+    "role": "Associate",
+    "practice_areas": [
+      "Regulatory",
+      "Arbitration"
+    ],
+    "specializations": [
+      "Competition Law",
+      "Commercial Arbitration",
+      "SIAC Seats"
+    ],
+    "office": "Singapore",
+    "joined_year": 2009,
+    "email": "devansh.nigam@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00055",
+    "name": "Victor Kannan",
+    "role": "Associate",
+    "practice_areas": [
+      "Real Estate",
+      "Disputes"
+    ],
+    "specializations": [
+      "Title Diligence",
+      "Shareholder Disputes"
+    ],
+    "office": "Singapore",
+    "joined_year": 2023,
+    "email": "victor.kannan@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00056",
+    "name": "Ekavir Bhargava",
+    "role": "Associate",
+    "practice_areas": [
+      "Arbitration"
+    ],
+    "specializations": [
+      "Commercial Arbitration",
+      "Construction Arbitration"
+    ],
+    "office": "Delhi",
+    "joined_year": 2018,
+    "email": "ekavir.bhargava@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00057",
+    "name": "Ekansh Balay",
+    "role": "Associate",
+    "practice_areas": [
+      "Tax",
+      "M&A"
+    ],
+    "specializations": [
+      "International Tax",
+      "GST Litigation",
+      "Share Purchase Agreements",
+      "Private Equity Exits"
+    ],
+    "office": "Delhi",
+    "joined_year": 2016,
+    "email": "ekansh.balay@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00058",
+    "name": "Ekavir Varkey",
+    "role": "Associate",
+    "practice_areas": [
+      "Arbitration",
+      "Disputes"
+    ],
+    "specializations": [
+      "SIAC Seats",
+      "Construction Arbitration",
+      "Shareholder Disputes"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2008,
+    "email": "ekavir.varkey@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00059",
+    "name": "Arya Sunder",
+    "role": "Associate",
+    "practice_areas": [
+      "Corporate"
+    ],
+    "specializations": [
+      "Shareholder Disputes"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2007,
+    "email": "arya.sunder@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00060",
+    "name": "Kevin Solanki",
+    "role": "Associate",
+    "practice_areas": [
+      "Arbitration",
+      "Regulatory"
+    ],
+    "specializations": [
+      "Commercial Arbitration",
+      "SEBI Investigations",
+      "Competition Law"
+    ],
+    "office": "Singapore",
+    "joined_year": 2015,
+    "email": "kevin.solanki@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00061",
+    "name": "Urvashi Ray",
+    "role": "Associate",
+    "practice_areas": [
+      "Regulatory"
+    ],
+    "specializations": [
+      "SEBI Investigations",
+      "Competition Law"
+    ],
+    "office": "Delhi",
+    "joined_year": 2008,
+    "email": "urvashi.ray@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00062",
+    "name": "Girindra Chatterjee",
+    "role": "Associate",
+    "practice_areas": [
+      "Insolvency"
+    ],
+    "specializations": [
+      "Resolution Plans",
+      "CIRP Strategy"
+    ],
+    "office": "Singapore",
+    "joined_year": 2007,
+    "email": "girindra.chatterjee@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00063",
+    "name": "Irya Sampath",
+    "role": "Associate",
+    "practice_areas": [
+      "Tax",
+      "Real Estate"
+    ],
+    "specializations": [
+      "Assessment Appeals",
+      "RERA",
+      "Lease Disputes"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2007,
+    "email": "irya.sampath@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00064",
+    "name": "Unni Bhagat",
+    "role": "Associate",
+    "practice_areas": [
+      "Tax",
+      "Employment"
+    ],
+    "specializations": [
+      "Assessment Appeals",
+      "Restrictive Covenants"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2008,
+    "email": "unni.bhagat@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00065",
+    "name": "Darsh Rau",
+    "role": "Associate",
+    "practice_areas": [
+      "Real Estate"
+    ],
+    "specializations": [
+      "Joint Development"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2005,
+    "email": "darsh.rau@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00066",
+    "name": "Ikbal Kothari",
+    "role": "Associate",
+    "practice_areas": [
+      "Banking & Finance"
+    ],
+    "specializations": [
+      "NBFC Lending",
+      "Acquisition Finance"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2018,
+    "email": "ikbal.kothari@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00067",
+    "name": "Ranveer Yadav",
+    "role": "Junior",
+    "practice_areas": [
+      "Arbitration"
+    ],
+    "specializations": [
+      "Investment Arbitration"
+    ],
+    "office": "Delhi",
+    "joined_year": 2008,
+    "email": "ranveer.yadav@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00068",
+    "name": "Logan Sami",
+    "role": "Junior",
+    "practice_areas": [
+      "Corporate",
+      "Employment"
+    ],
+    "specializations": [
+      "Joint Ventures",
+      "POSH",
+      "Restrictive Covenants"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2018,
+    "email": "logan.sami@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00069",
+    "name": "Arya Shere",
+    "role": "Junior",
+    "practice_areas": [
+      "Regulatory",
+      "Tax"
+    ],
+    "specializations": [
+      "Competition Law",
+      "Assessment Appeals",
+      "GST Litigation"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2021,
+    "email": "arya.shere@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00070",
+    "name": "Faqid Savant",
+    "role": "Junior",
+    "practice_areas": [
+      "Employment"
+    ],
+    "specializations": [
+      "Wrongful Termination"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2007,
+    "email": "faqid.savant@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00071",
+    "name": "Chandresh Zachariah",
+    "role": "Junior",
+    "practice_areas": [
+      "Tax"
+    ],
+    "specializations": [
+      "GST Litigation"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2004,
+    "email": "chandresh.zachariah@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00072",
+    "name": "Girik Khalsa",
+    "role": "Junior",
+    "practice_areas": [
+      "Real Estate"
+    ],
+    "specializations": [
+      "RERA"
+    ],
+    "office": "Delhi",
+    "joined_year": 2020,
+    "email": "girik.khalsa@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00073",
+    "name": "Niharika Sunder",
+    "role": "Junior",
+    "practice_areas": [
+      "Corporate"
+    ],
+    "specializations": [
+      "Joint Ventures"
+    ],
+    "office": "Delhi",
+    "joined_year": 2006,
+    "email": "niharika.sunder@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00074",
+    "name": "Tanay Rattan",
+    "role": "Junior",
+    "practice_areas": [
+      "M&A",
+      "Tax"
+    ],
+    "specializations": [
+      "Cross-border M&A",
+      "Private Equity Exits",
+      "GST Litigation",
+      "Assessment Appeals"
+    ],
+    "office": "Singapore",
+    "joined_year": 2023,
+    "email": "tanay.rattan@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00075",
+    "name": "Nitesh Raghavan",
+    "role": "Junior",
+    "practice_areas": [
+      "Tax"
+    ],
+    "specializations": [
+      "Transfer Pricing"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2008,
+    "email": "nitesh.raghavan@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00076",
+    "name": "Madhavi Lanka",
+    "role": "Junior",
+    "practice_areas": [
+      "Banking & Finance",
+      "M&A"
+    ],
+    "specializations": [
+      "Acquisition Finance",
+      "Cross-border M&A",
+      "Share Purchase Agreements"
+    ],
+    "office": "Singapore",
+    "joined_year": 2004,
+    "email": "madhavi.lanka@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00077",
+    "name": "Bhavika Sampath",
+    "role": "Junior",
+    "practice_areas": [
+      "Arbitration",
+      "Regulatory"
+    ],
+    "specializations": [
+      "Construction Arbitration",
+      "Competition Law"
+    ],
+    "office": "Delhi",
+    "joined_year": 2020,
+    "email": "bhavika.sampath@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00078",
+    "name": "Mohammed Gupta",
+    "role": "Junior",
+    "practice_areas": [
+      "Arbitration"
+    ],
+    "specializations": [
+      "Investment Arbitration"
+    ],
+    "office": "Singapore",
+    "joined_year": 2022,
+    "email": "mohammed.gupta@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00079",
+    "name": "Teerth Bhardwaj",
+    "role": "Junior",
+    "practice_areas": [
+      "Arbitration",
+      "Banking & Finance"
+    ],
+    "specializations": [
+      "Investment Arbitration",
+      "SIAC Seats",
+      "Debt Restructuring",
+      "Acquisition Finance"
+    ],
+    "office": "Delhi",
+    "joined_year": 2015,
+    "email": "teerth.bhardwaj@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00080",
+    "name": "Dipta Bhandari",
+    "role": "KM Lawyer",
+    "practice_areas": [
+      "Banking & Finance",
+      "Real Estate"
+    ],
+    "specializations": [
+      "Security Enforcement",
+      "Acquisition Finance",
+      "Lease Disputes"
+    ],
+    "office": "Delhi",
+    "joined_year": 2020,
+    "email": "dipta.bhandari@apexchambers.com",
+    "is_lawyer": true
+  },
+  {
+    "member_id": "MEM-00081",
+    "name": "Vansha Thakkar",
+    "role": "Knowledge Manager",
+    "practice_areas": [
+      "Regulatory"
+    ],
+    "specializations": [
+      "SEBI Investigations",
+      "Sectoral Licensing"
+    ],
+    "office": "Delhi",
+    "joined_year": 2014,
+    "email": "vansha.thakkar@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00082",
+    "name": "Dakshesh Trivedi",
+    "role": "Clerk",
+    "practice_areas": [
+      "Regulatory"
+    ],
+    "specializations": [
+      "SEBI Investigations"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2023,
+    "email": "dakshesh.trivedi@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00083",
+    "name": "Quincy Biswas",
+    "role": "Stenographer",
+    "practice_areas": [
+      "Disputes"
+    ],
+    "specializations": [
+      "Shareholder Disputes",
+      "Contract Disputes"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2010,
+    "email": "quincy.biswas@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00084",
+    "name": "Wahab Raval",
+    "role": "Paralegal",
+    "practice_areas": [
+      "Insolvency",
+      "Regulatory"
+    ],
+    "specializations": [
+      "CIRP Strategy",
+      "NCLT Practice",
+      "FDI Policy"
+    ],
+    "office": "Singapore",
+    "joined_year": 2005,
+    "email": "wahab.raval@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00085",
+    "name": "Yatin Baral",
+    "role": "Knowledge Manager",
+    "practice_areas": [
+      "Employment",
+      "Corporate"
+    ],
+    "specializations": [
+      "POSH",
+      "Restrictive Covenants",
+      "Shareholder Disputes",
+      "Corporate Governance"
+    ],
+    "office": "Singapore",
+    "joined_year": 2009,
+    "email": "yatin.baral@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00086",
+    "name": "Oni Virk",
+    "role": "Clerk",
+    "practice_areas": [
+      "M&A"
+    ],
+    "specializations": [
+      "Private Equity Exits"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2018,
+    "email": "oni.virk@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00087",
+    "name": "Advika Jayaraman",
+    "role": "Stenographer",
+    "practice_areas": [
+      "Arbitration"
+    ],
+    "specializations": [
+      "SIAC Seats",
+      "Commercial Arbitration"
+    ],
+    "office": "Delhi",
+    "joined_year": 2015,
+    "email": "advika.jayaraman@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00088",
+    "name": "William Lanka",
+    "role": "Paralegal",
+    "practice_areas": [
+      "Disputes"
+    ],
+    "specializations": [
+      "Infrastructure Disputes",
+      "Commercial Litigation"
+    ],
+    "office": "Singapore",
+    "joined_year": 2018,
+    "email": "william.lanka@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00089",
+    "name": "Karan Mital",
+    "role": "Knowledge Manager",
+    "practice_areas": [
+      "Banking & Finance"
+    ],
+    "specializations": [
+      "Security Enforcement"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2017,
+    "email": "karan.mital@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00090",
+    "name": "Diya Bora",
+    "role": "Clerk",
+    "practice_areas": [
+      "Disputes",
+      "Insolvency"
+    ],
+    "specializations": [
+      "Contract Disputes",
+      "Infrastructure Disputes",
+      "Resolution Plans"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2006,
+    "email": "diya.bora@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00091",
+    "name": "Tara Chaudhry",
+    "role": "Stenographer",
+    "practice_areas": [
+      "M&A"
+    ],
+    "specializations": [
+      "Cross-border M&A",
+      "Due Diligence"
+    ],
+    "office": "Delhi",
+    "joined_year": 2022,
+    "email": "tara.chaudhry@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00092",
+    "name": "Tanay Toor",
+    "role": "Paralegal",
+    "practice_areas": [
+      "Tax",
+      "Employment"
+    ],
+    "specializations": [
+      "International Tax",
+      "Restrictive Covenants"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2005,
+    "email": "tanay.toor@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00093",
+    "name": "Kevin Palla",
+    "role": "Knowledge Manager",
+    "practice_areas": [
+      "M&A",
+      "Insolvency"
+    ],
+    "specializations": [
+      "Due Diligence",
+      "Private Equity Exits",
+      "NCLT Practice",
+      "Personal Guarantees"
+    ],
+    "office": "Singapore",
+    "joined_year": 2018,
+    "email": "kevin.palla@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00094",
+    "name": "Yash Pingle",
+    "role": "Clerk",
+    "practice_areas": [
+      "Employment",
+      "M&A"
+    ],
+    "specializations": [
+      "Restrictive Covenants",
+      "Private Equity Exits",
+      "Due Diligence"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2013,
+    "email": "yash.pingle@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00095",
+    "name": "Nakul Sarma",
+    "role": "Stenographer",
+    "practice_areas": [
+      "Arbitration",
+      "M&A"
+    ],
+    "specializations": [
+      "Commercial Arbitration",
+      "Construction Arbitration",
+      "Cross-border M&A"
+    ],
+    "office": "Delhi",
+    "joined_year": 2008,
+    "email": "nakul.sarma@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00096",
+    "name": "Abhiram Mistry",
+    "role": "Paralegal",
+    "practice_areas": [
+      "Disputes",
+      "Regulatory"
+    ],
+    "specializations": [
+      "Commercial Litigation",
+      "Competition Law",
+      "FDI Policy"
+    ],
+    "office": "Bengaluru",
+    "joined_year": 2016,
+    "email": "abhiram.mistry@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00097",
+    "name": "Krish Lalla",
+    "role": "Knowledge Manager",
+    "practice_areas": [
+      "Employment",
+      "Regulatory"
+    ],
+    "specializations": [
+      "Wrongful Termination",
+      "SEBI Investigations"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2007,
+    "email": "krish.lalla@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00098",
+    "name": "Hredhaan Dugal",
+    "role": "Clerk",
+    "practice_areas": [
+      "Arbitration"
+    ],
+    "specializations": [
+      "SIAC Seats"
+    ],
+    "office": "Mumbai",
+    "joined_year": 2015,
+    "email": "hredhaan.dugal@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00099",
+    "name": "Baghyawati Kade",
+    "role": "Stenographer",
+    "practice_areas": [
+      "Arbitration"
+    ],
+    "specializations": [
+      "SIAC Seats",
+      "Construction Arbitration"
+    ],
+    "office": "Delhi",
+    "joined_year": 2013,
+    "email": "baghyawati.kade@apexchambers.com",
+    "is_lawyer": false
+  },
+  {
+    "member_id": "MEM-00100",
+    "name": "Samar Lalla",
+    "role": "Paralegal",
+    "practice_areas": [
+      "Banking & Finance",
+      "M&A"
+    ],
+    "specializations": [
+      "Acquisition Finance",
+      "Cross-border M&A"
+    ],
+    "office": "Delhi",
+    "joined_year": 2007,
+    "email": "samar.lalla@apexchambers.com",
+    "is_lawyer": false
+  }
+]

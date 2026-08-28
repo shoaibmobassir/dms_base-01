@@ -1,0 +1,14 @@
+{
+  "firm": "Apex Chambers",
+  "profile": "v2",
+  "members": 100,
+  "clients": 500,
+  "matters": 1000,
+  "documents": 38232,
+  "relationships": 9746,
+  "arguments": 20456,
+  "entities": 132576,
+  "evaluation_questions": 66,
+  "restricted_matters": 80,
+  "approx_chunks_if_800_tokens": 114696
+}
