@@ -1,0 +1,207 @@
+{
+  "version": "1.0",
+  "description": "Retrieval evaluation benchmark for LEXOS Legal DMS. Every retrieval architecture change runs old vs new against this dataset.",
+  "metrics": ["recall@5", "recall@10", "recall@50", "mrr", "ndcg@10", "precision@5"],
+  "queries": [
+    {
+      "id": "eval-001",
+      "query": "What was our position regarding force majeure in the MSEDCL matter?",
+      "intent": "cross_document",
+      "expected_matters": ["MTR-2024-003"],
+      "expected_documents": ["DOC-00007", "DOC-00008"],
+      "practice_area": "Disputes",
+      "difficulty": "easy",
+      "notes": "Cross-document query targeting specific matter with known docs"
+    },
+    {
+      "id": "eval-002",
+      "query": "Have we previously handled shareholder disputes involving Indian promoters?",
+      "intent": "similar_matter",
+      "expected_matters": ["MTR-2023-005", "MTR-2024-001"],
+      "expected_documents": [],
+      "practice_area": "Disputes",
+      "difficulty": "medium",
+      "notes": "Broad similar-matter search across practice area"
+    },
+    {
+      "id": "eval-003",
+      "query": "Find matters related to MTR-2024-001 where the same lead partner worked with a different client",
+      "intent": "graph_reasoning",
+      "expected_matters": ["MTR-2024-001"],
+      "expected_documents": [],
+      "practice_area": null,
+      "difficulty": "hard",
+      "notes": "Graph reasoning query — needs relationship traversal"
+    },
+    {
+      "id": "eval-004",
+      "query": "What is the matter code for the Tata Steel arbitration?",
+      "intent": "exact_lookup",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "Arbitration",
+      "difficulty": "easy",
+      "notes": "Exact lookup — should use metadata channel only"
+    },
+    {
+      "id": "eval-005",
+      "query": "Which lawyers have experience in insolvency and IBC matters?",
+      "intent": "experience_search",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "Insolvency",
+      "difficulty": "medium",
+      "notes": "Experience search — should deduplicate by matter"
+    },
+    {
+      "id": "eval-006",
+      "query": "Have we previously advised on limitation of liability clauses in construction contracts?",
+      "intent": "similar_matter",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": null,
+      "difficulty": "medium",
+      "notes": "Semantic similarity search across legal concepts"
+    },
+    {
+      "id": "eval-007",
+      "query": "What have we previously done for Reliance Industries?",
+      "intent": "matter_research",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": null,
+      "difficulty": "easy",
+      "notes": "Client-level matter research"
+    },
+    {
+      "id": "eval-008",
+      "query": "Find all arbitration matters where we acted as counsel before the SIAC",
+      "intent": "matter_research",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "Arbitration",
+      "difficulty": "medium",
+      "notes": "Multi-filter matter research (practice + court)"
+    },
+    {
+      "id": "eval-009",
+      "query": "DOC-00005",
+      "intent": "exact_lookup",
+      "expected_matters": [],
+      "expected_documents": ["DOC-00005"],
+      "practice_area": null,
+      "difficulty": "easy",
+      "notes": "Direct document ID lookup"
+    },
+    {
+      "id": "eval-010",
+      "query": "Have we ever negotiated non-compete clauses with senior executives in the pharma industry?",
+      "intent": "semantic",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "Employment",
+      "difficulty": "hard",
+      "notes": "Complex semantic query spanning multiple concepts"
+    },
+    {
+      "id": "eval-011",
+      "query": "What arguments have we used successfully against limitation-of-liability clauses in construction disputes?",
+      "intent": "similar_matter",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "Disputes",
+      "difficulty": "hard",
+      "notes": "Argument retrieval — needs deep document understanding + graph"
+    },
+    {
+      "id": "eval-012",
+      "query": "Find matters similar to our previous work involving flood-related insurance claims",
+      "intent": "similar_matter",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": null,
+      "difficulty": "hard",
+      "notes": "Natural language similar matter search"
+    },
+    {
+      "id": "eval-013",
+      "query": "What was our position regarding the validity of the force majeure clause in the power purchase agreement?",
+      "intent": "cross_document",
+      "expected_matters": ["MTR-2024-003"],
+      "expected_documents": ["DOC-00007"],
+      "practice_area": "Disputes",
+      "difficulty": "medium",
+      "notes": "Cross-document query with specific legal concept"
+    },
+    {
+      "id": "eval-014",
+      "query": "Who was the lead partner on the Infosys corporate governance matter?",
+      "intent": "experience_search",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "Regulatory",
+      "difficulty": "medium",
+      "notes": "People + matter intersection query"
+    },
+    {
+      "id": "eval-015",
+      "query": "Show me all M&A due diligence reports from 2023",
+      "intent": "matter_research",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "M&A",
+      "difficulty": "medium",
+      "notes": "Document type + practice area + temporal filter"
+    },
+    {
+      "id": "eval-016",
+      "query": "What precedents have we cited in employment termination disputes?",
+      "intent": "cross_document",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "Employment",
+      "difficulty": "hard",
+      "notes": "Cross-document precedent retrieval"
+    },
+    {
+      "id": "eval-017",
+      "query": "Find contracts where we included anti-dilution provisions for minority shareholders",
+      "intent": "semantic",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "M&A",
+      "difficulty": "hard",
+      "notes": "Clause-level semantic search within contracts"
+    },
+    {
+      "id": "eval-018",
+      "query": "MTR-2024-003",
+      "intent": "exact_lookup",
+      "expected_matters": ["MTR-2024-003"],
+      "expected_documents": [],
+      "practice_area": null,
+      "difficulty": "easy",
+      "notes": "Direct matter ID lookup"
+    },
+    {
+      "id": "eval-019",
+      "query": "What is the firm's track record in tax disputes before the ITAT?",
+      "intent": "matter_research",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "Tax",
+      "difficulty": "medium",
+      "notes": "Firm-level experience query with court filter"
+    },
+    {
+      "id": "eval-020",
+      "query": "Have we acted on a CIRP proceeding under IBC where the corporate debtor was a real estate company?",
+      "intent": "similar_matter",
+      "expected_matters": [],
+      "expected_documents": [],
+      "practice_area": "Insolvency",
+      "difficulty": "hard",
+      "notes": "Complex multi-concept intersection query"
+    }
+  ]
+}

@@ -1,3 +1,19 @@
+"""LLM answer generation with DMS-style structured output.
+
+Reasoning:
+  The DMS portal returns structured responses with:
+  - Key finding (summary paragraph)
+  - Primary document (strongest match with matter_id, tags, document_type)
+  - Supporting documents (additional matches)
+  - Inline citations
+
+  Original prompt produced a flat answer with [filename, p.N] citations.
+  New prompt instructs the LLM to produce a structured JSON response that
+  maps 1:1 to the DMS portal format shown in the screenshots.
+
+  Context packing is increased from 600→1200 chars per hit and now includes
+  metadata (document_type, matter_id, tags) so the LLM can reference them.
+"""
 from __future__ import annotations
 
 import json
@@ -5,28 +21,70 @@ import re
 
 from config import settings
 
-SYSTEM_PROMPT = """You are a legal document assistant. Answer ONLY from the provided excerpts below.
+SYSTEM_PROMPT = """You are a legal DMS (Document Management System) assistant for a law firm. Answer ONLY from the provided document excerpts below.
 
 Rules:
-- Cite every claim as [filename, p.N] where N is the page number.
-- If the excerpts do not contain enough information to answer, set "abstain" to true and leave "answer" empty.
+- Cite every claim inline as [filename, p.N] where N is the page number.
+- If the excerpts do not contain enough information, set "abstain" to true and leave "answer" empty.
 - Never invent facts not found in the excerpts.
-- Be precise and concise.
+- Write in clear, professional prose like a research memo.
+- Identify the single most relevant document as the primary_document.
+- List additional relevant documents as supporting_documents.
+- Produce a "key_finding" — a 1-2 sentence executive summary of the main takeaway.
+- Include matter_id, document_type, and tags from the excerpt headers when available.
 
 Respond with VALID JSON only — no markdown fences:
 {
   "abstain": false,
-  "answer": "your answer with inline citations like [Affidavit - CA 10046 of 2025.pdf, p.3]",
+  "key_finding": "One-line summary of the key finding across all documents.",
+  "answer": "Detailed answer with inline citations like [Affidavit - CA 10046 of 2025.pdf, p.3]",
+  "primary_document": {
+    "filename": "exact filename from excerpt header",
+    "page": 3,
+    "matter_id": "if available from excerpt header, else null",
+    "document_type": "if available from excerpt header, else null",
+    "tags": ["tag1", "tag2"],
+    "snippet": "verbatim short excerpt (<=120 chars)"
+  },
+  "supporting_documents": [
+    {
+      "filename": "another_file.pdf",
+      "page": 1,
+      "matter_id": "if available",
+      "document_type": "if available",
+      "tags": ["tag1"],
+      "snippet": "verbatim short excerpt (<=120 chars)"
+    }
+  ],
   "citations": [
-    {"file": "exact filename from excerpt header", "page": 3, "snippet": "verbatim short excerpt (<=120 chars)"}
+    {"file": "exact filename", "page": 3, "snippet": "verbatim short excerpt (<=120 chars)"}
   ]
 }"""
 
 
 def _pack_context(hits: list[dict]) -> str:
+    """Pack retrieval hits into a numbered context string for the LLM.
+
+    Now includes metadata (document_type, matter_id, tags) in each header
+    so the LLM can reference them in its structured response.
+    """
     parts = []
     for i, h in enumerate(hits, start=1):
-        parts.append(f"[{i}] {h['filename']} | page {h['page_number']}\n{h['text'][:600]}")
+        header = f"[{i}] {h['filename']} | page {h['page_number']}"
+        # Add metadata if available
+        meta_parts = []
+        if h.get("document_type"):
+            meta_parts.append(f"Type: {h['document_type']}")
+        if h.get("matter_id"):
+            meta_parts.append(f"Matter: {h['matter_id']}")
+        if h.get("tags"):
+            tags = h["tags"] if isinstance(h["tags"], list) else []
+            if tags:
+                meta_parts.append(f"Tags: {', '.join(tags)}")
+        if meta_parts:
+            header += f" | {' | '.join(meta_parts)}"
+        # Increased from 600 to 1200 chars to preserve complete legal arguments
+        parts.append(f"{header}\n{h['text'][:1200]}")
     return "\n\n---\n\n".join(parts)
 
 
@@ -38,7 +96,10 @@ def _parse_raw(raw: str) -> dict | None:
         data = json.loads(raw)
         return {
             "abstain": bool(data.get("abstain", False)),
+            "key_finding": str(data.get("key_finding") or ""),
             "answer": str(data.get("answer") or ""),
+            "primary_document": data.get("primary_document"),
+            "supporting_documents": data.get("supporting_documents") or [],
             "citations": data.get("citations") or [],
         }
     except (json.JSONDecodeError, TypeError, ValueError):
@@ -46,13 +107,35 @@ def _parse_raw(raw: str) -> dict | None:
 
 
 def _extractive_answer(hits: list[dict]) -> dict:
+    """Fallback answer when all LLM providers fail."""
     snippets = [
-        f"[{h['filename']}, p.{h['page_number']}] {h['text'][:300]}"
+        f"[{h['filename']}, p.{h['page_number']}] {h['text'][:400]}"
         for h in hits[:3]
     ]
+
+    # Build primary and supporting documents from hits
+    primary = None
+    supporting = []
+    for i, h in enumerate(hits[:5]):
+        doc_entry = {
+            "filename": h["filename"],
+            "page": h["page_number"],
+            "matter_id": h.get("matter_id"),
+            "document_type": h.get("document_type"),
+            "tags": h.get("tags") if isinstance(h.get("tags"), list) else [],
+            "snippet": h["text"][:120],
+        }
+        if i == 0:
+            primary = doc_entry
+        else:
+            supporting.append(doc_entry)
+
     return {
         "abstain": False,
+        "key_finding": f"Found {len(hits)} relevant excerpts from firm documents.",
         "answer": "Based on the documents:\n\n" + "\n\n".join(snippets),
+        "primary_document": primary,
+        "supporting_documents": supporting,
         "citations": [
             {"file": h["filename"], "page": h["page_number"], "snippet": h["text"][:120]}
             for h in hits[:3]

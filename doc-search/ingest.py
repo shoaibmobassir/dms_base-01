@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Ingest all PDFs from DOCS_DIR into Postgres docs_* tables."""
+"""Ingest all PDFs from DOCS_DIR into Postgres docs_* tables.
+
+Reasoning:
+  Original ingest stored only filename/page/text. Now we also extract and store
+  DMS metadata (matter_id, document_type, forum, case_number, client, tags) so
+  that the API can return DMS-portal-style responses with tags attached.
+"""
 from __future__ import annotations
 
 import hashlib
-import os
 import sys
 import time
 from pathlib import Path
@@ -15,6 +20,7 @@ from pypdf import PdfReader
 from chunking import chunk_text
 from config import settings
 from embedder import MiniLMEmbedder
+from metadata_extractor import extract_with_overrides
 
 
 def file_id(path: Path) -> str:
@@ -52,10 +58,18 @@ def ingest_file(conn: psycopg.Connection, pdf_path: Path, embedder: MiniLMEmbedd
         print(f"  SKIP (no text): {filename}")
         return 0
 
+    # ── Extract metadata ─────────────────────────────────────────────────
+    full_text = "\n\n".join(text for _, text in pages)
+    meta = extract_with_overrides(filename, full_text)
+    print(f"  Metadata: type={meta['document_type']}, forum={meta['forum']}, "
+          f"case={meta['case_number']}, matter={meta['matter_id']}, "
+          f"client={meta['client_name']}, tags={meta['tags']}")
+
+    # ── Chunk text ────────────────────────────────────────────────────────
     chunks: list[dict] = []
     idx = 0
     for page_num, page_text in pages:
-        for piece in chunk_text(page_text, max_chars=900, overlap=90):
+        for piece in chunk_text(page_text, max_chars=1200, overlap=150):
             chunks.append({
                 "chunk_id": chunk_id(fid, idx),
                 "file_id": fid,
@@ -63,6 +77,9 @@ def ingest_file(conn: psycopg.Connection, pdf_path: Path, embedder: MiniLMEmbedd
                 "page_number": page_num,
                 "chunk_index": idx,
                 "text": piece,
+                "matter_id": meta["matter_id"],
+                "document_type": meta["document_type"],
+                "tags": meta["tags"],
             })
             idx += 1
 
@@ -70,31 +87,51 @@ def ingest_file(conn: psycopg.Connection, pdf_path: Path, embedder: MiniLMEmbedd
         print(f"  SKIP (no chunks): {filename}")
         return 0
 
+    # ── Upsert file record ────────────────────────────────────────────────
     conn.execute(
         """
-        INSERT INTO docs_files (file_id, filename, filepath, page_count)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO docs_files (file_id, filename, filepath, page_count,
+                                matter_id, client_name, document_type, forum,
+                                case_number, tags)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (filename) DO UPDATE
             SET filepath = EXCLUDED.filepath,
-                page_count = EXCLUDED.page_count
+                page_count = EXCLUDED.page_count,
+                matter_id = EXCLUDED.matter_id,
+                client_name = EXCLUDED.client_name,
+                document_type = EXCLUDED.document_type,
+                forum = EXCLUDED.forum,
+                case_number = EXCLUDED.case_number,
+                tags = EXCLUDED.tags
         """,
-        (fid, filename, str(pdf_path), max(p for p, _ in pages)),
+        (
+            fid, filename, str(pdf_path), max(p for p, _ in pages),
+            meta["matter_id"], meta["client_name"], meta["document_type"],
+            meta["forum"], meta["case_number"], meta["tags"],
+        ),
     )
 
+    # ── Upsert chunks ─────────────────────────────────────────────────────
     with conn.pipeline():
         for c in chunks:
             conn.execute(
                 """
-                INSERT INTO docs_chunks (chunk_id, file_id, filename, page_number, chunk_index, text)
-                VALUES (%(chunk_id)s, %(file_id)s, %(filename)s, %(page_number)s, %(chunk_index)s, %(text)s)
+                INSERT INTO docs_chunks (chunk_id, file_id, filename, page_number,
+                                         chunk_index, text, matter_id, document_type, tags)
+                VALUES (%(chunk_id)s, %(file_id)s, %(filename)s, %(page_number)s,
+                        %(chunk_index)s, %(text)s, %(matter_id)s, %(document_type)s, %(tags)s)
                 ON CONFLICT (file_id, chunk_index) DO UPDATE
                     SET text = EXCLUDED.text,
-                        page_number = EXCLUDED.page_number
+                        page_number = EXCLUDED.page_number,
+                        matter_id = EXCLUDED.matter_id,
+                        document_type = EXCLUDED.document_type,
+                        tags = EXCLUDED.tags
                 """,
                 c,
             )
     conn.commit()
 
+    # ── Embed chunks ──────────────────────────────────────────────────────
     texts = [c["text"] for c in chunks]
     print(f"  Embedding {len(texts)} chunks ...", end=" ", flush=True)
     t0 = time.perf_counter()

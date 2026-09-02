@@ -128,3 +128,18 @@ Our design decisions:
 Mike source used as coding basis: NO
 New dependencies introduced: None
 IP notes: None
+
+### Feature: Project workspace — folders, versioning UI, activity timeline
+Date: 2026-09-01
+Mike observation (product level only): Legal project workspaces organize matter documents in nested folders, track immutable document versions with diff/history, and maintain an audit trail of folder and document changes.
+Requirement (technology-independent): Users working on a project must browse a folder tree, assign and move documents, inspect version history with integrity hashes, compare revisions, and review a chronological activity feed — all ACL-scoped to the parent matter.
+Our design decisions:
+  - Three-tab project workspace in LEXOS SPA: Overview | Documents | Activity
+  - Folder tree sidebar backed by `GET /projects/{id}/directory` with create/delete/move via existing REST endpoints
+  - Document table with per-row folder selector and version chip opening immutable history from `GET /documents/{id}/versions` + unified diff
+  - Activity timeline from `GET /projects/{id}/activity` with human-readable action labels
+  - Export manifest download via `GET /projects/{id}/export`
+  - Vanilla JS + CSS grid layout — no Mike components, names, or file structure copied
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: None

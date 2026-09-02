@@ -1,0 +1,17 @@
+{
+  "total_questions": 20,
+  "scored": 20,
+  "errors": 0,
+  "avg_latency_ms": 1329.4,
+  "metrics": {
+    "retrieval_recall": 0.5,
+    "answer_contains": 0.375,
+    "abstention_accuracy": 0.55,
+    "matter_match": 0.3125,
+    "grounding": 1.0,
+    "has_key_finding": 0.4,
+    "has_structured_citations": 0.55,
+    "has_tags": 0.55
+  },
+  "errors_detail": []
+}

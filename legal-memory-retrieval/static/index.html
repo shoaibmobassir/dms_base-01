@@ -57,27 +57,27 @@
       <div class="sidebar-group">
         <div class="sidebar-group-title">WORKSPACE</div>
         <nav>
-          <a class="nav-item active" data-view="home">
+          <a href="/ui/home" class="nav-item active" data-view="home">
             <div class="nav-item-left"><span>✦</span> <span>Home</span></div>
             <span class="nav-badge">⌘1</span>
           </a>
-          <a class="nav-item" data-view="ask">
+          <a href="/ui/ask" class="nav-item" data-view="ask">
             <div class="nav-item-left"><span>🔍</span> <span>Ask Firm AI</span></div>
             <span class="nav-badge">⌘2</span>
           </a>
-          <a class="nav-item" data-view="matters">
+          <a href="/ui/matters" class="nav-item" data-view="matters">
             <div class="nav-item-left"><span>⚖️</span> <span>Matters</span></div>
             <span class="nav-badge">⌘3</span>
           </a>
-          <a class="nav-item" data-view="projects">
+          <a href="/ui/projects" class="nav-item" data-view="projects">
             <div class="nav-item-left"><span>📁</span> <span>Projects</span></div>
             <span class="nav-badge">⌘4</span>
           </a>
-          <a class="nav-item" data-view="clients">
+          <a href="/ui/clients" class="nav-item" data-view="clients">
             <div class="nav-item-left"><span>🏛️</span> <span>Clients</span></div>
             <span class="nav-badge">⌘5</span>
           </a>
-          <a class="nav-item" data-view="documents">
+          <a href="/ui/documents" class="nav-item" data-view="documents">
             <div class="nav-item-left"><span>📄</span> <span>Documents</span></div>
             <span class="nav-badge">⌘6</span>
           </a>
@@ -87,15 +87,15 @@
       <div class="sidebar-group">
         <div class="sidebar-group-title">INSTITUTION</div>
         <nav>
-          <a class="nav-item" data-view="teams">
+          <a href="/ui/teams" class="nav-item" data-view="teams">
             <div class="nav-item-left"><span>👥</span> <span>Teams</span></div>
             <span class="nav-badge">⌘7</span>
           </a>
-          <a class="nav-item" data-view="people">
+          <a href="/ui/people" class="nav-item" data-view="people">
             <div class="nav-item-left"><span>👤</span> <span>People</span></div>
             <span class="nav-badge">⌘8</span>
           </a>
-          <a class="nav-item" data-view="knowledge">
+          <a href="/ui/knowledge" class="nav-item" data-view="knowledge">
             <div class="nav-item-left"><span>📚</span> <span>Knowledge Vault</span></div>
             <span class="nav-badge">⌘9</span>
           </a>
@@ -105,10 +105,10 @@
       <div class="sidebar-group">
         <div class="sidebar-group-title">OPERATIONS</div>
         <nav>
-          <a class="nav-item" data-view="activity">
+          <a href="/ui/activity" class="nav-item" data-view="activity">
             <div class="nav-item-left"><span>⚡</span> <span>Live Activity</span></div>
           </a>
-          <a class="nav-item" data-view="tasks">
+          <a href="/ui/tasks" class="nav-item" data-view="tasks">
             <div class="nav-item-left"><span>✓</span> <span>Court Deadlines</span></div>
           </a>
         </nav>
@@ -224,14 +224,38 @@
     </div>
   </div>
 
+  <!-- DOCUMENT SOURCE VIEWER DRAWER (WITH EXACT HIGHLIGHT) -->
+  <div id="doc-source-viewer-overlay" class="doc-source-viewer-overlay">
+    <div class="doc-source-viewer-drawer">
+      <div class="viewer-header">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+            <span id="viewer-doc-type" class="scope-chip">Contract</span>
+            <span id="viewer-doc-id" class="mono" style="font-size:11px;color:var(--text-muted);">DOC-00004</span>
+            <span id="viewer-doc-version" class="version-tag">v4 Executed</span>
+          </div>
+          <h3 id="viewer-doc-title" style="font-size:15px;font-weight:700;color:var(--text-primary);">Share Purchase Agreement</h3>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button id="viewer-open-full-btn" class="btn btn-secondary btn-sm">Full Document Detail →</button>
+          <button id="close-viewer-btn" class="btn btn-ghost btn-sm">✕</button>
+        </div>
+      </div>
+
+      <div id="viewer-cite-bar" class="viewer-cite-bar">
+        <span><strong>✦ Highlighted Source Citation:</strong> Showing exact verified excerpt from institutional records</span>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('match-1')?.scrollIntoView({behavior:'smooth', block:'center'});" style="font-size:10.5px;">Jump to Highlight ↓</button>
+      </div>
+
+      <div id="viewer-document-body" class="viewer-body">
+        <!-- Highlighted Document Content Rendered Here -->
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- Synchronous Core Data Bundle -->
-  <script src="/ui/firm_core_data.js"></script>
-  <script src="firm_core_data.js"></script>
 
-  <!-- Application Controller -->
   <script src="/ui/app.js"></script>
-  <script src="app.js"></script>
 </body>
 </html>

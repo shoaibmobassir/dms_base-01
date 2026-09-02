@@ -1,0 +1,77 @@
+# Real PDF Filing Manifests
+# Maps the 7 real PDFs to matter clusters for ingestion into legal-memory-retrieval.
+#
+# Matter clustering:
+#   MTR-REAL-00001: MSEDCL cluster (APL 163/2018, submissions, rejoinders)
+#   MTR-REAL-00002: Vector Green (Petition No. 22/2026)
+#   MTR-REAL-00003: CA 10046/2025 + Final Reply 310-MP-2026 (CERC appeals)
+
+matters:
+  - matter_id: MTR-REAL-00001
+    matter_code: REAL/ENR/MSEDCL/2018
+    title: "MSEDCL — APL 163/2018 & Related Proceedings"
+    client_id: CLI-REAL-MSEDCL
+    client_name: "MSEDCL"
+    practice_area: Regulatory
+    matter_type: Litigation
+    court: APTEL
+    jurisdiction: India
+    theme_key: flood_force_majeure
+    legal_issues:
+      - Force Majeure
+      - Flood Damage
+      - Electricity Distribution
+      - Regulatory Compliance
+    file_patterns:
+      - "MSEDCL"
+      - "BRIEF NOTE.*RESPONDENT"
+      - "Rejoinder"
+      - "Impleadment"
+    document_type_map:
+      "BRIEF NOTE": "Brief Note"
+      "Rejoinder": "Rejoinder"
+      "APL": "Brief Note"
+
+  - matter_id: MTR-REAL-00002
+    matter_code: REAL/ENR/VGREEN/2026
+    title: "Vector Green — Petition No. 22 of 2026"
+    client_id: CLI-REAL-VGREEN
+    client_name: "Vector Green Energy Pvt. Ltd."
+    practice_area: Regulatory
+    matter_type: Litigation
+    court: CERC
+    jurisdiction: India
+    theme_key: tariff_ppa
+    legal_issues:
+      - Tariff Determination
+      - PPA Compliance
+      - Regulatory Framework
+      - Renewable Energy
+    file_patterns:
+      - "VECTOR GREEN"
+      - "PETITION NO.*22"
+      - "WRITTEN SUBMISSION.*22"
+    document_type_map:
+      "WRITTEN SUBMISSION": "Written Submission"
+
+  - matter_id: MTR-REAL-00003
+    matter_code: REAL/ENR/CERC/2025
+    title: "CERC Appeals — CA 10046/2025 & 310-MP-2026"
+    client_id: CLI-REAL-CERC
+    client_name: "CERC Appellant"
+    practice_area: Regulatory
+    matter_type: Litigation
+    court: "Supreme Court / CERC"
+    jurisdiction: India
+    theme_key: regulatory_appeal
+    legal_issues:
+      - Civil Appeal
+      - Regulatory Framework
+      - Electricity Regulation
+    file_patterns:
+      - "CA 10046"
+      - "Affidavit.*CA"
+      - "Final Reply.*310-MP"
+    document_type_map:
+      "Affidavit": "Affidavit"
+      "Final Reply": "Final Reply"

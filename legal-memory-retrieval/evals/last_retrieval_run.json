@@ -8,12 +8,12 @@
   ],
   "baseline": "keyword+metadata+vector+graph",
   "overall": {
-    "recall@5": 0.3932,
-    "recall@10": 0.5885,
-    "recall@20": 0.6922,
+    "recall@5": 0.4021,
+    "recall@10": 0.5895,
+    "recall@20": 0.6914,
     "hit@10": 0.9238,
-    "mrr": 0.6906,
-    "ndcg@10": 0.5543
+    "mrr": 0.6941,
+    "ndcg@10": 0.5568
   },
   "by_type": {
     "argument_retrieval": {
@@ -25,17 +25,17 @@
     },
     "cross_document": {
       "n": 40,
-      "recall@10": 0.4795,
+      "recall@10": 0.4826,
       "hit@10": 1.0,
-      "mrr": 0.7288,
-      "ndcg@10": 0.4896
+      "mrr": 0.7529,
+      "ndcg@10": 0.4972
     },
     "exact": {
       "n": 220,
-      "recall@10": 0.6545,
-      "hit@10": 0.9045,
-      "mrr": 0.6766,
-      "ndcg@10": 0.5509
+      "recall@10": 0.65,
+      "hit@10": 0.9091,
+      "mrr": 0.6803,
+      "ndcg@10": 0.5499
     },
     "graph_reasoning": {
       "n": 15,
@@ -46,10 +46,10 @@
     },
     "matter_retrieval": {
       "n": 40,
-      "recall@10": 0.2964,
-      "hit@10": 1.0,
-      "mrr": 0.7463,
-      "ndcg@10": 0.3393
+      "recall@10": 0.3335,
+      "hit@10": 0.975,
+      "mrr": 0.7413,
+      "ndcg@10": 0.3684
     },
     "multi_hop": {
       "n": 1,
@@ -74,10 +74,10 @@
     },
     "person_expertise": {
       "n": 7,
-      "recall@10": 0.1619,
+      "recall@10": 0.1429,
       "hit@10": 0.8571,
       "mrr": 0.6082,
-      "ndcg@10": 0.2612
+      "ndcg@10": 0.2427
     },
     "semantic": {
       "n": 7,
@@ -90,8 +90,8 @@
       "n": 6,
       "recall@10": 0.0333,
       "hit@10": 0.6667,
-      "mrr": 0.2685,
-      "ndcg@10": 0.0791
+      "mrr": 0.2667,
+      "ndcg@10": 0.0787
     },
     "versioning": {
       "n": 40,

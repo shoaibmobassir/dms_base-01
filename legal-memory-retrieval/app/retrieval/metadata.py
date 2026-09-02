@@ -71,8 +71,10 @@ def _scoped_matter_search(
     rank_q: str,
 ) -> list[dict]:
     sql = f"""
-        SELECT d.document_id, d.matter_id, d.title, d.document_type,
-               c.chunk_id, c.text,
+        SELECT d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
+               d.author_name, d.doc_date,
+               m.client_name, m.court, m.practice_area,
+               c.chunk_id, c.chunk_index, c.text,
                ts_rank_cd(c.tsv, plainto_tsquery('english', %(rank_q)s)) AS score,
                'metadata' AS channel
         FROM chunks c
@@ -114,8 +116,10 @@ def _catalog_search(
     distinct = "DISTINCT ON (d.matter_id)" if dedupe else ""
     order = "ORDER BY d.matter_id, c.chunk_index" if dedupe else ""
     sql = f"""
-        SELECT {distinct} d.document_id, d.matter_id, d.title, d.document_type,
-               c.chunk_id, c.text,
+        SELECT {distinct} d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
+               d.author_name, d.doc_date,
+               m.client_name, m.court, m.practice_area,
+               c.chunk_id, c.chunk_index, c.text,
                1.0 AS score,
                'metadata' AS channel
         FROM documents d

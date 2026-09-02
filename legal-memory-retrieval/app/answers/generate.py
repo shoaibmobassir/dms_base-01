@@ -38,12 +38,30 @@ def answer_question(
 ) -> dict:
     import time
 
-    parsed = understand(query)
-    hits: list[dict] = []
-    retrieval_latency: dict = {}
-    if parsed.intent != "empty" and parsed.raw:
-        hits, retrieval_latency = retrieve(conn, query, member_id, k=k)
+    # Lightweight empty-query check (understand() is called inside retrieve())
+    raw = (query or "").strip()
+    if not raw:
+        parsed = understand(query)
+        return {
+            "query": query,
+            "sprint": CURRENT_SPRINT,
+            "llm": FEATURES["llm"],
+            "understanding": parsed.to_dict(),
+            "member_id": member_id,
+            "hits": [],
+            "answer": "",
+            "citations": [],
+            "abstained": True,
+            "reason": "no_evidence",
+            "provider": "none",
+            "latency_ms": {},
+        }
 
+    # Retrieve already calls understand() internally — don't call it twice
+    hits, retrieval_latency = retrieve(conn, query, member_id, k=k)
+
+    # understand() is cheap (regex only) — call it for blocking check
+    parsed = understand(query)
     blocked = _blocked_matter_or_doc(parsed, hits)
     if not hits or blocked:
         if blocked:

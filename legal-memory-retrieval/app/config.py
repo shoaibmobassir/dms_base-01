@@ -22,5 +22,18 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6380"
     cache_ttl_seconds: int = 300
 
+    # ── Async connection pool ────────────────────────────────────────────
+    db_pool_min_size: int = 4
+    db_pool_max_size: int = 20
+    db_pool_max_idle: float = 300.0
+
+    # ── Version-based cache invalidation ─────────────────────────────────
+    knowledge_version: int = 1
+    permission_version: int = 1
+    embedding_version: str = "minilm-l6-v2"
+
+    # ── Retrieval engine v2 ──────────────────────────────────────────────
+    use_engine_v2: bool = True
+
 
 settings = Settings()

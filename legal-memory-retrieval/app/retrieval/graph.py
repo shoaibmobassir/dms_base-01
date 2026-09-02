@@ -57,12 +57,15 @@ def graph_search(
     """
     docs_sql = f"""
         SELECT DISTINCT ON (d.matter_id)
-               d.document_id, d.matter_id, d.title, d.document_type,
-               c.chunk_id, c.text,
+               d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
+               d.author_name, d.doc_date,
+               m.client_name, m.court, m.practice_area,
+               c.chunk_id, c.chunk_index, c.text,
                1.0 AS score,
                'graph' AS channel
         FROM documents d
         JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
+        JOIN matters m ON m.matter_id = d.matter_id
         JOIN permissions p ON p.matter_id = d.matter_id
         WHERE {ACL}
           AND d.matter_id IN ({related_sql})

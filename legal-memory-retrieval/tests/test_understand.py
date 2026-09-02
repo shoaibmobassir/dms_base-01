@@ -76,6 +76,18 @@ def test_similar_matter_keeps_semantics() -> None:
     assert "flooding" in parsed.search_text.lower()
 
 
+def test_force_majeure_question_strips_prefix() -> None:
+    parsed = understand("Have we previously advised on force majeure clauses?")
+    assert parsed.intent == "semantic"
+    assert parsed.search_text.lower() == "force majeure clauses"
+
+
+def test_matters_involve_strips_to_client() -> None:
+    parsed = understand("What matters involve Narang Limited?")
+    assert parsed.intent == "matter_research"
+    assert parsed.search_text == "Narang Limited"
+
+
 def test_negative_style_question_is_not_exact() -> None:
     parsed = understand("Have we advised on nuclear submarine licensing?")
     assert parsed.intent == "semantic"

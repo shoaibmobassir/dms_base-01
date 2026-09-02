@@ -1,0 +1,42 @@
+{
+  "Affidavit - CA 10046 of 2025.pdf": {
+    "document_type": "Affidavit",
+    "case_number": "CA 10046 of 2025",
+    "forum": "Supreme Court",
+    "tags": ["Affidavit", "Civil Appeal"]
+  },
+  "BRIEF NOTE OF SUBMISSIONS ON BEHALF OF RESPONDENT NO. 2, MSEDCL.pdf": {
+    "document_type": "Brief Note",
+    "client_name": "MSEDCL",
+    "forum": "MERC",
+    "tags": ["Regulatory", "Electricity", "MSEDCL"]
+  },
+  "Final Reply (310-MP-2026).pdf": {
+    "document_type": "Final Reply",
+    "case_number": "310-MP-2026",
+    "forum": "CERC",
+    "tags": ["Regulatory", "Electricity"]
+  },
+  "MSEDCL Note in APL. 163 of 2018.pdf": {
+    "document_type": "Brief Note",
+    "client_name": "MSEDCL",
+    "case_number": "APL. 163 of 2018",
+    "forum": "APTEL",
+    "tags": ["Regulatory", "MSEDCL", "Electricity"]
+  },
+  "Rejoinder to Reply to Impleadment Application.pdf": {
+    "document_type": "Rejoinder",
+    "tags": ["Impleadment", "Regulatory"]
+  },
+  "Rejoinder to reply of IA.pdf": {
+    "document_type": "Rejoinder",
+    "tags": ["Impleadment", "Regulatory"]
+  },
+  "WRITTEN SUBMISSION IN PETITION NO. 22 OF 2026 (VECTOR GREEN) 01.08.2026.pdf": {
+    "document_type": "Written Submission",
+    "client_name": "Vector Green Energy Pvt. Ltd.",
+    "case_number": "Petition No. 22 of 2026",
+    "forum": "CERC",
+    "tags": ["Regulatory", "Tariff", "PPA", "Electricity"]
+  }
+}

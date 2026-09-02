@@ -16,9 +16,12 @@ SYSTEM = (
     "3. Cite every factual claim inline as (DOC-XXXXX). Multiple citations per sentence are fine.\n"
     "4. Include a ## Sources section at the end listing each cited doc ID and its title.\n"
     "5. If excerpts are insufficient, set abstain=true and leave answer empty.\n"
-    "6. Never invent document IDs — only cite IDs that appear in the excerpts.\n\n"
+    "6. Never invent document IDs — only cite IDs that appear in the excerpts.\n"
+    "7. Produce a key_finding — a 1-2 sentence executive summary of the main answer.\n"
+    "8. Include matter_id, document_type from excerpt headers in your citations where available.\n\n"
     "Respond with JSON only, no markdown fences:\n"
-    '{"abstain": bool, "answer": str, "citations": [str]}\n\n'
+    '{"abstain": bool, "key_finding": str, "answer": str, "citations": [str]}\n\n'
+    "The key_finding is the executive summary. "
     "The answer field should be rich prose with inline citations. "
     "The citations array must list every DOC-ID you cited."
 )
@@ -33,8 +36,24 @@ def _pack_context(hits: list[dict], max_docs: int = 12) -> str:
             continue
         seen.add(doc_id)
         title = hit.get("title") or ""
-        text = " ".join(str(hit.get("text") or "").split())[:600]
-        lines.append(f"{doc_id} | {title}\n{text}")
+        # Include matter metadata in excerpt header for structured citations
+        header = f"{doc_id} | {title}"
+        meta_parts = []
+        if hit.get("matter_id"):
+            meta_parts.append(f"Matter: {hit['matter_id']}")
+        if hit.get("document_type"):
+            meta_parts.append(f"Type: {hit['document_type']}")
+        if hit.get("matter_code"):
+            meta_parts.append(f"Code: {hit['matter_code']}")
+        if hit.get("client_name"):
+            meta_parts.append(f"Client: {hit['client_name']}")
+        if hit.get("court"):
+            meta_parts.append(f"Forum: {hit['court']}")
+        if meta_parts:
+            header += f" | {' | '.join(meta_parts)}"
+        # Increased from 600 to 1200 chars to preserve complete legal arguments
+        text = " ".join(str(hit.get("text") or "").split())[:1200]
+        lines.append(f"{header}\n{text}")
         if len(lines) >= max_docs:
             break
     return "\n\n".join(lines)
@@ -78,15 +97,27 @@ def parse_model_json(raw: str, hits: list[dict]) -> dict:
             "citations": [],
             "abstained": True,
             "reason": "insufficient_evidence",
+            "key_finding": "",
         }
-    # If model answered but gave no citations, extract them from the answer text
     if not cited:
         cited = filter_citations(extract_document_ids(answer), hits)
+    if not cited:
+        return {
+            "answer": "",
+            "citations": [],
+            "abstained": True,
+            "reason": "uncited_or_invalid_citations",
+            "key_finding": "",
+        }
+    key_finding = str(payload.get("key_finding") or "").strip()
+    if not key_finding:
+        key_finding = answer.split("\n\n")[0][:300]
     return {
         "answer": answer,
         "citations": cited,
         "abstained": False,
         "reason": None,
+        "key_finding": key_finding,
     }
 
 

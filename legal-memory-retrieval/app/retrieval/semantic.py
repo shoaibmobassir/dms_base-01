@@ -20,12 +20,15 @@ def semantic_search(conn, query: str, member_id: str | None, limit: int = 50) ->
     register_vector(conn)
     qvec = _model().encode([query])[0]
     sql = """
-        SELECT d.document_id, d.matter_id, d.title, d.document_type,
-               c.chunk_id, c.text,
+        SELECT d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
+               d.author_name, d.doc_date,
+               m.client_name, m.court, m.practice_area,
+               c.chunk_id, c.chunk_index, c.text,
                1.0 - (c.embedding <=> %(qvec)s) AS score,
                'vector' AS channel
         FROM chunks c
         JOIN documents d ON d.document_id = c.document_id
+        JOIN matters m ON m.matter_id = d.matter_id
         JOIN permissions p ON p.matter_id = c.matter_id
         WHERE c.embedding IS NOT NULL
         AND (

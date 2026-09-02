@@ -1,18 +1,32 @@
 from fastapi.testclient import TestClient
 
-from app.api.main import app
+from app.api.main import SERVICE_CATALOG, app
 from app.sprint import CURRENT_SPRINT
 
 
 def test_health_sprint_property() -> None:
     client = TestClient(app)
-    body = client.get("/health").json()
+    body = client.get("/api/system/health").json()
     assert body["sprint"] == CURRENT_SPRINT
     assert body["sprint"] == 8
     assert body["status"] == "ok"
     assert body["llm"] is True
     assert body["query_understanding"] is True
     assert body["graph"] is True
+    assert body["gateway"] == "lexos"
     root = client.get("/").json()
     assert root["sprint"] == 8
-    assert root["ask"] == "POST /ask"
+    assert "services" in root
+    assert root["services"]["answers"]["prefix"] == "/api/answers"
+    assert root["services"]["retrieval"]["prefix"] == "/api/retrieval"
+    assert root["services"]["matters"]["prefix"] == "/api/matters"
+    assert root["services"]["documents"]["prefix"] == "/api/documents"
+
+
+def test_service_health_endpoints() -> None:
+    client = TestClient(app)
+    for name, meta in SERVICE_CATALOG.items():
+        resp = client.get(meta["health"])
+        assert resp.status_code == 200, f"{name} health failed"
+        body = resp.json()
+        assert body.get("status") == "ok" or body.get("service") == name
