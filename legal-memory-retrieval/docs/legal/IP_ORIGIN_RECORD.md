@@ -143,3 +143,89 @@ Our design decisions:
 Mike source used as coding basis: NO
 New dependencies introduced: None
 IP notes: None
+
+### Feature: Multi-Model Orchestration & Encrypted Tenant Key Vault
+Date: 2026-09-05
+Mike observation (product level only): Legal platforms allow law firms to bring their own API keys (OpenAI, Anthropic Claude, Google Gemini, Ollama) and select specific models per reasoning task.
+Requirement (technology-independent): Encrypt tenant/user API keys using AES-256-GCM, provide a unified LLM interface with fallback routing, support local Ollama inference, and allow task-level model assignment (chat, tabular, extraction, drafting).
+Our design decisions:
+  - `key_vault.py` with AES-256-GCM authenticated encryption using PBKDF2 key derivation
+  - `model_router.py` unified async caller supporting Anthropic Claude 3.7, OpenAI GPT-4o, Google Gemini 2.0, and local Ollama
+  - Per-tenant key resolution and token usage auditing
+Mike source used as coding basis: NO
+New dependencies introduced: cryptography (Apache-2.0)
+IP notes: None
+
+### Feature: High-Throughput Tabular Document Review Engine
+Date: 2026-09-05
+Mike observation (product level only): Legal teams conducting due diligence need to extract structured criteria (governing law, caps, indemnities, change of control) across batches of documents into a matrix with confidence scores, reasoning traces, citations, and spreadsheet export.
+Requirement (technology-independent): Given a set of documents and a column schema with typed extraction prompts, execute scoped hybrid retrieval and LLM structured extraction per cell concurrently, record citations/confidence/reasoning trace, support human review overrides, and export formatted .xlsx/.csv workbooks.
+Our design decisions:
+  - `tabular_service.py` with async batch execution and concurrency control
+  - SQL schema for `tabular_reviews`, `tabular_columns`, `tabular_rows`, and `tabular_cells`
+  - Citation chip integration linking directly to retrieved chunk IDs
+  - OpenPyXL-based styled `.xlsx` workbook exporter with dedicated evidence/citation sheet
+Mike source used as coding basis: NO
+New dependencies introduced: openpyxl (MIT)
+IP notes: None
+
+### Feature: Reusable Declarative Legal Playbooks & Workflow Engine
+Date: 2026-09-05
+Mike observation (product level only): Legal practices use standardized checklists and multi-step prompt workflows (e.g. C&D letter drafter, contract triage, MSA review, M&A due diligence).
+Requirement (technology-independent): Execute multi-step declarative YAML DAG workflows with typed steps (`retrieve`, `ask`, `verify_citation`, `extract_entities`, `compose`), dynamic Jinja2 template parameter interpolation, precedent integration, and persistent execution history.
+Our design decisions:
+  - YAML catalog loader in `app/workflows/catalog/`
+  - Independent step executor without arbitrary code execution
+  - Structured output schemas with markdown and downloadable file generation
+Mike source used as coding basis: NO
+New dependencies introduced: jinja2 (BSD-3-Clause)
+IP notes: None
+
+### Feature: Word DOCX Native Track-Changes Redlining Engine
+Date: 2026-09-05
+Mike observation (product level only): Legal redlining requires native Microsoft Word tracked revisions (`<w:ins>`, `<w:del>`) rather than static text diffs, so exported files open in Microsoft Word ready for counterparty negotiation.
+Requirement (technology-independent): Analyze contract clauses against firm standards, generate structured redline suggestions with risk severity ratings, and produce native Word OpenXML `.docx` files containing tracked changes with attribution and timestamps.
+Our design decisions:
+  - `docx_redline_generator.py` using `python-docx` + `lxml` to inject `<w:ins>` and `<w:del>` XML nodes
+  - Clause deviation classifier rating risk (Low, Medium, High, Critical)
+  - Side-by-side and inline visual diff renderer for in-browser review
+Mike source used as coding basis: NO
+New dependencies introduced: lxml (BSD-3-Clause)
+IP notes: None
+
+### Feature: Microsoft Word Taskpane Add-in Integration & Auth Handoff
+Date: 2026-09-05
+Mike observation (product level only): Lawyers work inside Microsoft Word and need a taskpane add-in to query firm knowledge, draft clauses, and insert redlines directly into the active document.
+Requirement (technology-independent): Provide a secure browser-to-Word one-time ticket auth handoff, Office.js taskpane client, selection context analyzer, and 1-click text/track-changes insertion.
+Our design decisions:
+  - One-time cryptographically random tickets with 5-minute TTL stored in Redis/DB (`app/auth/handoff.py`)
+  - Office.js React taskpane UI in `word-addin/`
+  - Endpoints for `POST /api/word/analyze-selection` and `POST /api/word/draft-clause`
+Mike source used as coding basis: NO
+New dependencies introduced: None (Office.js)
+IP notes: None
+
+### Feature: Case Law Citation Parsing & CourtListener Judicial Opinion Verification
+Date: 2026-09-05
+Mike observation (product level only): Legal briefs require verifying case law citations against official reporters and checking whether cited opinions remain good law.
+Requirement (technology-independent): Detect Bluebook/statutory citations in legal text, query CourtListener API v4 for opinion clusters, docket metadata, and precedential status, and cache opinion records locally.
+Our design decisions:
+  - Regex citation tokenizer in `app/caselaw/citation_parser.py`
+  - Async CourtListener client with Redis-backed cluster cache
+  - Flagging overruled, distinguished, or non-precedential authorities
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: None
+
+### Feature: Tamper-Evident Signed Legal Export Manifests
+Date: 2026-09-05
+Mike observation (product level only): Regulatory filings and court submissions require cryptographic proof that exported documents, review findings, and audit logs have not been altered.
+Requirement (technology-independent): Package matter/project/review outputs into a structured ZIP archive containing a `manifest.json` with SHA-256 hashes of every file and an HMAC-SHA256 / Ed25519 digital signature.
+Our design decisions:
+  - `manifest_signer.py` computing streaming SHA-256 hashes
+  - Digital signature verification endpoint `POST /api/audit/verify-manifest`
+  - Immutable audit trail recording every export event
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: None
+

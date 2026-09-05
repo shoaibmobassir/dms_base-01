@@ -32,17 +32,17 @@ def plan(parsed: ParsedQuery) -> RetrievalPlan:
     intent = parsed.intent
 
     # ── Exact lookup: matter ID or doc ID ─────────────────────────────────
+    # Exact: metadata-dominant; BM25 secondary. No graph/hierarchy/CE.
     if intent == "exact_lookup":
         return RetrievalPlan(
             channels=["metadata", "bm25"],
             graph_expansion=False,
             rerank=False,
-            # Fusion pool size (rerank disabled; must be > 0 or exact lookups return empty)
-            rerank_candidates=50,
+            rerank_candidates=80,
             final_k=20,
             weights={
-                "metadata": 2.0,
-                "bm25": 1.0,
+                "metadata": 3.0,
+                "bm25": 0.5,
             },
         )
 
@@ -55,9 +55,9 @@ def plan(parsed: ParsedQuery) -> RetrievalPlan:
             rerank_candidates=50,
             final_k=20,
             weights={
-                "metadata": 2.2,
-                "matter": 1.5,
-                "graph_seed": 1.3,
+                "metadata": 1.2,
+                "matter": 0.5,
+                "graph_seed": 0.3,
             },
         )
 
@@ -80,52 +80,55 @@ def plan(parsed: ParsedQuery) -> RetrievalPlan:
     # ── Cross-document: "what was our position regarding..." ─────────────
     if intent == "cross_document":
         return RetrievalPlan(
-            channels=["bm25", "vector", "metadata", "matter", "graph_seed"],
+            channels=["bm25", "vector", "metadata", "matter", "hierarchical", "graph_seed"],
             graph_expansion=True,
             graph_expansion_depth=1,
             rerank=True,
             rerank_candidates=100,
             final_k=20,
             weights={
-                "bm25": 1.4,
-                "vector": 1.1,
-                "metadata": 1.3,
-                "matter": 1.0,
-                "graph_seed": 0.4,
+                "bm25": 1.0,
+                "vector": 1.0,
+                "metadata": 1.2,
+                "matter": 0.5,
+                "hierarchical": 0.0,
+                "graph_seed": 0.3,
             },
         )
 
     # ── Similar matter: "have we previously handled..." ──────────────────
     if intent in {"similar_matter", "semantic"}:
         return RetrievalPlan(
-            channels=["vector", "matter", "graph_seed", "bm25"],
+            channels=["vector", "matter", "hierarchical", "graph_seed", "bm25"],
             graph_expansion=True,
             graph_expansion_depth=2,
             rerank=True,
             rerank_candidates=100,
             final_k=20,
             weights={
-                "vector": 1.3,
-                "matter": 1.2,
-                "graph_seed": 1.0,
-                "bm25": 0.8,
+                "vector": 1.0,
+                "matter": 0.5,
+                "hierarchical": 0.0,
+                "graph_seed": 0.3,
+                "bm25": 1.0,
             },
         )
 
     # ── Matter research (default): broad legal research ──────────────────
     # intent == "matter_research" or anything else
     return RetrievalPlan(
-        channels=["bm25", "vector", "metadata", "matter", "graph_seed"],
+        channels=["bm25", "vector", "metadata", "matter", "hierarchical", "graph_seed"],
         graph_expansion=bool(parsed.matter_ids),
         graph_expansion_depth=2,
         rerank=True,
         rerank_candidates=100,
         final_k=20,
         weights={
-            "bm25": 1.2,
-            "vector": 0.75,
-            "metadata": 1.5,
-            "matter": 1.3,
-            "graph_seed": 0.9,
+            "bm25": 1.0,
+            "vector": 1.0,
+            "metadata": 1.2,
+            "matter": 0.5,
+            "hierarchical": 0.0,
+            "graph_seed": 0.3,
         },
     )

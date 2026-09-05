@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.5-flash-lite"
 
     # ── retrieval ─────────────────────────────────────────────────────────────
-    port: int = 8000
+    port: int = 8001
     embedding_dim: int = 384
     rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     rerank_ce_weight: float = 0.55

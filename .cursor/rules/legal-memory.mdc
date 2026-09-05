@@ -7,9 +7,11 @@ alwaysApply: true
 
 > **IP rule:** Mike (`/mike`) is AGPLv3 — product research only. See `agpl-cleanroom.mdc` for the mandatory clean-room protocol before implementing any Mike-inspired feature.
 
-- Do not regenerate `dummy-firm` documents to improve retrieval. Corpus is frozen (v2).
+- Do not regenerate synthetic Apex Chambers prose. The dummy-firm corpus is PCIJ + UNSC + `docs/` filings (`python3 dummy-firm/scripts/build_corpus.py`).
 - Retrieval quality is measured with `legal-memory-retrieval/evals/retrieval_eval.py` separately from answer quality.
 - Filter permissions in SQL before ranking. Never retrieve everything and ask the model to redact.
 - Do not add Kafka, Neo4j, or agents until the current sprint gate in `.cursor/skills/legal-memory/SKILL.md` says so. Answers (`POST /ask`) shipped in Sprint 8; citations must come from retrieved ids.
 - After a retrieval change, run eval and append `legal-memory-retrieval/docs/CHANGELOG.md`. Claim improvement only with numbers.
+- Default retrieval: `FUSION_POLICY=p55_repair_ce_protect`, `MATTER_SCOPE=hard` (P5.6-A). Matter narrows the universe; do not retune global fusion without a typed ablation.
 - Embeddings are local MiniLM 384-d (`app/embeddings`). Keep an interface; do not hard-code a new provider in `semantic.py`.
+- After D6: stop document-identity experiments. C7 evidence-first (proposition → passage); production flags stay off until Ev R@20 is material. C7.5 CE-on-evidence FAIL — do not enable.

@@ -1,0 +1,5318 @@
+{
+  "experiment": "P5.6-C4 matter evidence profiles",
+  "diagnosis": {
+    "holder_pattern": "scattered_within_theme",
+    "note": "Holders share theme_key/legal_issues with non-holders; theme routing is the primary lift",
+    "c1_holder_ranks": "min~1 med~50 p90~114 (scattered)"
+  },
+  "n_semantic": 7,
+  "ks": [
+    5,
+    10,
+    20,
+    50,
+    100
+  ],
+  "summary": [
+    {
+      "variant": "c1_lexical_struct",
+      "holder_mrr": 0.4014,
+      "median_first_holder_rank": 7,
+      "p90_first_holder_rank": 20.0,
+      "pct_reach_cov_0.9": 0.7143,
+      "avg_min_k_cov_0.9": 74.8,
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0571,
+          "holder_hit": 0.4286,
+          "holder_ndcg": 0.1462
+        },
+        "10": {
+          "holder_coverage": 0.1143,
+          "holder_hit": 0.5714,
+          "holder_ndcg": 0.1361
+        },
+        "20": {
+          "holder_coverage": 0.2476,
+          "holder_hit": 1.0,
+          "holder_ndcg": 0.1956
+        },
+        "50": {
+          "holder_coverage": 0.5571,
+          "holder_hit": 1.0,
+          "holder_ndcg": 0.3119
+        },
+        "100": {
+          "holder_coverage": 0.8714,
+          "holder_hit": 1.0,
+          "holder_ndcg": 0.423
+        }
+      }
+    },
+    {
+      "variant": "c4_theme",
+      "holder_mrr": 0.4567,
+      "median_first_holder_rank": 18,
+      "p90_first_holder_rank": 23.0,
+      "pct_reach_cov_0.9": 1.0,
+      "avg_min_k_cov_0.9": 73.2857,
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0429,
+          "holder_hit": 0.4286,
+          "holder_ndcg": 0.1454
+        },
+        "10": {
+          "holder_coverage": 0.0571,
+          "holder_hit": 0.4286,
+          "holder_ndcg": 0.1038
+        },
+        "20": {
+          "holder_coverage": 0.219,
+          "holder_hit": 0.7143,
+          "holder_ndcg": 0.1785
+        },
+        "50": {
+          "holder_coverage": 0.6,
+          "holder_hit": 1.0,
+          "holder_ndcg": 0.3264
+        },
+        "100": {
+          "holder_coverage": 0.9857,
+          "holder_hit": 1.0,
+          "holder_ndcg": 0.4644
+        }
+      }
+    },
+    {
+      "variant": "c4_profile",
+      "holder_mrr": 0.329,
+      "median_first_holder_rank": 11.0,
+      "p90_first_holder_rank": 23.0,
+      "pct_reach_cov_0.9": 0.8571,
+      "avg_min_k_cov_0.9": 74.1667,
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0429,
+          "holder_hit": 0.2857,
+          "holder_ndcg": 0.1157
+        },
+        "10": {
+          "holder_coverage": 0.1,
+          "holder_hit": 0.4286,
+          "holder_ndcg": 0.1163
+        },
+        "20": {
+          "holder_coverage": 0.2048,
+          "holder_hit": 0.7143,
+          "holder_ndcg": 0.1623
+        },
+        "50": {
+          "holder_coverage": 0.5429,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.2925
+        },
+        "100": {
+          "holder_coverage": 0.8429,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.3992
+        }
+      }
+    },
+    {
+      "variant": "c4_profile_doctype",
+      "holder_mrr": 0.329,
+      "median_first_holder_rank": 11.0,
+      "p90_first_holder_rank": 23.0,
+      "pct_reach_cov_0.9": 0.8571,
+      "avg_min_k_cov_0.9": 74.1667,
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0429,
+          "holder_hit": 0.2857,
+          "holder_ndcg": 0.1157
+        },
+        "10": {
+          "holder_coverage": 0.1,
+          "holder_hit": 0.4286,
+          "holder_ndcg": 0.1163
+        },
+        "20": {
+          "holder_coverage": 0.2048,
+          "holder_hit": 0.7143,
+          "holder_ndcg": 0.1623
+        },
+        "50": {
+          "holder_coverage": 0.5429,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.2925
+        },
+        "100": {
+          "holder_coverage": 0.8429,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.3992
+        }
+      }
+    },
+    {
+      "variant": "c4_profile_evidence",
+      "holder_mrr": 0.3221,
+      "median_first_holder_rank": 5.5,
+      "p90_first_holder_rank": 19.0,
+      "pct_reach_cov_0.9": 0.7143,
+      "avg_min_k_cov_0.9": 77.8,
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0714,
+          "holder_hit": 0.4286,
+          "holder_ndcg": 0.161
+        },
+        "10": {
+          "holder_coverage": 0.1143,
+          "holder_hit": 0.5714,
+          "holder_ndcg": 0.1344
+        },
+        "20": {
+          "holder_coverage": 0.2476,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.2002
+        },
+        "50": {
+          "holder_coverage": 0.4524,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.2807
+        },
+        "100": {
+          "holder_coverage": 0.8143,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.4044
+        }
+      }
+    },
+    {
+      "variant": "c4_combined",
+      "holder_mrr": 0.3221,
+      "median_first_holder_rank": 5.5,
+      "p90_first_holder_rank": 19.0,
+      "pct_reach_cov_0.9": 0.7143,
+      "avg_min_k_cov_0.9": 77.8,
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0714,
+          "holder_hit": 0.4286,
+          "holder_ndcg": 0.161
+        },
+        "10": {
+          "holder_coverage": 0.1143,
+          "holder_hit": 0.5714,
+          "holder_ndcg": 0.1344
+        },
+        "20": {
+          "holder_coverage": 0.2476,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.2002
+        },
+        "50": {
+          "holder_coverage": 0.4524,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.2806
+        },
+        "100": {
+          "holder_coverage": 0.8143,
+          "holder_hit": 0.8571,
+          "holder_ndcg": 0.4043
+        }
+      }
+    }
+  ],
+  "per_variant": {
+    "c1_lexical_struct": [
+      {
+        "query_id": "Q-0264",
+        "n_holders": 10,
+        "theme_keys": [
+          "sebi_insider"
+        ],
+        "n_ranked": 196,
+        "first_holder_rank": 2,
+        "holder_mrr": 0.5,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2019-00028"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.214
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.1389
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2021-00071"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.189
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007"
+            ],
+            "holder_ndcg": 0.2741
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 8,
+            "holder_coverage": 0.8,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00070",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2022-00031",
+              "MTR-2023-00007"
+            ],
+            "holder_ndcg": 0.4118
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "n_holders": 10,
+        "theme_keys": [
+          "employment_exit"
+        ],
+        "n_ranked": 187,
+        "first_holder_rank": 20,
+        "holder_mrr": 0.05,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0501
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.02,
+            "found_ids": [
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0501
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.04,
+            "found_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.1562
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "n_holders": 10,
+        "theme_keys": [
+          "title_diligence"
+        ],
+        "n_ranked": 200,
+        "first_holder_rank": 15,
+        "holder_mrr": 0.0667,
+        "min_k_cov_0.9": 94,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2021-00059"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.055
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.1822
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.36
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "n_holders": 10,
+        "theme_keys": [
+          "transfer_pricing"
+        ],
+        "n_ranked": 200,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 71,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.4,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.4704
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.3836
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.4354
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067"
+            ],
+            "holder_ndcg": 0.5698
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.6789
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "n_holders": 10,
+        "theme_keys": [
+          "commercial_arb"
+        ],
+        "n_ranked": 184,
+        "first_holder_rank": 7,
+        "holder_mrr": 0.1429,
+        "min_k_cov_0.9": 85,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2024-00052"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0734
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2024-00052",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065",
+              "MTR-2024-00105"
+            ],
+            "holder_ndcg": 0.1243
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.12,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2024-00052",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065",
+              "MTR-2024-00105"
+            ],
+            "holder_ndcg": 0.2845
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.426
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "n_holders": 10,
+        "theme_keys": [
+          "jv"
+        ],
+        "n_ranked": 200,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 74,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3392
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3571
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.4089
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095",
+              "MTR-2023-00025",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2024-00093"
+            ],
+            "holder_ndcg": 0.5355
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.6407
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "n_holders": 3,
+        "theme_keys": [
+          "flood_force_majeure"
+        ],
+        "n_ranked": 144,
+        "first_holder_rank": 20,
+        "holder_mrr": 0.05,
+        "min_k_cov_0.9": 50,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 1,
+            "holder_coverage": 0.3333,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004"
+            ],
+            "missing_ids": [
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.1068
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.2872
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.03,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.2872
+          }
+        }
+      }
+    ],
+    "c4_theme": [
+      {
+        "query_id": "Q-0264",
+        "n_holders": 10,
+        "theme_keys": [
+          "sebi_insider"
+        ],
+        "n_ranked": 103,
+        "first_holder_rank": 18,
+        "holder_mrr": 0.0556,
+        "min_k_cov_0.9": 75,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.15,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060"
+            ],
+            "missing_ids": [
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.1528
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.12,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071"
+            ],
+            "missing_ids": [
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.2807
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.4248
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "n_holders": 10,
+        "theme_keys": [
+          "employment_exit"
+        ],
+        "n_ranked": 84,
+        "first_holder_rank": 21,
+        "holder_mrr": 0.0476,
+        "min_k_cov_0.9": 71,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122"
+            ],
+            "missing_ids": [
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.2225
+          },
+          "100": {
+            "k": 84,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.119,
+            "found_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.4037
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "n_holders": 10,
+        "theme_keys": [
+          "title_diligence"
+        ],
+        "n_ranked": 113,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 95,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00051"
+            ],
+            "missing_ids": [
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.3392
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00051"
+            ],
+            "missing_ids": [
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.2201
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024"
+            ],
+            "missing_ids": [
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.2719
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049"
+            ],
+            "missing_ids": [
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.3569
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "missing_ids": [
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.5362
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "n_holders": 10,
+        "theme_keys": [
+          "transfer_pricing"
+        ],
+        "n_ranked": 90,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 64,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00064"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.3392
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00064"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.2201
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.3817
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.12,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.4616
+          },
+          "100": {
+            "k": 90,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1111,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.6057
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "n_holders": 10,
+        "theme_keys": [
+          "commercial_arb"
+        ],
+        "n_ranked": 100,
+        "first_holder_rank": 23,
+        "holder_mrr": 0.0435,
+        "min_k_cov_0.9": 80,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048"
+            ],
+            "missing_ids": [
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.2157
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.3902
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "n_holders": 10,
+        "theme_keys": [
+          "jv"
+        ],
+        "n_ranked": 101,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 78,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3392
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030"
+            ],
+            "missing_ids": [
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.2863
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.15,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033"
+            ],
+            "missing_ids": [
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3365
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.12,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095"
+            ],
+            "missing_ids": [
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.4603
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.6033
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "n_holders": 3,
+        "theme_keys": [
+          "flood_force_majeure"
+        ],
+        "n_ranked": 60,
+        "first_holder_rank": 20,
+        "holder_mrr": 0.05,
+        "min_k_cov_0.9": 50,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 1,
+            "holder_coverage": 0.3333,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004"
+            ],
+            "missing_ids": [
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.1068
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.2872
+          },
+          "100": {
+            "k": 60,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.2872
+          }
+        }
+      }
+    ],
+    "c4_profile": [
+      {
+        "query_id": "Q-0264",
+        "n_holders": 10,
+        "theme_keys": [
+          "sebi_insider"
+        ],
+        "n_ranked": 103,
+        "first_holder_rank": 7,
+        "holder_mrr": 0.1429,
+        "min_k_cov_0.9": 76,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0734
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2021-00071"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.1297
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2021-00071",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007"
+            ],
+            "holder_ndcg": 0.2572
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.4373
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "n_holders": 10,
+        "theme_keys": [
+          "employment_exit"
+        ],
+        "n_ranked": 0,
+        "first_holder_rank": null,
+        "holder_mrr": 0.0,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "50": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "100": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "n_holders": 10,
+        "theme_keys": [
+          "title_diligence"
+        ],
+        "n_ranked": 113,
+        "first_holder_rank": 15,
+        "holder_mrr": 0.0667,
+        "min_k_cov_0.9": 94,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2021-00059"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.055
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.1822
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.36
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "n_holders": 10,
+        "theme_keys": [
+          "transfer_pricing"
+        ],
+        "n_ranked": 90,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 71,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.4,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.4704
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.3836
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.4354
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067"
+            ],
+            "holder_ndcg": 0.5698
+          },
+          "100": {
+            "k": 90,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1111,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.6789
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "n_holders": 10,
+        "theme_keys": [
+          "commercial_arb"
+        ],
+        "n_ranked": 100,
+        "first_holder_rank": 23,
+        "holder_mrr": 0.0435,
+        "min_k_cov_0.9": 80,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048"
+            ],
+            "missing_ids": [
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.2157
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.3902
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "n_holders": 10,
+        "theme_keys": [
+          "jv"
+        ],
+        "n_ranked": 101,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 74,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3392
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3571
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.4089
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095",
+              "MTR-2023-00025",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2024-00093"
+            ],
+            "holder_ndcg": 0.5355
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.6407
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "n_holders": 3,
+        "theme_keys": [
+          "flood_force_majeure"
+        ],
+        "n_ranked": 60,
+        "first_holder_rank": 20,
+        "holder_mrr": 0.05,
+        "min_k_cov_0.9": 50,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 1,
+            "holder_coverage": 0.3333,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004"
+            ],
+            "missing_ids": [
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.1068
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.2872
+          },
+          "100": {
+            "k": 60,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.2872
+          }
+        }
+      }
+    ],
+    "c4_profile_doctype": [
+      {
+        "query_id": "Q-0264",
+        "n_holders": 10,
+        "theme_keys": [
+          "sebi_insider"
+        ],
+        "n_ranked": 103,
+        "first_holder_rank": 7,
+        "holder_mrr": 0.1429,
+        "min_k_cov_0.9": 76,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0734
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2021-00071"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.1297
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2021-00071",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007"
+            ],
+            "holder_ndcg": 0.2572
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.4373
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "n_holders": 10,
+        "theme_keys": [
+          "employment_exit"
+        ],
+        "n_ranked": 0,
+        "first_holder_rank": null,
+        "holder_mrr": 0.0,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "50": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "100": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "n_holders": 10,
+        "theme_keys": [
+          "title_diligence"
+        ],
+        "n_ranked": 113,
+        "first_holder_rank": 15,
+        "holder_mrr": 0.0667,
+        "min_k_cov_0.9": 94,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2021-00059"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "holder_ndcg": 0.055
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.1822
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.36
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "n_holders": 10,
+        "theme_keys": [
+          "transfer_pricing"
+        ],
+        "n_ranked": 90,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 71,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.4,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.4704
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.3836
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.4354
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067"
+            ],
+            "holder_ndcg": 0.5698
+          },
+          "100": {
+            "k": 90,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1111,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.6789
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "n_holders": 10,
+        "theme_keys": [
+          "commercial_arb"
+        ],
+        "n_ranked": 100,
+        "first_holder_rank": 23,
+        "holder_mrr": 0.0435,
+        "min_k_cov_0.9": 80,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048"
+            ],
+            "missing_ids": [
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.2157
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.3902
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "n_holders": 10,
+        "theme_keys": [
+          "jv"
+        ],
+        "n_ranked": 101,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 74,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3392
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3571
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.4089
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095",
+              "MTR-2023-00025",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2024-00093"
+            ],
+            "holder_ndcg": 0.5355
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.6407
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "n_holders": 3,
+        "theme_keys": [
+          "flood_force_majeure"
+        ],
+        "n_ranked": 60,
+        "first_holder_rank": 20,
+        "holder_mrr": 0.05,
+        "min_k_cov_0.9": 50,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 1,
+            "holder_coverage": 0.3333,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004"
+            ],
+            "missing_ids": [
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.1068
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.2872
+          },
+          "100": {
+            "k": 60,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.2872
+          }
+        }
+      }
+    ],
+    "c4_profile_evidence": [
+      {
+        "query_id": "Q-0264",
+        "n_holders": 10,
+        "theme_keys": [
+          "sebi_insider"
+        ],
+        "n_ranked": 103,
+        "first_holder_rank": 9,
+        "holder_mrr": 0.1111,
+        "min_k_cov_0.9": 98,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0663
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2021-00071"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.1213
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00060",
+              "MTR-2021-00071",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007"
+            ],
+            "holder_ndcg": 0.2087
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2022-00031"
+            ],
+            "holder_ndcg": 0.3881
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "n_holders": 10,
+        "theme_keys": [
+          "employment_exit"
+        ],
+        "n_ranked": 0,
+        "first_holder_rank": null,
+        "holder_mrr": 0.0,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "50": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "100": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "n_holders": 10,
+        "theme_keys": [
+          "title_diligence"
+        ],
+        "n_ranked": 113,
+        "first_holder_rank": 2,
+        "holder_mrr": 0.5,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.4,
+            "found_ids": [
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.3601
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.2337
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.2337
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.3158
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 8,
+            "holder_coverage": 0.8,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2020-00049",
+              "MTR-2021-00005"
+            ],
+            "holder_ndcg": 0.4614
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "n_holders": 10,
+        "theme_keys": [
+          "transfer_pricing"
+        ],
+        "n_ranked": 90,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 64,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.4,
+            "found_ids": [
+              "MTR-2019-00086",
+              "MTR-2023-00088"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.5531
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2023-00088"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.4323
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.25,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.5438
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067"
+            ],
+            "holder_ndcg": 0.6294
+          },
+          "100": {
+            "k": 90,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1111,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.7388
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "n_holders": 10,
+        "theme_keys": [
+          "commercial_arb"
+        ],
+        "n_ranked": 100,
+        "first_holder_rank": 19,
+        "holder_mrr": 0.0526,
+        "min_k_cov_0.9": 82,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2021-00048"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0509
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2021-00048",
+              "MTR-2024-00052",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2022-00062",
+              "MTR-2024-00065"
+            ],
+            "holder_ndcg": 0.1757
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.391
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "n_holders": 10,
+        "theme_keys": [
+          "jv"
+        ],
+        "n_ranked": 101,
+        "first_holder_rank": 2,
+        "holder_mrr": 0.5,
+        "min_k_cov_0.9": 89,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.214
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.2083
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3206
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.12,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095",
+              "MTR-2023-00025",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2024-00093"
+            ],
+            "holder_ndcg": 0.4094
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.5454
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "n_holders": 3,
+        "theme_keys": [
+          "flood_force_majeure"
+        ],
+        "n_ranked": 60,
+        "first_holder_rank": 11,
+        "holder_mrr": 0.0909,
+        "min_k_cov_0.9": 56,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 1,
+            "holder_coverage": 0.3333,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2021-00019"
+            ],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.1309
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 2,
+            "holder_coverage": 0.6667,
+            "holder_hit": 1.0,
+            "holder_precision": 0.04,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019"
+            ],
+            "missing_ids": [
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.2256
+          },
+          "100": {
+            "k": 60,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.3061
+          }
+        }
+      }
+    ],
+    "c4_combined": [
+      {
+        "query_id": "Q-0264",
+        "n_holders": 10,
+        "theme_keys": [
+          "sebi_insider"
+        ],
+        "n_ranked": 103,
+        "first_holder_rank": 9,
+        "holder_mrr": 0.1111,
+        "min_k_cov_0.9": 98,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.0663
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2021-00071"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "holder_ndcg": 0.1213
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00060",
+              "MTR-2021-00071",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007"
+            ],
+            "holder_ndcg": 0.2087
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2022-00031"
+            ],
+            "holder_ndcg": 0.3881
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "n_holders": 10,
+        "theme_keys": [
+          "employment_exit"
+        ],
+        "n_ranked": 0,
+        "first_holder_rank": null,
+        "holder_mrr": 0.0,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "50": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "100": {
+            "k": 0,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "holder_ndcg": 0.0
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "n_holders": 10,
+        "theme_keys": [
+          "title_diligence"
+        ],
+        "n_ranked": 113,
+        "first_holder_rank": 2,
+        "holder_mrr": 0.5,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.4,
+            "found_ids": [
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.3601
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.2337
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.2337
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ],
+            "holder_ndcg": 0.3152
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 8,
+            "holder_coverage": 0.8,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2020-00049",
+              "MTR-2021-00005"
+            ],
+            "holder_ndcg": 0.4606
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "n_holders": 10,
+        "theme_keys": [
+          "transfer_pricing"
+        ],
+        "n_ranked": 90,
+        "first_holder_rank": 1,
+        "holder_mrr": 1.0,
+        "min_k_cov_0.9": 64,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.4,
+            "found_ids": [
+              "MTR-2019-00086",
+              "MTR-2023-00088"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.5531
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2023-00088"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.4323
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.25,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2025-00017"
+            ],
+            "holder_ndcg": 0.5438
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067"
+            ],
+            "holder_ndcg": 0.6294
+          },
+          "100": {
+            "k": 90,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1111,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.7388
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "n_holders": 10,
+        "theme_keys": [
+          "commercial_arb"
+        ],
+        "n_ranked": 100,
+        "first_holder_rank": 19,
+        "holder_mrr": 0.0526,
+        "min_k_cov_0.9": 82,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2021-00048"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "holder_ndcg": 0.0509
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2021-00048",
+              "MTR-2024-00052",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2022-00062",
+              "MTR-2024-00065"
+            ],
+            "holder_ndcg": 0.1757
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.391
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "n_holders": 10,
+        "theme_keys": [
+          "jv"
+        ],
+        "n_ranked": 101,
+        "first_holder_rank": 2,
+        "holder_mrr": 0.5,
+        "min_k_cov_0.9": 89,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.214
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.2083
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "holder_ndcg": 0.3206
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.12,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095",
+              "MTR-2023-00025",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2024-00093"
+            ],
+            "holder_ndcg": 0.4094
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.5454
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "n_holders": 3,
+        "theme_keys": [
+          "flood_force_majeure"
+        ],
+        "n_ranked": 60,
+        "first_holder_rank": 11,
+        "holder_mrr": 0.0909,
+        "min_k_cov_0.9": 56,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.0
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 1,
+            "holder_coverage": 0.3333,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2021-00019"
+            ],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.1309
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 2,
+            "holder_coverage": 0.6667,
+            "holder_hit": 1.0,
+            "holder_precision": 0.04,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019"
+            ],
+            "missing_ids": [
+              "MTR-2024-00012"
+            ],
+            "holder_ndcg": 0.2256
+          },
+          "100": {
+            "k": 60,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": [],
+            "holder_ndcg": 0.3061
+          }
+        }
+      }
+    ]
+  },
+  "gate": {
+    "SEMANTIC_DOC_RESOLVE": "off until HolderCoverage@50 >= 0.90",
+    "target_cov@50": 0.9,
+    "target_cov@20": 0.7
+  }
+}

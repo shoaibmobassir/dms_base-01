@@ -6,7 +6,7 @@ This is not “can the LLM answer questions about these PDFs?”
 
 ## Frozen world
 
-Apex Chambers lives in `dummy-firm/data/` (v2): 100 members, 500 clients, 1,000 matters, 38,232 documents. Relationships, versions, permissions, and gold questions are part of that world. Ingestion of **new** dummy documents is frozen. Load into Postgres; do not regenerate to chase scores.
+Harbour International Chambers lives in `dummy-firm/data/`: PCIJ cases, UNSC resolutions, and Indian electricity filings. Load into Postgres from that dump. Do not restore Apex Chambers templates.
 
 ## How we know we improved
 

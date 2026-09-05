@@ -100,10 +100,12 @@ def test_percent_and_underscore_not_stripped_from_search() -> None:
 
 
 def test_sprint_property() -> None:
-    assert CURRENT_SPRINT == 8
+    assert CURRENT_SPRINT == 9
     payload = health_payload()
-    assert payload["sprint"] == 8
+    assert payload["sprint"] == 9
     assert payload["query_understanding"] is True
     assert payload["graph"] is True
     assert payload["llm"] is True
+    assert payload["engine_v2"] is True
+    assert payload["retrieval_engine"] == "v2"
     assert FEATURES["rerank"] is True

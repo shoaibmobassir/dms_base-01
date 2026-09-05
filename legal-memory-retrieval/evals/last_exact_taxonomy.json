@@ -1,0 +1,34 @@
+{
+  "n": 220,
+  "hit@10": 0.9955,
+  "taxonomy": {
+    "HIT": 219,
+    "F_duplicate_title_other_matter": 1
+  },
+  "misses": [
+    {
+      "question_id": "Q-0214",
+      "query": "What is the matter code for Bali-Kata Limited \u2014 Due Diligence?",
+      "search_text": "Bali-Kata Limited \u2014 Due Diligence",
+      "label": "F_duplicate_title_other_matter",
+      "gold": [
+        "DOC-08183",
+        "DOC-08184",
+        "DOC-08185"
+      ],
+      "top10": [
+        "DOC-01094",
+        "DOC-01095",
+        "DOC-01096",
+        "DOC-01097",
+        "DOC-01098",
+        "DOC-01099",
+        "DOC-01100",
+        "DOC-01101",
+        "DOC-01102",
+        "DOC-01103"
+      ],
+      "best_gold_rank": null
+    }
+  ]
+}

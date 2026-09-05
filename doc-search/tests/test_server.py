@@ -122,7 +122,35 @@ class TestHealthEndpoint:
         with TestClient(app) as tc:
             resp = tc.get("/health")
             assert resp.status_code == 200
-            assert resp.json()["status"] == "ok"
+            body = resp.json()
+            assert body["status"] == "ok"
+            assert body["parallel_retrieval"] is True
+            assert "keyword" in body["channels"]
+
+
+class TestDebugAndDocs:
+    def test_debug_endpoint(self, client):
+        resp = client.post("/debug", json={"query": "force majeure", "k": 5})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["service"] == "doc-search-debug"
+        assert "channel_counts" in data
+        assert "latency_ms" in data
+        assert len(data["hits"]) >= 1
+
+    def test_architecture_markdown(self):
+        from server import app
+        with TestClient(app) as tc:
+            resp = tc.get("/architecture")
+            assert resp.status_code == 200
+            assert "Doc Search" in resp.text or "LEXOS" in resp.text
+
+    def test_docs_ui(self):
+        from server import app
+        with TestClient(app) as tc:
+            resp = tc.get("/docs-ui")
+            assert resp.status_code == 200
+            assert "Architecture" in resp.text
 
 
 class TestDocServeEndpoint:
@@ -130,7 +158,8 @@ class TestDocServeEndpoint:
         from server import app
         with TestClient(app) as tc:
             resp = tc.get("/doc/serve/../../etc/passwd")
-            assert resp.status_code == 400
+            # Framework may normalize to 404; our handler returns 400 for ".."
+            assert resp.status_code in (400, 404)
 
     def test_absolute_path_blocked(self):
         from server import app

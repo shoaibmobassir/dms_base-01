@@ -11,7 +11,7 @@ description: >-
 
 ## Current gate
 
-**Sprint 8 answers are on.** Cross-document Recall@10 **0.48** (was 0.02). Overall Recall@10 **0.59**. `POST /ask` cites retrieved `DOC-` ids only and abstains with no evidence. Next: Sprint 9 Redis latency — do not add Kafka/Neo4j/agents.
+**Sprint 9 + P5.6-A frozen.** **C7.4b/C7.5 done:** soft Ev R@20=.033 (Hit@20=.36); hard-role Hit@20=.71. **CE-on-evidence FAIL** (hurts hard pool). Vectors/proximity useless. Next: **C7.6 evidence→doc aggregation** (non-CE) + better candidate fields — not more CE/GraphRAG. Flags off.
 
 ## Thesis
 
@@ -21,10 +21,11 @@ Do **not** optimize for “can an LLM talk about these PDFs?”
 
 ## Hard rules
 
-- Corpus is **frozen** at `dummy-firm/data/` (v2: 38232 docs, 1000 matters). Do not regenerate documents to chase scores.
+- Corpus lives at `dummy-firm/data/` (PCIJ + UNSC + `docs/` electricity filings). Rebuild only with `python3 dummy-firm/scripts/build_corpus.py`. Do not restore Apex Chambers templates.
 - Measure **retrieval** separately from **answers**. Missing gold docs is not an LLM bug.
 - ACL **before** ranking (`permissions.restricted` / `allowed_members`). Never retrieve-all then prompt to hide secrets.
-- A sprint ships only if `python evals/retrieval_eval.py` beats the previous `evals/last_retrieval_run.json` on the relevant types.
+- A sprint ships only if `python evals/retrieval_eval.py` beats the previous `evals/last_retrieval_run.json` on the relevant types **and** (post-P5.3) Hit@10 + MRR do not regress vs baseline.
+- After hierarchical/fusion changes: run `evals/retrieval_diagnose.py` before tuning weights; fix the stage named in `relevant_drop_stages`.
 - No Kafka, Neo4j, or agents until later gates. Answer LLM is Sprint 8 (`POST /ask`).
 - Embeddings: local `all-MiniLM-L6-v2` (384-d) behind `app/embeddings`. Do not change dimension without a schema + re-embed.
 

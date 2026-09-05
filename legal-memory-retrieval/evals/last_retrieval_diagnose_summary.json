@@ -1,0 +1,154 @@
+{
+  "n_queries": 445,
+  "n_candidate_rows": 30449,
+  "k": 20,
+  "csv": "evals/last_retrieval_diagnose.csv",
+  "overall": {
+    "hit@10": 0.7146,
+    "mrr": 0.5227,
+    "relevant@1": 0.418,
+    "relevant@5": 0.6562,
+    "relevant@10": 0.7146
+  },
+  "by_type": {
+    "argument_retrieval": {
+      "n": 1,
+      "hit@10": 0.0,
+      "mrr": 0.0,
+      "relevant@1": 0.0,
+      "relevant@5": 0.0,
+      "relevant@10": 0.0
+    },
+    "cross_document": {
+      "n": 40,
+      "hit@10": 1.0,
+      "mrr": 0.7308,
+      "relevant@1": 0.575,
+      "relevant@5": 1.0,
+      "relevant@10": 1.0
+    },
+    "exact": {
+      "n": 220,
+      "hit@10": 0.7682,
+      "mrr": 0.6326,
+      "relevant@1": 0.55,
+      "relevant@5": 0.7409,
+      "relevant@10": 0.7682
+    },
+    "graph_reasoning": {
+      "n": 15,
+      "hit@10": 0.7333,
+      "mrr": 0.1336,
+      "relevant@1": 0.0,
+      "relevant@5": 0.2667,
+      "relevant@10": 0.7333
+    },
+    "matter_retrieval": {
+      "n": 40,
+      "hit@10": 0.525,
+      "mrr": 0.1966,
+      "relevant@1": 0.075,
+      "relevant@5": 0.25,
+      "relevant@10": 0.525
+    },
+    "multi_hop": {
+      "n": 1,
+      "hit@10": 0.0,
+      "mrr": 0.0,
+      "relevant@1": 0.0,
+      "relevant@5": 0.0,
+      "relevant@10": 0.0
+    },
+    "negative": {
+      "n": 8,
+      "hit@10": 0.0,
+      "mrr": 0.0,
+      "relevant@1": 0.0,
+      "relevant@5": 0.0,
+      "relevant@10": 0.0
+    },
+    "permission": {
+      "n": 60,
+      "hit@10": 0.5,
+      "mrr": 0.4172,
+      "relevant@1": 0.35,
+      "relevant@5": 0.5,
+      "relevant@10": 0.5
+    },
+    "person_expertise": {
+      "n": 7,
+      "hit@10": 1.0,
+      "mrr": 0.4643,
+      "relevant@1": 0.2857,
+      "relevant@5": 0.8571,
+      "relevant@10": 1.0
+    },
+    "semantic": {
+      "n": 7,
+      "hit@10": 0.0,
+      "mrr": 0.0,
+      "relevant@1": 0.0,
+      "relevant@5": 0.0,
+      "relevant@10": 0.0
+    },
+    "similar_matter": {
+      "n": 6,
+      "hit@10": 0.0,
+      "mrr": 0.0181,
+      "relevant@1": 0.0,
+      "relevant@5": 0.0,
+      "relevant@10": 0.0
+    },
+    "versioning": {
+      "n": 40,
+      "hit@10": 1.0,
+      "mrr": 0.6483,
+      "relevant@1": 0.4,
+      "relevant@5": 0.975,
+      "relevant@10": 1.0
+    }
+  },
+  "negative_false_positives": {
+    "n": 8,
+    "queries_with_any_hit@10": 2,
+    "abstain_rate@10": 0.75,
+    "queries_with_zero_candidates": 6
+  },
+  "relevant_drop_stages": {
+    "fusion_or_hierarchy_channel": 210,
+    "reranker": 437
+  },
+  "relevant_channel_combos_top": {
+    "metadata": 1315,
+    "bm25|metadata": 514,
+    "graph_seed": 185,
+    "bm25": 128,
+    "matter": 75,
+    "metadata|vector": 25,
+    "vector": 20,
+    "bm25|hierarchical|matter|metadata|vector": 18,
+    "matter|metadata": 15,
+    "bm25|hierarchical": 14,
+    "bm25|hierarchical|matter|vector": 13,
+    "matter|metadata|vector": 13,
+    "bm25|hierarchical|matter": 11,
+    "matter|vector": 10,
+    "bm25|hierarchical|matter|metadata": 10,
+    "bm25|matter": 7,
+    "bm25|vector": 7,
+    "bm25|hierarchical|vector": 7,
+    "bm25|matter|metadata": 7,
+    "bm25|matter|metadata|vector": 6,
+    "bm25|hierarchical|metadata|vector": 3,
+    "hierarchical|matter": 3,
+    "bm25|matter|vector": 3,
+    "bm25|hierarchical|metadata": 2,
+    "hierarchical|matter|metadata|vector": 2,
+    "graph_expansion": 2,
+    "hierarchical": 1,
+    "hierarchical|vector": 1,
+    "bm25|metadata|vector": 1,
+    "graph_seed|vector": 1
+  },
+  "hypothesis": "If fusion_or_hierarchy_channel dominates relevant_drop_stages, fix hierarchical/fusion policy (P5.5). If reranker dominates, defer to P5.8 \u2014 but still remove hierarchy score overrides first."
+}

@@ -1,0 +1,535 @@
+{
+  "experiment": "P5.6-C5 theme-complete document resolution",
+  "summary": {
+    "n": 7,
+    "max_themes": 1,
+    "avg_matters": 93.0,
+    "avg_documents": 3464.7143,
+    "avg_srr": 11.4886,
+    "c5_0_ceiling": 1.0,
+    "c5_1_bm25": {
+      "R@5": 0.0,
+      "R@10": 0.0071,
+      "R@20": 0.0071,
+      "R@50": 0.0071,
+      "R@100": 0.0357,
+      "Hit@20": 0.1429,
+      "Hit@50": 0.1429,
+      "avg_best_gold_rank": 165.75
+    },
+    "c5_2_vector": {
+      "R@5": 0.0,
+      "R@10": 0.0,
+      "R@20": 0.0,
+      "R@50": 0.0,
+      "R@100": 0.0071,
+      "Hit@20": 0.0,
+      "Hit@50": 0.0,
+      "avg_best_gold_rank": 247.5
+    },
+    "c5_3_union": {
+      "R@5": 0.0,
+      "R@10": 0.0,
+      "R@20": 0.0,
+      "R@50": 0.0071,
+      "R@100": 0.0286,
+      "Hit@20": 0.0,
+      "Hit@50": 0.1429,
+      "mrr": 0.0044,
+      "ndcg@20": 0.0
+    }
+  },
+  "gate": {
+    "ceiling_ok": true,
+    "doc_r20_material": false,
+    "union_r20_target": 0.85,
+    "union_r20_pass": false,
+    "enable_theme_scoped": false,
+    "ce_next": false
+  },
+  "per_query": [
+    {
+      "query_id": "Q-0264",
+      "question": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+      "theme_keys": [
+        "sebi_insider"
+      ],
+      "n_gold_docs": 20,
+      "scope": {
+        "n_matters": 103,
+        "n_documents": 3791,
+        "scope_reduction_ratio": 10.09,
+        "corpus_documents": 38250
+      },
+      "c5_0_ceiling": {
+        "doc_recall_ceiling": 1.0,
+        "gold_in_scope": 20
+      },
+      "c5_1_bm25": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0035,
+        "ndcg@20": 0.0,
+        "best_gold_rank": 286,
+        "n_gold_in_candidates": 2,
+        "n_candidates": 500
+      },
+      "c5_2_vector": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      },
+      "c5_3_union": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0021,
+        "ndcg@20": 0.0,
+        "best_gold_rank": 482,
+        "n_gold_in_candidates": 1,
+        "n_candidates": 500
+      }
+    },
+    {
+      "query_id": "Q-0265",
+      "question": "Have we advised on post-employment non-competes and restraint of trade?",
+      "theme_keys": [
+        "employment_exit"
+      ],
+      "n_gold_docs": 20,
+      "scope": {
+        "n_matters": 84,
+        "n_documents": 3254,
+        "scope_reduction_ratio": 11.75,
+        "corpus_documents": 38250
+      },
+      "c5_0_ceiling": {
+        "doc_recall_ceiling": 1.0,
+        "gold_in_scope": 20
+      },
+      "c5_1_bm25": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      },
+      "c5_2_vector": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      },
+      "c5_3_union": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      }
+    },
+    {
+      "query_id": "Q-0266",
+      "question": "Have we done title diligence involving unregistered family settlements?",
+      "theme_keys": [
+        "title_diligence"
+      ],
+      "n_gold_docs": 20,
+      "scope": {
+        "n_matters": 113,
+        "n_documents": 4158,
+        "scope_reduction_ratio": 9.2,
+        "corpus_documents": 38250
+      },
+      "c5_0_ceiling": {
+        "doc_recall_ceiling": 1.0,
+        "gold_in_scope": 20
+      },
+      "c5_1_bm25": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      },
+      "c5_2_vector": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      },
+      "c5_3_union": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      }
+    },
+    {
+      "query_id": "Q-0267",
+      "question": "Have we handled transfer pricing adjustments on intra-group management fees?",
+      "theme_keys": [
+        "transfer_pricing"
+      ],
+      "n_gold_docs": 20,
+      "scope": {
+        "n_matters": 90,
+        "n_documents": 3262,
+        "scope_reduction_ratio": 11.73,
+        "corpus_documents": 38250
+      },
+      "c5_0_ceiling": {
+        "doc_recall_ceiling": 1.0,
+        "gold_in_scope": 20
+      },
+      "c5_1_bm25": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0085,
+        "ndcg@20": 0.0,
+        "best_gold_rank": 118,
+        "n_gold_in_candidates": 4,
+        "n_candidates": 500
+      },
+      "c5_2_vector": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0025,
+        "ndcg@20": 0.0,
+        "best_gold_rank": 395,
+        "n_gold_in_candidates": 3,
+        "n_candidates": 500
+      },
+      "c5_3_union": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0037,
+        "ndcg@20": 0.0,
+        "best_gold_rank": 267,
+        "n_gold_in_candidates": 2,
+        "n_candidates": 500
+      }
+    },
+    {
+      "query_id": "Q-0270",
+      "question": "Have we handled supply-contract terminations for quality failures?",
+      "theme_keys": [
+        "commercial_arb"
+      ],
+      "n_gold_docs": 20,
+      "scope": {
+        "n_matters": 100,
+        "n_documents": 3752,
+        "scope_reduction_ratio": 10.19,
+        "corpus_documents": 38250
+      },
+      "c5_0_ceiling": {
+        "doc_recall_ceiling": 1.0,
+        "gold_in_scope": 20
+      },
+      "c5_1_bm25": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      },
+      "c5_2_vector": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      },
+      "c5_3_union": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      }
+    },
+    {
+      "query_id": "Q-0271",
+      "question": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+      "theme_keys": [
+        "jv"
+      ],
+      "n_gold_docs": 20,
+      "scope": {
+        "n_matters": 101,
+        "n_documents": 3855,
+        "scope_reduction_ratio": 9.92,
+        "corpus_documents": 38250
+      },
+      "c5_0_ceiling": {
+        "doc_recall_ceiling": 1.0,
+        "gold_in_scope": 20
+      },
+      "c5_1_bm25": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.004,
+        "ndcg@20": 0.0,
+        "best_gold_rank": 253,
+        "n_gold_in_candidates": 5,
+        "n_candidates": 500
+      },
+      "c5_2_vector": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      },
+      "c5_3_union": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.0,
+        "Hit@100": 0.0,
+        "mrr": 0.0,
+        "ndcg@20": 0.0,
+        "best_gold_rank": null,
+        "n_gold_in_candidates": 0,
+        "n_candidates": 500
+      }
+    },
+    {
+      "query_id": "Q-0273",
+      "question": "Have we dealt with natural disasters affecting contractual performance?",
+      "theme_keys": [
+        "flood_force_majeure"
+      ],
+      "n_gold_docs": 20,
+      "scope": {
+        "n_matters": 60,
+        "n_documents": 2181,
+        "scope_reduction_ratio": 17.54,
+        "corpus_documents": 38250
+      },
+      "c5_0_ceiling": {
+        "doc_recall_ceiling": 1.0,
+        "gold_in_scope": 20
+      },
+      "c5_1_bm25": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.05,
+        "Hit@10": 1.0,
+        "R@20": 0.05,
+        "Hit@20": 1.0,
+        "R@50": 0.05,
+        "Hit@50": 1.0,
+        "R@100": 0.25,
+        "Hit@100": 1.0,
+        "mrr": 0.1667,
+        "ndcg@20": 0.0506,
+        "best_gold_rank": 6,
+        "n_gold_in_candidates": 10,
+        "n_candidates": 500
+      },
+      "c5_2_vector": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.0,
+        "Hit@50": 0.0,
+        "R@100": 0.05,
+        "Hit@100": 1.0,
+        "mrr": 0.01,
+        "ndcg@20": 0.0,
+        "best_gold_rank": 100,
+        "n_gold_in_candidates": 9,
+        "n_candidates": 500
+      },
+      "c5_3_union": {
+        "R@5": 0.0,
+        "Hit@5": 0.0,
+        "R@10": 0.0,
+        "Hit@10": 0.0,
+        "R@20": 0.0,
+        "Hit@20": 0.0,
+        "R@50": 0.05,
+        "Hit@50": 1.0,
+        "R@100": 0.2,
+        "Hit@100": 1.0,
+        "mrr": 0.025,
+        "ndcg@20": 0.0,
+        "best_gold_rank": 40,
+        "n_gold_in_candidates": 10,
+        "n_candidates": 500
+      }
+    }
+  ]
+}

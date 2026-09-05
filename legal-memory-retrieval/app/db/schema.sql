@@ -98,6 +98,7 @@ CREATE TABLE chunks (
     text TEXT NOT NULL,
     tsv tsvector,
     embedding vector(384),
+    embedding_ctx vector(384),  -- C5.5 contextual chunk (title+type+section+text); optional
     UNIQUE (document_id, chunk_index)
 );
 
@@ -214,6 +215,11 @@ CREATE TABLE IF NOT EXISTS document_versions (
 
 CREATE INDEX IF NOT EXISTS idx_docver_document ON document_versions (document_id, version_number DESC);
 
+ALTER TABLE document_versions ADD COLUMN IF NOT EXISTS parent_version_id TEXT;
+ALTER TABLE document_versions ADD COLUMN IF NOT EXISTS storage_uri TEXT;
+ALTER TABLE document_versions ADD COLUMN IF NOT EXISTS change_summary TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS folder_path TEXT;
+
 -- documents: pointer to active version + folder assignment
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS current_version_id TEXT;
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS folder_id TEXT;
@@ -246,3 +252,198 @@ CREATE TABLE IF NOT EXISTS project_activity (
 );
 
 CREATE INDEX IF NOT EXISTS idx_projact_project ON project_activity (project_id, created_at DESC);
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Document Intelligence + Immutable Version Control & Review Engine
+-- ═══════════════════════════════════════════════════════════════════
+
+-- 1. Canonical Document Blocks (AST Nodes)
+CREATE TABLE IF NOT EXISTS document_blocks (
+    block_id TEXT PRIMARY KEY,
+    version_id TEXT NOT NULL REFERENCES document_versions (version_id) ON DELETE CASCADE,
+    document_id TEXT NOT NULL REFERENCES documents (document_id) ON DELETE CASCADE,
+    page_number INT NOT NULL DEFAULT 1,
+    sequence INT NOT NULL,
+    section_id TEXT,                    -- e.g. "8.2", "Clause 4.1"
+    section_title TEXT,
+    block_type TEXT NOT NULL,           -- heading | paragraph | clause | table | table_cell | footnote | header | footer | list | signature | citation
+    text TEXT NOT NULL,
+    text_hash VARCHAR(64) NOT NULL,     -- SHA-256 hex digest of block text
+    start_offset INT NOT NULL,          -- Character offset within document version
+    end_offset INT NOT NULL,            -- Character offset end within document version
+    embedding vector(384),
+    metadata JSONB NOT NULL DEFAULT '{}',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_docblocks_ver_seq ON document_blocks (version_id, sequence);
+CREATE INDEX IF NOT EXISTS idx_docblocks_doc ON document_blocks (document_id);
+CREATE INDEX IF NOT EXISTS idx_docblocks_type ON document_blocks (block_type);
+CREATE INDEX IF NOT EXISTS idx_docblocks_hash ON document_blocks (text_hash);
+
+-- 2. Version Diffs (Lexical + Semantic Legal Delta)
+CREATE TABLE IF NOT EXISTS version_diffs (
+    diff_id TEXT PRIMARY KEY,
+    document_id TEXT NOT NULL REFERENCES documents (document_id) ON DELETE CASCADE,
+    source_version_id TEXT NOT NULL REFERENCES document_versions (version_id) ON DELETE CASCADE,
+    target_version_id TEXT NOT NULL REFERENCES document_versions (version_id) ON DELETE CASCADE,
+    lexical_diff JSONB NOT NULL DEFAULT '{}',
+    semantic_diff JSONB NOT NULL DEFAULT '{}',
+    material_changes_count INT NOT NULL DEFAULT 0,
+    risk_level TEXT NOT NULL DEFAULT 'neutral', -- low | medium | high | critical | neutral
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (source_version_id, target_version_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_verdiffs_doc ON version_diffs (document_id);
+CREATE INDEX IF NOT EXISTS idx_verdiffs_source_target ON version_diffs (source_version_id, target_version_id);
+
+-- 3. Review Jobs (High-concurrency Map-Reduce-Verify Review Runs)
+CREATE TABLE IF NOT EXISTS review_jobs (
+    job_id TEXT PRIMARY KEY,
+    matter_id TEXT REFERENCES matters (matter_id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    features_requested TEXT[] NOT NULL DEFAULT '{}',
+    target_document_ids TEXT[] NOT NULL DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'pending', -- pending | running | completed | failed
+    total_documents INT NOT NULL DEFAULT 0,
+    relevant_documents_count INT NOT NULL DEFAULT 0,
+    findings_count INT NOT NULL DEFAULT 0,
+    duration_ms INT,
+    error_summary TEXT,
+    created_by TEXT REFERENCES members (member_id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviewjobs_matter ON review_jobs (matter_id);
+CREATE INDEX IF NOT EXISTS idx_reviewjobs_status ON review_jobs (status);
+
+-- 4. Structured Legal Findings
+CREATE TABLE IF NOT EXISTS findings (
+    finding_id TEXT PRIMARY KEY,
+    review_job_id TEXT REFERENCES review_jobs (job_id) ON DELETE CASCADE,
+    document_id TEXT NOT NULL REFERENCES documents (document_id) ON DELETE CASCADE,
+    version_id TEXT NOT NULL REFERENCES document_versions (version_id) ON DELETE CASCADE,
+    category TEXT NOT NULL,             -- indemnity | liability | termination | change_of_control | governing_law | assignment | compliance | other
+    severity TEXT NOT NULL DEFAULT 'medium', -- critical | high | medium | low | info
+    title TEXT NOT NULL,
+    explanation TEXT NOT NULL,
+    risk_direction TEXT NOT NULL DEFAULT 'neutral', -- risk_increased | risk_decreased | neutral
+    financial_impact_usd NUMERIC(15, 2),
+    confidence_score FLOAT NOT NULL DEFAULT 1.0,
+    status TEXT NOT NULL DEFAULT 'open', -- open | reviewed | accepted | dismissed
+    created_by TEXT DEFAULT 'AI',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_findings_job ON findings (review_job_id);
+CREATE INDEX IF NOT EXISTS idx_findings_doc_ver ON findings (document_id, version_id);
+CREATE INDEX IF NOT EXISTS idx_findings_category ON findings (category);
+CREATE INDEX IF NOT EXISTS idx_findings_severity ON findings (severity);
+
+-- 5. Evidence Anchors (3-Tier Durable Anchoring to Blocks)
+CREATE TABLE IF NOT EXISTS evidence_anchors (
+    anchor_id TEXT PRIMARY KEY,
+    finding_id TEXT NOT NULL REFERENCES findings (finding_id) ON DELETE CASCADE,
+    version_id TEXT NOT NULL REFERENCES document_versions (version_id) ON DELETE CASCADE,
+    block_id TEXT NOT NULL REFERENCES document_blocks (block_id) ON DELETE CASCADE,
+    page_number INT NOT NULL DEFAULT 1,
+    start_offset INT NOT NULL,
+    end_offset INT NOT NULL,
+    quoted_text TEXT NOT NULL,
+    text_hash VARCHAR(64) NOT NULL,
+    anchor_confidence FLOAT NOT NULL DEFAULT 1.0,
+    resolution_tier TEXT NOT NULL DEFAULT 'exact', -- exact | fuzzy | semantic
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_anchors_finding ON evidence_anchors (finding_id);
+CREATE INDEX IF NOT EXISTS idx_anchors_ver_block ON evidence_anchors (version_id, block_id);
+
+-- 6. Durable Annotations (AI Highlights, Lawyer Highlights, Comments, Issues, Redlines, Citations)
+CREATE TABLE IF NOT EXISTS annotations (
+    annotation_id TEXT PRIMARY KEY,
+    document_id TEXT NOT NULL REFERENCES documents (document_id) ON DELETE CASCADE,
+    version_id TEXT NOT NULL REFERENCES document_versions (version_id) ON DELETE CASCADE,
+    block_id TEXT REFERENCES document_blocks (block_id) ON DELETE SET NULL,
+    annotation_type TEXT NOT NULL,      -- ai_highlight | user_highlight | comment | issue | redline | citation
+    author_id TEXT REFERENCES members (member_id),
+    author_name TEXT,
+    finding_id TEXT REFERENCES findings (finding_id) ON DELETE SET NULL,
+    page_number INT NOT NULL DEFAULT 1,
+    start_offset INT NOT NULL,
+    end_offset INT NOT NULL,
+    quoted_text TEXT NOT NULL,
+    text_hash VARCHAR(64) NOT NULL,
+    content TEXT,                       -- Comment body or reason note
+    status TEXT NOT NULL DEFAULT 'active', -- active | resolved | dismissed
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_annotations_doc_ver ON annotations (document_id, version_id);
+CREATE INDEX IF NOT EXISTS idx_annotations_block ON annotations (block_id);
+CREATE INDEX IF NOT EXISTS idx_annotations_type ON annotations (annotation_type);
+
+-- Per-version intelligence cache (summaries / entities / clauses)
+CREATE TABLE IF NOT EXISTS document_intelligence (
+    version_id TEXT PRIMARY KEY REFERENCES document_versions (version_id) ON DELETE CASCADE,
+    document_id TEXT NOT NULL REFERENCES documents (document_id) ON DELETE CASCADE,
+    executive_summary TEXT,
+    section_summaries JSONB NOT NULL DEFAULT '{}',
+    entities JSONB NOT NULL DEFAULT '[]',
+    clauses TEXT[] NOT NULL DEFAULT '{}',
+    summary_version TEXT NOT NULL DEFAULT 'summary_v1',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_docintel_doc ON document_intelligence (document_id);
+
+-- Upload batches (FirmOS Phase 3–4)
+CREATE TABLE IF NOT EXISTS upload_batches (
+    batch_id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'harbour',
+    matter_id TEXT NOT NULL REFERENCES matters (matter_id),
+    client_id TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    total_files INT NOT NULL DEFAULT 0,
+    processed_files INT NOT NULL DEFAULT 0,
+    failed_files INT NOT NULL DEFAULT 0,
+    ingest_job_id TEXT,
+    created_by TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    error_summary TEXT,
+    manifest JSONB NOT NULL DEFAULT '[]'
+);
+
+CREATE TABLE IF NOT EXISTS upload_batch_files (
+    item_id BIGSERIAL PRIMARY KEY,
+    batch_id TEXT NOT NULL REFERENCES upload_batches (batch_id) ON DELETE CASCADE,
+    relative_path TEXT NOT NULL,
+    storage_uri TEXT NOT NULL,
+    content_sha256 TEXT NOT NULL,
+    size_bytes INT NOT NULL DEFAULT 0,
+    mime_type TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    provisional_document_id TEXT,
+    document_id TEXT,
+    version_id TEXT,
+    error TEXT,
+    processed_at TIMESTAMPTZ,
+    UNIQUE (batch_id, relative_path)
+);
+
+-- Version-scoped hierarchical chunk metadata
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS version_id TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS folder_path TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS section_id TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS section_title TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS page_number INT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS parent_chunk_id TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS block_ids TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS is_parent BOOLEAN NOT NULL DEFAULT FALSE;
+

@@ -8,12 +8,12 @@
   ],
   "baseline": "keyword+metadata+vector+graph",
   "overall": {
-    "recall@5": 0.4021,
-    "recall@10": 0.5895,
-    "recall@20": 0.6914,
-    "hit@10": 0.9238,
-    "mrr": 0.6941,
-    "ndcg@10": 0.5568
+    "recall@5": 0.7061,
+    "recall@10": 0.7635,
+    "recall@20": 0.7871,
+    "hit@10": 0.9386,
+    "mrr": 0.8563,
+    "ndcg@10": 0.7924
   },
   "by_type": {
     "argument_retrieval": {
@@ -25,31 +25,31 @@
     },
     "cross_document": {
       "n": 40,
-      "recall@10": 0.4826,
+      "recall@10": 0.4446,
       "hit@10": 1.0,
-      "mrr": 0.7529,
-      "ndcg@10": 0.4972
+      "mrr": 0.6758,
+      "ndcg@10": 0.4462
     },
     "exact": {
       "n": 220,
-      "recall@10": 0.65,
-      "hit@10": 0.9091,
-      "mrr": 0.6803,
-      "ndcg@10": 0.5499
+      "recall@10": 0.9955,
+      "hit@10": 0.9955,
+      "mrr": 0.9955,
+      "ndcg@10": 0.9955
     },
     "graph_reasoning": {
       "n": 15,
-      "recall@10": 0.45,
-      "hit@10": 1.0,
-      "mrr": 0.5189,
-      "ndcg@10": 0.5063
+      "recall@10": 0.2531,
+      "hit@10": 0.9333,
+      "mrr": 0.5891,
+      "ndcg@10": 0.3285
     },
     "matter_retrieval": {
       "n": 40,
-      "recall@10": 0.3335,
-      "hit@10": 0.975,
-      "mrr": 0.7413,
-      "ndcg@10": 0.3684
+      "recall@10": 0.5218,
+      "hit@10": 0.825,
+      "mrr": 0.7417,
+      "ndcg@10": 0.5505
     },
     "multi_hop": {
       "n": 1,
@@ -60,45 +60,45 @@
     },
     "negative": {
       "n": 8,
-      "recall@10": 1.0,
+      "recall@10": 0.75,
       "hit@10": 0.0,
-      "mrr": 1.0,
-      "ndcg@10": 1.0
+      "mrr": 0.75,
+      "ndcg@10": 0.75
     },
     "permission": {
       "n": 60,
       "recall@10": 1.0,
       "hit@10": 1.0,
-      "mrr": 0.8444,
-      "ndcg@10": 0.9107
+      "mrr": 0.9542,
+      "ndcg@10": 0.9712
     },
     "person_expertise": {
       "n": 7,
-      "recall@10": 0.1429,
+      "recall@10": 0.1238,
       "hit@10": 0.8571,
-      "mrr": 0.6082,
-      "ndcg@10": 0.2427
+      "mrr": 0.6161,
+      "ndcg@10": 0.2265
     },
     "semantic": {
       "n": 7,
-      "recall@10": 0.0143,
-      "hit@10": 0.2857,
-      "mrr": 0.1071,
-      "ndcg@10": 0.0334
+      "recall@10": 0.0,
+      "hit@10": 0.0,
+      "mrr": 0.0,
+      "ndcg@10": 0.0
     },
     "similar_matter": {
       "n": 6,
-      "recall@10": 0.0333,
-      "hit@10": 0.6667,
-      "mrr": 0.2667,
-      "ndcg@10": 0.0787
+      "recall@10": 0.0,
+      "hit@10": 0.0,
+      "mrr": 0.0,
+      "ndcg@10": 0.0
     },
     "versioning": {
       "n": 40,
-      "recall@10": 0.2662,
+      "recall@10": 0.2854,
       "hit@10": 1.0,
-      "mrr": 0.6592,
-      "ndcg@10": 0.4879
+      "mrr": 0.7244,
+      "ndcg@10": 0.574
     }
   }
 }

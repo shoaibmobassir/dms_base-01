@@ -26,6 +26,10 @@
     askQuery: '',
     askLoading: false,
     askResult: null,
+    askDebug: null,
+    debugOpen: new URLSearchParams(window.location.search).get('debug') === '1',
+    systemInfo: null,
+    architectureMarkdown: '',
     scopeFilter: 'all',
     projectStatusFilter: 'all',
     searchQuery: '',
@@ -333,6 +337,7 @@
     knowledge: '/ui/knowledge',
     activity: '/ui/activity',
     tasks: '/ui/tasks',
+    architecture: '/ui/architecture',
   };
 
   const VIEW_TITLES = {
@@ -352,6 +357,7 @@
     knowledge: 'Knowledge Vault',
     activity: 'Live Activity',
     tasks: 'Court Deadlines',
+    architecture: 'Architecture',
   };
 
   function buildUrl(view, params = {}) {
@@ -380,6 +386,7 @@
           : UI.knowledge;
       case 'activity': return UI.activity;
       case 'tasks': return UI.tasks;
+      case 'architecture': return UI.architecture;
       default: return UI.home;
     }
   }
@@ -403,7 +410,7 @@
     if (section === 'people' && id) return { view: 'person-detail', params: { personId: decodeURIComponent(id) } };
     if (section === 'knowledge' && id) return { view: 'knowledge', params: { tab: decodeURIComponent(id) } };
 
-    const listViews = ['home', 'ask', 'matters', 'projects', 'clients', 'documents', 'teams', 'people', 'knowledge', 'activity', 'tasks'];
+    const listViews = ['home', 'ask', 'matters', 'projects', 'clients', 'documents', 'teams', 'people', 'knowledge', 'activity', 'tasks', 'architecture'];
     if (listViews.includes(section)) return { view: section, params: {} };
     return { view: 'home', params: {} };
   }
@@ -430,6 +437,7 @@
     knowledge: '/api/knowledge',
     activity: '/api/activity',
     tasks: '/api/tasks',
+    system: '/api/system',
   };
 
   // --- API CLIENT HELPERS ---
@@ -1101,6 +1109,10 @@
         break;
       case 'tasks':
         ws.innerHTML = renderTasksScreen();
+        break;
+      case 'architecture':
+        ws.innerHTML = renderArchitectureScreen();
+        attachArchitectureEvents();
         break;
       default:
         ws.innerHTML = renderHomeScreen();
@@ -2079,15 +2091,21 @@
 
   // --- SCREEN 2: ASK THE FIRM (4-LAYER REASONING & HIGHLIGHTED SOURCES) ---
   function renderAskScreen() {
+    const engineLabel = state.systemInfo?.retrieval_engine
+      ? `Engine ${String(state.systemInfo.retrieval_engine).toUpperCase()}`
+      : 'Engine V2';
     return `
       <div class="view-container">
         <div class="view-header">
           <div>
             <div class="view-header-title">Ask the Firm AI</div>
-            <div class="view-header-desc">Natural-language institutional reasoning across 38,232 documents, 1,000 matters, and projects.</div>
+            <div class="view-header-desc">Parallel retrieval fabric across 38,232 documents — planner → channels → fusion → rerank → cited answer.</div>
           </div>
-          <div class="view-header-actions">
+          <div class="view-header-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span class="status-badge-live"><span class="status-dot-pulse"></span> ${escapeHtml(engineLabel)}</span>
             <span class="status-badge-live"><span class="status-dot-pulse"></span> ACL Secured</span>
+            <button id="ask-debug-toggle" class="btn btn-secondary btn-sm">${state.debugOpen ? 'Hide Debug' : 'Show Debug'}</button>
+            <button class="btn btn-ghost btn-sm" onclick="window.lexosNavigate('architecture')">Architecture →</button>
           </div>
         </div>
 
@@ -2105,9 +2123,10 @@
           </div>
           <div class="suggested-pills">
             <span class="pill-label">Presets:</span>
-            <button class="query-preset-pill" data-query="Have we handled a shareholder dispute involving oppression and minority rights before?">Shareholder oppression dispute</button>
-            <button class="query-preset-pill" data-query="Show similar SIAC arbitration matters with emergency arbitrator relief">SIAC emergency relief</button>
-            <button class="query-preset-pill" data-query="What indemnity cap and locked-box leakage clauses do we usually negotiate in M&A?">M&A indemnity cap & locked-box</button>
+            <button class="query-preset-pill" data-query="Have we previously advised on force majeure clauses?">Force majeure clauses</button>
+            <button class="query-preset-pill" data-query="What matters involve Narang Limited?">Narang Limited matters</button>
+            <button class="query-preset-pill" data-query="Have we handled a shareholder dispute involving oppression and minority rights before?">Shareholder oppression</button>
+            <button class="query-preset-pill" data-query="Find matters related to MTR-2017-00874 with a different client">Graph-related matters</button>
           </div>
         </div>
 
@@ -2123,9 +2142,10 @@
       <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:36px 20px;text-align:center;">
         <div style="font-size:24px;color:var(--accent-primary);margin-bottom:8px;">✦</div>
         <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Ask any question to reconstruct institutional memory</div>
-        <div style="font-size:12px;color:var(--text-secondary);max-width:520px;margin:0 auto 16px auto;">
-          LEXOS executes hybrid semantic retrieval, permission gating, cross-document reranking, and SQL graph synthesis.
+        <div style="font-size:12px;color:var(--text-secondary);max-width:560px;margin:0 auto 16px auto;">
+          Query understanding → retrieval planner → parallel BM25 / vector / metadata / matter / graph seeds → ACL dedupe → optional graph expansion → RRF → cross-encoder → cited answer.
         </div>
+        <div style="font-size:11px;color:var(--text-muted);">Tip: open <span class="mono">/ui/ask?debug=1</span> or click Show Debug for channel provenance.</div>
       </div>
     `;
   }
@@ -2134,7 +2154,7 @@
     return `
       <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:40px 20px;text-align:center;">
         <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">Reconstructing Institutional Knowledge...</div>
-        <div style="font-size:11.5px;color:var(--text-muted);font-family:var(--font-mono);">Query Understanding → ACL Verification → Hybrid RRF → Cross-Encoder Rerank</div>
+        <div style="font-size:11.5px;color:var(--text-muted);font-family:var(--font-mono);">Understand → Plan → Parallel Channels → Fusion → Rerank → Answer</div>
       </div>
     `;
   }
@@ -2254,7 +2274,100 @@
             </div>
           </div>
         </div>
+
+        ${renderAskLatencyStrip(res)}
+        ${renderAskDebugPanel()}
       </div>
+    `;
+  }
+
+  function renderAskLatencyStrip(res) {
+    const lat = res.latency_ms || {};
+    const planned = lat.channels_planned || state.askDebug?.plan?.channels || [];
+    const wall = lat.parallel_wall_ms ?? lat.total_ms;
+    const chips = [];
+    if (planned.length) chips.push(`plan: ${planned.join('+')}`);
+    if (wall != null) chips.push(`parallel ${wall}ms`);
+    if (lat.fusion != null) chips.push(`fusion ${lat.fusion}ms`);
+    if (lat.rerank != null) chips.push(`rerank ${lat.rerank}ms`);
+    if (lat.llm != null) chips.push(`llm ${lat.llm}ms`);
+    if (lat.final_count != null) chips.push(`${lat.final_count} final`);
+    if (!chips.length) return '';
+    return `
+      <div class="retrieval-latency-strip">
+        ${chips.map(c => `<span class="latency-chip">${escapeHtml(String(c))}</span>`).join('')}
+      </div>
+    `;
+  }
+
+  function renderAskDebugPanel() {
+    const debug = state.askDebug;
+    const summaryBits = [];
+    if (debug?.summary) {
+      const s = debug.summary;
+      summaryBits.push(`raw ${s.total_raw_candidates ?? 0}`);
+      summaryBits.push(`dedup ${s.unique_after_dedup ?? 0}`);
+      if (s.graph_expansion_added) summaryBits.push(`+graph ${s.graph_expansion_added}`);
+      summaryBits.push(`final ${s.final_count ?? 0}`);
+      if (s.total_latency_ms != null) summaryBits.push(`${s.total_latency_ms}ms`);
+    } else if (state.askResult?.latency_ms) {
+      const lat = state.askResult.latency_ms;
+      Object.keys(lat).filter(k => k.endsWith('_count')).forEach(k => {
+        summaryBits.push(`${k.replace('_count', '')}:${lat[k]}`);
+      });
+    }
+    const head = summaryBits.length
+      ? summaryBits.join(' · ')
+      : 'intent / channels / fusion / rerank';
+
+    let body = `<div class="retrieval-debug-empty">Run a query to populate channel provenance. Uses <span class="mono">POST /api/retrieval/debug</span>.</div>`;
+    if (debug) {
+      const u = debug.understanding || {};
+      const plan = debug.plan || {};
+      const channels = debug.channels || {};
+      const channelRows = Object.entries(channels).map(([name, info]) => {
+        const top = (info.top_3 || []).map(h =>
+          `${h.document_id || '?'} (${Number(h.score || 0).toFixed(3)})`
+        ).join(', ') || '—';
+        return `<tr><td class="mono">${escapeHtml(name)}</td><td>${info.count ?? 0}</td><td>${info.latency_ms ?? '—'}ms</td><td class="mono" style="font-size:10px;">${escapeHtml(top)}</td></tr>`;
+      }).join('');
+      const weights = plan.weights
+        ? Object.entries(plan.weights).map(([k, v]) => `${k}×${v}`).join(' · ')
+        : '—';
+      const finals = (debug.final_results || []).slice(0, 5).map((r, i) => {
+        const prov = r.provenance || {};
+        const chans = (prov.channels_found_in || [r.channel]).join('+');
+        return `<div class="debug-final-row"><span class="mono">${i + 1}. ${escapeHtml(r.document_id || '')}</span> <span class="scope-chip">${escapeHtml(chans)}</span></div>`;
+      }).join('');
+      body = `
+        <div class="retrieval-debug-grid">
+          <div>
+            <div class="debug-section-title">Understanding</div>
+            <div class="mono debug-kv">intent=${escapeHtml(u.intent || '—')} · search_text=${escapeHtml(u.search_text || '')}</div>
+            <div class="mono debug-kv">matters=${escapeHtml(JSON.stringify(u.matter_ids || []))} · practice=${escapeHtml(u.practice_area || '—')}</div>
+          </div>
+          <div>
+            <div class="debug-section-title">Plan</div>
+            <div class="mono debug-kv">channels=${escapeHtml((plan.channels || []).join(', '))}</div>
+            <div class="mono debug-kv">graph_expansion=${plan.graph_expansion ? 'yes' : 'no'} · rerank=${plan.rerank ? 'yes' : 'no'}</div>
+            <div class="mono debug-kv">weights: ${escapeHtml(weights)}</div>
+          </div>
+        </div>
+        <div class="debug-section-title" style="margin-top:12px;">Channels</div>
+        <table class="retrieval-debug-table">
+          <thead><tr><th>Channel</th><th>Hits</th><th>Latency</th><th>Top 3</th></tr></thead>
+          <tbody>${channelRows || '<tr><td colspan="4">No channel data</td></tr>'}</tbody>
+        </table>
+        <div class="debug-section-title" style="margin-top:12px;">Final (top 5) provenance</div>
+        ${finals || '<div class="retrieval-debug-empty">No finals</div>'}
+      `;
+    }
+
+    return `
+      <details class="retrieval-debug-panel" ${state.debugOpen ? 'open' : ''}>
+        <summary>Debug — ${escapeHtml(head)}</summary>
+        <div class="retrieval-debug-body">${body}</div>
+      </details>
     `;
   }
 
@@ -2277,18 +2390,46 @@
         }
       });
     });
+
+    const dbg = document.getElementById('ask-debug-toggle');
+    if (dbg) {
+      dbg.addEventListener('click', () => {
+        state.debugOpen = !state.debugOpen;
+        const url = new URL(window.location.href);
+        if (state.debugOpen) url.searchParams.set('debug', '1');
+        else url.searchParams.delete('debug');
+        history.replaceState(history.state, '', url.pathname + url.search);
+        renderWorkspace();
+      });
+    }
+
+    const panel = document.querySelector('.retrieval-debug-panel');
+    if (panel) {
+      panel.addEventListener('toggle', () => {
+        state.debugOpen = panel.open;
+      });
+    }
   }
 
   async function executeAskQuery(query) {
     state.askQuery = query;
     state.askLoading = true;
+    state.askDebug = null;
     renderWorkspace();
 
-    // Call live FastAPI backend endpoint /ask
-    const apiRes = await apiFetch(API.answers, {
-      method: 'POST',
-      body: JSON.stringify({ query: query, k: 10 })
-    });
+    const [apiRes, debugRes, infoRes] = await Promise.all([
+      apiFetch(API.answers, {
+        method: 'POST',
+        body: JSON.stringify({ query: query, k: 10 })
+      }),
+      apiFetch(`${API.retrieval}/debug`, {
+        method: 'POST',
+        body: JSON.stringify({ query: query, k: 10 })
+      }),
+      state.systemInfo ? Promise.resolve(state.systemInfo) : apiFetch(`${API.system}/info`),
+    ]);
+
+    if (infoRes && !infoRes.detail) state.systemInfo = infoRes;
 
     state.askLoading = false;
     if (apiRes && apiRes.service === 'answers') {
@@ -2302,9 +2443,116 @@
         matchedMatters: [],
         structured_citations: [],
         tags: [],
+        latency_ms: {},
       };
     }
+    if (debugRes && !debugRes.detail) {
+      state.askDebug = debugRes;
+    }
     renderWorkspace();
+  }
+
+  function renderMarkdownLite(md) {
+    const lines = String(md || '').split('\n');
+    const html = [];
+    let inCode = false;
+    let inList = false;
+    for (const raw of lines) {
+      const line = raw.replace(/\r$/, '');
+      if (line.startsWith('```')) {
+        if (inCode) { html.push('</code></pre>'); inCode = false; }
+        else { html.push('<pre class="arch-code"><code>'); inCode = true; }
+        continue;
+      }
+      if (inCode) {
+        html.push(escapeHtml(line) + '\n');
+        continue;
+      }
+      if (line.startsWith('|') && line.includes('|')) {
+        if (inList) { html.push('</ul>'); inList = false; }
+        const cells = line.split('|').slice(1, -1).map(c => c.trim());
+        if (cells.every(c => /^:?-{3,}:?$/.test(c))) continue;
+        const tag = html.length && html[html.length - 1].includes('<table') ? 'td' : 'th';
+        if (tag === 'th' && !html[html.length - 1]?.includes('<table')) html.push('<table class="arch-table"><thead>');
+        if (tag === 'td' && html[html.length - 1]?.includes('</thead>') === false && html.join('').includes('<thead>') && !html.join('').includes('</thead>')) {
+          // close thead on first data row — handled below
+        }
+        const row = `<tr>${cells.map(c => `<${tag}>${escapeHtml(c)}</${tag}>`).join('')}</tr>`;
+        if (tag === 'th') html.push(row);
+        else {
+          if (!html.join('').includes('</thead>')) html.push('</thead><tbody>');
+          html.push(row);
+        }
+        continue;
+      }
+      if (html.join('').includes('<table') && !html.join('').includes('</table>') && !line.startsWith('|')) {
+        html.push('</tbody></table>');
+      }
+      if (/^\s*-\s+/.test(line)) {
+        if (!inList) { html.push('<ul>'); inList = true; }
+        html.push(`<li>${escapeHtml(line.replace(/^\s*-\s+/, ''))}</li>`);
+        continue;
+      }
+      if (inList) { html.push('</ul>'); inList = false; }
+      if (line.startsWith('# ')) { html.push(`<h1>${escapeHtml(line.slice(2))}</h1>`); continue; }
+      if (line.startsWith('## ')) { html.push(`<h2>${escapeHtml(line.slice(3))}</h2>`); continue; }
+      if (line.startsWith('### ')) { html.push(`<h3>${escapeHtml(line.slice(4))}</h3>`); continue; }
+      if (!line.trim()) { html.push('<div class="arch-spacer"></div>'); continue; }
+      html.push(`<p>${escapeHtml(line).replace(/`([^`]+)`/g, '<code>$1</code>')}</p>`);
+    }
+    if (inCode) html.push('</code></pre>');
+    if (inList) html.push('</ul>');
+    if (html.join('').includes('<table') && !html.join('').includes('</table>')) html.push('</tbody></table>');
+    return html.join('\n');
+  }
+
+  function renderArchitectureScreen() {
+    const info = state.systemInfo || {};
+    const features = info.features || {};
+    const featureChips = Object.entries(features).map(([k, v]) =>
+      `<span class="scope-chip ${v ? 'active' : ''}">${escapeHtml(k)}: ${v ? 'on' : 'off'}</span>`
+    ).join('');
+    return `
+      <div class="view-container">
+        <div class="view-header">
+          <div>
+            <div class="view-header-title">Retrieval Architecture</div>
+            <div class="view-header-desc">Parallel fabric, planner, graph seed/expand, provenance, and production roadmap.</div>
+          </div>
+          <div class="view-header-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="status-badge-live"><span class="status-dot-pulse"></span> ${escapeHtml(info.retrieval_engine || 'v2')}</span>
+            <a class="btn btn-secondary btn-sm" href="/docs" target="_blank" rel="noopener">OpenAPI /docs</a>
+            <a class="btn btn-secondary btn-sm" href="/api/system/architecture" target="_blank" rel="noopener">Raw Markdown</a>
+            <button class="btn btn-primary btn-sm" onclick="window.lexosNavigate('ask')">Ask Firm AI →</button>
+          </div>
+        </div>
+        <div class="arch-feature-row">${featureChips || '<span class="scope-chip">Loading features…</span>'}</div>
+        <div class="architecture-doc">${state.architectureMarkdown ? renderMarkdownLite(state.architectureMarkdown) : '<div class="retrieval-debug-empty">Loading architecture…</div>'}</div>
+      </div>
+    `;
+  }
+
+  function attachArchitectureEvents() {
+    if (!state.systemInfo) {
+      apiFetch(`${API.system}/info`).then(info => {
+        if (info && !info.detail) {
+          state.systemInfo = info;
+          if (state.view === 'architecture') renderWorkspace();
+        }
+      });
+    }
+    if (!state.architectureMarkdown) {
+      fetch(`${API.system}/architecture`)
+        .then(r => r.ok ? r.text() : Promise.reject(r.status))
+        .then(text => {
+          state.architectureMarkdown = text;
+          if (state.view === 'architecture') renderWorkspace();
+        })
+        .catch(() => {
+          state.architectureMarkdown = '# Architecture\n\nCould not load `/api/system/architecture`.';
+          if (state.view === 'architecture') renderWorkspace();
+        });
+    }
   }
 
   // --- SCREEN 3: MATTERS ---

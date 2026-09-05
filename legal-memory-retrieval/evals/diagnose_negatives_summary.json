@@ -1,0 +1,32 @@
+{
+  "n_queries": 8,
+  "n_candidate_rows": 131,
+  "k": 20,
+  "csv": "evals/diagnose_negatives.csv",
+  "overall": {
+    "hit@10": 0.0,
+    "mrr": 0.0,
+    "relevant@1": 0.0,
+    "relevant@5": 0.0,
+    "relevant@10": 0.0
+  },
+  "by_type": {
+    "negative": {
+      "n": 8,
+      "hit@10": 0.0,
+      "mrr": 0.0,
+      "relevant@1": 0.0,
+      "relevant@5": 0.0,
+      "relevant@10": 0.0
+    }
+  },
+  "negative_false_positives": {
+    "n": 8,
+    "queries_with_any_hit@10": 2,
+    "abstain_rate@10": 0.75,
+    "queries_with_zero_candidates": 6
+  },
+  "relevant_drop_stages": {},
+  "relevant_channel_combos_top": {},
+  "hypothesis": "If fusion_or_hierarchy_channel dominates relevant_drop_stages, fix hierarchical/fusion policy (P5.5). If reranker dominates, defer to P5.8 \u2014 but still remove hierarchy score overrides first."
+}

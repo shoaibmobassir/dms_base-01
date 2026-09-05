@@ -1,0 +1,37 @@
+id: master-services-agreement-review
+title: Master Services Agreement (MSA) Deep Review
+description: Structured clause-by-clause audit of an MSA against firm playbooks, examining warranties, indemnities, IP allocation, SLA credits, and audit rights.
+category: review
+inputs:
+  - name: msa_document_id
+    label: MSA Document ID / File Name
+    type: string
+    required: true
+  - name: client_role
+    label: Client Role (Customer / Vendor)
+    type: string
+    default: "Customer"
+steps:
+  - id: retrieve_msa_sections
+    type: retrieve
+    query: "Master services agreement intellectual property indemnity limitation of liability warranties SLAs in {{inputs.msa_document_id}}"
+    k: 6
+
+  - id: audit_clauses
+    type: ask
+    prompt: |
+      Perform a deep legal review of the Master Services Agreement for {{inputs.msa_document_id}} from the perspective of our client as the {{inputs.client_role}}:
+      1. Scope of Services & Acceptance Criteria (Milestones, deemed acceptance).
+      2. Intellectual Property Rights (Work-for-hire, background IP, open-source licenses, ownership of deliverables).
+      3. Service Level Agreements & Penalties (Credits, chronic failure termination).
+      4. Risk Exposure (Audit rights, insurance thresholds, indemnification scopes, liability caps).
+      5. Top 3 Redlines required to safeguard our client.
+
+  - id: compose_msa_report
+    type: compose
+    template: |
+      # MASTER SERVICES AGREEMENT (MSA) AUDIT REPORT
+      **Document:** {{inputs.msa_document_id}}
+      **Client Stance:** {{inputs.client_role}}
+
+      {{steps.audit_clauses.answer}}

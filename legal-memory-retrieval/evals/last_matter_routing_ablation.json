@@ -1,0 +1,76 @@
+{
+  "baseline": "p55_repair_ce_protect + exact-title repair",
+  "promoted": "MATTER_SCOPE=hard + matter_scope heads",
+  "p55_metrics": {
+    "recall@10": 0.739,
+    "hit@10": 0.926,
+    "mrr": 0.805,
+    "exact_hit@10": 0.996
+  },
+  "promotion_rule": "\u0394R@10>=+1pp AND \u0394Hit@10>=+1pp AND \u0394MRR>=+1pp AND exact Hit@10>=0.99",
+  "runs_summary": [
+    {
+      "variant": "A",
+      "R@10": 0.7392,
+      "Hit@10": 0.9287,
+      "MRR": 0.8069,
+      "matter_Hit@10": 0.725,
+      "promote": false
+    },
+    {
+      "variant": "B",
+      "R@10": 0.7543,
+      "Hit@10": 0.941,
+      "MRR": 0.8312,
+      "matter_Hit@10": 0.85,
+      "promote": true,
+      "note": "score path"
+    },
+    {
+      "variant": "C0_broken",
+      "R@10": 0.7233,
+      "Hit@10": 0.8649,
+      "MRR": 0.7947,
+      "matter_Hit@10": 0.075,
+      "promote": false,
+      "note": "hard without heads"
+    },
+    {
+      "variant": "C",
+      "R@10": 0.7643,
+      "Hit@10": 0.9484,
+      "MRR": 0.8591,
+      "matter_Hit@10": 0.875,
+      "promote": true,
+      "note": "hard+matter_scope PROMOTED"
+    },
+    {
+      "variant": "D",
+      "R@10": 0.707,
+      "Hit@10": 0.8182,
+      "MRR": 0.7309,
+      "matter_Hit@10": 0.525,
+      "promote": false
+    },
+    {
+      "variant": "E",
+      "R@10": 0.7051,
+      "Hit@10": 0.8919,
+      "MRR": 0.7765,
+      "matter_Hit@10": 0.45,
+      "promote": false
+    },
+    {
+      "variant": "F",
+      "R@10": 0.7436,
+      "Hit@10": 0.9214,
+      "MRR": 0.8072,
+      "matter_Hit@10": 0.675,
+      "promote": false
+    }
+  ],
+  "crr": {
+    "avg_matter_count": 4.4,
+    "avg_document_universe": 173.93
+  }
+}

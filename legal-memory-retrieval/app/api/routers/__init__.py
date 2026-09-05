@@ -15,6 +15,14 @@ from app.api.routers import (
     system,
     tasks,
     teams,
+    reviews,
+    uploads,
+    tabular,
+    workflows_router,
+    drafting_router,
+    word_router,
+    caselaw_router,
+    audit_router,
 )
 
 __all__ = [
@@ -32,4 +40,13 @@ __all__ = [
     "system",
     "tasks",
     "teams",
+    "reviews",
+    "uploads",
+    "tabular",
+    "workflows_router",
+    "drafting_router",
+    "word_router",
+    "caselaw_router",
+    "audit_router",
 ]
+

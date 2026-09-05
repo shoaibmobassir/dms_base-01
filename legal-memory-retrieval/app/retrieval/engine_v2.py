@@ -12,7 +12,7 @@ Architecture:
       ↓
     ┌──────────────────────────────────────────────────────┐
     │ asyncio.gather(*channel_tasks)                       │
-    │ BM25 │ Vector │ Metadata │ Matter │ Graph │ Similar  │
+    │ BM25 │ Vector │ Metadata │ Matter │ Hierarchical │ Graph │ Similar  │
     └──────────────────────────────────────────────────────┘
       ↓
     ACL filter (already in SQL, but double-check here)
@@ -42,21 +42,37 @@ import logging
 import time
 from typing import Any
 
-from app.db.pool import acquire
+from app.db.pool import acquire, init_pool, pool_stats
 from app.embeddings.minilm import MiniLMEmbedder
 from app.observability.tracing import span
 from app.query.understand import ParsedQuery, understand
+from app.retrieval.matter_scope import (
+    active_matter_scope,
+    adjust_fusion_weights,
+    apply_channel_plan,
+    scope_filters,
+    scope_stats,
+    should_apply_matter_scope,
+)
 from app.retrieval.contracts import (
     Candidate,
     Provenance,
     RetrievalContext,
     RetrievalPlan,
 )
+from app.retrieval.fusion_policy import (
+    active_policy,
+    apply_ce_protection,
+    channel_limit,
+    merge_plan_weights,
+    policy_to_dict,
+)
 from app.retrieval.planner import plan as plan_retrieval
 from app.retrieval.reranker import rerank
 from app.retrieval.route import VECTOR_MIN_SCORE
 from app.storage.postgres import (
     PgGraphStore,
+    PgHierarchicalStore,
     PgMatterStore,
     PgMetadataStore,
     PgSearchStore,
@@ -72,6 +88,7 @@ _vector_store = PgVectorStore()
 _metadata_store = PgMetadataStore()
 _graph_store = PgGraphStore()
 _matter_store = PgMatterStore()
+_hierarchical_store = PgHierarchicalStore()
 
 # ── Embedder (lazy init) ────────────────────────────────────────────────────
 
@@ -94,14 +111,15 @@ async def _channel_bm25(ctx: RetrievalContext, limit: int) -> list[Candidate]:
     """BM25 full-text search channel."""
     # Prefer cleaned search_text so question boilerplate does not AND-kill FTS.
     query = ctx.query_search_text or ctx.query_raw
+    filters = scope_filters(ctx.matter_ids, ctx.intent)
     async with acquire() as conn:
         rows = await _search_store.search(
-            conn, query, ctx.member_id, limit=limit,
+            conn, query, ctx.member_id, limit=limit, filters=filters,
         )
         # Fallback to raw if cleaned query was over-stripped or empty.
         if not rows and query != ctx.query_raw:
             rows = await _search_store.search(
-                conn, ctx.query_raw, ctx.member_id, limit=limit,
+                conn, ctx.query_raw, ctx.member_id, limit=limit, filters=filters,
             )
     return [Candidate.from_db_row(r, "bm25") for r in rows]
 
@@ -110,10 +128,11 @@ async def _channel_vector(ctx: RetrievalContext, limit: int) -> list[Candidate]:
     """Vector ANN search channel."""
     embedder = _get_embedder()
     qvec = embedder.encode([ctx.query_raw])[0]
+    filters = scope_filters(ctx.matter_ids, ctx.intent)
     async with acquire() as conn:
         rows = await _vector_store.search(
             conn, qvec.tolist() if hasattr(qvec, "tolist") else list(qvec),
-            ctx.member_id, limit=limit,
+            ctx.member_id, limit=limit, filters=filters,
         )
     # Apply minimum score threshold (but no lexical dependency anymore)
     candidates = []
@@ -126,17 +145,19 @@ async def _channel_vector(ctx: RetrievalContext, limit: int) -> list[Candidate]:
 
 async def _channel_metadata(ctx: RetrievalContext, limit: int) -> list[Candidate]:
     """Metadata exact/near-exact lookup channel."""
+    exact_title = ctx.intent == "exact_lookup"
     async with acquire() as conn:
         rows = await _metadata_store.search(
             conn,
             ctx.query_search_text or ctx.query_raw,
             member_id=ctx.member_id,
-            limit=limit,
+            limit=limit if not exact_title else max(limit, 80),
             matter_ids=ctx.matter_ids or None,
             matter_codes=ctx.matter_codes or None,
             practice_area=ctx.practice_area,
             rank_query=ctx.query_raw,
             dedupe_matters=ctx.intent == "experience_search",
+            exact_title_mode=exact_title and not (ctx.matter_ids or ctx.matter_codes),
         )
     return [Candidate.from_db_row(r, "metadata") for r in rows]
 
@@ -196,10 +217,11 @@ async def _channel_similar_matter(ctx: RetrievalContext, limit: int) -> list[Can
     # For now, delegate to vector search with matter-level deduplication
     embedder = _get_embedder()
     qvec = embedder.encode([ctx.query_raw])[0]
+    filters = scope_filters(ctx.matter_ids, ctx.intent)
     async with acquire() as conn:
         rows = await _vector_store.search(
             conn, qvec.tolist() if hasattr(qvec, "tolist") else list(qvec),
-            ctx.member_id, limit=limit,
+            ctx.member_id, limit=limit, filters=filters,
         )
     # Deduplicate by matter_id, keeping highest scoring per matter
     seen_matters: dict[str, Candidate] = {}
@@ -211,6 +233,45 @@ async def _channel_similar_matter(ctx: RetrievalContext, limit: int) -> list[Can
     return list(seen_matters.values())
 
 
+async def _channel_matter_scope(ctx: RetrievalContext, limit: int) -> list[Candidate]:
+    """Document heads inside resolved matter IDs (hard/hier scope evidence)."""
+    if not ctx.matter_ids:
+        return []
+    # One head per resolved matter is enough; BM25/vector expand within scope.
+    fetch_limit = max(limit, 40)
+    async with acquire() as conn:
+        rows = await _matter_store.documents_in_matters(
+            conn, ctx.matter_ids, ctx.member_id, limit=fetch_limit,
+        )
+    return [Candidate.from_db_row(r, "matter_scope") for r in rows]
+
+
+async def _channel_hierarchical(ctx: RetrievalContext, limit: int) -> list[Candidate]:
+    """Matter → Document → Chunk cascade preferring version-scoped children."""
+    query = ctx.query_search_text or ctx.query_raw
+    async with acquire() as conn:
+        rows = await _hierarchical_store.retrieve(
+            conn,
+            query,
+            ctx.member_id,
+            top_matters=min(15, max(limit // 4, 5)),
+            top_docs=min(40, max(limit, 20)),
+            top_chunks=limit,
+            matter_ids=ctx.matter_ids or None,
+        )
+        if not rows and query != ctx.query_raw:
+            rows = await _hierarchical_store.retrieve(
+                conn,
+                ctx.query_raw,
+                ctx.member_id,
+                top_matters=min(15, max(limit // 4, 5)),
+                top_docs=min(40, max(limit, 20)),
+                top_chunks=limit,
+                matter_ids=ctx.matter_ids or None,
+            )
+    return [Candidate.from_db_row(r, "hierarchical") for r in rows]
+
+
 # ── Channel registry ─────────────────────────────────────────────────────────
 
 _CHANNEL_FNS = {
@@ -218,8 +279,10 @@ _CHANNEL_FNS = {
     "vector": _channel_vector,
     "metadata": _channel_metadata,
     "matter": _channel_matter,
+    "matter_scope": _channel_matter_scope,
     "graph_seed": _channel_graph_seed,
     "similar_matter": _channel_similar_matter,
+    "hierarchical": _channel_hierarchical,
 }
 
 
@@ -279,6 +342,7 @@ def _deduplicate(candidates: list[Candidate]) -> list[Candidate]:
         candidate.provenance.matter_score = scores.get("matter_score")
         candidate.provenance.graph_score = scores.get("graph_seed_score")
         candidate.provenance.similar_matter_score = scores.get("similar_matter_score")
+        candidate.provenance.hierarchical_score = scores.get("hierarchical_score")
 
     return list(best.values())
 
@@ -399,6 +463,9 @@ async def retrieve_async(
     latency: dict[str, Any] = {}
     timers: dict[str, float] = {}
 
+    if not pool_stats().get("initialized"):
+        await init_pool()
+
     # ── Step 1: Query understanding ──────────────────────────────────────
     t0 = time.perf_counter()
     parsed = understand(query)
@@ -411,9 +478,45 @@ async def retrieve_async(
     t1 = time.perf_counter()
     retrieval_plan = plan_retrieval(parsed)
     latency["plan"] = round((time.perf_counter() - t1) * 1000, 1)
-    latency["channels_planned"] = retrieval_plan.channels
 
     ctx = _build_context(parsed, member_id, k)
+    policy = active_policy()
+    latency["fusion_policy"] = policy.name
+    scope_mode = active_matter_scope()
+    latency["matter_scope_mode"] = scope_mode
+
+    # ── Step 2b: Matter scope resolution (hard/hier) ─────────────────────
+    if should_apply_matter_scope(parsed.intent, scope_mode):
+        t_scope = time.perf_counter()
+        needle = ctx.client_name or ctx.query_search_text or ctx.query_raw
+        async with acquire() as conn:
+            matters = await _matter_store.resolve_matters(
+                conn, needle, ctx.member_id, limit=20,
+            )
+            corpus_docs = None
+            try:
+                async with conn.cursor() as cur:
+                    await cur.execute("SELECT COUNT(*) FROM documents")
+                    row = await cur.fetchone()
+                    corpus_docs = int(row[0]) if row else None
+            except Exception:
+                corpus_docs = None
+        if matters:
+            ctx.matter_ids = [str(m["matter_id"]) for m in matters]
+            latency["matter_scope"] = scope_stats(matters, corpus_documents=corpus_docs)
+        else:
+            latency["matter_scope"] = {
+                "matter_count": 0,
+                "document_universe": 0,
+                "fallback": "unscoped",
+            }
+        latency["matter_scope_ms"] = round((time.perf_counter() - t_scope) * 1000, 1)
+
+    planned_channels = list(retrieval_plan.channels)
+    if not policy.include_hierarchical_channel:
+        planned_channels = [c for c in planned_channels if c != "hierarchical"]
+    planned_channels = apply_channel_plan(planned_channels, parsed.intent, scope_mode)
+    latency["channels_planned"] = planned_channels
 
     # ── Step 3: Parallel channel execution ───────────────────────────────
     t_parallel = time.perf_counter()
@@ -423,16 +526,17 @@ async def retrieve_async(
         fn = _CHANNEL_FNS.get(name)
         if fn is None:
             return name, [], 0.0
+        limit = channel_limit(name, default=50, policy=policy)
         try:
             with span(f"retrieval.{name}", {"intent": parsed.intent}):
-                results = await fn(ctx, limit=50)
+                results = await fn(ctx, limit=limit)
         except Exception as exc:
             logger.warning("Channel %s failed: %s", name, exc, exc_info=True)
             results = []
         elapsed = round((time.perf_counter() - t) * 1000, 1)
         return name, results, elapsed
 
-    channel_tasks = [_timed_channel(ch) for ch in retrieval_plan.channels]
+    channel_tasks = [_timed_channel(ch) for ch in planned_channels]
     channel_results = await asyncio.gather(*channel_tasks)
 
     all_candidates: list[Candidate] = []
@@ -466,13 +570,17 @@ async def retrieve_async(
 
     # ── Step 6: Weighted RRF Fusion ──────────────────────────────────────
     t_fusion = time.perf_counter()
-    # When rerank is off (e.g. exact_lookup), still keep a non-zero fusion pool.
     fusion_limit = retrieval_plan.rerank_candidates if retrieval_plan.rerank else retrieval_plan.final_k
     fusion_limit = max(fusion_limit, retrieval_plan.final_k, k)
+    fusion_weights = merge_plan_weights(
+        retrieval_plan.weights, policy, intent=parsed.intent,
+    )
+    fusion_weights = adjust_fusion_weights(fusion_weights, parsed.intent, scope_mode)
+    latency["fusion_weights"] = fusion_weights
     with span("retrieval.fusion"):
         fused = _fuse_candidates(
             deduped,
-            weights=retrieval_plan.weights,
+            weights=fusion_weights,
             limit=fusion_limit,
         )
     latency["fusion"] = round((time.perf_counter() - t_fusion) * 1000, 1)
@@ -483,11 +591,14 @@ async def retrieve_async(
         t_rerank = time.perf_counter()
         with span("retrieval.rerank", {"candidates": len(fused)}):
             fused = await _rerank_candidates(query, fused, retrieval_plan)
+            fused = apply_ce_protection(fused, policy)
         latency["rerank"] = round((time.perf_counter() - t_rerank) * 1000, 1)
         latency["rerank_candidates"] = len(fused)
+        latency["ce_protection"] = policy.ce_protection
 
     result = fused[:k]
     latency["final_count"] = len(result)
+    latency["policy"] = policy_to_dict(policy)
     return result, latency
 
 

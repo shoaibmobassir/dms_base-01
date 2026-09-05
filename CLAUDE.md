@@ -1,9 +1,9 @@
-# Apex Chambers — DMS Knowledge Base
+# Harbour International Chambers — DMS Knowledge Base
 
 ## Project overview
 
 Two sub-projects:
-- `dummy-firm/` — synthetic law-firm corpus generator (frozen at v2: 1000 matters, 38,232 documents)
+- `dummy-firm/` — firm corpus from PCIJ PDFs, UNSC resolutions, and `docs/` filings
 - `legal-memory-retrieval/` — retrieval + answer API (Sprint 8 complete)
 
 See `legal-memory-retrieval/CLAUDE.md` for retrieval sprint rules and eval gates.

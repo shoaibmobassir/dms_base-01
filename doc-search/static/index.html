@@ -130,7 +130,7 @@
           <option value="12">Top 12</option>
         </select>
       </div>
-      <p id="hint">Ctrl + Enter to submit</p>
+      <p id="hint">Ctrl + Enter to submit · <a href="/docs-ui" style="color:var(--accent)">Architecture</a> · companion to <a href="http://localhost:8000/ui" style="color:var(--accent)">LEXOS :8000</a></p>
     </div>
     <div id="results">
       <div id="status">Enter a query and press Ask.</div>
@@ -392,11 +392,14 @@ function renderResults(data, query) {
   const lat = data.latency_ms || {};
   const latDiv = document.createElement('div');
   latDiv.id = 'latency';
-  latDiv.innerHTML = [
-    chip(`Retrieve ${lat.retrieve_ms}ms`, lat.retrieve_ms < 500),
-    chip(`LLM ${lat.llm_ms}ms`, lat.llm_ms < 3000),
-    chip(`Total ${lat.total_ms}ms`, lat.total_ms < 4000),
-  ].join('');
+  const chips = [];
+  if (lat.keyword_ms != null) chips.push(chip(`keyword ${lat.keyword_ms}ms`, lat.keyword_ms < 200));
+  if (lat.vector_ms != null) chips.push(chip(`vector ${lat.vector_ms}ms`, lat.vector_ms < 800));
+  if (lat.parallel_search_ms != null) chips.push(chip(`parallel ${lat.parallel_search_ms}ms`, true));
+  chips.push(chip(`Retrieve ${lat.retrieve_ms}ms`, lat.retrieve_ms < 500));
+  chips.push(chip(`LLM ${lat.llm_ms}ms`, lat.llm_ms < 3000));
+  chips.push(chip(`Total ${lat.total_ms}ms`, lat.total_ms < 4000));
+  latDiv.innerHTML = chips.join('');
   if (data.provider) {
     const providerColors = {groq:'#10b981', nvidia:'#76b900', gemini:'#4285f4', extractive:'#f59e0b'};
     const col = providerColors[data.provider] || 'var(--muted)';

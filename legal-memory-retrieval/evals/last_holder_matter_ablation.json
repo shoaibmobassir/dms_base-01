@@ -1,0 +1,5420 @@
+{
+  "experiment": "P5.6-C1 holder-matter resolution",
+  "n_semantic": 7,
+  "ks": [
+    5,
+    10,
+    20,
+    50,
+    100
+  ],
+  "summary": [
+    {
+      "variant": "vector",
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0286,
+          "holder_hit": 0.2857,
+          "holder_precision": 0.0571
+        },
+        "10": {
+          "holder_coverage": 0.0571,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.0571
+        },
+        "20": {
+          "holder_coverage": 0.1,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.0615
+        },
+        "50": {
+          "holder_coverage": 0.1,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.0582
+        },
+        "100": {
+          "holder_coverage": 0.1,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.0582
+        }
+      },
+      "pct_reach_cov_0.9": 0.0,
+      "avg_min_k_cov_0.9": null
+    },
+    {
+      "variant": "lexical",
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0429,
+          "holder_hit": 0.2857,
+          "holder_precision": 0.0857
+        },
+        "10": {
+          "holder_coverage": 0.1,
+          "holder_hit": 0.4286,
+          "holder_precision": 0.1
+        },
+        "20": {
+          "holder_coverage": 0.219,
+          "holder_hit": 0.8571,
+          "holder_precision": 0.0929
+        },
+        "50": {
+          "holder_coverage": 0.5429,
+          "holder_hit": 1.0,
+          "holder_precision": 0.0886
+        },
+        "100": {
+          "holder_coverage": 0.8714,
+          "holder_hit": 1.0,
+          "holder_precision": 0.0771
+        }
+      },
+      "pct_reach_cov_0.9": 0.7143,
+      "avg_min_k_cov_0.9": 74.8
+    },
+    {
+      "variant": "lexical_struct",
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0571,
+          "holder_hit": 0.4286,
+          "holder_precision": 0.1143
+        },
+        "10": {
+          "holder_coverage": 0.1143,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.1143
+        },
+        "20": {
+          "holder_coverage": 0.2476,
+          "holder_hit": 1.0,
+          "holder_precision": 0.1071
+        },
+        "50": {
+          "holder_coverage": 0.5571,
+          "holder_hit": 1.0,
+          "holder_precision": 0.0914
+        },
+        "100": {
+          "holder_coverage": 0.8714,
+          "holder_hit": 1.0,
+          "holder_precision": 0.0771
+        }
+      },
+      "pct_reach_cov_0.9": 0.7143,
+      "avg_min_k_cov_0.9": 74.8
+    },
+    {
+      "variant": "vector_struct",
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0143,
+          "holder_hit": 0.1429,
+          "holder_precision": 0.0286
+        },
+        "10": {
+          "holder_coverage": 0.0571,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.0571
+        },
+        "20": {
+          "holder_coverage": 0.1286,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.0708
+        },
+        "50": {
+          "holder_coverage": 0.1286,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.0659
+        },
+        "100": {
+          "holder_coverage": 0.1286,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.0659
+        }
+      },
+      "pct_reach_cov_0.9": 0.0,
+      "avg_min_k_cov_0.9": null
+    },
+    {
+      "variant": "hybrid",
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0143,
+          "holder_hit": 0.1429,
+          "holder_precision": 0.0286
+        },
+        "10": {
+          "holder_coverage": 0.0429,
+          "holder_hit": 0.4286,
+          "holder_precision": 0.0429
+        },
+        "20": {
+          "holder_coverage": 0.1571,
+          "holder_hit": 0.5714,
+          "holder_precision": 0.0786
+        },
+        "50": {
+          "holder_coverage": 0.4667,
+          "holder_hit": 0.8571,
+          "holder_precision": 0.08
+        },
+        "100": {
+          "holder_coverage": 0.8571,
+          "holder_hit": 1.0,
+          "holder_precision": 0.0757
+        }
+      },
+      "pct_reach_cov_0.9": 0.7143,
+      "avg_min_k_cov_0.9": 73.2
+    },
+    {
+      "variant": "hybrid_struct",
+      "ks": {
+        "5": {
+          "holder_coverage": 0.0143,
+          "holder_hit": 0.1429,
+          "holder_precision": 0.0286
+        },
+        "10": {
+          "holder_coverage": 0.0429,
+          "holder_hit": 0.4286,
+          "holder_precision": 0.0429
+        },
+        "20": {
+          "holder_coverage": 0.1857,
+          "holder_hit": 0.7143,
+          "holder_precision": 0.0929
+        },
+        "50": {
+          "holder_coverage": 0.5381,
+          "holder_hit": 1.0,
+          "holder_precision": 0.0943
+        },
+        "100": {
+          "holder_coverage": 0.8857,
+          "holder_hit": 1.0,
+          "holder_precision": 0.0786
+        }
+      },
+      "pct_reach_cov_0.9": 0.7143,
+      "avg_min_k_cov_0.9": 71.8
+    }
+  ],
+  "per_variant": {
+    "vector": [
+      {
+        "query_id": "Q-0264",
+        "question": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00028",
+          "MTR-2019-00044",
+          "MTR-2019-00060",
+          "MTR-2020-00018",
+          "MTR-2020-00099",
+          "MTR-2021-00071",
+          "MTR-2022-00031",
+          "MTR-2022-00070",
+          "MTR-2023-00007",
+          "MTR-2023-00072"
+        ],
+        "n_ranked": 19,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "20": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "50": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "100": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "question": "Have we advised on post-employment non-competes and restraint of trade?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2020-00074",
+          "MTR-2020-00128",
+          "MTR-2021-00058",
+          "MTR-2022-00083",
+          "MTR-2022-00122",
+          "MTR-2023-00084",
+          "MTR-2024-00009",
+          "MTR-2024-00023",
+          "MTR-2024-00078",
+          "MTR-2024-00082"
+        ],
+        "n_ranked": 26,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2021-00058"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "50": {
+            "k": 26,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.0769,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "100": {
+            "k": 26,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.0769,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "question": "Have we done title diligence involving unregistered family settlements?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00051",
+          "MTR-2018-00024",
+          "MTR-2019-00056",
+          "MTR-2020-00049",
+          "MTR-2021-00005",
+          "MTR-2021-00059",
+          "MTR-2022-00011",
+          "MTR-2023-00050",
+          "MTR-2024-00073",
+          "MTR-2025-00075"
+        ],
+        "n_ranked": 19,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "20": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "50": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "100": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "question": "Have we handled transfer pricing adjustments on intra-group management fees?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00064",
+          "MTR-2019-00039",
+          "MTR-2019-00086",
+          "MTR-2019-00090",
+          "MTR-2021-00020",
+          "MTR-2022-00035",
+          "MTR-2023-00036",
+          "MTR-2023-00067",
+          "MTR-2023-00088",
+          "MTR-2025-00017"
+        ],
+        "n_ranked": 10,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "20": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "50": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "100": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "question": "Have we handled supply-contract terminations for quality failures?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00047",
+          "MTR-2020-00055",
+          "MTR-2020-00063",
+          "MTR-2020-00077",
+          "MTR-2021-00048",
+          "MTR-2022-00062",
+          "MTR-2024-00052",
+          "MTR-2024-00065",
+          "MTR-2024-00105",
+          "MTR-2025-00040"
+        ],
+        "n_ranked": 19,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2020-00077"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2020-00077"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "20": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1053,
+            "found_ids": [
+              "MTR-2020-00077",
+              "MTR-2024-00105"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2025-00040"
+            ]
+          },
+          "50": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1053,
+            "found_ids": [
+              "MTR-2020-00077",
+              "MTR-2024-00105"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2025-00040"
+            ]
+          },
+          "100": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1053,
+            "found_ids": [
+              "MTR-2020-00077",
+              "MTR-2024-00105"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2025-00040"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "question": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00006",
+          "MTR-2018-00030",
+          "MTR-2019-00033",
+          "MTR-2020-00016",
+          "MTR-2021-00068",
+          "MTR-2021-00095",
+          "MTR-2022-00022",
+          "MTR-2023-00025",
+          "MTR-2024-00093",
+          "MTR-2025-00054"
+        ],
+        "n_ranked": 16,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093"
+            ]
+          },
+          "20": {
+            "k": 16,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.125,
+            "found_ids": [
+              "MTR-2021-00095",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093"
+            ]
+          },
+          "50": {
+            "k": 16,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.125,
+            "found_ids": [
+              "MTR-2021-00095",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093"
+            ]
+          },
+          "100": {
+            "k": 16,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.125,
+            "found_ids": [
+              "MTR-2021-00095",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "question": "Have we dealt with natural disasters affecting contractual performance?",
+        "n_holders": 3,
+        "holder_ids": [
+          "MTR-2020-00004",
+          "MTR-2021-00019",
+          "MTR-2024-00012"
+        ],
+        "n_ranked": 19,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "20": {
+            "k": 19,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "50": {
+            "k": 19,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "100": {
+            "k": 19,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          }
+        }
+      }
+    ],
+    "lexical": [
+      {
+        "query_id": "Q-0264",
+        "question": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00028",
+          "MTR-2019-00044",
+          "MTR-2019-00060",
+          "MTR-2020-00018",
+          "MTR-2020-00099",
+          "MTR-2021-00071",
+          "MTR-2022-00031",
+          "MTR-2022-00070",
+          "MTR-2023-00007",
+          "MTR-2023-00072"
+        ],
+        "n_ranked": 193,
+        "min_k_cov_0.5": 61,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060"
+            ],
+            "missing_ids": [
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 8,
+            "holder_coverage": 0.8,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070"
+            ],
+            "missing_ids": [
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "question": "Have we advised on post-employment non-competes and restraint of trade?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2020-00074",
+          "MTR-2020-00128",
+          "MTR-2021-00058",
+          "MTR-2022-00083",
+          "MTR-2022-00122",
+          "MTR-2023-00084",
+          "MTR-2024-00009",
+          "MTR-2024-00023",
+          "MTR-2024-00078",
+          "MTR-2024-00082"
+        ],
+        "n_ranked": 187,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.02,
+            "found_ids": [
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.04,
+            "found_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "question": "Have we done title diligence involving unregistered family settlements?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00051",
+          "MTR-2018-00024",
+          "MTR-2019-00056",
+          "MTR-2020-00049",
+          "MTR-2021-00005",
+          "MTR-2021-00059",
+          "MTR-2022-00011",
+          "MTR-2023-00050",
+          "MTR-2024-00073",
+          "MTR-2025-00075"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 56,
+        "min_k_cov_0.9": 94,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2021-00059"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2024-00073"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "question": "Have we handled transfer pricing adjustments on intra-group management fees?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00064",
+          "MTR-2019-00039",
+          "MTR-2019-00086",
+          "MTR-2019-00090",
+          "MTR-2021-00020",
+          "MTR-2022-00035",
+          "MTR-2023-00036",
+          "MTR-2023-00067",
+          "MTR-2023-00088",
+          "MTR-2025-00017"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 22,
+        "min_k_cov_0.9": 71,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.4,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "question": "Have we handled supply-contract terminations for quality failures?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00047",
+          "MTR-2020-00055",
+          "MTR-2020-00063",
+          "MTR-2020-00077",
+          "MTR-2021-00048",
+          "MTR-2022-00062",
+          "MTR-2024-00052",
+          "MTR-2024-00065",
+          "MTR-2024-00105",
+          "MTR-2025-00040"
+        ],
+        "n_ranked": 184,
+        "min_k_cov_0.5": 46,
+        "min_k_cov_0.9": 85,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2024-00052"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2024-00052",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065",
+              "MTR-2024-00105"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.12,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2024-00052",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065",
+              "MTR-2024-00105"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "question": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00006",
+          "MTR-2018-00030",
+          "MTR-2019-00033",
+          "MTR-2020-00016",
+          "MTR-2021-00068",
+          "MTR-2021-00095",
+          "MTR-2022-00022",
+          "MTR-2023-00025",
+          "MTR-2024-00093",
+          "MTR-2025-00054"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 26,
+        "min_k_cov_0.9": 74,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095",
+              "MTR-2023-00025",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2024-00093"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "question": "Have we dealt with natural disasters affecting contractual performance?",
+        "n_holders": 3,
+        "holder_ids": [
+          "MTR-2020-00004",
+          "MTR-2021-00019",
+          "MTR-2024-00012"
+        ],
+        "n_ranked": 143,
+        "min_k_cov_0.5": 27,
+        "min_k_cov_0.9": 50,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 1,
+            "holder_coverage": 0.3333,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004"
+            ],
+            "missing_ids": [
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": []
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.03,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": []
+          }
+        }
+      }
+    ],
+    "lexical_struct": [
+      {
+        "query_id": "Q-0264",
+        "question": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00028",
+          "MTR-2019-00044",
+          "MTR-2019-00060",
+          "MTR-2020-00018",
+          "MTR-2020-00099",
+          "MTR-2021-00071",
+          "MTR-2022-00031",
+          "MTR-2022-00070",
+          "MTR-2023-00007",
+          "MTR-2023-00072"
+        ],
+        "n_ranked": 196,
+        "min_k_cov_0.5": 61,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2019-00028"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2021-00071"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 8,
+            "holder_coverage": 0.8,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00070",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2022-00031",
+              "MTR-2023-00007"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "question": "Have we advised on post-employment non-competes and restraint of trade?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2020-00074",
+          "MTR-2020-00128",
+          "MTR-2021-00058",
+          "MTR-2022-00083",
+          "MTR-2022-00122",
+          "MTR-2023-00084",
+          "MTR-2024-00009",
+          "MTR-2024-00023",
+          "MTR-2024-00078",
+          "MTR-2024-00082"
+        ],
+        "n_ranked": 187,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.02,
+            "found_ids": [
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.04,
+            "found_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "question": "Have we done title diligence involving unregistered family settlements?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00051",
+          "MTR-2018-00024",
+          "MTR-2019-00056",
+          "MTR-2020-00049",
+          "MTR-2021-00005",
+          "MTR-2021-00059",
+          "MTR-2022-00011",
+          "MTR-2023-00050",
+          "MTR-2024-00073",
+          "MTR-2025-00075"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 56,
+        "min_k_cov_0.9": 94,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2021-00059"
+            ],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2024-00073"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "question": "Have we handled transfer pricing adjustments on intra-group management fees?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00064",
+          "MTR-2019-00039",
+          "MTR-2019-00086",
+          "MTR-2019-00090",
+          "MTR-2021-00020",
+          "MTR-2022-00035",
+          "MTR-2023-00036",
+          "MTR-2023-00067",
+          "MTR-2023-00088",
+          "MTR-2025-00017"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 22,
+        "min_k_cov_0.9": 71,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.4,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "question": "Have we handled supply-contract terminations for quality failures?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00047",
+          "MTR-2020-00055",
+          "MTR-2020-00063",
+          "MTR-2020-00077",
+          "MTR-2021-00048",
+          "MTR-2022-00062",
+          "MTR-2024-00052",
+          "MTR-2024-00065",
+          "MTR-2024-00105",
+          "MTR-2025-00040"
+        ],
+        "n_ranked": 184,
+        "min_k_cov_0.5": 46,
+        "min_k_cov_0.9": 85,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2024-00052"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2024-00052",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065",
+              "MTR-2024-00105"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.12,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2024-00052",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065",
+              "MTR-2024-00105"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "question": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00006",
+          "MTR-2018-00030",
+          "MTR-2019-00033",
+          "MTR-2020-00016",
+          "MTR-2021-00068",
+          "MTR-2021-00095",
+          "MTR-2022-00022",
+          "MTR-2023-00025",
+          "MTR-2024-00093",
+          "MTR-2025-00054"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 26,
+        "min_k_cov_0.9": 74,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.3,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095",
+              "MTR-2023-00025",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2024-00093"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "question": "Have we dealt with natural disasters affecting contractual performance?",
+        "n_holders": 3,
+        "holder_ids": [
+          "MTR-2020-00004",
+          "MTR-2021-00019",
+          "MTR-2024-00012"
+        ],
+        "n_ranked": 144,
+        "min_k_cov_0.5": 27,
+        "min_k_cov_0.9": 50,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 1,
+            "holder_coverage": 0.3333,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00004"
+            ],
+            "missing_ids": [
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": []
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.03,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": []
+          }
+        }
+      }
+    ],
+    "vector_struct": [
+      {
+        "query_id": "Q-0264",
+        "question": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00028",
+          "MTR-2019-00044",
+          "MTR-2019-00060",
+          "MTR-2020-00018",
+          "MTR-2020-00099",
+          "MTR-2021-00071",
+          "MTR-2022-00031",
+          "MTR-2022-00070",
+          "MTR-2023-00007",
+          "MTR-2023-00072"
+        ],
+        "n_ranked": 18,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "20": {
+            "k": 18,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "50": {
+            "k": 18,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "100": {
+            "k": 18,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "question": "Have we advised on post-employment non-competes and restraint of trade?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2020-00074",
+          "MTR-2020-00128",
+          "MTR-2021-00058",
+          "MTR-2022-00083",
+          "MTR-2022-00122",
+          "MTR-2023-00084",
+          "MTR-2024-00009",
+          "MTR-2024-00023",
+          "MTR-2024-00078",
+          "MTR-2024-00082"
+        ],
+        "n_ranked": 26,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2022-00122"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.15,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122",
+              "MTR-2024-00082"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078"
+            ]
+          },
+          "50": {
+            "k": 26,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1154,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122",
+              "MTR-2024-00082"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078"
+            ]
+          },
+          "100": {
+            "k": 26,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1154,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122",
+              "MTR-2024-00082"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "question": "Have we done title diligence involving unregistered family settlements?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00051",
+          "MTR-2018-00024",
+          "MTR-2019-00056",
+          "MTR-2020-00049",
+          "MTR-2021-00005",
+          "MTR-2021-00059",
+          "MTR-2022-00011",
+          "MTR-2023-00050",
+          "MTR-2024-00073",
+          "MTR-2025-00075"
+        ],
+        "n_ranked": 20,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "50": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "100": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "question": "Have we handled transfer pricing adjustments on intra-group management fees?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00064",
+          "MTR-2019-00039",
+          "MTR-2019-00086",
+          "MTR-2019-00090",
+          "MTR-2021-00020",
+          "MTR-2022-00035",
+          "MTR-2023-00036",
+          "MTR-2023-00067",
+          "MTR-2023-00088",
+          "MTR-2025-00017"
+        ],
+        "n_ranked": 13,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "20": {
+            "k": 13,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.0769,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "50": {
+            "k": 13,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.0769,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "100": {
+            "k": 13,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.0769,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "question": "Have we handled supply-contract terminations for quality failures?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00047",
+          "MTR-2020-00055",
+          "MTR-2020-00063",
+          "MTR-2020-00077",
+          "MTR-2021-00048",
+          "MTR-2022-00062",
+          "MTR-2024-00052",
+          "MTR-2024-00065",
+          "MTR-2024-00105",
+          "MTR-2025-00040"
+        ],
+        "n_ranked": 19,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2020-00077"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2020-00077"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "20": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1579,
+            "found_ids": [
+              "MTR-2020-00077",
+              "MTR-2022-00062",
+              "MTR-2024-00105"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2025-00040"
+            ]
+          },
+          "50": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1579,
+            "found_ids": [
+              "MTR-2020-00077",
+              "MTR-2022-00062",
+              "MTR-2024-00105"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2025-00040"
+            ]
+          },
+          "100": {
+            "k": 19,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1579,
+            "found_ids": [
+              "MTR-2020-00077",
+              "MTR-2022-00062",
+              "MTR-2024-00105"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2025-00040"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "question": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00006",
+          "MTR-2018-00030",
+          "MTR-2019-00033",
+          "MTR-2020-00016",
+          "MTR-2021-00068",
+          "MTR-2021-00095",
+          "MTR-2022-00022",
+          "MTR-2023-00025",
+          "MTR-2024-00093",
+          "MTR-2025-00054"
+        ],
+        "n_ranked": 18,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "20": {
+            "k": 18,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1111,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093"
+            ]
+          },
+          "50": {
+            "k": 18,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1111,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093"
+            ]
+          },
+          "100": {
+            "k": 18,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1111,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "question": "Have we dealt with natural disasters affecting contractual performance?",
+        "n_holders": 3,
+        "holder_ids": [
+          "MTR-2020-00004",
+          "MTR-2021-00019",
+          "MTR-2024-00012"
+        ],
+        "n_ranked": 20,
+        "min_k_cov_0.5": null,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "50": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "100": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          }
+        }
+      }
+    ],
+    "hybrid": [
+      {
+        "query_id": "Q-0264",
+        "question": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00028",
+          "MTR-2019-00044",
+          "MTR-2019-00060",
+          "MTR-2020-00018",
+          "MTR-2020-00099",
+          "MTR-2021-00071",
+          "MTR-2022-00031",
+          "MTR-2022-00070",
+          "MTR-2023-00007",
+          "MTR-2023-00072"
+        ],
+        "n_ranked": 193,
+        "min_k_cov_0.5": 76,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071"
+            ],
+            "missing_ids": [
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "question": "Have we advised on post-employment non-competes and restraint of trade?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2020-00074",
+          "MTR-2020-00128",
+          "MTR-2021-00058",
+          "MTR-2022-00083",
+          "MTR-2022-00122",
+          "MTR-2023-00084",
+          "MTR-2024-00009",
+          "MTR-2024-00023",
+          "MTR-2024-00078",
+          "MTR-2024-00082"
+        ],
+        "n_ranked": 187,
+        "min_k_cov_0.5": 84,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122",
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00122",
+              "MTR-2024-00078"
+            ],
+            "missing_ids": [
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00082"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "question": "Have we done title diligence involving unregistered family settlements?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00051",
+          "MTR-2018-00024",
+          "MTR-2019-00056",
+          "MTR-2020-00049",
+          "MTR-2021-00005",
+          "MTR-2021-00059",
+          "MTR-2022-00011",
+          "MTR-2023-00050",
+          "MTR-2024-00073",
+          "MTR-2025-00075"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 59,
+        "min_k_cov_0.9": 95,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2024-00073"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "question": "Have we handled transfer pricing adjustments on intra-group management fees?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00064",
+          "MTR-2019-00039",
+          "MTR-2019-00086",
+          "MTR-2019-00090",
+          "MTR-2021-00020",
+          "MTR-2022-00035",
+          "MTR-2023-00036",
+          "MTR-2023-00067",
+          "MTR-2023-00088",
+          "MTR-2025-00017"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 26,
+        "min_k_cov_0.9": 71,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "question": "Have we handled supply-contract terminations for quality failures?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00047",
+          "MTR-2020-00055",
+          "MTR-2020-00063",
+          "MTR-2020-00077",
+          "MTR-2021-00048",
+          "MTR-2022-00062",
+          "MTR-2024-00052",
+          "MTR-2024-00065",
+          "MTR-2024-00105",
+          "MTR-2025-00040"
+        ],
+        "n_ranked": 184,
+        "min_k_cov_0.5": 48,
+        "min_k_cov_0.9": 74,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2020-00077"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2020-00077",
+              "MTR-2024-00105"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2025-00040"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 5,
+            "holder_coverage": 0.5,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00077",
+              "MTR-2024-00052",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00065"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "question": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00006",
+          "MTR-2018-00030",
+          "MTR-2019-00033",
+          "MTR-2020-00016",
+          "MTR-2021-00068",
+          "MTR-2021-00095",
+          "MTR-2022-00022",
+          "MTR-2023-00025",
+          "MTR-2024-00093",
+          "MTR-2025-00054"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 24,
+        "min_k_cov_0.9": 74,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2021-00095"
+            ],
+            "missing_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.15,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2021-00095",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095",
+              "MTR-2023-00025",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2024-00093"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "question": "Have we dealt with natural disasters affecting contractual performance?",
+        "n_holders": 3,
+        "holder_ids": [
+          "MTR-2020-00004",
+          "MTR-2021-00019",
+          "MTR-2024-00012"
+        ],
+        "n_ranked": 143,
+        "min_k_cov_0.5": 40,
+        "min_k_cov_0.9": 52,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 2,
+            "holder_coverage": 0.6667,
+            "holder_hit": 1.0,
+            "holder_precision": 0.04,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019"
+            ],
+            "missing_ids": [
+              "MTR-2024-00012"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.03,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": []
+          }
+        }
+      }
+    ],
+    "hybrid_struct": [
+      {
+        "query_id": "Q-0264",
+        "question": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00028",
+          "MTR-2019-00044",
+          "MTR-2019-00060",
+          "MTR-2020-00018",
+          "MTR-2020-00099",
+          "MTR-2021-00071",
+          "MTR-2022-00031",
+          "MTR-2022-00070",
+          "MTR-2023-00007",
+          "MTR-2023-00072"
+        ],
+        "n_ranked": 196,
+        "min_k_cov_0.5": 73,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.05,
+            "found_ids": [
+              "MTR-2019-00028"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007",
+              "MTR-2023-00072"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2021-00071",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00018",
+              "MTR-2020-00099",
+              "MTR-2022-00031",
+              "MTR-2022-00070",
+              "MTR-2023-00007"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.07,
+            "found_ids": [
+              "MTR-2019-00028",
+              "MTR-2019-00044",
+              "MTR-2019-00060",
+              "MTR-2020-00099",
+              "MTR-2021-00071",
+              "MTR-2022-00070",
+              "MTR-2023-00072"
+            ],
+            "missing_ids": [
+              "MTR-2020-00018",
+              "MTR-2022-00031",
+              "MTR-2023-00007"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0265",
+        "question": "Have we advised on post-employment non-competes and restraint of trade?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2020-00074",
+          "MTR-2020-00128",
+          "MTR-2021-00058",
+          "MTR-2022-00083",
+          "MTR-2022-00122",
+          "MTR-2023-00084",
+          "MTR-2024-00009",
+          "MTR-2024-00023",
+          "MTR-2024-00078",
+          "MTR-2024-00082"
+        ],
+        "n_ranked": 187,
+        "min_k_cov_0.5": 83,
+        "min_k_cov_0.9": null,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00083",
+              "MTR-2022-00122",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.15,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122",
+              "MTR-2024-00082"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023",
+              "MTR-2024-00078"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2021-00058",
+              "MTR-2022-00122",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "missing_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.06,
+            "found_ids": [
+              "MTR-2020-00074",
+              "MTR-2020-00128",
+              "MTR-2021-00058",
+              "MTR-2022-00122",
+              "MTR-2024-00078",
+              "MTR-2024-00082"
+            ],
+            "missing_ids": [
+              "MTR-2022-00083",
+              "MTR-2023-00084",
+              "MTR-2024-00009",
+              "MTR-2024-00023"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0266",
+        "question": "Have we done title diligence involving unregistered family settlements?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00051",
+          "MTR-2018-00024",
+          "MTR-2019-00056",
+          "MTR-2020-00049",
+          "MTR-2021-00005",
+          "MTR-2021-00059",
+          "MTR-2022-00011",
+          "MTR-2023-00050",
+          "MTR-2024-00073",
+          "MTR-2025-00075"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 60,
+        "min_k_cov_0.9": 96,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073",
+              "MTR-2025-00075"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.08,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2021-00059",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2024-00073"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 9,
+            "holder_coverage": 0.9,
+            "holder_hit": 1.0,
+            "holder_precision": 0.09,
+            "found_ids": [
+              "MTR-2017-00051",
+              "MTR-2018-00024",
+              "MTR-2019-00056",
+              "MTR-2020-00049",
+              "MTR-2021-00005",
+              "MTR-2021-00059",
+              "MTR-2022-00011",
+              "MTR-2023-00050",
+              "MTR-2025-00075"
+            ],
+            "missing_ids": [
+              "MTR-2024-00073"
+            ]
+          }
+        }
+      },
+      {
+        "query_id": "Q-0267",
+        "question": "Have we handled transfer pricing adjustments on intra-group management fees?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00064",
+          "MTR-2019-00039",
+          "MTR-2019-00086",
+          "MTR-2019-00090",
+          "MTR-2021-00020",
+          "MTR-2022-00035",
+          "MTR-2023-00036",
+          "MTR-2023-00067",
+          "MTR-2023-00088",
+          "MTR-2025-00017"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 28,
+        "min_k_cov_0.9": 71,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 4,
+            "holder_coverage": 0.4,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035"
+            ],
+            "missing_ids": [
+              "MTR-2019-00039",
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2022-00035",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": [
+              "MTR-2021-00020",
+              "MTR-2023-00036",
+              "MTR-2023-00067"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00064",
+              "MTR-2019-00039",
+              "MTR-2019-00086",
+              "MTR-2019-00090",
+              "MTR-2021-00020",
+              "MTR-2022-00035",
+              "MTR-2023-00036",
+              "MTR-2023-00067",
+              "MTR-2023-00088",
+              "MTR-2025-00017"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0270",
+        "question": "Have we handled supply-contract terminations for quality failures?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2019-00047",
+          "MTR-2020-00055",
+          "MTR-2020-00063",
+          "MTR-2020-00077",
+          "MTR-2021-00048",
+          "MTR-2022-00062",
+          "MTR-2024-00052",
+          "MTR-2024-00065",
+          "MTR-2024-00105",
+          "MTR-2025-00040"
+        ],
+        "n_ranked": 184,
+        "min_k_cov_0.5": 32,
+        "min_k_cov_0.9": 66,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2020-00077"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 3,
+            "holder_coverage": 0.3,
+            "holder_hit": 1.0,
+            "holder_precision": 0.15,
+            "found_ids": [
+              "MTR-2020-00077",
+              "MTR-2022-00062",
+              "MTR-2024-00105"
+            ],
+            "missing_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2025-00040"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 6,
+            "holder_coverage": 0.6,
+            "holder_hit": 1.0,
+            "holder_precision": 0.12,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00077",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": [
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2021-00048",
+              "MTR-2024-00065"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2019-00047",
+              "MTR-2020-00055",
+              "MTR-2020-00063",
+              "MTR-2020-00077",
+              "MTR-2021-00048",
+              "MTR-2022-00062",
+              "MTR-2024-00052",
+              "MTR-2024-00065",
+              "MTR-2024-00105",
+              "MTR-2025-00040"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0271",
+        "question": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+        "n_holders": 10,
+        "holder_ids": [
+          "MTR-2017-00006",
+          "MTR-2018-00030",
+          "MTR-2019-00033",
+          "MTR-2020-00016",
+          "MTR-2021-00068",
+          "MTR-2021-00095",
+          "MTR-2022-00022",
+          "MTR-2023-00025",
+          "MTR-2024-00093",
+          "MTR-2025-00054"
+        ],
+        "n_ranked": 200,
+        "min_k_cov_0.5": 29,
+        "min_k_cov_0.9": 74,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.2,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 10,
+            "holders_found": 1,
+            "holder_coverage": 0.1,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 10,
+            "holders_found": 2,
+            "holder_coverage": 0.2,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 10,
+            "holders_found": 7,
+            "holder_coverage": 0.7,
+            "holder_hit": 1.0,
+            "holder_precision": 0.14,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00095",
+              "MTR-2023-00025",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": [
+              "MTR-2021-00068",
+              "MTR-2022-00022",
+              "MTR-2024-00093"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 10,
+            "holders_found": 10,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.1,
+            "found_ids": [
+              "MTR-2017-00006",
+              "MTR-2018-00030",
+              "MTR-2019-00033",
+              "MTR-2020-00016",
+              "MTR-2021-00068",
+              "MTR-2021-00095",
+              "MTR-2022-00022",
+              "MTR-2023-00025",
+              "MTR-2024-00093",
+              "MTR-2025-00054"
+            ],
+            "missing_ids": []
+          }
+        }
+      },
+      {
+        "query_id": "Q-0273",
+        "question": "Have we dealt with natural disasters affecting contractual performance?",
+        "n_holders": 3,
+        "holder_ids": [
+          "MTR-2020-00004",
+          "MTR-2021-00019",
+          "MTR-2024-00012"
+        ],
+        "n_ranked": 144,
+        "min_k_cov_0.5": 40,
+        "min_k_cov_0.9": 52,
+        "by_k": {
+          "5": {
+            "k": 5,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "10": {
+            "k": 10,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "20": {
+            "k": 20,
+            "n_holders": 3,
+            "holders_found": 0,
+            "holder_coverage": 0.0,
+            "holder_hit": 0.0,
+            "holder_precision": 0.0,
+            "found_ids": [],
+            "missing_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ]
+          },
+          "50": {
+            "k": 50,
+            "n_holders": 3,
+            "holders_found": 2,
+            "holder_coverage": 0.6667,
+            "holder_hit": 1.0,
+            "holder_precision": 0.04,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019"
+            ],
+            "missing_ids": [
+              "MTR-2024-00012"
+            ]
+          },
+          "100": {
+            "k": 100,
+            "n_holders": 3,
+            "holders_found": 3,
+            "holder_coverage": 1.0,
+            "holder_hit": 1.0,
+            "holder_precision": 0.03,
+            "found_ids": [
+              "MTR-2020-00004",
+              "MTR-2021-00019",
+              "MTR-2024-00012"
+            ],
+            "missing_ids": []
+          }
+        }
+      }
+    ]
+  },
+  "gate": {
+    "note": "Promote toward C5 only if HolderCoverage@20 \u2265 ~0.5 and climbing; C0 doc resolve stays off",
+    "target_holder_coverage@20": 0.5,
+    "target_holder_coverage@50": 0.9
+  }
+}

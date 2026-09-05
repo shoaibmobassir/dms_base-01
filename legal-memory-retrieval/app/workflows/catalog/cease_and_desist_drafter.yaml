@@ -1,0 +1,57 @@
+id: cease-and-desist-drafter
+title: Formal Cease & Desist Letter Drafter (IP & Commercial)
+description: Searches firm precedents for IP and breach enforcement, extracts required legal demands, and drafts a formal formal demand letter.
+category: drafting
+inputs:
+  - name: rights_holder
+    label: Rights Holder / Client Name
+    type: string
+    required: true
+  - name: infringing_party
+    label: Infringing Party Legal Name
+    type: string
+    required: true
+  - name: infringement_details
+    label: Description of Unauthorized Conduct / Infringement
+    type: string
+    required: true
+  - name: remedy_deadline_days
+    label: Cure Period (Days)
+    type: number
+    default: 10
+steps:
+  - id: retrieve_firm_cd_precedents
+    type: retrieve
+    query: "Cease and desist demand letter for intellectual property infringement and commercial breach"
+    k: 4
+
+  - id: draft_demand_letter
+    type: ask
+    prompt: |
+      Draft a formal Cease & Desist Demand Letter from {{inputs.rights_holder}} to {{inputs.infringing_party}}.
+      Infringing conduct details: {{inputs.infringing_details}}
+      Demand compliance within {{inputs.remedy_deadline_days}} business days.
+      Structure the letter with formal legal demand blocks:
+      1. Notice of Rights & Protected Subject Matter
+      2. Specific Acts of Unauthorized Infringement
+      3. Formal Demands (Immediate cessation, destruction/removal, written confirmation)
+      4. Reservation of All Legal and Equitable Remedies.
+      Maintain an uncompromising, authoritative, and professional legal tone.
+
+  - id: compose_letter
+    type: compose
+    template: |
+      # LEGAL DEMAND — CEASE AND DESIST
+      **PRIVILEGED & CONFIDENTIAL / FOR COUNSEL REVIEW ONLY**
+
+      **DATE:** Current Date
+      **TO:** {{inputs.infringing_party}}
+      **FROM:** Counsel for {{inputs.rights_holder}}
+      **RE:** FORMAL NOTICE OF INFRINGEMENT & DEMAND FOR CESSATION
+
+      ---
+
+      {{steps.draft_demand_letter.answer}}
+
+      ---
+      *Generated via FirmOS Legal Memory & Drafting Engine*

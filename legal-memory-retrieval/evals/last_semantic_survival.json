@@ -1,0 +1,2678 @@
+{
+  "freeze": {
+    "FUSION_POLICY": "p55_repair_ce_protect",
+    "MATTER_SCOPE": "hard",
+    "note": "P5.6-B0 diagnosis only \u2014 no matter routing / fusion / embedding changes"
+  },
+  "aggregate": {
+    "n": 7,
+    "stage_table_R@20": {
+      "bm25": 0.0,
+      "vector": 0.0,
+      "metadata": 0.0,
+      "matter": 0.0,
+      "matter_scope": 0.0,
+      "hierarchical": 0.0,
+      "graph_seed": 0.0,
+      "union": 0.0,
+      "fusion": 0.0,
+      "ce": 0.0,
+      "final": 0.0
+    },
+    "stage_table_Hit@20": {
+      "bm25": 0.0,
+      "vector": 0.0,
+      "metadata": 0.0,
+      "matter": 0.0,
+      "matter_scope": 0.0,
+      "hierarchical": 0.0,
+      "graph_seed": 0.0,
+      "union": 0.0,
+      "fusion": 0.0,
+      "ce": 0.0,
+      "final": 0.0
+    },
+    "stage_table_full": {
+      "bm25": {
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0,
+        "Hit@5": 0.0,
+        "Hit@10": 0.0,
+        "Hit@20": 0.0,
+        "Hit@50": 0.0
+      },
+      "vector": {
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0,
+        "Hit@5": 0.0,
+        "Hit@10": 0.0,
+        "Hit@20": 0.0,
+        "Hit@50": 0.0
+      },
+      "metadata": {},
+      "matter": {
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0143,
+        "Hit@5": 0.0,
+        "Hit@10": 0.0,
+        "Hit@20": 0.0,
+        "Hit@50": 0.1429
+      },
+      "matter_scope": {},
+      "hierarchical": {
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0,
+        "Hit@5": 0.0,
+        "Hit@10": 0.0,
+        "Hit@20": 0.0,
+        "Hit@50": 0.0
+      },
+      "graph_seed": {
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0,
+        "Hit@5": 0.0,
+        "Hit@10": 0.0,
+        "Hit@20": 0.0,
+        "Hit@50": 0.0
+      },
+      "union": {
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0,
+        "Hit@5": 0.0,
+        "Hit@10": 0.0,
+        "Hit@20": 0.0,
+        "Hit@50": 0.0
+      },
+      "fusion": {
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0,
+        "Hit@5": 0.0,
+        "Hit@10": 0.0,
+        "Hit@20": 0.0,
+        "Hit@50": 0.0
+      },
+      "ce": {
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0,
+        "Hit@5": 0.0,
+        "Hit@10": 0.0,
+        "Hit@20": 0.0,
+        "Hit@50": 0.0
+      },
+      "final": {
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0,
+        "Hit@5": 0.0,
+        "Hit@10": 0.0,
+        "Hit@20": 0.0,
+        "Hit@50": 0.0
+      }
+    },
+    "matter_stage_table_R@20": {
+      "bm25": 0.0222,
+      "vector": 0.1912,
+      "matter": 0.0119,
+      "union": 0.2066,
+      "fusion": 0.1113,
+      "ce": 0.2122,
+      "final": 0.1261
+    },
+    "matter_stage_table_Hit@20": {
+      "bm25": 0.1429,
+      "vector": 1.0,
+      "matter": 0.5714,
+      "union": 1.0,
+      "fusion": 1.0,
+      "ce": 1.0,
+      "final": 1.0
+    },
+    "drop_stage_counts": {
+      "candidate_generation": 7
+    },
+    "vector_R@20": 0.0,
+    "union_R@20": 0.0,
+    "fusion_R@20": 0.0,
+    "ce_R@20": 0.0,
+    "outcome": "A_candidate_generation",
+    "guidance": "Gold barely enters the pool \u2014 fix vector/BM25/query rep; do not touch CE."
+  },
+  "per_query": [
+    {
+      "query_id": "Q-0264",
+      "query": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+      "intent": "semantic",
+      "n_gold_docs": 20,
+      "n_gold_matters": 103,
+      "channels_planned": [
+        "vector",
+        "matter",
+        "hierarchical",
+        "graph_seed",
+        "bm25"
+      ],
+      "matter_scope_mode": "hard",
+      "fusion_policy": "p55_repair_ce_protect",
+      "channel": {
+        "vector": {
+          "name": "vector",
+          "n_candidates": 40,
+          "n_unique_docs": 40,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 19,
+          "gold_matters_hit": 19,
+          "matter_recall": {
+            "R@5": 0.04854368932038835,
+            "R@10": 0.0970873786407767,
+            "R@20": 0.18446601941747573,
+            "R@50": 0.18446601941747573
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "matter": {
+          "name": "matter",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 2,
+          "gold_matters_hit": 2,
+          "matter_recall": {
+            "R@5": 0.019417475728155338,
+            "R@10": 0.019417475728155338,
+            "R@20": 0.019417475728155338,
+            "R@50": 0.019417475728155338
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "hierarchical": {
+          "name": "hierarchical",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_seed": {
+          "name": "graph_seed",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "bm25": {
+          "name": "bm25",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_expansion": {
+          "name": "graph_expansion",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 50,
+          "gold_matters_hit": 9,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.009708737864077669,
+            "R@50": 0.08737864077669903
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        }
+      },
+      "union": {
+        "name": "union",
+        "n_candidates": 137,
+        "n_unique_docs": 137,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 69,
+        "gold_matters_hit": 28,
+        "matter_recall": {
+          "R@5": 0.04854368932038835,
+          "R@10": 0.0970873786407767,
+          "R@20": 0.18446601941747573,
+          "R@50": 0.21359223300970873
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "fusion": {
+        "name": "fusion",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 69,
+        "gold_matters_hit": 28,
+        "matter_recall": {
+          "R@5": 0.02912621359223301,
+          "R@10": 0.04854368932038835,
+          "R@20": 0.07766990291262135,
+          "R@50": 0.20388349514563106
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "ce": {
+        "name": "ce",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 69,
+        "gold_matters_hit": 28,
+        "matter_recall": {
+          "R@5": 0.04854368932038835,
+          "R@10": 0.0970873786407767,
+          "R@20": 0.1941747572815534,
+          "R@50": 0.27184466019417475
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "final": {
+        "name": "final",
+        "n_candidates": 20,
+        "n_unique_docs": 20,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 10,
+        "gold_matters_hit": 10,
+        "matter_recall": {
+          "R@5": 0.04854368932038835,
+          "R@10": 0.0970873786407767,
+          "R@20": 0.0970873786407767,
+          "R@50": 0.0970873786407767
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "drop_stage": "candidate_generation",
+      "latency_ms": {
+        "understand": 0.0,
+        "parallel_wall_ms": 8031.6,
+        "vector": 7970.8,
+        "matter": 97.5,
+        "hierarchical": 62.8,
+        "graph_seed": 0.0,
+        "bm25": 29.3,
+        "rerank": 8693.4
+      }
+    },
+    {
+      "query_id": "Q-0265",
+      "query": "Have we advised on post-employment non-competes and restraint of trade?",
+      "intent": "semantic",
+      "n_gold_docs": 20,
+      "n_gold_matters": 84,
+      "channels_planned": [
+        "vector",
+        "matter",
+        "hierarchical",
+        "graph_seed",
+        "bm25"
+      ],
+      "matter_scope_mode": "hard",
+      "fusion_policy": "p55_repair_ce_protect",
+      "channel": {
+        "vector": {
+          "name": "vector",
+          "n_candidates": 40,
+          "n_unique_docs": 40,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 26,
+          "gold_matters_hit": 26,
+          "matter_recall": {
+            "R@5": 0.05952380952380952,
+            "R@10": 0.11904761904761904,
+            "R@20": 0.23809523809523808,
+            "R@50": 0.30952380952380953
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "matter": {
+          "name": "matter",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 2,
+          "gold_matters_hit": 2,
+          "matter_recall": {
+            "R@5": 0.023809523809523808,
+            "R@10": 0.023809523809523808,
+            "R@20": 0.023809523809523808,
+            "R@50": 0.023809523809523808
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "hierarchical": {
+          "name": "hierarchical",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_seed": {
+          "name": "graph_seed",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "bm25": {
+          "name": "bm25",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_expansion": {
+          "name": "graph_expansion",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 50,
+          "gold_matters_hit": 3,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.011904761904761904,
+            "R@50": 0.03571428571428571
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        }
+      },
+      "union": {
+        "name": "union",
+        "n_candidates": 139,
+        "n_unique_docs": 139,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 77,
+        "gold_matters_hit": 30,
+        "matter_recall": {
+          "R@5": 0.05952380952380952,
+          "R@10": 0.11904761904761904,
+          "R@20": 0.23809523809523808,
+          "R@50": 0.34523809523809523
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "fusion": {
+        "name": "fusion",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 76,
+        "gold_matters_hit": 29,
+        "matter_recall": {
+          "R@5": 0.03571428571428571,
+          "R@10": 0.05952380952380952,
+          "R@20": 0.11904761904761904,
+          "R@50": 0.2619047619047619
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "ce": {
+        "name": "ce",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 76,
+        "gold_matters_hit": 29,
+        "matter_recall": {
+          "R@5": 0.05952380952380952,
+          "R@10": 0.11904761904761904,
+          "R@20": 0.23809523809523808,
+          "R@50": 0.3333333333333333
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "final": {
+        "name": "final",
+        "n_candidates": 20,
+        "n_unique_docs": 20,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 16,
+        "gold_matters_hit": 16,
+        "matter_recall": {
+          "R@5": 0.05952380952380952,
+          "R@10": 0.11904761904761904,
+          "R@20": 0.19047619047619047,
+          "R@50": 0.19047619047619047
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "drop_stage": "candidate_generation",
+      "latency_ms": {
+        "understand": 0.1,
+        "parallel_wall_ms": 81.8,
+        "vector": 48.2,
+        "matter": 57.7,
+        "hierarchical": 63.9,
+        "graph_seed": 0.0,
+        "bm25": 22.8,
+        "rerank": 497.8
+      }
+    },
+    {
+      "query_id": "Q-0266",
+      "query": "Have we done title diligence involving unregistered family settlements?",
+      "intent": "semantic",
+      "n_gold_docs": 20,
+      "n_gold_matters": 113,
+      "channels_planned": [
+        "vector",
+        "matter",
+        "hierarchical",
+        "graph_seed",
+        "bm25"
+      ],
+      "matter_scope_mode": "hard",
+      "fusion_policy": "p55_repair_ce_protect",
+      "channel": {
+        "vector": {
+          "name": "vector",
+          "n_candidates": 40,
+          "n_unique_docs": 40,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 19,
+          "gold_matters_hit": 19,
+          "matter_recall": {
+            "R@5": 0.04424778761061947,
+            "R@10": 0.08849557522123894,
+            "R@20": 0.168141592920354,
+            "R@50": 0.168141592920354
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "matter": {
+          "name": "matter",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 2,
+          "gold_doc_ids": [
+            "DOC-02879",
+            "DOC-02880"
+          ],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.1
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 1.0
+          },
+          "n_unique_matters": 2,
+          "gold_matters_hit": 2,
+          "matter_recall": {
+            "R@5": 0.017699115044247787,
+            "R@10": 0.017699115044247787,
+            "R@20": 0.017699115044247787,
+            "R@50": 0.017699115044247787
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "hierarchical": {
+          "name": "hierarchical",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_seed": {
+          "name": "graph_seed",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "bm25": {
+          "name": "bm25",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_expansion": {
+          "name": "graph_expansion",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 50,
+          "gold_matters_hit": 11,
+          "matter_recall": {
+            "R@5": 0.017699115044247787,
+            "R@10": 0.02654867256637168,
+            "R@20": 0.035398230088495575,
+            "R@50": 0.09734513274336283
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        }
+      },
+      "union": {
+        "name": "union",
+        "n_candidates": 140,
+        "n_unique_docs": 140,
+        "gold_docs_hit": 2,
+        "gold_doc_ids": [
+          "DOC-02879",
+          "DOC-02880"
+        ],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 71,
+        "gold_matters_hit": 32,
+        "matter_recall": {
+          "R@5": 0.04424778761061947,
+          "R@10": 0.08849557522123894,
+          "R@20": 0.17699115044247787,
+          "R@50": 0.23893805309734514
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "fusion": {
+        "name": "fusion",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 70,
+        "gold_matters_hit": 31,
+        "matter_recall": {
+          "R@5": 0.02654867256637168,
+          "R@10": 0.05309734513274336,
+          "R@20": 0.09734513274336283,
+          "R@50": 0.18584070796460178
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "ce": {
+        "name": "ce",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 70,
+        "gold_matters_hit": 31,
+        "matter_recall": {
+          "R@5": 0.04424778761061947,
+          "R@10": 0.08849557522123894,
+          "R@20": 0.17699115044247787,
+          "R@50": 0.24778761061946902
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "final": {
+        "name": "final",
+        "n_candidates": 20,
+        "n_unique_docs": 20,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 12,
+        "gold_matters_hit": 12,
+        "matter_recall": {
+          "R@5": 0.04424778761061947,
+          "R@10": 0.08849557522123894,
+          "R@20": 0.10619469026548672,
+          "R@50": 0.10619469026548672
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "drop_stage": "candidate_generation",
+      "latency_ms": {
+        "understand": 0.1,
+        "parallel_wall_ms": 68.9,
+        "vector": 24.2,
+        "matter": 50.9,
+        "hierarchical": 61.1,
+        "graph_seed": 0.0,
+        "bm25": 12.3,
+        "rerank": 484.3
+      }
+    },
+    {
+      "query_id": "Q-0267",
+      "query": "Have we handled transfer pricing adjustments on intra-group management fees?",
+      "intent": "semantic",
+      "n_gold_docs": 20,
+      "n_gold_matters": 90,
+      "channels_planned": [
+        "vector",
+        "matter",
+        "hierarchical",
+        "graph_seed",
+        "bm25"
+      ],
+      "matter_scope_mode": "hard",
+      "fusion_policy": "p55_repair_ce_protect",
+      "channel": {
+        "vector": {
+          "name": "vector",
+          "n_candidates": 40,
+          "n_unique_docs": 40,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 10,
+          "gold_matters_hit": 10,
+          "matter_recall": {
+            "R@5": 0.05555555555555555,
+            "R@10": 0.1111111111111111,
+            "R@20": 0.1111111111111111,
+            "R@50": 0.1111111111111111
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "matter": {
+          "name": "matter",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 2,
+          "gold_matters_hit": 2,
+          "matter_recall": {
+            "R@5": 0.022222222222222223,
+            "R@10": 0.022222222222222223,
+            "R@20": 0.022222222222222223,
+            "R@50": 0.022222222222222223
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "hierarchical": {
+          "name": "hierarchical",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_seed": {
+          "name": "graph_seed",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "bm25": {
+          "name": "bm25",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 14,
+          "gold_matters_hit": 14,
+          "matter_recall": {
+            "R@5": 0.05555555555555555,
+            "R@10": 0.1111111111111111,
+            "R@20": 0.15555555555555556,
+            "R@50": 0.15555555555555556
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "graph_expansion": {
+          "name": "graph_expansion",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 50,
+          "gold_matters_hit": 9,
+          "matter_recall": {
+            "R@5": 0.022222222222222223,
+            "R@10": 0.022222222222222223,
+            "R@20": 0.044444444444444446,
+            "R@50": 0.1
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        }
+      },
+      "union": {
+        "name": "union",
+        "n_candidates": 190,
+        "n_unique_docs": 190,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 68,
+        "gold_matters_hit": 27,
+        "matter_recall": {
+          "R@5": 0.05555555555555555,
+          "R@10": 0.1111111111111111,
+          "R@20": 0.2,
+          "R@50": 0.26666666666666666
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "fusion": {
+        "name": "fusion",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 47,
+        "gold_matters_hit": 20,
+        "matter_recall": {
+          "R@5": 0.03333333333333333,
+          "R@10": 0.07777777777777778,
+          "R@20": 0.13333333333333333,
+          "R@50": 0.2222222222222222
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "ce": {
+        "name": "ce",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 47,
+        "gold_matters_hit": 20,
+        "matter_recall": {
+          "R@5": 0.05555555555555555,
+          "R@10": 0.1111111111111111,
+          "R@20": 0.2,
+          "R@50": 0.2222222222222222
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "final": {
+        "name": "final",
+        "n_candidates": 20,
+        "n_unique_docs": 20,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 6,
+        "gold_matters_hit": 6,
+        "matter_recall": {
+          "R@5": 0.05555555555555555,
+          "R@10": 0.06666666666666667,
+          "R@20": 0.06666666666666667,
+          "R@50": 0.06666666666666667
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "drop_stage": "candidate_generation",
+      "latency_ms": {
+        "understand": 0.0,
+        "parallel_wall_ms": 77.8,
+        "vector": 29.0,
+        "matter": 50.6,
+        "hierarchical": 61.5,
+        "graph_seed": 0.0,
+        "bm25": 33.4,
+        "rerank": 518.8
+      }
+    },
+    {
+      "query_id": "Q-0270",
+      "query": "Have we handled supply-contract terminations for quality failures?",
+      "intent": "semantic",
+      "n_gold_docs": 20,
+      "n_gold_matters": 100,
+      "channels_planned": [
+        "vector",
+        "matter",
+        "hierarchical",
+        "graph_seed",
+        "bm25"
+      ],
+      "matter_scope_mode": "hard",
+      "fusion_policy": "p55_repair_ce_protect",
+      "channel": {
+        "vector": {
+          "name": "vector",
+          "n_candidates": 40,
+          "n_unique_docs": 40,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 19,
+          "gold_matters_hit": 19,
+          "matter_recall": {
+            "R@5": 0.05,
+            "R@10": 0.1,
+            "R@20": 0.19,
+            "R@50": 0.19
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "matter": {
+          "name": "matter",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "hierarchical": {
+          "name": "hierarchical",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_seed": {
+          "name": "graph_seed",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "bm25": {
+          "name": "bm25",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_expansion": {
+          "name": "graph_expansion",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 50,
+          "gold_matters_hit": 8,
+          "matter_recall": {
+            "R@5": 0.02,
+            "R@10": 0.02,
+            "R@20": 0.02,
+            "R@50": 0.08
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        }
+      },
+      "union": {
+        "name": "union",
+        "n_candidates": 90,
+        "n_unique_docs": 90,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 69,
+        "gold_matters_hit": 27,
+        "matter_recall": {
+          "R@5": 0.05,
+          "R@10": 0.1,
+          "R@20": 0.19,
+          "R@50": 0.23
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "fusion": {
+        "name": "fusion",
+        "n_candidates": 90,
+        "n_unique_docs": 90,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 69,
+        "gold_matters_hit": 27,
+        "matter_recall": {
+          "R@5": 0.02,
+          "R@10": 0.07,
+          "R@20": 0.09,
+          "R@50": 0.2
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "ce": {
+        "name": "ce",
+        "n_candidates": 90,
+        "n_unique_docs": 90,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 69,
+        "gold_matters_hit": 27,
+        "matter_recall": {
+          "R@5": 0.05,
+          "R@10": 0.1,
+          "R@20": 0.2,
+          "R@50": 0.26
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "final": {
+        "name": "final",
+        "n_candidates": 20,
+        "n_unique_docs": 20,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 11,
+        "gold_matters_hit": 11,
+        "matter_recall": {
+          "R@5": 0.05,
+          "R@10": 0.1,
+          "R@20": 0.11,
+          "R@50": 0.11
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "drop_stage": "candidate_generation",
+      "latency_ms": {
+        "understand": 0.1,
+        "parallel_wall_ms": 64.5,
+        "vector": 30.5,
+        "matter": 11.8,
+        "hierarchical": 45.2,
+        "graph_seed": 0.0,
+        "bm25": 9.1,
+        "rerank": 438.8
+      }
+    },
+    {
+      "query_id": "Q-0271",
+      "query": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+      "intent": "semantic",
+      "n_gold_docs": 20,
+      "n_gold_matters": 101,
+      "channels_planned": [
+        "vector",
+        "matter",
+        "hierarchical",
+        "graph_seed",
+        "bm25"
+      ],
+      "matter_scope_mode": "hard",
+      "fusion_policy": "p55_repair_ce_protect",
+      "channel": {
+        "vector": {
+          "name": "vector",
+          "n_candidates": 40,
+          "n_unique_docs": 40,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 16,
+          "gold_matters_hit": 16,
+          "matter_recall": {
+            "R@5": 0.04950495049504951,
+            "R@10": 0.09900990099009901,
+            "R@20": 0.15841584158415842,
+            "R@50": 0.15841584158415842
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "matter": {
+          "name": "matter",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "hierarchical": {
+          "name": "hierarchical",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_seed": {
+          "name": "graph_seed",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "bm25": {
+          "name": "bm25",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_expansion": {
+          "name": "graph_expansion",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 50,
+          "gold_matters_hit": 7,
+          "matter_recall": {
+            "R@5": 0.009900990099009901,
+            "R@10": 0.0297029702970297,
+            "R@20": 0.0297029702970297,
+            "R@50": 0.06930693069306931
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        }
+      },
+      "union": {
+        "name": "union",
+        "n_candidates": 90,
+        "n_unique_docs": 90,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 66,
+        "gold_matters_hit": 23,
+        "matter_recall": {
+          "R@5": 0.04950495049504951,
+          "R@10": 0.09900990099009901,
+          "R@20": 0.16831683168316833,
+          "R@50": 0.2079207920792079
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "fusion": {
+        "name": "fusion",
+        "n_candidates": 90,
+        "n_unique_docs": 90,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 66,
+        "gold_matters_hit": 23,
+        "matter_recall": {
+          "R@5": 0.039603960396039604,
+          "R@10": 0.0594059405940594,
+          "R@20": 0.10891089108910891,
+          "R@50": 0.2079207920792079
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "ce": {
+        "name": "ce",
+        "n_candidates": 90,
+        "n_unique_docs": 90,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 66,
+        "gold_matters_hit": 23,
+        "matter_recall": {
+          "R@5": 0.04950495049504951,
+          "R@10": 0.09900990099009901,
+          "R@20": 0.18811881188118812,
+          "R@50": 0.22772277227722773
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "final": {
+        "name": "final",
+        "n_candidates": 20,
+        "n_unique_docs": 20,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 11,
+        "gold_matters_hit": 11,
+        "matter_recall": {
+          "R@5": 0.04950495049504951,
+          "R@10": 0.09900990099009901,
+          "R@20": 0.10891089108910891,
+          "R@50": 0.10891089108910891
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "drop_stage": "candidate_generation",
+      "latency_ms": {
+        "understand": 0.1,
+        "parallel_wall_ms": 77.7,
+        "vector": 38.8,
+        "matter": 15.4,
+        "hierarchical": 53.8,
+        "graph_seed": 0.0,
+        "bm25": 10.8,
+        "rerank": 434.6
+      }
+    },
+    {
+      "query_id": "Q-0273",
+      "query": "Have we dealt with natural disasters affecting contractual performance?",
+      "intent": "semantic",
+      "n_gold_docs": 20,
+      "n_gold_matters": 59,
+      "channels_planned": [
+        "vector",
+        "matter",
+        "hierarchical",
+        "graph_seed",
+        "bm25"
+      ],
+      "matter_scope_mode": "hard",
+      "fusion_policy": "p55_repair_ce_protect",
+      "channel": {
+        "vector": {
+          "name": "vector",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 17,
+          "gold_matters_hit": 17,
+          "matter_recall": {
+            "R@5": 0.0847457627118644,
+            "R@10": 0.1694915254237288,
+            "R@20": 0.288135593220339,
+            "R@50": 0.288135593220339
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        },
+        "matter": {
+          "name": "matter",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "hierarchical": {
+          "name": "hierarchical",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_seed": {
+          "name": "graph_seed",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "bm25": {
+          "name": "bm25",
+          "n_candidates": 0,
+          "n_unique_docs": 0,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 0,
+          "gold_matters_hit": 0,
+          "matter_recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "matter_hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          }
+        },
+        "graph_expansion": {
+          "name": "graph_expansion",
+          "n_candidates": 50,
+          "n_unique_docs": 50,
+          "gold_docs_hit": 0,
+          "gold_doc_ids": [],
+          "recall": {
+            "R@5": 0.0,
+            "R@10": 0.0,
+            "R@20": 0.0,
+            "R@50": 0.0
+          },
+          "hit": {
+            "Hit@5": 0.0,
+            "Hit@10": 0.0,
+            "Hit@20": 0.0,
+            "Hit@50": 0.0
+          },
+          "n_unique_matters": 50,
+          "gold_matters_hit": 5,
+          "matter_recall": {
+            "R@5": 0.01694915254237288,
+            "R@10": 0.01694915254237288,
+            "R@20": 0.03389830508474576,
+            "R@50": 0.0847457627118644
+          },
+          "matter_hit": {
+            "Hit@5": 1.0,
+            "Hit@10": 1.0,
+            "Hit@20": 1.0,
+            "Hit@50": 1.0
+          }
+        }
+      },
+      "union": {
+        "name": "union",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 67,
+        "gold_matters_hit": 22,
+        "matter_recall": {
+          "R@5": 0.0847457627118644,
+          "R@10": 0.1694915254237288,
+          "R@20": 0.288135593220339,
+          "R@50": 0.3389830508474576
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "fusion": {
+        "name": "fusion",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 67,
+        "gold_matters_hit": 22,
+        "matter_recall": {
+          "R@5": 0.03389830508474576,
+          "R@10": 0.1016949152542373,
+          "R@20": 0.15254237288135594,
+          "R@50": 0.3220338983050847
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "ce": {
+        "name": "ce",
+        "n_candidates": 100,
+        "n_unique_docs": 100,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 67,
+        "gold_matters_hit": 22,
+        "matter_recall": {
+          "R@5": 0.0847457627118644,
+          "R@10": 0.1694915254237288,
+          "R@20": 0.288135593220339,
+          "R@50": 0.3389830508474576
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "final": {
+        "name": "final",
+        "n_candidates": 20,
+        "n_unique_docs": 20,
+        "gold_docs_hit": 0,
+        "gold_doc_ids": [],
+        "recall": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0
+        },
+        "hit": {
+          "Hit@5": 0.0,
+          "Hit@10": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0
+        },
+        "n_unique_matters": 12,
+        "gold_matters_hit": 12,
+        "matter_recall": {
+          "R@5": 0.0847457627118644,
+          "R@10": 0.1694915254237288,
+          "R@20": 0.2033898305084746,
+          "R@50": 0.2033898305084746
+        },
+        "matter_hit": {
+          "Hit@5": 1.0,
+          "Hit@10": 1.0,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0
+        }
+      },
+      "drop_stage": "candidate_generation",
+      "latency_ms": {
+        "understand": 0.1,
+        "parallel_wall_ms": 76.3,
+        "vector": 36.4,
+        "matter": 14.4,
+        "hierarchical": 53.0,
+        "graph_seed": 0.0,
+        "bm25": 11.2,
+        "rerank": 436.0
+      }
+    }
+  ]
+}

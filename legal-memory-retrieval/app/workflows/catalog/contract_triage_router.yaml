@@ -1,0 +1,40 @@
+id: contract-triage-router
+title: Contract Triage & Risk Classification
+description: Automatically identifies contract type, flags non-market covenants, and assesses counterparty liability caps against firm standards.
+category: review
+inputs:
+  - name: contract_title
+    label: Contract Title / Document ID
+    type: string
+    required: true
+  - name: governing_law
+    label: Governing Law / Jurisdiction
+    type: string
+    default: "English / Indian Law"
+steps:
+  - id: retrieve_contract_context
+    type: retrieve
+    query: "Contract terms, liability cap, indemnities, governing law in {{inputs.contract_title}}"
+    k: 5
+
+  - id: triage_analysis
+    type: ask
+    prompt: |
+      Perform a comprehensive risk triage on {{inputs.contract_title}} (Governing Law: {{inputs.governing_law}}):
+      1. Identify Contract Classification & Purpose.
+      2. Key Commercial Terms (Duration, Termination for Convenience, Auto-Renewal).
+      3. Risk Matrix:
+         - Indemnity Exposure (Uncapped vs Capped)
+         - Limitation of Liability & Consequential Damages Carve-outs
+         - Restrictive Covenants / Non-competes / IP Assignment
+      4. Summary of Deviations from Standard Market Position with Recommended Redlines.
+
+  - id: compose_triage_memo
+    type: compose
+    template: |
+      # CONTRACT TRIAGE EXECUTIVE MEMORANDUM
+      **Target:** {{inputs.contract_title}}
+      **Jurisdiction:** {{inputs.governing_law}}
+
+      ## 1. Executive Summary & Risk Classification
+      {{steps.triage_analysis.answer}}

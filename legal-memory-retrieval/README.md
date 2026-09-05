@@ -2,7 +2,7 @@
 
 Ask the firm: retrieve the right institutional knowledge, cite it, respect permissions, and measure every change against a frozen corpus.
 
-**Ingestion of new documents is frozen.** The corpus lives in `../dummy-firm/data/` (v2: 38,232 documents, 1,000 matters, 500 clients, 100 members). Do not regenerate it to “improve” retrieval. Improve the retrieval stack and prove it on `evals/dataset.jsonl`.
+The corpus lives in `../dummy-firm/data/` (PCIJ + UNSC + Indian electricity filings). Rebuild with `python3 dummy-firm/scripts/build_corpus.py`. Existing `evals/dataset.jsonl` gold is from the retired Apex Chambers dump and needs a new set before retrieval scores are meaningful.
 
 ## Build order (do not skip)
 
@@ -29,7 +29,7 @@ Ask the firm: retrieve the right institutional knowledge, cite it, respect permi
 |---------|--------|-----------|
 | Home | `/api/home` | `GET /stats` |
 | Ask Firm AI | `/api/answers` | `POST /` |
-| Retrieval | `/api/retrieval` | `POST /` |
+| Retrieval | `/api/retrieval` | `POST /`, `POST /debug`, `GET /health` |
 | Matters | `/api/matters` | `GET /`, `GET /{id}`, `GET /{id}/arguments`, … |
 | Projects | `/api/projects` | `GET /`, `GET /{id}`, `POST /`, `PATCH /{id}/milestones` |
 | Documents | `/api/documents` | `GET /`, `GET /{id}`, `GET /{id}/versions`, `POST /ingest` |
@@ -40,10 +40,15 @@ Ask the firm: retrieve the right institutional knowledge, cite it, respect permi
 | Live Activity | `/api/activity` | `GET /` |
 | Court Deadlines | `/api/tasks` | `GET /` |
 | Command search | `/api/search` | `GET /?q=` |
-| System | `/api/system` | `GET /health`, `/metrics`, `/info` |
+| System | `/api/system` | `GET /health`, `/metrics`, `/info`, `/architecture` |
 
-Service discovery: `GET /` returns all prefixes and health URLs. UI: `/ui`.
+**UI:** `/ui` · Ask debugger `/ui/ask?debug=1` · Architecture `/ui/architecture` · OpenAPI `/docs`
 
+**Engine:** default `USE_ENGINE_V2=true` — planner + parallel BM25/vector/metadata/matter/graph seeds + conditional expansion. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+**Companion:** PDF-folder Doc Search on port **8001** (`../doc-search/`) — do not bind both to 8000.
+
+Service discovery: `GET /` returns all prefixes and health URLs.
 ## Quick start
 
 ```bash

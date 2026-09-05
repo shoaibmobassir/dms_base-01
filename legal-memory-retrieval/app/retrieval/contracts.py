@@ -58,6 +58,7 @@ class Provenance:
     matter_score: float | None = None
     graph_score: float | None = None
     similar_matter_score: float | None = None
+    hierarchical_score: float | None = None
 
     # Populated by graph expansion
     graph_path: list[str] = field(default_factory=list)
@@ -78,6 +79,7 @@ class Provenance:
         for attr in (
             "bm25_score", "vector_score", "metadata_score",
             "matter_score", "graph_score", "similar_matter_score",
+            "hierarchical_score",
             "ce_score",
         ):
             val = getattr(self, attr)
@@ -157,6 +159,7 @@ class Candidate:
             "fusion_score": self.fusion_score,
             "rerank_score": self.rerank_score,
             "provenance": self.provenance.to_dict(),
+            "metadata": self.metadata,
         }
 
     @classmethod
@@ -168,6 +171,17 @@ class Candidate:
         constructing Candidates.
         """
         score = float(row.get("score") or 0.0)
+        meta: dict[str, Any] = {}
+        for key in (
+            "version_id", "folder_path", "section_id", "section_title",
+            "page_number", "parent_chunk_id", "is_parent", "block_ids",
+            "hierarchy", "matter_stage_score", "doc_stage_score",
+            "doc_folder_path",
+        ):
+            if row.get(key) is not None:
+                meta[key] = row[key]
+        if not meta.get("folder_path") and row.get("doc_folder_path"):
+            meta["folder_path"] = row["doc_folder_path"]
         return cls(
             chunk_id=str(row.get("chunk_id") or ""),
             document_id=str(row.get("document_id") or ""),
@@ -185,6 +199,7 @@ class Candidate:
             channel=channel,
             raw_score=score,
             provenance=Provenance(channel=channel, raw_score=score),
+            metadata=meta,
         )
 
 

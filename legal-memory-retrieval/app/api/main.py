@@ -21,6 +21,14 @@ from app.api.routers import (
     system,
     tasks,
     teams,
+    reviews,
+    uploads,
+    tabular,
+    workflows_router,
+    drafting_router,
+    word_router,
+    caselaw_router,
+    audit_router,
 )
 from app.db.pool import close_pool, init_pool
 from app.observability.tracing import setup_tracing
@@ -43,6 +51,14 @@ SERVICE_CATALOG = {
     "knowledge": {"prefix": "/api/knowledge", "health": "/api/knowledge/health"},
     "activity": {"prefix": "/api/activity", "health": "/api/activity/health"},
     "tasks": {"prefix": "/api/tasks", "health": "/api/tasks/health"},
+    "reviews": {"prefix": "/api/reviews", "health": "/api/reviews/health"},
+    "uploads": {"prefix": "/api/uploads", "health": "/api/uploads/health"},
+    "tabular": {"prefix": "/api/tabular", "health": "/api/tabular/health"},
+    "workflows": {"prefix": "/api/workflows", "health": "/api/workflows/health"},
+    "drafting": {"prefix": "/api/drafting", "health": "/api/drafting/health"},
+    "word": {"prefix": "/api/word", "health": "/api/word/health"},
+    "caselaw": {"prefix": "/api/caselaw", "health": "/api/caselaw/health"},
+    "audit": {"prefix": "/api/audit", "health": "/api/audit/health"},
 }
 
 
@@ -90,6 +106,15 @@ app.include_router(teams.router, prefix="/api/teams")
 app.include_router(knowledge.router, prefix="/api/knowledge")
 app.include_router(activity.router, prefix="/api/activity")
 app.include_router(tasks.router, prefix="/api/tasks")
+app.include_router(reviews.router, prefix="/api/reviews")
+app.include_router(uploads.router, prefix="/api/uploads")
+app.include_router(tabular.router, prefix="/api/tabular")
+app.include_router(workflows_router.router, prefix="/api/workflows")
+app.include_router(drafting_router.router, prefix="/api/drafting")
+app.include_router(word_router.router, prefix="/api/word")
+app.include_router(caselaw_router.router, prefix="/api/caselaw")
+app.include_router(audit_router.router, prefix="/api/audit")
+
 
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "..", "static")
 

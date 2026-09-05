@@ -1,0 +1,2752 @@
+{
+  "experiment": "P5.6-C5.5-D6 within-family purpose profiling",
+  "summary": {
+    "n": 7,
+    "ceilings": {
+      "theme": 1.0,
+      "role_family": 1.0,
+      "purpose": 1.0,
+      "document_type_el_ica": 0.8286,
+      "avg_n_purpose": 855.3,
+      "avg_n_role_family": 855.3,
+      "avg_family_to_purpose_reduction": 1.0
+    },
+    "baselines": {
+      "C5.4-D": {
+        "R@20": 0.007
+      },
+      "D5_family_lex": {
+        "R@20": 0.043,
+        "Hit@20": 0.571,
+        "label": "D5 family+lexical"
+      }
+    },
+    "variants": {
+      "D6_A_family_lex": {
+        "label": "role-family + lexical (D5 control)",
+        "R@5": 0.0071,
+        "R@10": 0.0071,
+        "R@20": 0.0429,
+        "R@50": 0.0643,
+        "R@100": 0.1643,
+        "Hit@20": 0.5714,
+        "Hit@50": 0.7143,
+        "Hit@100": 1.0,
+        "mrr": 0.0901,
+        "avg_best_gold_rank": 29.8571
+      },
+      "D6_B_purpose_lex": {
+        "label": "role+purpose + lexical",
+        "R@5": 0.0071,
+        "R@10": 0.0071,
+        "R@20": 0.0429,
+        "R@50": 0.0643,
+        "R@100": 0.1643,
+        "Hit@20": 0.5714,
+        "Hit@50": 0.7143,
+        "Hit@100": 1.0,
+        "mrr": 0.0901,
+        "avg_best_gold_rank": 29.8571
+      },
+      "D6_C_purpose_ctx": {
+        "label": "role+purpose + contextual",
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0143,
+        "R@50": 0.0429,
+        "R@100": 0.1357,
+        "Hit@20": 0.2857,
+        "Hit@50": 0.5714,
+        "Hit@100": 1.0,
+        "mrr": 0.0287,
+        "avg_best_gold_rank": 46.7143
+      },
+      "D6_D_purpose_hybrid": {
+        "label": "role+purpose + lex\u222actx RRF",
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0286,
+        "R@50": 0.05,
+        "R@100": 0.1214,
+        "Hit@20": 0.2857,
+        "Hit@50": 0.4286,
+        "Hit@100": 0.8571,
+        "mrr": 0.0298,
+        "avg_best_gold_rank": 50.8571
+      },
+      "D6_purpose_raw": {
+        "label": "role+purpose + raw vector",
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0429,
+        "R@100": 0.1071,
+        "Hit@20": 0.0,
+        "Hit@50": 0.7143,
+        "Hit@100": 1.0,
+        "mrr": 0.0223,
+        "avg_best_gold_rank": 51.4286
+      }
+    }
+  },
+  "gate": {
+    "pass1_purpose_ceiling": true,
+    "pass2_further_reduction": false,
+    "pass3_beats_d5": false,
+    "material_r20_020": false,
+    "strong_r20_040": false,
+    "best_r20": 0.0429,
+    "purpose_as_hard_scope": true,
+    "purpose_as_soft_feature": false,
+    "next": "proposition/evidence-level retrieval"
+  },
+  "dataset": [
+    {
+      "query_id": "Q-0264",
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3791,
+        "n_role_family": 872,
+        "n_purpose": 872,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Initial Case Assessment": 9,
+          "Engagement Letter": 6
+        },
+        "purpose_counts": {
+          "ASSESS": 9,
+          "ESTABLISH": 6
+        }
+      },
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00232",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Srivastava Energy Ltd. \u2014 Competition Commission",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "insider",
+            "sebi"
+          ]
+        },
+        {
+          "document_id": "DOC-12735",
+          "document_type": "Initial Case Assessment",
+          "title": "Initial Case Assessment \u2014 Mangat-Bose Holdings \u2014 Sectoral Licensing",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ASSESS",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ASSESS:\\binitial case assessment\\b",
+              "ASSESS:\\bcase assessment\\b"
+            ],
+            "title_tokens": [
+              "assessment"
+            ]
+          },
+          "topics": [
+            "upsi",
+            "diligence"
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "Q-0265",
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3254,
+        "n_role_family": 740,
+        "n_purpose": 740,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 9,
+          "Initial Case Assessment": 6
+        },
+        "purpose_counts": {
+          "ESTABLISH": 9,
+          "ASSESS": 6
+        }
+      },
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00354",
+          "document_type": "Initial Case Assessment",
+          "title": "Initial Case Assessment \u2014 Rajagopalan Energy Ltd. v Blue Oak Energy",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ASSESS",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ASSESS:\\binitial case assessment\\b",
+              "ASSESS:\\bcase assessment\\b"
+            ],
+            "title_tokens": [
+              "assessment"
+            ]
+          },
+          "topics": []
+        },
+        {
+          "document_id": "DOC-13142",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Choudhary Energy Ltd. v State Urban Development Authority",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "non-compete"
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "Q-0266",
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 4158,
+        "n_role_family": 937,
+        "n_purpose": 937,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 8,
+          "Initial Case Assessment": 7
+        },
+        "purpose_counts": {
+          "ESTABLISH": 8,
+          "ASSESS": 7
+        }
+      },
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00145",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Konda Infrastructure Ltd. \u2014 Development Agreement",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "title"
+          ]
+        },
+        {
+          "document_id": "DOC-13061",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Narang-Kakar Ltd. v Helios Power Ltd.",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "title"
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "Q-0267",
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3262,
+        "n_role_family": 755,
+        "n_purpose": 755,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 7,
+          "Initial Case Assessment": 8
+        },
+        "purpose_counts": {
+          "ESTABLISH": 7,
+          "ASSESS": 8
+        }
+      },
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00614",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Bali Limited \u2014 Transfer Pricing",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "pricing",
+            "transfer pricing"
+          ]
+        },
+        {
+          "document_id": "DOC-12954",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Sekhon-Basak Limited \u2014 Transfer Pricing",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "pricing",
+            "transfer pricing"
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "Q-0270",
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3752,
+        "n_role_family": 552,
+        "n_purpose": 552,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 9,
+          "Initial Case Assessment": 6
+        },
+        "purpose_counts": {
+          "ESTABLISH": 9,
+          "ASSESS": 6
+        }
+      },
+      "purpose_cards": [
+        {
+          "document_id": "DOC-01489",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Ray Infrastructure Ltd. v National Highways Concessionaire",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": []
+        },
+        {
+          "document_id": "DOC-12742",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Chaudhari-Chaudhry Holdings v Cedar Grove Holdings",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": []
+        }
+      ]
+    },
+    {
+      "query_id": "Q-0271",
+      "oracle_purposes": [
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 6,
+          "gold_share": 0.3
+        },
+        {
+          "purpose": "PROPOSE",
+          "confidence": 1.0,
+          "n_gold": 4,
+          "gold_share": 0.2
+        }
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 0.8,
+        "n_theme": 3855,
+        "n_role_family": 958,
+        "n_purpose": 958,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 8,
+          "Term Sheet": 2,
+          "Share Purchase Agreement": 5
+        },
+        "purpose_counts": {
+          "ESTABLISH": 8,
+          "PROPOSE": 7
+        }
+      },
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00192",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Saha Holdings \u2014 Joint Venture",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "joint venture"
+          ]
+        },
+        {
+          "document_id": "DOC-13009",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Shere Energy Ltd. \u2014 Merger",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "joint venture"
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "Q-0273",
+      "oracle_purposes": [
+        {
+          "purpose": "PLEAD",
+          "confidence": 1.0,
+          "n_gold": 9,
+          "gold_share": 0.45
+        },
+        {
+          "purpose": "ANALYZE",
+          "confidence": 1.0,
+          "n_gold": 8,
+          "gold_share": 0.4
+        },
+        {
+          "purpose": "RECORD",
+          "confidence": 1.0,
+          "n_gold": 3,
+          "gold_share": 0.15
+        }
+      ],
+      "oracle_role_families": [
+        {
+          "family": "PLEADING",
+          "confidence": 1.0,
+          "n_gold": 9,
+          "gold_share": 0.45
+        },
+        {
+          "family": "ANALYSIS",
+          "confidence": 1.0,
+          "n_gold": 8,
+          "gold_share": 0.4
+        },
+        {
+          "family": "EVIDENCE_RECORD",
+          "confidence": 1.0,
+          "n_gold": 3,
+          "gold_share": 0.15
+        }
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 0.0,
+        "n_theme": 2181,
+        "n_role_family": 1173,
+        "n_purpose": 1173,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Research Memo": 1,
+          "Statement of Claim": 1,
+          "Statement of Defence": 3,
+          "Evidence Note": 2,
+          "Matter Strategy Note": 3,
+          "Hearing Notes": 3,
+          "Final Arguments": 2
+        },
+        "purpose_counts": {
+          "ANALYZE": 4,
+          "PLEAD": 6,
+          "RECORD": 5
+        }
+      },
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00123",
+          "document_type": "Research Memo",
+          "title": "Research Memo \u2014 Solanki Holdings v State Urban Development Authority",
+          "role_family": "ANALYSIS",
+          "document_role": "RESEARCH_MEMO",
+          "purpose": "ANALYZE",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ANALYZE:\\bresearch memo\\b",
+              "ANALYZE:\\banalysis\\b",
+              "NOTIFY:\\bnotice\\b"
+            ],
+            "title_tokens": [
+              "research"
+            ]
+          },
+          "topics": [
+            "force majeure"
+          ]
+        },
+        {
+          "document_id": "DOC-13779",
+          "document_type": "Research Memo",
+          "title": "Research Memo \u2014 Savant-Mishra Pvt. Ltd. v Pacific Bulk Commodities",
+          "role_family": "ANALYSIS",
+          "document_role": "RESEARCH_MEMO",
+          "purpose": "ANALYZE",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ANALYZE:\\bresearch memo\\b",
+              "ANALYZE:\\banalysis\\b",
+              "NOTIFY:\\bnotice\\b"
+            ],
+            "title_tokens": [
+              "research"
+            ]
+          },
+          "topics": [
+            "force majeure",
+            "flood"
+          ]
+        }
+      ]
+    }
+  ],
+  "per_query": [
+    {
+      "query_id": "Q-0264",
+      "question": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+      "theme_keys": [
+        "sebi_insider"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "allowed_types_for_purpose": [
+        "Engagement Letter",
+        "Initial Case Assessment"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3791,
+        "n_role_family": 872,
+        "n_purpose": 872,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Initial Case Assessment": 9,
+          "Engagement Letter": 6
+        },
+        "purpose_counts": {
+          "ASSESS": 9,
+          "ESTABLISH": 6
+        }
+      },
+      "discriminative_purpose_features": [
+        {
+          "feature": "purpose_ASSESS",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.6,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.6,
+          "log_odds": -0.405,
+          "abs_log_odds": 0.405
+        },
+        {
+          "feature": "purpose_ESTABLISH",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.4,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.4,
+          "log_odds": 0.405,
+          "abs_log_odds": 0.405
+        },
+        {
+          "feature": "has_phrase_hit",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "has_title_token",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_ANALYZE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_OTHER",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PLEAD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PROPOSE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_RECORD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "source_type",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        }
+      ],
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00232",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Srivastava Energy Ltd. \u2014 Competition Commission",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "insider",
+            "sebi"
+          ]
+        },
+        {
+          "document_id": "DOC-12735",
+          "document_type": "Initial Case Assessment",
+          "title": "Initial Case Assessment \u2014 Mangat-Bose Holdings \u2014 Sectoral Licensing",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ASSESS",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ASSESS:\\binitial case assessment\\b",
+              "ASSESS:\\bcase assessment\\b"
+            ],
+            "title_tokens": [
+              "assessment"
+            ]
+          },
+          "topics": [
+            "upsi",
+            "diligence"
+          ]
+        }
+      ],
+      "variants": {
+        "D6_A_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.1,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0345,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 29,
+          "n_candidates": 500,
+          "label": "role-family + lexical (D5 control)"
+        },
+        "D6_B_purpose_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.1,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0345,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 29,
+          "n_candidates": 500,
+          "label": "role+purpose + lexical"
+        },
+        "D6_C_purpose_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.027,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 37,
+          "n_candidates": 500,
+          "label": "role+purpose + contextual"
+        },
+        "D6_D_purpose_hybrid": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0256,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 39,
+          "n_candidates": 500,
+          "label": "role+purpose + lex\u222actx RRF"
+        },
+        "D6_purpose_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0111,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 90,
+          "n_candidates": 500,
+          "label": "role+purpose + raw vector"
+        }
+      }
+    },
+    {
+      "query_id": "Q-0265",
+      "question": "Have we advised on post-employment non-competes and restraint of trade?",
+      "theme_keys": [
+        "employment_exit"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "allowed_types_for_purpose": [
+        "Engagement Letter",
+        "Initial Case Assessment"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3254,
+        "n_role_family": 740,
+        "n_purpose": 740,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 9,
+          "Initial Case Assessment": 6
+        },
+        "purpose_counts": {
+          "ESTABLISH": 9,
+          "ASSESS": 6
+        }
+      },
+      "discriminative_purpose_features": [
+        {
+          "feature": "purpose_ASSESS",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.4,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.4,
+          "log_odds": 0.405,
+          "abs_log_odds": 0.405
+        },
+        {
+          "feature": "purpose_ESTABLISH",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.6,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.6,
+          "log_odds": -0.405,
+          "abs_log_odds": 0.405
+        },
+        {
+          "feature": "has_phrase_hit",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "has_title_token",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_ANALYZE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_OTHER",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PLEAD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PROPOSE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_RECORD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "source_type",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        }
+      ],
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00354",
+          "document_type": "Initial Case Assessment",
+          "title": "Initial Case Assessment \u2014 Rajagopalan Energy Ltd. v Blue Oak Energy",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ASSESS",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ASSESS:\\binitial case assessment\\b",
+              "ASSESS:\\bcase assessment\\b"
+            ],
+            "title_tokens": [
+              "assessment"
+            ]
+          },
+          "topics": []
+        },
+        {
+          "document_id": "DOC-13142",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Choudhary Energy Ltd. v State Urban Development Authority",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "non-compete"
+          ]
+        }
+      ],
+      "variants": {
+        "D6_A_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.013,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 77,
+          "n_candidates": 405,
+          "label": "role-family + lexical (D5 control)"
+        },
+        "D6_B_purpose_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.013,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 77,
+          "n_candidates": 405,
+          "label": "role+purpose + lexical"
+        },
+        "D6_C_purpose_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0169,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 59,
+          "n_candidates": 500,
+          "label": "role+purpose + contextual"
+        },
+        "D6_D_purpose_hybrid": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 0.0,
+          "mrr": 0.0093,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 108,
+          "n_candidates": 500,
+          "label": "role+purpose + lex\u222actx RRF"
+        },
+        "D6_purpose_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0222,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 45,
+          "n_candidates": 500,
+          "label": "role+purpose + raw vector"
+        }
+      }
+    },
+    {
+      "query_id": "Q-0266",
+      "question": "Have we done title diligence involving unregistered family settlements?",
+      "theme_keys": [
+        "title_diligence"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "allowed_types_for_purpose": [
+        "Engagement Letter",
+        "Initial Case Assessment"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 4158,
+        "n_role_family": 937,
+        "n_purpose": 937,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 8,
+          "Initial Case Assessment": 7
+        },
+        "purpose_counts": {
+          "ESTABLISH": 8,
+          "ASSESS": 7
+        }
+      },
+      "discriminative_purpose_features": [
+        {
+          "feature": "purpose_ASSESS",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.4667,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.4667,
+          "log_odds": 0.134,
+          "abs_log_odds": 0.134
+        },
+        {
+          "feature": "purpose_ESTABLISH",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.5333,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.5333,
+          "log_odds": -0.134,
+          "abs_log_odds": 0.134
+        },
+        {
+          "feature": "has_phrase_hit",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "has_title_token",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_ANALYZE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_OTHER",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PLEAD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PROPOSE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_RECORD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "source_type",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        }
+      ],
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00145",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Konda Infrastructure Ltd. \u2014 Development Agreement",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "title"
+          ]
+        },
+        {
+          "document_id": "DOC-13061",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Narang-Kakar Ltd. v Helios Power Ltd.",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "title"
+          ]
+        }
+      ],
+      "variants": {
+        "D6_A_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0164,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 61,
+          "n_candidates": 500,
+          "label": "role-family + lexical (D5 control)"
+        },
+        "D6_B_purpose_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0164,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 61,
+          "n_candidates": 500,
+          "label": "role+purpose + lexical"
+        },
+        "D6_C_purpose_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.025,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 40,
+          "n_candidates": 500,
+          "label": "role+purpose + contextual"
+        },
+        "D6_D_purpose_hybrid": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0192,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 52,
+          "n_candidates": 500,
+          "label": "role+purpose + lex\u222actx RRF"
+        },
+        "D6_purpose_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0323,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 31,
+          "n_candidates": 500,
+          "label": "role+purpose + raw vector"
+        }
+      }
+    },
+    {
+      "query_id": "Q-0267",
+      "question": "Have we handled transfer pricing adjustments on intra-group management fees?",
+      "theme_keys": [
+        "transfer_pricing"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "allowed_types_for_purpose": [
+        "Engagement Letter",
+        "Initial Case Assessment"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3262,
+        "n_role_family": 755,
+        "n_purpose": 755,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 7,
+          "Initial Case Assessment": 8
+        },
+        "purpose_counts": {
+          "ESTABLISH": 7,
+          "ASSESS": 8
+        }
+      },
+      "discriminative_purpose_features": [
+        {
+          "feature": "purpose_ASSESS",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.5333,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.5333,
+          "log_odds": -0.134,
+          "abs_log_odds": 0.134
+        },
+        {
+          "feature": "purpose_ESTABLISH",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.4667,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.4667,
+          "log_odds": 0.134,
+          "abs_log_odds": 0.134
+        },
+        {
+          "feature": "has_phrase_hit",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "has_title_token",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_ANALYZE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_OTHER",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PLEAD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PROPOSE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_RECORD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "source_type",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        }
+      ],
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00614",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Bali Limited \u2014 Transfer Pricing",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "pricing",
+            "transfer pricing"
+          ]
+        },
+        {
+          "document_id": "DOC-12954",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Sekhon-Basak Limited \u2014 Transfer Pricing",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "pricing",
+            "transfer pricing"
+          ]
+        }
+      ],
+      "variants": {
+        "D6_A_family_lex": {
+          "R@5": 0.05,
+          "R@10": 0.05,
+          "R@20": 0.1,
+          "R@50": 0.1,
+          "R@100": 0.25,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.3333,
+          "ndcg@20": 0.1094,
+          "best_gold_rank": 3,
+          "n_candidates": 500,
+          "label": "role-family + lexical (D5 control)"
+        },
+        "D6_B_purpose_lex": {
+          "R@5": 0.05,
+          "R@10": 0.05,
+          "R@20": 0.1,
+          "R@50": 0.1,
+          "R@100": 0.25,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.3333,
+          "ndcg@20": 0.1094,
+          "best_gold_rank": 3,
+          "n_candidates": 500,
+          "label": "role+purpose + lexical"
+        },
+        "D6_C_purpose_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.1,
+          "R@100": 0.3,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0556,
+          "ndcg@20": 0.0334,
+          "best_gold_rank": 18,
+          "n_candidates": 500,
+          "label": "role+purpose + contextual"
+        },
+        "D6_D_purpose_hybrid": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.1,
+          "R@50": 0.15,
+          "R@100": 0.3,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0625,
+          "ndcg@20": 0.0688,
+          "best_gold_rank": 16,
+          "n_candidates": 500,
+          "label": "role+purpose + lex\u222actx RRF"
+        },
+        "D6_purpose_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.1,
+          "R@100": 0.2,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0303,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 33,
+          "n_candidates": 500,
+          "label": "role+purpose + raw vector"
+        }
+      }
+    },
+    {
+      "query_id": "Q-0270",
+      "question": "Have we handled supply-contract terminations for quality failures?",
+      "theme_keys": [
+        "commercial_arb"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "oracle_purposes": [
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        }
+      ],
+      "allowed_types_for_purpose": [
+        "Engagement Letter",
+        "Initial Case Assessment"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3752,
+        "n_role_family": 552,
+        "n_purpose": 552,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 9,
+          "Initial Case Assessment": 6
+        },
+        "purpose_counts": {
+          "ESTABLISH": 9,
+          "ASSESS": 6
+        }
+      },
+      "discriminative_purpose_features": [
+        {
+          "feature": "purpose_ASSESS",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.4,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.4,
+          "log_odds": 0.405,
+          "abs_log_odds": 0.405
+        },
+        {
+          "feature": "purpose_ESTABLISH",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.6,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.6,
+          "log_odds": -0.405,
+          "abs_log_odds": 0.405
+        },
+        {
+          "feature": "has_phrase_hit",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "has_title_token",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_ANALYZE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_OTHER",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PLEAD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PROPOSE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_RECORD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "source_type",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        }
+      ],
+      "purpose_cards": [
+        {
+          "document_id": "DOC-01489",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Ray Infrastructure Ltd. v National Highways Concessionaire",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": []
+        },
+        {
+          "document_id": "DOC-12742",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Chaudhari-Chaudhry Holdings v Cedar Grove Holdings",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": []
+        }
+      ],
+      "variants": {
+        "D6_A_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.1,
+          "R@50": 0.1,
+          "R@100": 0.2,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0714,
+          "ndcg@20": 0.0687,
+          "best_gold_rank": 14,
+          "n_candidates": 500,
+          "label": "role-family + lexical (D5 control)"
+        },
+        "D6_B_purpose_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.1,
+          "R@50": 0.1,
+          "R@100": 0.2,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0714,
+          "ndcg@20": 0.0687,
+          "best_gold_rank": 14,
+          "n_candidates": 500,
+          "label": "role+purpose + lexical"
+        },
+        "D6_C_purpose_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.1,
+          "R@100": 0.15,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.05,
+          "ndcg@20": 0.0323,
+          "best_gold_rank": 20,
+          "n_candidates": 500,
+          "label": "role+purpose + contextual"
+        },
+        "D6_D_purpose_hybrid": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.1,
+          "R@50": 0.15,
+          "R@100": 0.15,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0588,
+          "ndcg@20": 0.0675,
+          "best_gold_rank": 17,
+          "n_candidates": 500,
+          "label": "role+purpose + lex\u222actx RRF"
+        },
+        "D6_purpose_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0244,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 41,
+          "n_candidates": 500,
+          "label": "role+purpose + raw vector"
+        }
+      }
+    },
+    {
+      "query_id": "Q-0271",
+      "question": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+      "theme_keys": [
+        "jv"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "oracle_purposes": [
+        {
+          "purpose": "ESTABLISH",
+          "confidence": 1.0,
+          "n_gold": 10,
+          "gold_share": 0.5
+        },
+        {
+          "purpose": "ASSESS",
+          "confidence": 1.0,
+          "n_gold": 6,
+          "gold_share": 0.3
+        },
+        {
+          "purpose": "PROPOSE",
+          "confidence": 1.0,
+          "n_gold": 4,
+          "gold_share": 0.2
+        }
+      ],
+      "allowed_types_for_purpose": [
+        "Engagement Letter",
+        "Initial Case Assessment",
+        "Share Purchase Agreement",
+        "Term Sheet"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 0.8,
+        "n_theme": 3855,
+        "n_role_family": 958,
+        "n_purpose": 958,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Engagement Letter": 8,
+          "Term Sheet": 2,
+          "Share Purchase Agreement": 5
+        },
+        "purpose_counts": {
+          "ESTABLISH": 8,
+          "PROPOSE": 7
+        }
+      },
+      "discriminative_purpose_features": [
+        {
+          "feature": "has_phrase_hit",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 0.6667,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 0.6667,
+          "log_odds": 6.214,
+          "abs_log_odds": 6.214
+        },
+        {
+          "feature": "has_title_token",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 0.6667,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 0.6667,
+          "log_odds": 6.214,
+          "abs_log_odds": 6.214
+        },
+        {
+          "feature": "purpose_ASSESS",
+          "kind": "binary",
+          "p_gold": 0.3,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.3,
+          "mean_hard_neg": 0.0,
+          "log_odds": 6.059,
+          "abs_log_odds": 6.059
+        },
+        {
+          "feature": "purpose_PROPOSE",
+          "kind": "binary",
+          "p_gold": 0.2,
+          "p_hard_neg": 0.4667,
+          "mean_gold": 0.2,
+          "mean_hard_neg": 0.4667,
+          "log_odds": -1.253,
+          "abs_log_odds": 1.253
+        },
+        {
+          "feature": "purpose_ESTABLISH",
+          "kind": "binary",
+          "p_gold": 0.5,
+          "p_hard_neg": 0.5333,
+          "mean_gold": 0.5,
+          "mean_hard_neg": 0.5333,
+          "log_odds": -0.134,
+          "abs_log_odds": 0.134
+        },
+        {
+          "feature": "purpose_ANALYZE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_OTHER",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PLEAD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_RECORD",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "source_type",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        }
+      ],
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00192",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Saha Holdings \u2014 Joint Venture",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "joint venture"
+          ]
+        },
+        {
+          "document_id": "DOC-13009",
+          "document_type": "Engagement Letter",
+          "title": "Engagement Letter \u2014 Shere Energy Ltd. \u2014 Merger",
+          "role_family": "TRANSACTIONAL",
+          "document_role": "ENGAGEMENT_DOCUMENT",
+          "purpose": "ESTABLISH",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ESTABLISH:\\bengagement letter\\b",
+              "ESTABLISH:\\bretain(?:ed|er)\\b"
+            ],
+            "title_tokens": [
+              "engagement"
+            ]
+          },
+          "topics": [
+            "joint venture"
+          ]
+        }
+      ],
+      "variants": {
+        "D6_A_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.1,
+          "R@100": 0.15,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0909,
+          "ndcg@20": 0.0396,
+          "best_gold_rank": 11,
+          "n_candidates": 500,
+          "label": "role-family + lexical (D5 control)"
+        },
+        "D6_B_purpose_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.1,
+          "R@100": 0.15,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0909,
+          "ndcg@20": 0.0396,
+          "best_gold_rank": 11,
+          "n_candidates": 500,
+          "label": "role+purpose + lexical"
+        },
+        "D6_C_purpose_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0149,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 67,
+          "n_candidates": 500,
+          "label": "role+purpose + contextual"
+        },
+        "D6_D_purpose_hybrid": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0189,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 53,
+          "n_candidates": 500,
+          "label": "role+purpose + lex\u222actx RRF"
+        },
+        "D6_purpose_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0222,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 45,
+          "n_candidates": 500,
+          "label": "role+purpose + raw vector"
+        }
+      }
+    },
+    {
+      "query_id": "Q-0273",
+      "question": "Have we dealt with natural disasters affecting contractual performance?",
+      "theme_keys": [
+        "flood_force_majeure"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "PLEADING",
+          "confidence": 1.0,
+          "n_gold": 9,
+          "gold_share": 0.45
+        },
+        {
+          "family": "ANALYSIS",
+          "confidence": 1.0,
+          "n_gold": 8,
+          "gold_share": 0.4
+        },
+        {
+          "family": "EVIDENCE_RECORD",
+          "confidence": 1.0,
+          "n_gold": 3,
+          "gold_share": 0.15
+        }
+      ],
+      "oracle_purposes": [
+        {
+          "purpose": "PLEAD",
+          "confidence": 1.0,
+          "n_gold": 9,
+          "gold_share": 0.45
+        },
+        {
+          "purpose": "ANALYZE",
+          "confidence": 1.0,
+          "n_gold": 8,
+          "gold_share": 0.4
+        },
+        {
+          "purpose": "RECORD",
+          "confidence": 1.0,
+          "n_gold": 3,
+          "gold_share": 0.15
+        }
+      ],
+      "allowed_types_for_purpose": [
+        "Award Summary",
+        "Evidence Note",
+        "Final Arguments",
+        "Hearing Notes",
+        "KM Note",
+        "Legal Opinion",
+        "Matter Strategy Note",
+        "Meeting Notes",
+        "Partner Note",
+        "Research Memo",
+        "Statement of Claim",
+        "Statement of Defence"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "purpose": 1.0,
+        "document_type_el_ica": 0.0,
+        "n_theme": 2181,
+        "n_role_family": 1173,
+        "n_purpose": 1173,
+        "scope_reduction_family_to_purpose": 1.0
+      },
+      "hard_neg_summary": {
+        "n": 15,
+        "type_counts": {
+          "Research Memo": 1,
+          "Statement of Claim": 1,
+          "Statement of Defence": 3,
+          "Evidence Note": 2,
+          "Matter Strategy Note": 3,
+          "Hearing Notes": 3,
+          "Final Arguments": 2
+        },
+        "purpose_counts": {
+          "ANALYZE": 4,
+          "PLEAD": 6,
+          "RECORD": 5
+        }
+      },
+      "discriminative_purpose_features": [
+        {
+          "feature": "has_title_token",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 0.3333,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 0.3333,
+          "log_odds": 7.6,
+          "abs_log_odds": 7.6
+        },
+        {
+          "feature": "has_phrase_hit",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 0.8,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 0.8,
+          "log_odds": 5.52,
+          "abs_log_odds": 5.52
+        },
+        {
+          "feature": "purpose_RECORD",
+          "kind": "binary",
+          "p_gold": 0.15,
+          "p_hard_neg": 0.3333,
+          "mean_gold": 0.15,
+          "mean_hard_neg": 0.3333,
+          "log_odds": -1.041,
+          "abs_log_odds": 1.041
+        },
+        {
+          "feature": "purpose_ANALYZE",
+          "kind": "binary",
+          "p_gold": 0.4,
+          "p_hard_neg": 0.2667,
+          "mean_gold": 0.4,
+          "mean_hard_neg": 0.2667,
+          "log_odds": 0.606,
+          "abs_log_odds": 0.606
+        },
+        {
+          "feature": "purpose_PLEAD",
+          "kind": "binary",
+          "p_gold": 0.45,
+          "p_hard_neg": 0.4,
+          "mean_gold": 0.45,
+          "mean_hard_neg": 0.4,
+          "log_odds": 0.205,
+          "abs_log_odds": 0.205
+        },
+        {
+          "feature": "purpose_ASSESS",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_ESTABLISH",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_OTHER",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "purpose_PROPOSE",
+          "kind": "binary",
+          "p_gold": 0.0,
+          "p_hard_neg": 0.0,
+          "mean_gold": 0.0,
+          "mean_hard_neg": 0.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        },
+        {
+          "feature": "source_type",
+          "kind": "binary",
+          "p_gold": 1.0,
+          "p_hard_neg": 1.0,
+          "mean_gold": 1.0,
+          "mean_hard_neg": 1.0,
+          "log_odds": 0.0,
+          "abs_log_odds": 0.0
+        }
+      ],
+      "purpose_cards": [
+        {
+          "document_id": "DOC-00123",
+          "document_type": "Research Memo",
+          "title": "Research Memo \u2014 Solanki Holdings v State Urban Development Authority",
+          "role_family": "ANALYSIS",
+          "document_role": "RESEARCH_MEMO",
+          "purpose": "ANALYZE",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ANALYZE:\\bresearch memo\\b",
+              "ANALYZE:\\banalysis\\b",
+              "NOTIFY:\\bnotice\\b"
+            ],
+            "title_tokens": [
+              "research"
+            ]
+          },
+          "topics": [
+            "force majeure"
+          ]
+        },
+        {
+          "document_id": "DOC-13779",
+          "document_type": "Research Memo",
+          "title": "Research Memo \u2014 Savant-Mishra Pvt. Ltd. v Pacific Bulk Commodities",
+          "role_family": "ANALYSIS",
+          "document_role": "RESEARCH_MEMO",
+          "purpose": "ANALYZE",
+          "purpose_source": "type",
+          "signals": {
+            "phrase_hits": [
+              "ANALYZE:\\bresearch memo\\b",
+              "ANALYZE:\\banalysis\\b",
+              "NOTIFY:\\bnotice\\b"
+            ],
+            "title_tokens": [
+              "research"
+            ]
+          },
+          "topics": [
+            "force majeure",
+            "flood"
+          ]
+        }
+      ],
+      "variants": {
+        "D6_A_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.05,
+          "R@100": 0.25,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0714,
+          "ndcg@20": 0.0364,
+          "best_gold_rank": 14,
+          "n_candidates": 500,
+          "label": "role-family + lexical (D5 control)"
+        },
+        "D6_B_purpose_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.05,
+          "R@100": 0.25,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0714,
+          "ndcg@20": 0.0364,
+          "best_gold_rank": 14,
+          "n_candidates": 500,
+          "label": "role+purpose + lexical"
+        },
+        "D6_C_purpose_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0116,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 86,
+          "n_candidates": 500,
+          "label": "role+purpose + contextual"
+        },
+        "D6_D_purpose_hybrid": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0141,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 71,
+          "n_candidates": 500,
+          "label": "role+purpose + lex\u222actx RRF"
+        },
+        "D6_purpose_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0133,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 75,
+          "n_candidates": 500,
+          "label": "role+purpose + raw vector"
+        }
+      }
+    }
+  ]
+}

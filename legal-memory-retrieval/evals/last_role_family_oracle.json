@@ -1,0 +1,1585 @@
+{
+  "experiment": "P5.6-C5.5-D4/D5 role-family oracle",
+  "summary": {
+    "n": 7,
+    "ceilings": {
+      "theme": 1.0,
+      "role_family": 1.0,
+      "document_type_el_ica": 0.8286,
+      "avg_n_role_family": 855.3,
+      "avg_n_theme": 3464.7,
+      "avg_scope_reduction": 4.31
+    },
+    "baselines": {
+      "C5.4-D": {
+        "R@20": 0.007,
+        "label": "C5.4-D"
+      },
+      "C5.5_ctx": {
+        "R@20": 0.0,
+        "label": "C5.5 contextual"
+      }
+    },
+    "variants": {
+      "D5_A_theme_raw": {
+        "label": "theme + raw vector",
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0,
+        "R@100": 0.0071,
+        "Hit@20": 0.0,
+        "Hit@50": 0.0,
+        "Hit@100": 0.1429,
+        "mrr": 0.0018,
+        "avg_best_gold_rank": 247.5
+      },
+      "D5_B_family_raw": {
+        "label": "role-family + raw vector",
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0,
+        "R@50": 0.0429,
+        "R@100": 0.1071,
+        "Hit@20": 0.0,
+        "Hit@50": 0.7143,
+        "Hit@100": 1.0,
+        "mrr": 0.0223,
+        "avg_best_gold_rank": 51.4286
+      },
+      "D5_C_family_ctx": {
+        "label": "role-family + contextual vector",
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0143,
+        "R@50": 0.0429,
+        "R@100": 0.1357,
+        "Hit@20": 0.2857,
+        "Hit@50": 0.5714,
+        "Hit@100": 1.0,
+        "mrr": 0.0287,
+        "avg_best_gold_rank": 46.7143
+      },
+      "D5_D_family_lex": {
+        "label": "role-family + lexical",
+        "R@5": 0.0071,
+        "R@10": 0.0071,
+        "R@20": 0.0429,
+        "R@50": 0.0643,
+        "R@100": 0.1643,
+        "Hit@20": 0.5714,
+        "Hit@50": 0.7143,
+        "Hit@100": 1.0,
+        "mrr": 0.0901,
+        "avg_best_gold_rank": 29.8571
+      },
+      "D5_E_family_lex_ctx": {
+        "label": "role-family + lexical\u222actx RRF",
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "R@20": 0.0286,
+        "R@50": 0.05,
+        "R@100": 0.1214,
+        "Hit@20": 0.2857,
+        "Hit@50": 0.4286,
+        "Hit@100": 0.8571,
+        "mrr": 0.0298,
+        "avg_best_gold_rank": 50.8571
+      }
+    }
+  },
+  "gate": {
+    "role_family_ceiling_ok": true,
+    "beats_c54": false,
+    "beats_c55": false,
+    "material_r20": false,
+    "strong_r20": false,
+    "best_r20": 0.0429,
+    "enable_role_conditioned": false,
+    "ce_next": false,
+    "next": "document-purpose/content profiling below genre"
+  },
+  "per_query": [
+    {
+      "query_id": "Q-0264",
+      "question": "Have we advised on unpublished price sensitive information or insider trading SCNs?",
+      "theme_keys": [
+        "sebi_insider"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "allowed_document_types": [
+        "Engagement Letter",
+        "Initial Case Assessment",
+        "Share Purchase Agreement",
+        "Term Sheet"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3791,
+        "n_role_family": 872,
+        "n_el_ica": 872,
+        "scope_reduction_theme_to_family": 4.35
+      },
+      "variants": {
+        "D5_A_theme_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 0.0,
+          "mrr": 0.0,
+          "ndcg@20": 0.0,
+          "best_gold_rank": null,
+          "n_candidates": 500,
+          "label": "theme + raw vector"
+        },
+        "D5_B_family_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0111,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 90,
+          "n_candidates": 500,
+          "label": "role-family + raw vector"
+        },
+        "D5_C_family_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.027,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 37,
+          "n_candidates": 500,
+          "label": "role-family + contextual vector"
+        },
+        "D5_D_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.1,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0345,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 29,
+          "n_candidates": 500,
+          "label": "role-family + lexical"
+        },
+        "D5_E_family_lex_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0256,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 39,
+          "n_candidates": 500,
+          "label": "role-family + lexical\u222actx RRF"
+        }
+      },
+      "diagnostics": {
+        "D5_C_top": [
+          {
+            "document_id": "DOC-23455",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5043,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-20201",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5025,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-23453",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5002,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-23449",
+            "document_type": "Initial Case Assessment",
+            "score": 0.4934,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-23451",
+            "document_type": "Initial Case Assessment",
+            "score": 0.4925,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-23440",
+            "document_type": "Initial Case Assessment",
+            "score": 0.4914,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-11284",
+            "document_type": "Initial Case Assessment",
+            "score": 0.4898,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-20655",
+            "document_type": "Initial Case Assessment",
+            "score": 0.4735,
+            "in_gold": false
+          }
+        ],
+        "D5_D_top": [
+          {
+            "document_id": "DOC-02828",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-23037",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-23032",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-25555",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-23020",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-07201",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-35831",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-02786",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          }
+        ]
+      }
+    },
+    {
+      "query_id": "Q-0265",
+      "question": "Have we advised on post-employment non-competes and restraint of trade?",
+      "theme_keys": [
+        "employment_exit"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "allowed_document_types": [
+        "Engagement Letter",
+        "Initial Case Assessment",
+        "Share Purchase Agreement",
+        "Term Sheet"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3254,
+        "n_role_family": 740,
+        "n_el_ica": 740,
+        "scope_reduction_theme_to_family": 4.4
+      },
+      "variants": {
+        "D5_A_theme_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 0.0,
+          "mrr": 0.0,
+          "ndcg@20": 0.0,
+          "best_gold_rank": null,
+          "n_candidates": 500,
+          "label": "theme + raw vector"
+        },
+        "D5_B_family_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0222,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 45,
+          "n_candidates": 500,
+          "label": "role-family + raw vector"
+        },
+        "D5_C_family_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0169,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 59,
+          "n_candidates": 500,
+          "label": "role-family + contextual vector"
+        },
+        "D5_D_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.013,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 77,
+          "n_candidates": 405,
+          "label": "role-family + lexical"
+        },
+        "D5_E_family_lex_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 0.0,
+          "mrr": 0.0093,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 108,
+          "n_candidates": 500,
+          "label": "role-family + lexical\u222actx RRF"
+        }
+      },
+      "diagnostics": {
+        "D5_C_top": [
+          {
+            "document_id": "DOC-18860",
+            "document_type": "Engagement Letter",
+            "score": 0.4583,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-19868",
+            "document_type": "Engagement Letter",
+            "score": 0.4576,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-19849",
+            "document_type": "Engagement Letter",
+            "score": 0.4218,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-18878",
+            "document_type": "Engagement Letter",
+            "score": 0.4197,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-19831",
+            "document_type": "Engagement Letter",
+            "score": 0.4147,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-06913",
+            "document_type": "Engagement Letter",
+            "score": 0.4132,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-13753",
+            "document_type": "Engagement Letter",
+            "score": 0.4125,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-19834",
+            "document_type": "Engagement Letter",
+            "score": 0.4061,
+            "in_gold": false
+          }
+        ],
+        "D5_D_top": [
+          {
+            "document_id": "DOC-18880",
+            "document_type": "Engagement Letter",
+            "score": 0.2083,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-30030",
+            "document_type": "Engagement Letter",
+            "score": 0.2083,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-30050",
+            "document_type": "Engagement Letter",
+            "score": 0.2083,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-30052",
+            "document_type": "Engagement Letter",
+            "score": 0.2083,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-30057",
+            "document_type": "Engagement Letter",
+            "score": 0.2083,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-30059",
+            "document_type": "Engagement Letter",
+            "score": 0.2083,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-13747",
+            "document_type": "Engagement Letter",
+            "score": 0.2083,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-13753",
+            "document_type": "Engagement Letter",
+            "score": 0.2083,
+            "in_gold": false
+          }
+        ]
+      }
+    },
+    {
+      "query_id": "Q-0266",
+      "question": "Have we done title diligence involving unregistered family settlements?",
+      "theme_keys": [
+        "title_diligence"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "allowed_document_types": [
+        "Engagement Letter",
+        "Initial Case Assessment",
+        "Share Purchase Agreement",
+        "Term Sheet"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 4158,
+        "n_role_family": 937,
+        "n_el_ica": 937,
+        "scope_reduction_theme_to_family": 4.44
+      },
+      "variants": {
+        "D5_A_theme_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 0.0,
+          "mrr": 0.0,
+          "ndcg@20": 0.0,
+          "best_gold_rank": null,
+          "n_candidates": 500,
+          "label": "theme + raw vector"
+        },
+        "D5_B_family_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0323,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 31,
+          "n_candidates": 500,
+          "label": "role-family + raw vector"
+        },
+        "D5_C_family_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.025,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 40,
+          "n_candidates": 500,
+          "label": "role-family + contextual vector"
+        },
+        "D5_D_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0164,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 61,
+          "n_candidates": 500,
+          "label": "role-family + lexical"
+        },
+        "D5_E_family_lex_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0192,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 52,
+          "n_candidates": 500,
+          "label": "role-family + lexical\u222actx RRF"
+        }
+      },
+      "diagnostics": {
+        "D5_C_top": [
+          {
+            "document_id": "DOC-11218",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6619,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-09153",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6366,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-33296",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6345,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-28630",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6305,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-05484",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6242,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-33374",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6183,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-09147",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6177,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-07925",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6151,
+            "in_gold": false
+          }
+        ],
+        "D5_D_top": [
+          {
+            "document_id": "DOC-05973",
+            "document_type": "Initial Case Assessment",
+            "score": 0.9,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-09153",
+            "document_type": "Initial Case Assessment",
+            "score": 0.9,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-31730",
+            "document_type": "Initial Case Assessment",
+            "score": 0.9,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-28630",
+            "document_type": "Initial Case Assessment",
+            "score": 0.9,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-11218",
+            "document_type": "Initial Case Assessment",
+            "score": 0.9,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-15237",
+            "document_type": "Initial Case Assessment",
+            "score": 0.9,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-33296",
+            "document_type": "Initial Case Assessment",
+            "score": 0.9,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-31288",
+            "document_type": "Initial Case Assessment",
+            "score": 0.9,
+            "in_gold": false
+          }
+        ]
+      }
+    },
+    {
+      "query_id": "Q-0267",
+      "question": "Have we handled transfer pricing adjustments on intra-group management fees?",
+      "theme_keys": [
+        "transfer_pricing"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "allowed_document_types": [
+        "Engagement Letter",
+        "Initial Case Assessment",
+        "Share Purchase Agreement",
+        "Term Sheet"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3262,
+        "n_role_family": 755,
+        "n_el_ica": 755,
+        "scope_reduction_theme_to_family": 4.32
+      },
+      "variants": {
+        "D5_A_theme_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 0.0,
+          "mrr": 0.0025,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 395,
+          "n_candidates": 500,
+          "label": "theme + raw vector"
+        },
+        "D5_B_family_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.1,
+          "R@100": 0.2,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0303,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 33,
+          "n_candidates": 500,
+          "label": "role-family + raw vector"
+        },
+        "D5_C_family_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.1,
+          "R@100": 0.3,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0556,
+          "ndcg@20": 0.0334,
+          "best_gold_rank": 18,
+          "n_candidates": 500,
+          "label": "role-family + contextual vector"
+        },
+        "D5_D_family_lex": {
+          "R@5": 0.05,
+          "R@10": 0.05,
+          "R@20": 0.1,
+          "R@50": 0.1,
+          "R@100": 0.25,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.3333,
+          "ndcg@20": 0.1094,
+          "best_gold_rank": 3,
+          "n_candidates": 500,
+          "label": "role-family + lexical"
+        },
+        "D5_E_family_lex_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.1,
+          "R@50": 0.15,
+          "R@100": 0.3,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0625,
+          "ndcg@20": 0.0688,
+          "best_gold_rank": 16,
+          "n_candidates": 500,
+          "label": "role-family + lexical\u222actx RRF"
+        }
+      },
+      "diagnostics": {
+        "D5_C_top": [
+          {
+            "document_id": "DOC-30868",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6881,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-06250",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6769,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-06237",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6722,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-06244",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6686,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-36132",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6605,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-36122",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6505,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-30853",
+            "document_type": "Initial Case Assessment",
+            "score": 0.649,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-30828",
+            "document_type": "Initial Case Assessment",
+            "score": 0.648,
+            "in_gold": false
+          }
+        ],
+        "D5_D_top": [
+          {
+            "document_id": "DOC-03300",
+            "document_type": "Initial Case Assessment",
+            "score": 0.9,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-01313",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-03370",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": true
+          },
+          {
+            "document_id": "DOC-03307",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-19889",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-15794",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-03478",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-36442",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          }
+        ]
+      }
+    },
+    {
+      "query_id": "Q-0270",
+      "question": "Have we handled supply-contract terminations for quality failures?",
+      "theme_keys": [
+        "commercial_arb"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "allowed_document_types": [
+        "Engagement Letter",
+        "Initial Case Assessment",
+        "Share Purchase Agreement",
+        "Term Sheet"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "document_type_el_ica": 1.0,
+        "n_theme": 3752,
+        "n_role_family": 552,
+        "n_el_ica": 552,
+        "scope_reduction_theme_to_family": 6.8
+      },
+      "variants": {
+        "D5_A_theme_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 0.0,
+          "mrr": 0.0,
+          "ndcg@20": 0.0,
+          "best_gold_rank": null,
+          "n_candidates": 500,
+          "label": "theme + raw vector"
+        },
+        "D5_B_family_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0244,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 41,
+          "n_candidates": 500,
+          "label": "role-family + raw vector"
+        },
+        "D5_C_family_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.1,
+          "R@100": 0.15,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.05,
+          "ndcg@20": 0.0323,
+          "best_gold_rank": 20,
+          "n_candidates": 500,
+          "label": "role-family + contextual vector"
+        },
+        "D5_D_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.1,
+          "R@50": 0.1,
+          "R@100": 0.2,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0714,
+          "ndcg@20": 0.0687,
+          "best_gold_rank": 14,
+          "n_candidates": 500,
+          "label": "role-family + lexical"
+        },
+        "D5_E_family_lex_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.1,
+          "R@50": 0.15,
+          "R@100": 0.15,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0588,
+          "ndcg@20": 0.0675,
+          "best_gold_rank": 17,
+          "n_candidates": 500,
+          "label": "role-family + lexical\u222actx RRF"
+        }
+      },
+      "diagnostics": {
+        "D5_C_top": [
+          {
+            "document_id": "DOC-11233",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5488,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-01820",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5314,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-15409",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5227,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-05624",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5164,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-11085",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5132,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-04362",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5105,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-11042",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5105,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-02398",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5082,
+            "in_gold": false
+          }
+        ],
+        "D5_D_top": [
+          {
+            "document_id": "DOC-17185",
+            "document_type": "Initial Case Assessment",
+            "score": 0.6,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-10541",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-16258",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-13627",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-13653",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-16256",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-14042",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-14061",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5,
+            "in_gold": false
+          }
+        ]
+      }
+    },
+    {
+      "query_id": "Q-0271",
+      "question": "Have we advised on 50:50 joint venture deadlocks and shotgun clauses?",
+      "theme_keys": [
+        "jv"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "TRANSACTIONAL",
+          "confidence": 1.0,
+          "n_gold": 20,
+          "gold_share": 1.0
+        }
+      ],
+      "allowed_document_types": [
+        "Engagement Letter",
+        "Initial Case Assessment",
+        "Share Purchase Agreement",
+        "Term Sheet"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "document_type_el_ica": 0.8,
+        "n_theme": 3855,
+        "n_role_family": 958,
+        "n_el_ica": 723,
+        "scope_reduction_theme_to_family": 4.02
+      },
+      "variants": {
+        "D5_A_theme_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.0,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 0.0,
+          "mrr": 0.0,
+          "ndcg@20": 0.0,
+          "best_gold_rank": null,
+          "n_candidates": 500,
+          "label": "theme + raw vector"
+        },
+        "D5_B_family_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.05,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0222,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 45,
+          "n_candidates": 500,
+          "label": "role-family + raw vector"
+        },
+        "D5_C_family_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.15,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0149,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 67,
+          "n_candidates": 500,
+          "label": "role-family + contextual vector"
+        },
+        "D5_D_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.1,
+          "R@100": 0.15,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0909,
+          "ndcg@20": 0.0396,
+          "best_gold_rank": 11,
+          "n_candidates": 500,
+          "label": "role-family + lexical"
+        },
+        "D5_E_family_lex_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0189,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 53,
+          "n_candidates": 500,
+          "label": "role-family + lexical\u222actx RRF"
+        }
+      },
+      "diagnostics": {
+        "D5_C_top": [
+          {
+            "document_id": "DOC-12496",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5305,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-31464",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5304,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-12476",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5255,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-31474",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5215,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-27643",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5211,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-29635",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5195,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-12454",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5124,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-27572",
+            "document_type": "Initial Case Assessment",
+            "score": 0.5038,
+            "in_gold": false
+          }
+        ],
+        "D5_D_top": [
+          {
+            "document_id": "DOC-11617",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-12315",
+            "document_type": "Initial Case Assessment",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-31466",
+            "document_type": "Engagement Letter",
+            "score": 0.7,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-12317",
+            "document_type": "Engagement Letter",
+            "score": 0.7,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-00950",
+            "document_type": "Engagement Letter",
+            "score": 0.7,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-31443",
+            "document_type": "Engagement Letter",
+            "score": 0.7,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-31441",
+            "document_type": "Engagement Letter",
+            "score": 0.7,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-12308",
+            "document_type": "Engagement Letter",
+            "score": 0.7,
+            "in_gold": false
+          }
+        ]
+      }
+    },
+    {
+      "query_id": "Q-0273",
+      "question": "Have we dealt with natural disasters affecting contractual performance?",
+      "theme_keys": [
+        "flood_force_majeure"
+      ],
+      "oracle_role_families": [
+        {
+          "family": "PLEADING",
+          "confidence": 1.0,
+          "n_gold": 9,
+          "gold_share": 0.45
+        },
+        {
+          "family": "ANALYSIS",
+          "confidence": 1.0,
+          "n_gold": 8,
+          "gold_share": 0.4
+        },
+        {
+          "family": "EVIDENCE_RECORD",
+          "confidence": 1.0,
+          "n_gold": 3,
+          "gold_share": 0.15
+        }
+      ],
+      "allowed_document_types": [
+        "Evidence Note",
+        "Final Arguments",
+        "Hearing Notes",
+        "KM Note",
+        "Legal Opinion",
+        "Matter Strategy Note",
+        "Partner Note",
+        "Research Memo",
+        "Statement of Claim",
+        "Statement of Defence"
+      ],
+      "ceilings": {
+        "theme": 1.0,
+        "role_family": 1.0,
+        "document_type_el_ica": 0.0,
+        "n_theme": 2181,
+        "n_role_family": 1173,
+        "n_el_ica": 329,
+        "scope_reduction_theme_to_family": 1.86
+      },
+      "variants": {
+        "D5_A_theme_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.01,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 100,
+          "n_candidates": 500,
+          "label": "theme + raw vector"
+        },
+        "D5_B_family_raw": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0133,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 75,
+          "n_candidates": 500,
+          "label": "role-family + raw vector"
+        },
+        "D5_C_family_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.05,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0116,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 86,
+          "n_candidates": 500,
+          "label": "role-family + contextual vector"
+        },
+        "D5_D_family_lex": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.05,
+          "R@50": 0.05,
+          "R@100": 0.25,
+          "Hit@20": 1.0,
+          "Hit@50": 1.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0714,
+          "ndcg@20": 0.0364,
+          "best_gold_rank": 14,
+          "n_candidates": 500,
+          "label": "role-family + lexical"
+        },
+        "D5_E_family_lex_ctx": {
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "R@20": 0.0,
+          "R@50": 0.0,
+          "R@100": 0.1,
+          "Hit@20": 0.0,
+          "Hit@50": 0.0,
+          "Hit@100": 1.0,
+          "mrr": 0.0141,
+          "ndcg@20": 0.0,
+          "best_gold_rank": 71,
+          "n_candidates": 500,
+          "label": "role-family + lexical\u222actx RRF"
+        }
+      },
+      "diagnostics": {
+        "D5_C_top": [
+          {
+            "document_id": "DOC-08786",
+            "document_type": "Research Memo",
+            "score": 0.5739,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-08775",
+            "document_type": "Research Memo",
+            "score": 0.5739,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-20727",
+            "document_type": "Research Memo",
+            "score": 0.5566,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-05447",
+            "document_type": "Research Memo",
+            "score": 0.5549,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-05466",
+            "document_type": "Research Memo",
+            "score": 0.5549,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-27413",
+            "document_type": "Research Memo",
+            "score": 0.5511,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-28824",
+            "document_type": "Research Memo",
+            "score": 0.5439,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-28807",
+            "document_type": "Research Memo",
+            "score": 0.5439,
+            "in_gold": false
+          }
+        ],
+        "D5_D_top": [
+          {
+            "document_id": "DOC-25015",
+            "document_type": "Research Memo",
+            "score": 0.9053,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-19136",
+            "document_type": "Research Memo",
+            "score": 0.9,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-06713",
+            "document_type": "Research Memo",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-05447",
+            "document_type": "Research Memo",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-36252",
+            "document_type": "Research Memo",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-13907",
+            "document_type": "Research Memo",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-06730",
+            "document_type": "Research Memo",
+            "score": 0.8,
+            "in_gold": false
+          },
+          {
+            "document_id": "DOC-27999",
+            "document_type": "Research Memo",
+            "score": 0.8,
+            "in_gold": false
+          }
+        ]
+      }
+    }
+  ]
+}

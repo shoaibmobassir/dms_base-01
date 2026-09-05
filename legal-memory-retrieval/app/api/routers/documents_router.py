@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from psycopg.rows import dict_row
 
 from app.api.acl import ACL_CLAUSE
@@ -23,6 +24,12 @@ from app.documents import (
     list_versions as list_doc_versions,
     get_version,
     diff_versions,
+)
+from app.documents.anchor import AnchorTarget, resolve_anchor
+from app.documents.canonical import (
+    get_version_blocks,
+    parse_canonical_blocks,
+    save_canonical_blocks,
 )
 
 router = APIRouter(tags=["documents"])
@@ -282,3 +289,199 @@ def document_chunks_endpoint(
                 {"doc_id": doc_id},
             )
             return {"service": SERVICE, "document_id": doc_id, "chunks": list(cur.fetchall())}
+
+
+@router.get("/{document_id}/versions/{version_id}/chunks")
+def get_version_hierarchical_chunks(
+    document_id: str,
+    version_id: str,
+    children_only: bool = Query(default=False),
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Version-scoped hierarchical chunks (parent section + child paragraph groups)."""
+    _check_doc_access(document_id, member_id)
+    from app.documents.hierarchical_chunks import get_version_chunks
+
+    chunks = get_version_chunks(version_id, children_only=children_only)
+    return {
+        "service": SERVICE,
+        "document_id": document_id,
+        "version_id": version_id,
+        "chunks": chunks,
+        "count": len(chunks),
+    }
+
+
+@router.get("/chunks/{chunk_id}/context")
+def get_chunk_context_envelope(
+    chunk_id: str,
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Full context envelope for a chunk (client/matter/folder/doc/section/page)."""
+    from app.documents.hierarchical_chunks import build_context_envelope_for_chunk
+
+    envelope = build_context_envelope_for_chunk(chunk_id)
+    if envelope is None:
+        raise HTTPException(status_code=404, detail="Chunk not found")
+    return {"service": SERVICE, "chunk_id": chunk_id, "context_envelope": envelope}
+
+
+# ── Canonical AST Blocks & Intelligence ──────────────────────────────────────
+
+
+@router.get("/{document_id}/versions/{version_id}/blocks")
+def get_version_blocks_endpoint(
+    document_id: str,
+    version_id: str,
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Retrieve canonical AST blocks with deterministic offsets and SHA-256 hashes."""
+    _check_doc_access(document_id, member_id)
+
+    blocks = get_version_blocks(version_id)
+    if not blocks:
+        ver = get_version(document_id.upper(), version_id)
+        if ver and ver.get("body"):
+            parsed = parse_canonical_blocks(ver["body"], document_id.upper(), version_id)
+            save_canonical_blocks(parsed)
+            blocks = [b.to_dict() for b in parsed]
+
+    return {
+        "service": SERVICE,
+        "document_id": document_id,
+        "version_id": version_id,
+        "blocks": blocks,
+        "total_blocks": len(blocks),
+    }
+
+
+class ResolveAnchorRequest(BaseModel):
+    quoted_text: str
+    text_hash: str | None = None
+    block_id: str | None = None
+    page_number: int = 1
+    start_offset: int = 0
+    end_offset: int = 0
+
+
+@router.post("/{document_id}/versions/{version_id}/resolve-anchor")
+def resolve_anchor_endpoint(
+    document_id: str,
+    version_id: str,
+    req: ResolveAnchorRequest,
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Resolve a content anchor (exact → fuzzy → semantic). PDF coords are not required."""
+    _check_doc_access(document_id, member_id)
+    target = AnchorTarget(
+        version_id=version_id,
+        quoted_text=req.quoted_text,
+        text_hash=req.text_hash,
+        block_id=req.block_id,
+        page_number=req.page_number,
+        start_offset=req.start_offset,
+        end_offset=req.end_offset,
+    )
+    resolved = resolve_anchor(target)
+    return {
+        "service": SERVICE,
+        "document_id": document_id,
+        "version_id": version_id,
+        "resolved": resolved.to_dict(),
+    }
+
+
+@router.get("/{document_id}/versions/{version_id}/findings")
+def get_version_findings_endpoint(
+    document_id: str,
+    version_id: str,
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Retrieve all structured AI findings and durable evidence anchors for a document version."""
+    _check_doc_access(document_id, member_id)
+    from app.documents import list_version_findings
+
+    findings = list_version_findings(document_id.upper(), version_id)
+    return {
+        "service": SERVICE,
+        "document_id": document_id,
+        "version_id": version_id,
+        "findings": findings,
+        "count": len(findings),
+    }
+
+
+@router.post("/{document_id}/versions/{version_id}/diff/{compare_with_id}")
+def document_multilevel_diff_endpoint(
+    document_id: str,
+    version_id: str,
+    compare_with_id: str,
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Compute complete dual-level diff: word-level redline + structured semantic legal delta."""
+    _check_doc_access(document_id, member_id)
+    from app.documents.diff import diff_document_versions
+
+    result = diff_document_versions(version_id, compare_with_id)
+    return {"service": SERVICE, "diff": result.to_dict()}
+
+
+class AnnotationCreateRequest(BaseModel):
+    quoted_text: str
+    annotation_type: str = "user_highlight"
+    block_id: str | None = None
+    page_number: int = 1
+    start_offset: int = 0
+    end_offset: int = 0
+    author_name: str | None = None
+    finding_id: str | None = None
+    content: str | None = None
+
+
+@router.post("/{document_id}/versions/{version_id}/annotations")
+def create_annotation_endpoint(
+    document_id: str,
+    version_id: str,
+    req: AnnotationCreateRequest,
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Create a durable annotation attached to a canonical block."""
+    _check_doc_access(document_id, member_id)
+    from app.documents import create_annotation
+
+    ann = create_annotation(
+        document_id=document_id.upper(),
+        version_id=version_id,
+        quoted_text=req.quoted_text,
+        annotation_type=req.annotation_type,
+        block_id=req.block_id,
+        page_number=req.page_number,
+        start_offset=req.start_offset,
+        end_offset=req.end_offset,
+        author_id=member_id,
+        author_name=req.author_name,
+        finding_id=req.finding_id,
+        content=req.content,
+    )
+    return {"service": SERVICE, "status": "created", "annotation": ann}
+
+
+@router.get("/{document_id}/versions/{version_id}/annotations")
+def list_annotations_endpoint(
+    document_id: str,
+    version_id: str,
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """List all active annotations for a version."""
+    _check_doc_access(document_id, member_id)
+    from app.documents import list_annotations
+
+    anns = list_annotations(document_id.upper(), version_id)
+    return {
+        "service": SERVICE,
+        "document_id": document_id,
+        "version_id": version_id,
+        "annotations": anns,
+        "count": len(anns),
+    }
+

@@ -27,7 +27,9 @@ Update the Approved column when a human owner reviews an uncertain license.
 | python-jose | >=3.3.0 | MIT | No | No | Yes | ✅ |
 | passlib | >=1.7.4 | BSD-3-Clause | No | No | Yes | ✅ |
 | pypdf | >=5.0.0 | BSD-3-Clause | No | No | Yes | ✅ |
+| python-docx | >=1.1.0 | MIT | No | No | Yes | ✅ |
 | PyYAML | >=6.0.0 | MIT | No | No | Yes | ✅ |
+| python-multipart | >=0.0.9 | Apache-2.0 | No | No | Yes | ✅ |
 
 **Transitive dependencies of note:**
 

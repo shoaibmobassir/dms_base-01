@@ -22,6 +22,16 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6380"
     cache_ttl_seconds: int = 300
 
+    # ── Object storage (FirmOS Phase 3) ───────────────────────────────────
+    tenant_id: str = "harbour"
+    object_store_backend: str = "local"  # local | s3
+    object_store_root: str = "./data/object_store"
+    object_store_bucket: str = "firmos"
+    object_store_endpoint: str = "http://localhost:9000"
+    object_store_access_key: str = "minioadmin"
+    object_store_secret_key: str = "minioadmin"
+    object_store_region: str = "us-east-1"
+
     # ── Async connection pool ────────────────────────────────────────────
     db_pool_min_size: int = 4
     db_pool_max_size: int = 20

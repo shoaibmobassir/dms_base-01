@@ -1,0 +1,39 @@
+{
+  "baseline": {
+    "recall@5": 0.4021,
+    "recall@10": 0.5895,
+    "hit@10": 0.9238,
+    "mrr": 0.6941,
+    "ndcg@10": 0.5568
+  },
+  "note": "P5.5 pipeline repair ablations; gate requires R@10 AND Hit@10 AND MRR vs baseline",
+  "runs": [
+    {
+      "policy": "p53",
+      "recall@5": 0.5025,
+      "recall@10": 0.592,
+      "hit@10": 0.7715,
+      "mrr": 0.5998,
+      "ndcg@10": 0.5698,
+      "gate_pass": false
+    },
+    {
+      "policy": "p55_repair",
+      "recall@5": 0.5068,
+      "recall@10": 0.5982,
+      "hit@10": 0.7887,
+      "mrr": 0.6011,
+      "ndcg@10": 0.5733,
+      "gate_pass": false
+    },
+    {
+      "policy": "p55_no_hier_channel",
+      "recall@5": 0.5034,
+      "recall@10": 0.5869,
+      "hit@10": 0.7641,
+      "mrr": 0.596,
+      "ndcg@10": 0.5654,
+      "gate_pass": false
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 # DMS knowledge base
 
-Frozen synthetic firm: `dummy-firm/` (do not regenerate to chase retrieval scores).
+Firm corpus: `dummy-firm/` — PCIJ cases, UN Security Council resolutions, and Indian electricity filings from `docs/`. Rebuild with `python3 dummy-firm/scripts/build_corpus.py`.
 
-Retrieval stack: `legal-memory-retrieval/` — Postgres + FTS/metadata baseline now; vector, hybrid, graph, and LLM later, each gated on eval.
+Retrieval stack: `legal-memory-retrieval/` — Postgres + hybrid retrieval, gated on eval.

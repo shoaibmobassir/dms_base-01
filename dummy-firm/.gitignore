@@ -4,4 +4,6 @@ __pycache__/
 venv/
 data/*.json
 data/*.jsonl
+data/*.zip
+files/
 !data/.gitkeep
