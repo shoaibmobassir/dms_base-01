@@ -31,6 +31,31 @@ SCORE_BOOST_INTENTS = frozenset({
 
 VALID_MODES = frozenset({"off", "score", "hard", "hier"})
 
+# Full-title containment: the query wraps the title, ILIKE '%query%' cannot fire.
+MIN_CONTAINED_TITLE_LEN = 8
+MIN_CONTAINED_CODE_LEN = 4
+
+
+def normalize_dashes(text: str) -> str:
+    return (text or "").replace("\u2014", "-").replace("\u2013", "-")
+
+
+def contained_matter_ids(
+    needle: str,
+    titles: list[tuple[str, str]],
+    *,
+    min_len: int = MIN_CONTAINED_TITLE_LEN,
+) -> list[str]:
+    """Matter ids whose full title appears inside needle. Longest title first."""
+    n = normalize_dashes(needle).lower()
+    hits: list[tuple[int, str]] = []
+    for matter_id, title in titles:
+        t = normalize_dashes(title or "").lower()
+        if len(t) >= min_len and t in n:
+            hits.append((len(t), matter_id))
+    hits.sort(reverse=True)
+    return [matter_id for _, matter_id in hits]
+
 
 def active_matter_scope() -> str:
     # Default hard: resolve matters → scope BM25/vector; matter_scope heads (not matter-as-score).

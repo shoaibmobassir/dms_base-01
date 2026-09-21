@@ -58,6 +58,27 @@ def test_extractive_abstains_on_empty_hits() -> None:
     assert out["reason"] == "no_evidence"
 
 
+def test_groq_abstain_falls_back_to_extractive(monkeypatch) -> None:
+    hits = [
+        {
+            "document_id": "DOC-03076",
+            "title": "MSEDCL note",
+            "text": "Floods were treated as force majeure in Appeal 163 of 2018.",
+        }
+    ]
+    monkeypatch.setattr("app.answers.generate.settings.groq_api_key", "test-key")
+    monkeypatch.setattr(
+        "app.answers.generate.groq_complete",
+        lambda *_args, **_kwargs: '{"abstain": true, "answer": "", "citations": []}',
+    )
+    from app.answers.generate import _generate
+
+    out = _generate("groq", "Has MSEDCL argued floods?", hits)
+    assert out["abstained"] is False
+    assert out["provider"] == "extractive_after_groq_abstain"
+    assert "DOC-03076" in out["citations"]
+
+
 class _EmptyConn:
     pass
 

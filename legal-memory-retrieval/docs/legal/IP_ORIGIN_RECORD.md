@@ -229,3 +229,82 @@ Mike source used as coding basis: NO
 New dependencies introduced: None
 IP notes: None
 
+### Feature: Firm search vs drafting assistant (two products)
+Date: 2026-09-12
+Mike observation (product level only): Legal AI products separate finding prior work in the firm's files from a conversational assistant that drafts, reviews, and cites documents.
+Requirement (technology-independent): Provide two independently usable capabilities. The DMS retriever answers "have we seen this before" with ACL-filtered ranked documents and citations. The drafting assistant is a multi-turn agent that can search the corpus on demand, read documents, and generate Word/Excel drafts with verified quotes.
+Our design decisions:
+  - DMS / Ask Firm remains `POST /api/answers` + `POST /api/retrieval` over the hybrid engine
+  - Drafting assistant remains `/api/chat/*` with tool calling; it does not replace retrieval
+  - New `search_firm_records` tool calls our existing `retrieve()` rather than a second index
+  - Ask UI presets aligned to the Harbour Chambers PCIJ/UNSC/India filings corpus
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: Product requirements abstracted from Mike/Legora/Harvey feature lists only. No Mike source was read for this change.
+
+### Feature: On-demand firm-record search in the chat agent
+Date: 2026-09-12
+Mike observation (product level only): A drafting assistant must be able to look up firm documents during a conversation, not only from a list attached before the first message.
+Requirement (technology-independent): Given a natural-language query in chat, search ACL-filtered firm records, add matching documents to the chat-local document index, and let the model read/cite them.
+Our design decisions:
+  - Tool name `search_firm_records` with `{query, k}`
+  - Implementation reuses `app.retrieval.engine.retrieve`
+  - Chat-local slugs (`doc-N`) assigned independently
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: None
+
+### Feature: Chat request correlation and bounded context
+Date: 2026-09-12
+Mike observation (product level only): None. Generic operations requirement for debugging multi-turn assistants and keeping prompts inside a token budget.
+Requirement (technology-independent): Every API response carries a correlation id that appears in assistant logs. A long chat must not resend the entire transcript, and must not send the current user turn twice.
+Our design decisions:
+  - `X-Request-ID` accepted only as a short token, otherwise a UUID, stored on a ContextVar and echoed by ASGI middleware that does not buffer SSE
+  - LLM history keeps the last 10 user/assistant pairs and drops the just-persisted copy of the current user message
+  - No conversation summarization model
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: Not derived from Mike retry, memory, or analytics implementations.
+
+### Feature: Scoped argument supporting-document lookup
+Date: 2026-09-14
+Mike observation (product level only): None for this slice. Lawyers need the documents that back a matter's stored argument, not a search of the whole firm.
+Requirement (technology-independent): After the system has resolved which matter a question is about, it may use the firm's stored list of documents that support that matter's argument, and must still hide documents the member cannot see.
+Our design decisions:
+  - Channel name `argument_scope`, used only when the metric label is `argument_support` and hard matter scope already resolved matter ids
+  - Lookup is `arguments.supporting_documents` for those matter ids, joined to one chunk head per document, with the existing permission predicate in SQL
+  - Fusion weight 2.5 is applied on that path only; frozen `p55_repair_ce_protect` weights are not edited
+  - No full-text search of issue/position text, no second embedding column, no new dependency
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: Not an Argument Bank folder, library route, or Mike citation panel. Issue/position bank search is out of scope.
+
+### Feature: Party-span shortlist with optional LLM pick
+Date: 2026-09-14
+Mike observation (product level only): None. A lawyer may describe a matter by the parties instead of the title.
+Requirement (technology-independent): If the question does not contain a stored title, the system may still bind a matter when two or more party names in the question all appear on one stored matter, and must not invent a matter that was not already shortlisted. When several matters match, a model may choose one of those ids or none.
+Our design decisions:
+  - Runs only after ILIKE and title-containment return nothing, and never on document-title questions
+  - Shortlist is SQL AND of party spans against facts, title, opposing party, and client, with the existing permission predicate
+  - A single match is accepted without a model. Two or more matches call the model only when `MATTER_LLM_RESOLVE=on`. The model cannot return an id outside the shortlist. Confidence below 0.70 abstains
+  - No new embedding column, no fusion-weight change, no new dependency
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: Not a copy of a vendor matter-resolver service. The model sees only the shortlist, not the firm.
+
+### Feature: Universal document sync / source connectors (Phase 0)
+Date: 2026-09-19
+Mike observation (product level only): Enterprise legal products often let firms connect cloud document stores (Drive, SharePoint, OneDrive) so files stay synchronized into search/AI without manual re-upload. Observed only as a product capability category — not as UI or implementation detail from Mike source.
+Requirement (technology-independent): A firm member can connect an external document provider, after which the system discovers files, downloads only new/changed items using a stored sync cursor, stores originals in object storage, indexes text for retrieval, and removes or tombstones deleted remote files. Access must still honor firm matter permissions; source ACLs are stored for later intersection. Providers plug into one connector interface so the sync engine does not hard-code a vendor.
+Our design decisions:
+  - Additive tables: `source_connections`, `source_sync_state`, `source_files`, `source_file_permissions`, `identity_links`
+  - Python `DocumentConnector` protocol + `FakeConnector` first; real Drive/Graph adapters later
+  - Redis list queues with inline drain for tests; no Kafka in Phase 0
+  - Reuse existing object store + extractors + document/version write path
+  - v1: one connection bound to one matter; matter-trust ACL (source ACL stored, not yet intersected in SQL)
+  - Feature flag `SOURCES_SYNC_ENABLED`
+Mike source used as coding basis: NO
+New dependencies introduced: None (reuses cryptography, redis already in tree)
+IP notes: Independent architecture from requirements in docs/universal-document-sync-engine-plan.md. Not derived from Mike connector code, schemas, or UI.
+
+

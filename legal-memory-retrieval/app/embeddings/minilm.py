@@ -15,11 +15,28 @@ class MiniLMEmbedder:
     def encode(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        vectors = self._model.encode(
-            texts,
-            normalize_embeddings=True,
-            show_progress_bar=False,
-            convert_to_numpy=True,
-        )
-        matrix = np.asarray(vectors, dtype=np.float32)
-        return [row.tolist() for row in matrix]
+        from app.cache.multi_tier import embedding_cache_get, embedding_cache_set
+
+        out: list[list[float] | None] = [None] * len(texts)
+        missing_idx: list[int] = []
+        missing_texts: list[str] = []
+        for i, text in enumerate(texts):
+            cached = embedding_cache_get(text)
+            if cached is not None:
+                out[i] = cached
+            else:
+                missing_idx.append(i)
+                missing_texts.append(text)
+        if missing_texts:
+            vectors = self._model.encode(
+                missing_texts,
+                normalize_embeddings=True,
+                show_progress_bar=False,
+                convert_to_numpy=True,
+            )
+            matrix = np.asarray(vectors, dtype=np.float32)
+            for idx, row in zip(missing_idx, matrix):
+                vec = row.tolist()
+                embedding_cache_set(texts[idx], vec)
+                out[idx] = vec
+        return [row or [] for row in out]

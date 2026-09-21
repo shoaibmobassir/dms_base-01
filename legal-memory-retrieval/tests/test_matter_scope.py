@@ -83,3 +83,18 @@ def test_scope_stats_crr():
         corpus_documents=1000,
     )
     assert stats["candidate_reduction_ratio"] == 100.0
+
+
+def test_contained_titles_prefer_longest_and_ignore_short():
+    from app.retrieval.matter_scope import contained_matter_ids
+
+    titles = [
+        ("M-SHORT", "India"),
+        ("M-WIN", "Wimbledon — PCIJ Series A No. 1"),
+        ("M-OTHER", "Lotus — PCIJ Series A No. 10"),
+    ]
+    wrapped = "Papers we filed in Wimbledon — PCIJ Series A No. 1"
+    assert contained_matter_ids(wrapped, titles) == ["M-WIN"]
+    hyphen = "Where is the record of Wimbledon - PCIJ Series A No. 1?"
+    assert contained_matter_ids(hyphen, titles) == ["M-WIN"]
+    assert contained_matter_ids("Has the firm worked on quantum computing?", titles) == []

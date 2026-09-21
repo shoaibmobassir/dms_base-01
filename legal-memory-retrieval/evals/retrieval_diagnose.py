@@ -31,6 +31,7 @@ load_dotenv(ROOT / ".env.example")
 
 from app.retrieval.diagnose import (  # noqa: E402
     diagnose_query,
+    gold_channel_coverage,
     per_query_ranking_stats,
     summarize_rows,
 )
@@ -45,7 +46,9 @@ def _load_questions(path: Path) -> list[dict]:
 
 
 async def _run(args: argparse.Namespace) -> dict:
-    dataset = ROOT / "evals" / "dataset.jsonl"
+    dataset = Path(args.dataset)
+    if not dataset.is_absolute():
+        dataset = ROOT / dataset
     questions = _load_questions(dataset)
     if args.types:
         wanted = {t.strip() for t in args.types.split(",") if t.strip()}
@@ -57,6 +60,14 @@ async def _run(args: argparse.Namespace) -> dict:
     per_type_stats: dict[str, list[dict]] = defaultdict(list)
     drop_stage_counter: Counter = Counter()
     combo_counter: Counter = Counter()
+    gold_channel_counter: Counter = Counter()
+    gold_docs_total = 0
+    gold_in_pool = 0
+    gold_absent = 0
+    gold_in_final = 0
+    queries_gold_absent = 0
+    queries_unscoped = 0
+    queries_scoped = 0
 
     for i, q in enumerate(questions, start=1):
         member_id = q.get("as_member") or q.get("as_user")
@@ -83,6 +94,24 @@ async def _run(args: argparse.Namespace) -> dict:
         summary = summarize_rows(result.rows)
         drop_stage_counter.update(summary.get("relevant_drop_stages") or {})
         combo_counter.update(summary.get("relevant_channel_combos") or {})
+        coverage = gold_channel_coverage(result.rows, gold_docs)
+        gold_channel_counter.update(coverage["channels"])
+        gold_docs_total += coverage["gold_docs"]
+        gold_in_pool += coverage["gold_in_pool"]
+        gold_absent += coverage["gold_absent"]
+        gold_in_final += coverage["gold_in_final_top10"]
+        if coverage["gold_docs"] and coverage["gold_in_pool"] == 0:
+            queries_gold_absent += 1
+            drop_stage_counter["absent_from_pool"] += 1
+        scope = (result.latency_ms or {}).get("matter_scope")
+        if isinstance(scope, dict) and int(scope.get("matter_count") or 0) > 0:
+            queries_scoped += 1
+        elif (result.latency_ms or {}).get("scoped") == "scoped":
+            queries_scoped += 1
+        elif isinstance(scope, dict) and scope.get("fallback") == "unscoped":
+            queries_unscoped += 1
+        elif (result.latency_ms or {}).get("scoped") == "unscoped":
+            queries_unscoped += 1
 
         if i % 25 == 0 or i == len(questions):
             print(f"diagnosed {i}/{len(questions)}", flush=True)
@@ -152,6 +181,18 @@ async def _run(args: argparse.Namespace) -> dict:
         "by_type": by_type,
         "negative_false_positives": negative_fp,
         "relevant_drop_stages": dict(drop_stage_counter),
+        "gold_channel_coverage": {
+            "gold_docs": gold_docs_total,
+            "gold_in_pool": gold_in_pool,
+            "gold_absent": gold_absent,
+            "gold_in_final_top10": gold_in_final,
+            "queries_with_no_gold_in_pool": queries_gold_absent,
+            "channels": dict(gold_channel_counter.most_common()),
+        },
+        "matter_scope": {
+            "resolved": queries_scoped,
+            "unscoped": queries_unscoped,
+        },
         "relevant_channel_combos_top": dict(combo_counter.most_common(40)),
         "hypothesis": (
             "If fusion_or_hierarchy_channel dominates relevant_drop_stages, "
@@ -167,6 +208,12 @@ async def _run(args: argparse.Namespace) -> dict:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="P5.4 retrieval stage-rank diagnosis")
+    p.add_argument(
+        "--dataset",
+        type=str,
+        default="evals/dataset.jsonl",
+        help="JSONL gold file relative to legal-memory-retrieval/ or absolute",
+    )
     p.add_argument("--limit", type=int, default=0, help="Max questions (0 = all)")
     p.add_argument("--k", type=int, default=20, help="Final top-k kept")
     p.add_argument(

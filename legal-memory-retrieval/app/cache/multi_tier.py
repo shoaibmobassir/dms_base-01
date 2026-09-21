@@ -26,6 +26,7 @@ from typing import Any
 from cachetools import TTLCache
 
 from app.config import settings
+from app.observability.metrics import record_embedding_cache
 
 logger = logging.getLogger(__name__)
 
@@ -81,10 +82,20 @@ class CacheTier(str, Enum):
 _TTL_MAP = {
     CacheTier.EMBEDDING: 86400,      # 24 hours — deterministic
     CacheTier.CHANNEL: 300,          # 5 minutes
-    CacheTier.RETRIEVAL: 300,        # 5 minutes
+    # L3 follows settings.cache_ttl_seconds (see _tier_ttl). Kept here as fallback.
+    CacheTier.RETRIEVAL: 300,
     CacheTier.ANSWER: 900,           # 15 minutes
     CacheTier.GRAPH_COMMUNITY: 3600, # 1 hour
 }
+
+
+def _tier_ttl(tier: CacheTier, ttl: int | None) -> int:
+    """L3 retrieval TTL is settings.cache_ttl_seconds so config and Redis agree."""
+    if ttl is not None:
+        return ttl
+    if tier == CacheTier.RETRIEVAL:
+        return settings.cache_ttl_seconds
+    return _TTL_MAP.get(tier, settings.cache_ttl_seconds)
 
 
 # ── L1: In-process embedding cache ──────────────────────────────────────────
@@ -103,8 +114,10 @@ def embedding_cache_get(text: str) -> list[float] | None:
     result = _embedding_cache.get(key)
     if result is not None:
         _l1_hits += 1
+        record_embedding_cache(True)
     else:
         _l1_misses += 1
+        record_embedding_cache(False)
     return result
 
 
@@ -132,7 +145,13 @@ def embedding_cache_stats() -> dict:
 def _cache_key(tier: CacheTier, *parts: str) -> str:
     """Build a deterministic, collision-free cache key."""
     raw = json.dumps(
-        {"t": tier.value, "p": list(parts), "v": settings.index_version},
+        {
+            "t": tier.value,
+            "p": list(parts),
+            "v": settings.index_version,
+            "kv": settings.knowledge_version,
+            "pv": settings.permission_version,
+        },
         sort_keys=True,
     )
     digest = hashlib.sha256(raw.encode()).hexdigest()[:24]
@@ -165,7 +184,7 @@ async def cache_set_async(
     if client is None:
         return
     key = _cache_key(tier, *key_parts)
-    effective_ttl = ttl or _TTL_MAP.get(tier, 300)
+    effective_ttl = _tier_ttl(tier, ttl)
     try:
         await client.setex(key, effective_ttl, json.dumps(value, default=str))
     except Exception as exc:
@@ -197,7 +216,7 @@ def cache_set(
     if client is None:
         return
     key = _cache_key(tier, *key_parts)
-    effective_ttl = ttl or _TTL_MAP.get(tier, 300)
+    effective_ttl = _tier_ttl(tier, ttl)
     try:
         client.setex(key, effective_ttl, json.dumps(value, default=str))
     except Exception:

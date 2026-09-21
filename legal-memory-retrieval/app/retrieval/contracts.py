@@ -231,6 +231,7 @@ class RetrievalContext:
     document_ids: list[str] = field(default_factory=list)
     member_ids: list[str] = field(default_factory=list)
     practice_area: str | None = None
+    relationship_types: list[str] = field(default_factory=list)
     client_name: str | None = None
     entities: list[str] = field(default_factory=list)
 

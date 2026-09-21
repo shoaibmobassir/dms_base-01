@@ -1,0 +1,161 @@
+{
+  "corpus": "harbour-chambers-pcij-unsc-india",
+  "n": 307,
+  "k": 20,
+  "overall": {
+    "recall@5": 0.9562,
+    "recall@10": 0.9711,
+    "recall@20": 0.9721,
+    "hit@5": 0.9935,
+    "hit@10": 0.9935,
+    "mrr": 0.9542,
+    "ndcg@10": 0.9587
+  },
+  "by_type": {
+    "argument": {
+      "n": 170,
+      "recall@10": 1.0,
+      "hit@5": 1.0,
+      "hit@10": 1.0,
+      "mrr": 1.0,
+      "ndcg@10": 1.0
+    },
+    "client_matter": {
+      "n": 21,
+      "recall@10": 0.8096,
+      "hit@5": 1.0,
+      "hit@10": 1.0,
+      "mrr": 1.0,
+      "ndcg@10": 0.9095
+    },
+    "document_title": {
+      "n": 48,
+      "recall@10": 0.9583,
+      "hit@5": 0.9583,
+      "hit@10": 0.9583,
+      "mrr": 0.9444,
+      "ndcg@10": 0.9479
+    },
+    "exact": {
+      "n": 36,
+      "recall@10": 1.0,
+      "hit@5": 1.0,
+      "hit@10": 1.0,
+      "mrr": 1.0,
+      "ndcg@10": 1.0
+    },
+    "negative": {
+      "n": 4,
+      "recall@10": 1.0,
+      "hit@5": 1.0,
+      "hit@10": 1.0,
+      "mrr": 1.0,
+      "ndcg@10": 1.0
+    },
+    "related_matter": {
+      "n": 24,
+      "recall@10": 0.9272,
+      "hit@5": 1.0,
+      "hit@10": 1.0,
+      "mrr": 0.5465,
+      "ndcg@10": 0.698
+    },
+    "semantic": {
+      "n": 4,
+      "recall@10": 0.7188,
+      "hit@5": 1.0,
+      "hit@10": 1.0,
+      "mrr": 0.875,
+      "ndcg@10": 0.7446
+    }
+  },
+  "analyser_intents": {
+    "exact_lookup": 36,
+    "graph_reasoning": 24,
+    "matter_research": 243,
+    "semantic": 4
+  },
+  "channel_nonzero_rate": {
+    "argument_scope": 0.5537,
+    "bm25": 0.9967,
+    "final": 1.0,
+    "graph_seed": 0.7003,
+    "hierarchical": 0.1987,
+    "matter_scope": 0.6221,
+    "metadata": 0.7394,
+    "title_match": 0.1466,
+    "vector": 0.7883
+  },
+  "latency_ms": {
+    "p50": 55.1,
+    "p95": 1668.8,
+    "mean": 494.5
+  },
+  "stage_latency_ms": {
+    "rerank": {
+      "n": 8,
+      "p50": 657.4,
+      "p95": 10434.6
+    },
+    "parallel_wall_ms": {
+      "n": 307,
+      "p50": 49.9,
+      "p95": 1651.1
+    },
+    "bm25": {
+      "n": 307,
+      "p50": 39.6,
+      "p95": 1650.9
+    },
+    "vector": {
+      "n": 247,
+      "p50": 15.9,
+      "p95": 63.2
+    },
+    "matter_scope_ms": {
+      "n": 243,
+      "p50": 2.7,
+      "p95": 4.2
+    }
+  },
+  "matter_scope": {
+    "n": 243,
+    "resolved_rate": 0.786,
+    "median_document_universe": 4
+  },
+  "matter_scope_by_type": {
+    "argument": {
+      "n": 170,
+      "resolved_rate": 1.0,
+      "median_document_universe": 6.0
+    },
+    "client_matter": {
+      "n": 21,
+      "resolved_rate": 1.0,
+      "median_document_universe": 7
+    },
+    "document_title": {
+      "n": 48,
+      "resolved_rate": 0.0,
+      "median_document_universe": 0.0
+    },
+    "semantic": {
+      "n": 4,
+      "resolved_rate": 0.0,
+      "median_document_universe": 0.0
+    }
+  },
+  "cache_repeat_ms": {
+    "n": 12,
+    "hits": 12,
+    "p50": 1.3,
+    "mean": 1.3,
+    "protocol": "immediate repeat of the first 12 questions while the retrieval TTL is still live"
+  },
+  "notes": [
+    "Negative rows score topic leakage, not empty result sets. Hybrid search always returns neighbours.",
+    "Permission gold is empty in this corpus (restricted_matters=0), so ACL is not a scored type.",
+    "Apex evals/dataset.jsonl is a different corpus and was not used.",
+    "cache_repeat_ms is an immediate repeat, not an end-of-run warm number. A multi-minute eval outlives the 5-minute L3 TTL."
+  ]
+}

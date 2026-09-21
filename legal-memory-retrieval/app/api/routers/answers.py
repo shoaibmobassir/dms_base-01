@@ -32,7 +32,11 @@ def ask_endpoint(
     elapsed = time.perf_counter() - t0
     RETRIEVAL_LATENCY.labels(endpoint="ask").observe(elapsed)
     latency = result.get("latency_ms", {})
-    record_latency_breakdown(latency, result.get("provider", "unknown"))
+    record_latency_breakdown(
+        latency,
+        result.get("provider", "unknown"),
+        elapsed_ms=elapsed * 1000,
+    )
     if result.get("abstained"):
         ABSTENTIONS.labels(reason=result.get("reason", "unknown")).inc()
     hits = result.pop("hits")

@@ -2,6 +2,211 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-09-19 — Universal source sync Phase 0 (FakeConnector)
+
+Started the universal document sync engine behind `SOURCES_SYNC_ENABLED` (default **off**). No retrieval fusion / matter-scope changes. No new dependencies (reuses `cryptography`, Redis).
+
+Shipped: additive tables (`source_connections`, `source_sync_state`, `source_files`, `source_file_permissions`, `identity_links`) + document provenance columns; `DocumentConnector` protocol + `FakeConnector`; encrypted token helper; Redis/inline job queues; sync engine (cursor advance, hash skip, delete tombstones); download → object store → extract → `create_version`; API under `/api/sources`. Matter binding is 1:1; ACL mode is matter-trust (source ACLs stored only). Tests: `tests/test_source_sync.py` (10 passed). Migration: `app/db/migrations/20260919_source_sync_phase0.sql`. Plan: `docs/universal-document-sync-engine-plan.md`. Next: Phase A Google Drive.
+
+## 2026-09-14 — Title-free party shortlist; LLM tie-break measured, not defaulted
+
+`docs/paraphrase-resolution-experiments.md` still quotes the pre-containment paraphrase miss (R@10 0.4692, resolved 0). That slice is already 1.0. The remaining gap is a question that never contains the stored title. Vector matter profiles, a second embedding column, and an Anthropic paraphrase generator were not built. Fusion weights and `MATTER_SCOPE=hard` were not changed. No new dependency.
+
+Party spans (always on, after ILIKE and title-containment miss, never on document-title questions): two or more capitalised names must all appear in facts, title, opposing party, or client, with the permission predicate in SQL. One match is accepted. More than eight matches is left unscoped. A single country name cannot open the firm.
+
+LLM (`MATTER_LLM_RESOLVE`, default **off**): only when that shortlist has 2–8 matters. The model may return one id from the list, or none. Unknown ids and confidence below 0.70 are rejected. The prompt includes opposing party and a short facts line. Without that line, `openai/gpt-oss-20b` scored the UK-vs-Germany tie as Oder Commission at 0.95 (wrong). With the facts line it returned Wimbledon (`MTR-1923-00001`). A confident wrong pick would hard-scope retrieval into the wrong matter, so the flag is not the default.
+
+Title-free holdout `evals/fact_paraphrase.jsonl` (n=18, gold from corpus arguments, questions must not contain the title). Artifact off: `evals/last_fact_paraphrase_off.json`. Artifact on: `evals/last_fact_paraphrase_llm.json`.
+
+| Slice | n | Flag off R@10 / resolved | Flag on R@10 / resolved |
+| ----- | -: | ---: | ---: |
+| overall | 18 | 0.9556 / 0.8333 | **1.0000 / 0.8889** |
+| unique party pair | 8 | 0.9000 / 0.8750 | **1.0000 / 1.0000** |
+| pair plus a distinctive word | 8 | 1.0000 / 1.0000 | **1.0000 / 1.0000** |
+| negative | 2 | 1.0000 / 0.0 | **1.0000 / 0.0** |
+
+The eight “ambiguous” rows never called the model. The extra word already left one matter. The model was used on the one true tie (United Kingdom against Germany also matches Oder, because Germany is a co-applicant there). Negatives stayed unscoped. Do not read this as proof that a fact paraphrase with no party names resolves. `what was the case where acme challenged the bank` still has no capitalised spans and does not call the model.
+
+
+
+## 2026-09-14 — Wrapped-title paraphrase resolve (P1)
+
+The independent paraphrase miss was ILIKE looking the wrong way: `title ILIKE %query%` cannot match when the query is `Papers we filed in {title}`. No title in this corpus is a substring of another. `FUSION_POLICY=p55_repair_ce_protect` and `MATTER_SCOPE=hard` were not changed. `_REPAIR_WEIGHTS` was not edited. No new planner intent. No new dependencies. `MATTER_RESOLVER` stays off.
+
+P1. `resolve_matters` also matches when the full matter title or matter code appears inside the query (dash-normalized, minimum title length 8). Longest title wins. `query_class` labels document-seeking wording (`papers`, `record of`, `docs that`, `supports the argument`, …) as `argument_support` so the existing scoped supporting-document channel can arm. Intent stays `matter_research`. Prefix strip was not extended — containment is the generalization, not more Harbour templates.
+
+P2 not adopted. Containment resolved every independent paraphrase row (median document universe 6). Lexical/token resolve is the next experiment only for queries that do not contain a title.
+
+Independent holdout (`evals/independent_retrieval.jsonl`, n=333, k=20, artifact `evals/last_independent_retrieval.json`):
+
+| Type | n | Previous R@10 / Hit@10 | This run | matter resolved |
+| ---- | -: | ---: | ---: | ---: |
+| overall | 333 | 0.9121 / 0.9550 | **0.9759 / 0.9940** | 0.8576 |
+| paraphrase | 40 | 0.4692 / 0.6750 | **1.0000 / 1.0000** | **1.0** (universe 6) |
+| matter_name / matter_code | 170 / 34 | 1.0 / 1.0 | **1.0 / 1.0** | 1.0 |
+| document_name | 40 | 0.9500 / 0.9500 | **0.9500 / 0.9500** | 0.0 |
+| client_name | 21 | 0.7917 / 1.0 | **0.7917 / 1.0** | 1.0 |
+| related_matter | 24 | 0.9314 / 1.0 | **0.9314 / 1.0** | graph path |
+| negative | 4 | 1.0 / 1.0 | **1.0 / 1.0** | 0.0 |
+
+`argument_scope` nonzero rate on this set is 0.1201 (the 40 paraphrases). Cold p50 / p95 **26.2 / 2269.2 ms**. Immediate cache 12/12, p50 2.0 ms.
+
+Official 20-question wrap holdout (`evals/harbour_paraphrase_holdout.jsonl`, artifact `evals/last_harbour_paraphrase_holdout.json`): R@10 **1.0**, Hit@10 **1.0**, matter_scope **1.0**, median universe 5, p50 **30.6 ms** (was 0.4175 / 0.55 / 0.0 / 1935 ms).
+
+Official Harbour n=307 regression (`evals/last_harbour_retrieval.json`): argument Hit@10 **1.0**, exact / negative / related_matter Hit@10 **1.0**, related_matter R@10 **0.9272**, document_title Hit@10 **0.9583**. Overall R@10 / Hit@10 **0.9711 / 0.9935** (confirmation was 0.9712 / 0.9935). client_matter R@10 **0.8096** (was 0.8114), Hit@10 **1.0**. Cold p50 / p95 **55.1 / 1668.8 ms**.
+
+Not claimed: a title-free fact paraphrase (`What was the case Greece brought against the United Kingdom over Jerusalem concessions?`) still returns `matter_count=0`. Open-corpus BM25 can surface related Mavrommatis docs; the argument channel does not arm. That is a later lexical/facts experiment, not this change.
+
+## 2026-09-14 — Confirmation re-run vs independent holdout
+
+No ranking change in this entry. Fusion pin and matter scope stayed at `p55_repair_ce_protect` / `hard`. Apex `evals/dataset.jsonl` was not scored.
+
+Confirmation of the official Harbour set (`evals/harbour_benchmark.jsonl`, n=307, k=20, artifact `evals/last_harbour_retrieval.json`) reproduced the E1–E4 quality numbers below. Cold latency did not reproduce the earlier 60.4 ms p50: this run was **91.2 / 1726.6 ms** p50/p95. Immediate cache repeat 12/12, p50 1.5 ms.
+
+| Slice | 2026-09-12 baseline | This confirmation |
+| ----- | -------: | -------: |
+| Overall R@10 / Hit@10 | 0.6154 / 0.7231 | **0.9712 / 0.9935** |
+| argument n=170 R@10 / Hit@10 | 0.4209 / 0.5647 | **1.0000 / 1.0000** |
+| document_title Hit@10 | 0.7708 | **0.9583** |
+| exact / negative / related_matter Hit@10 | 1.0 | **1.0** |
+| related_matter R@10 | 0.9272 | **0.9272** |
+| client_matter R@10 (Hit@10 1.0) | 0.7265 | **0.8114** |
+| semantic R@10 (Hit@10 1.0) | 0.7188 | **0.7188** |
+
+That official argument 1.0 is the template prefix. `argument_scope` nonzero rate on this set was 0.5537 and `title_match` 0.1466 — those channels only arm for the two stripped prefixes.
+
+Independent holdout, scored separately. Search set `evals/independent_search.jsonl`, gold `evals/independent_gold.jsonl` (from `dummy-firm/data`, not the retriever), joined score file `evals/independent_retrieval.jsonl`. Artifact: `evals/last_independent_retrieval.json`. n=333, k=20. Questions do not start with the official prefixes and do not copy official question strings. `argument_scope` and `title_match` did not fire.
+
+| Type | n | R@10 | Hit@10 | matter_scope resolved |
+| ---- | -: | ---: | -----: | ----: |
+| overall | 333 | 0.9121 | 0.9550 | 0.7282 (n=309) |
+| matter_name | 170 | 1.0000 | 1.0000 | 1.0 |
+| matter_code | 34 | 1.0000 | 1.0000 | 1.0 |
+| document_name | 40 | 0.9500 | 0.9500 | 0.0 |
+| client_name | 21 | 0.7917 | 1.0000 | 1.0 |
+| related_matter | 24 | 0.9314 | 1.0000 | n/a (graph intent) |
+| paraphrase | 40 | 0.4692 | 0.6750 | **0.0** |
+| negative | 4 | 1.0000 | 1.0000 | 0.0 |
+
+Cold p50 / p95 **29.7 / 2288.8 ms**. Immediate cache 12/12, p50 1.7 ms. Two document_name misses (I-DOC-028, I-DOC-033) carry a bracketed subtitle the stored title does not. Paraphrase misses are the generalization gap: wrapping a matter title in other words does not resolve a matter, so the argument channel never arms.
+
+Existing paraphrase holdout re-scored the same way (`evals/harbour_paraphrase_holdout.jsonl`, n=20, artifact `evals/last_harbour_paraphrase_holdout.json`): R@10 **0.4175**, Hit@10 **0.5500**, matter_scope resolved **0.0**, cold p50 **1935.5 ms**. Same quality as the earlier holdout note. Not a quality win.
+
+## 2026-09-14 — Harbour argument scope (E1–E4)
+
+Scoreboard: `python evals/harbour_retrieval_eval.py` (n=307, k=20). Artifact: `evals/last_harbour_retrieval.json`. Apex `evals/dataset.jsonl` was not re-run.
+
+Freeze held: `FUSION_POLICY=p55_repair_ce_protect`, `MATTER_SCOPE=hard`. `_REPAIR_WEIGHTS` was not edited. `argument_scope` / `title_match` weights (2.5) are applied only on those planner paths. ACL stays in SQL. No new dependencies.
+
+Baseline is the 2026-09-12 Harbour full run (argument rows were unscoped).
+
+| Slice | Baseline | This run |
+| ----- | -------: | -------: |
+| Overall R@10 / Hit@10 | 0.6154 / 0.7231 | **0.9712 / 0.9935** |
+| argument n=170 R@10 / Hit@10 | 0.4209 / 0.5647 | **1.0000 / 1.0000** |
+| argument matter_scope resolved rate | 0.0 (0/170) | **1.0** (median document universe 6) |
+| document_title Hit@10 | 0.7708 | **0.9583** |
+| client_matter R@10 / Hit@10 | 0.7265 / 1.0 | **0.8114 / 1.0** |
+| exact / negative / related_matter Hit@10 | 1.0 | **1.0** |
+| related_matter R@10 | 0.9272 | **0.9272** |
+| semantic R@10 / Hit@10 | 0.7188 / 1.0 | **0.7188 / 1.0** |
+| cold p50 / p95 | 1659 / 2341 ms | **60.4 / 1638.2 ms** |
+
+Argument gates (matter_scope ≥ 0.95, Hit@10 ≥ 0.85, R@10 ≥ 0.70) pass. Exact / client_matter / negative / related_matter Hit@10 did not regress. Secondary document_title Hit@10 ≥ 0.90 passes. Immediate cache repeat: 12/12 hits, p50 1.4 ms.
+
+What shipped:
+
+- E1. Strip `which documents support our argument on` and `find the document titled` before matter resolve. Intent stays `matter_research`. `query_class` (`argument_support` / `document_title` / `other`) is a metric label only.
+- E2 not adopted. Prefix strip resolved a matter on every argument row. Punctuation ILIKE was not the miss.
+- E3. After hard scope, `argument_scope` reads `arguments.supporting_documents` for the resolved matter ids and applies the permission predicate in SQL. Btree `idx_arguments_matter`. No FTS on `issue` / `position`. Recorded in `docs/legal/IP_ORIGIN_RECORD.md` before the channel shipped.
+- E4 adopted. `SCOPED_MATTER_RERANK` defaults to `skip` when intent is `matter_research` and a matter resolved. Argument Hit@10 stayed 1.0 (drop of 0, inside the 2-point budget) and scoped argument latency fell from the CE-bound ~565 ms p50 to tens of milliseconds. Set `SCOPED_MATTER_RERANK=on` to keep the cross-encoder.
+- Pin. Dedupe keeps the higher raw-score channel, which was erasing the `title_match` and `argument_scope` RRF term. Fusion now credits those two channels when they found the chunk. Other channels are not double-counted. That is why argument R@10 moved from the skip-CE intermediate 0.8726 to 1.0, and why document_title left 0.7708.
+
+Residue, not a failed gate: two document_title questions (H-TTL-023, H-TTL-024) miss because the benchmark string includes a newline subtitle the stored title does not, so exact equality does not fire. title_match nonzero rate on that slice is 0.9375.
+
+Paraphrase holdout (`evals/harbour_paraphrase_holdout.jsonl`, n=20, cold): R@10 **0.4175**, Hit@10 **0.55**, matter_scope resolved rate **0.0**, p50 **1954 ms**. Prefix strip does not cover `Docs that back our position on {title}` or `What supports the argument in {title}?`. Not claimed as a quality win. No further experiment stacked.
+
+## 2026-09-14 — Harbour stage observability (no ranking change)
+
+Retrieval ranking is unchanged (`FUSION_POLICY` and `MATTER_SCOPE` untouched). Argument R@10 is not claimed here.
+
+| Change | Measured |
+| ------ | -------- |
+| Harbour harness rolls up stage p50/p95, matter-scope resolved rate, and median document universe. Immediate 12-query cache repeat is labelled as such, not as an end-of-run warm hit. | Instrumentation only. Previous full-run cold p50/p95 remain 1659 / 2341 ms. |
+| L3 retrieval TTL reads `settings.cache_ttl_seconds` (300) so the config value and Redis agree. | Not a recall change. |
+| Prometheus: query latency by `intent` and `scoped`; stage histograms; matter-scope resolved/unscoped counters; cache hits by `tier` (`l1` / `l3`); slow-query counter above 2 s (no query text); pool wait gauge. | Bounded labels. No live recall series. |
+| Optional OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; console exporter stays. No adaptive sampler. | Imported only when the endpoint is set. |
+| Index baseline `evals/last_index_explain.md` | HNSW unscoped 200.7 ms vs matter-filtered 10.2 ms (plan shape: ANN scan vs nested loop). GIN unscoped 32.8 ms vs matter-filtered bitmap-and. No chunk sequential scan. Partitioning not justified. |
+
+## 2026-09-12 — Chat stability slice (no retrieval recall claim)
+
+Request ids, a bounded chat prompt, tool wall-clock deadlines, and Prometheus chat counters. Retrieval ranking is unchanged (`FUSION_POLICY` and `MATTER_SCOPE` untouched).
+
+| Change | Measured |
+| ------ | -------- |
+| Retrieval cache key includes `knowledge_version` and `permission_version` as well as `index_version` | Immediate repeat of a just-cached query: **1.3 ms**, `cache=hit` (n=1). End-of-benchmark repeat of the first 12 questions: **0/12 hits**, p50 **545 ms**, because the 509s run exceeded the 5-minute TTL. |
+| Chat history window | Last 10 user/assistant pairs; the persisted current user turn is not sent twice. No token-cost benchmark. |
+| Tool deadline | 30s default, 10s for `find_in_document`. One extra LLM POST on 429/5xx. Tools are not retried. |
+| Live chat (model `gemini-2.5-flash`, not the default `gemini-1.5-flash`) | Two turns completed. Default model still returns Gemini 404. Citations on this smoke were unverified (quote drift). |
+
+**Harbour retrieval re-run** after this slice (`python evals/harbour_retrieval_eval.py`, n=307, k=20, 509s). Overall movement vs the earlier same-day full run is the related-matter analyser fix already in the tree, not this slice. Argument R@10 is unchanged.
+
+| Metric | Previous full run | This run |
+| ------ | ----------------: | -------: |
+| R@10 | 0.5429 | **0.6154** |
+| Hit@10 | 0.6450 | **0.7231** |
+| MRR | 0.5456 | **0.5883** |
+| nDCG@10 | 0.5082 | **0.5628** |
+| argument R@10 / Hit@10 | 0.4209 / 0.5647 | 0.4209 / 0.5647 |
+| related_matter R@10 / Hit@10 | 0.0000 (misrouted) | **0.9272 / 1.0000** |
+| cold p50 / p95 | 1674 / 2337 ms | 1659 / 2341 ms |
+
+Not adopted from the improvement list: DistilBERT intent, online channel dropping, Postgres retrieval materialized views, graph path-count fusion, zlib message bodies, SQL analytics tables, read replicas, pool `×6`, embed micro-batching, parallel tool waves, conversation summarization.
+
+Not adopted from the improvement list: DistilBERT intent, online channel dropping, Postgres retrieval materialized views, graph path-count fusion, zlib message bodies, SQL analytics tables, read replicas, pool `×6`, embed micro-batching, parallel tool waves, conversation summarization.
+
+## 2026-09-12 — Harbour retrieval benchmark + architecture check
+
+New labeled set `evals/harbour_benchmark.jsonl` (n=307), gold from corpus files, not from the retriever. Harness: `python evals/harbour_retrieval_eval.py`. Frozen Apex `dataset.jsonl` (n=445) was **not** re-run.
+
+Full run before the related-matter routing fix (k=20, ~507s):
+
+| Metric | Score |
+| ------ | ----: |
+| R@10 | 0.5429 |
+| Hit@10 | 0.6450 |
+| MRR | 0.5456 |
+| nDCG@10 | 0.5082 |
+
+By type: exact Hit@10 1.0; client_matter Hit@10 1.0 / R@10 0.73; semantic Hit@10 1.0 / R@10 0.72; document_title Hit@10 0.77; argument Hit@10 0.56 / R@10 0.42; negative 1.0 (no topic leak). Related-matter on that run was 0.0 because questions containing `MTR-` were classified `exact_lookup`. Cold p50 1674 ms. Immediate Redis retrieval hit after the run: 0.5–0.9 ms (the end-of-run “repeat” missed the 5-minute TTL).
+
+**Related-matter ablation** (analyser emits `graph_reasoning` + stored edge type; graph seed/expand filter `rel_type`; v2 honours `skip_vector` / `skip_rerank`; fusion weights unchanged): Hit@10 **1.000**, R@10 **0.927** (n=24, one question per seed, all direct neighbours as gold). The R@10 gap is two hub seeds with 79 neighbours (R@10 ceiling is 10/79; channel limit 50).
+
+Architecture vs the evidence-intelligence backbone notebook: query analyser (`understand` → `plan`) already runs first. Postgres + pgvector HNSW, ACL-in-SQL, parallel BM25/vector, RRF, conditional CE, SQL graph (no Neo4j), Redis L1 embedding + L3 retrieval cache are in place. Not adopted: OpenSearch (36k chunks is under the notebook’s ~100k swap trigger), proposition→evidence CE (C7.5 FAIL), BGE, Document→Version→Block as the live model. Argument ranking was not retuned.
+
+## 2026-09-12 — Empty corpus restore + OR lexical BM25 (Harbour Chambers)
+
+**Symptom:** Ask the Firm always returned `No sufficient evidence in firm records` because Postgres had **0 documents / 0 chunks**. Presets still asked Apex Chambers commercial questions against the PCIJ/UNSC/India filings corpus.
+
+**Restore:** Re-ingested `dummy-firm/data` after fixing schema apply (`--` comments containing `;` split `CREATE TABLE chunks`). Embedded 36,191 MiniLM vectors. Doc-search remains on :8001 (6 PDFs / 196 chunks).
+
+**Lexical fix:** `plainto_tsquery` AND-killed long questions (`Has MSEDCL argued floods constitute force majeure…` → 0 BM25). BM25 now uses `chunk_or_tsquery` (OR of distinctive terms) and matches **title + matter code + chunk tsv**.
+
+**Harbour Chambers eval** (`dummy-firm/data/evaluation.jsonl`, n=36 exact lookups, MEM-00001, k=5):
+
+| Metric | Score |
+| ------ | ----: |
+| Hit@1  | **1.000** |
+| Hit@5  | **1.000** |
+
+Live Ask smoke: Lotus, Chorzów Factory, UNSC 1950, and MSEDCL APL 163/2018 all return cited answers (not empty abstention). Frozen n=445 Apex `dataset.jsonl` was **not** re-run — it does not match this corpus.
+
+**Two-product split (requirements, not a Mike port):**
+- DMS / similar-work retrieval: `POST /api/answers` + `POST /api/retrieval`
+- Drafting agent: `/api/chat/*` plus on-demand `search_firm_records` tool wrapping the same retriever
+
+UI presets on Ask/Home now use Harbour questions (Lotus, MSEDCL, UNSC 1950, Chorzów).
+
 ## 2026-09-05 — P5.6-C7.4b/C7.5 phrase·proximity·soft role + CE evidence
 
 **Question:** Do phrase/proximity + stronger soft role lift evidence recall? Does CE-on-evidence help once gold is in the pool?

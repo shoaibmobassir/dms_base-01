@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 from app.api.routers import (
     activity,
     answers,
+    chat_router,
     clients,
     documents_router,
     home,
@@ -18,6 +19,7 @@ from app.api.routers import (
     projects,
     retrieval,
     search,
+    sources,
     system,
     tasks,
     teams,
@@ -31,6 +33,7 @@ from app.api.routers import (
     audit_router,
 )
 from app.db.pool import close_pool, init_pool
+from app.observability.request_id import RequestIDMiddleware
 from app.observability.tracing import setup_tracing
 from app.sprint import CURRENT_SPRINT
 
@@ -59,6 +62,8 @@ SERVICE_CATALOG = {
     "word": {"prefix": "/api/word", "health": "/api/word/health"},
     "caselaw": {"prefix": "/api/caselaw", "health": "/api/caselaw/health"},
     "audit": {"prefix": "/api/audit", "health": "/api/audit/health"},
+    "chat": {"prefix": "/api/chat", "health": "/api/chat/health"},
+    "sources": {"prefix": "/api/sources", "health": "/api/sources/health"},
 }
 
 
@@ -90,7 +95,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
 )
+# Added last so it is outermost and still echoes the id on streamed responses.
+app.add_middleware(RequestIDMiddleware)
 
 app.include_router(system.router, prefix="/api/system")
 app.include_router(home.router, prefix="/api/home")
@@ -114,6 +122,8 @@ app.include_router(drafting_router.router, prefix="/api/drafting")
 app.include_router(word_router.router, prefix="/api/word")
 app.include_router(caselaw_router.router, prefix="/api/caselaw")
 app.include_router(audit_router.router, prefix="/api/audit")
+app.include_router(chat_router.router, prefix="/api/chat")
+app.include_router(sources.router, prefix="/api/sources")
 
 
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "..", "static")

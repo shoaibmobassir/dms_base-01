@@ -69,7 +69,28 @@ def main() -> None:
 
 
 def _apply_schema(conn, schema: str) -> None:
-    for stmt in schema.split(";"):
+    # Strip -- line comments so a semicolon inside a comment cannot split a
+    # CREATE TABLE (psycopg execute() is one statement at a time).
+    cleaned_lines: list[str] = []
+    for line in schema.splitlines():
+        in_single = False
+        in_double = False
+        out: list[str] = []
+        i = 0
+        while i < len(line):
+            ch = line[i]
+            nxt = line[i + 1] if i + 1 < len(line) else ""
+            if ch == "'" and not in_double:
+                in_single = not in_single
+            elif ch == '"' and not in_single:
+                in_double = not in_double
+            elif ch == "-" and nxt == "-" and not in_single and not in_double:
+                break
+            out.append(ch)
+            i += 1
+        cleaned_lines.append("".join(out))
+    cleaned = "\n".join(cleaned_lines)
+    for stmt in cleaned.split(";"):
         stmt = stmt.strip()
         if stmt:
             conn.execute(stmt)

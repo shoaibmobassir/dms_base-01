@@ -45,5 +45,20 @@ class Settings(BaseSettings):
     # ── Retrieval engine v2 ──────────────────────────────────────────────
     use_engine_v2: bool = True
 
+    # ── Chat agent bounds ────────────────────────────────────────────────
+    # Last N user/assistant pairs kept in the LLM prompt (empty assistants dropped).
+    chat_history_max_pairs: int = 10
+    chat_tool_timeout_seconds: float = 30.0
+    chat_find_timeout_seconds: float = 10.0
+
+    # ── Universal source sync (Phase 0) ───────────────────────────────────
+    sources_sync_enabled: bool = False
+    sources_token_encryption_secret: str = (
+        "firmos-dev-sources-token-encryption-secret-32b"
+    )
+    sources_queue_inline: bool = True  # process jobs in-process when True
+    sources_sync_max_retries: int = 5
+    sources_sync_backoff_base_seconds: float = 1.0
+
 
 settings = Settings()

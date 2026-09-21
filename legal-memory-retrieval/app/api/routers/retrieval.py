@@ -33,7 +33,7 @@ def retrieve_endpoint(
             hits, latency = retrieve(conn, body.query, member_id, k=body.k)
     elapsed = time.perf_counter() - t0
     RETRIEVAL_LATENCY.labels(endpoint="retrieve").observe(elapsed)
-    record_latency_breakdown(latency, "retrieve")
+    record_latency_breakdown(latency, "retrieve", elapsed_ms=elapsed * 1000)
     formatted_hits = [hit_payload_highlighted(h, body.query) for h in hits]
     return {
         "service": "retrieval",

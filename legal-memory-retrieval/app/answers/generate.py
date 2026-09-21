@@ -130,6 +130,11 @@ def _generate(provider: Provider, query: str, hits: list[dict]) -> dict:
             return fallback
         parsed = parse_model_json(raw, hits)
         parsed["provider"] = "groq"
+        if parsed.get("abstained") and hits:
+            fallback = extractive_answer(query, hits)
+            if not fallback.get("abstained"):
+                fallback["provider"] = "extractive_after_groq_abstain"
+                return fallback
         return parsed
     if provider == "gemini":
         if not settings.gemini_api_key:
@@ -144,6 +149,11 @@ def _generate(provider: Provider, query: str, hits: list[dict]) -> dict:
             return fallback
         parsed = parse_model_json(raw, hits)
         parsed["provider"] = "gemini"
+        if parsed.get("abstained") and hits:
+            fallback = extractive_answer(query, hits)
+            if not fallback.get("abstained"):
+                fallback["provider"] = "extractive_after_gemini_abstain"
+                return fallback
         return parsed
     exhausted: Never = provider
     raise RuntimeError(f"unknown provider: {exhausted}")

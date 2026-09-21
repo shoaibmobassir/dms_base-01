@@ -485,3 +485,74 @@ def list_annotations_endpoint(
         "count": len(anns),
     }
 
+
+# ---------------------------------------------------------------------------
+# Document download URL (Phase 4: SourceDocument support)
+# ---------------------------------------------------------------------------
+
+@router.get("/{document_id}/download")
+def document_download(document_id: str):
+    """
+    Generate a download URL for a document. For local object store,
+    serves the file directly. For S3, generates a presigned URL.
+    """
+    import os
+    from fastapi.responses import FileResponse
+    from app.config import settings
+
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT document_id, filename FROM documents WHERE document_id = %s",
+            (document_id,),
+        ).fetchone()
+        if not row:
+            # Check generated files
+            gen_dir = os.path.join(settings.object_store_root, "generated")
+            if os.path.isdir(gen_dir):
+                for f in os.listdir(gen_dir):
+                    if f.startswith(document_id):
+                        return FileResponse(
+                            os.path.join(gen_dir, f),
+                            filename=f.split("_", 1)[-1] if "_" in f else f,
+                        )
+            raise HTTPException(status_code=404, detail="Document not found")
+
+    filename = row["filename"]
+    # Try local object store path
+    local_path = os.path.join(settings.object_store_root, settings.tenant_id, document_id, filename)
+    if os.path.isfile(local_path):
+        return FileResponse(local_path, filename=filename)
+
+    raise HTTPException(status_code=404, detail="Document file not available for download")
+
+
+@router.get("/{document_id}/text")
+def document_text(document_id: str, member=Depends(resolve_member)):
+    """
+    Return the full extracted text of a document by joining all its chunks.
+    Used by the chat agent for read_document tool calls.
+    """
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT document_id, filename FROM documents WHERE document_id = %s",
+            (document_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        chunks = conn.execute(
+            """
+            SELECT chunk_text FROM chunks
+            WHERE document_id = %s
+            ORDER BY chunk_index ASC
+            """,
+            (document_id,),
+        ).fetchall()
+
+    full_text = "\n".join(c["chunk_text"] for c in chunks) if chunks else ""
+    return {
+        "document_id": document_id,
+        "filename": row["filename"],
+        "text": full_text,
+        "chunk_count": len(chunks),
+    }

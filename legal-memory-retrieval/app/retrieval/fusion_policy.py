@@ -190,7 +190,7 @@ def apply_ce_protection(candidates: list[Any], policy: FusionPolicy | None = Non
             return 0.0
         return (v - lo) / (hi - lo)
 
-    protect = {"bm25", "metadata"}
+    protect = {"bm25", "metadata", "argument_scope", "title_match"}
     scored: list[tuple[float, Any]] = []
     for c, ce, fu in zip(candidates, ces, fuses):
         channels = set(c.provenance.channels_found_in or [])

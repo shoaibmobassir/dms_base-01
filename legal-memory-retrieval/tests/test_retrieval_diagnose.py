@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from app.retrieval.contracts import Candidate, Provenance
-from app.retrieval.diagnose import assign_stage_ranks, summarize_rows
+from app.retrieval.diagnose import StageRow, assign_stage_ranks, gold_channel_coverage, summarize_rows
 
 
 def _c(chunk: str, doc: str, matter: str, channel: str, score: float) -> Candidate:
@@ -85,3 +85,27 @@ class TestAssignStageRanks:
         assert rows[0].retrieved_by == "bm25|vector"
         assert rows[0].final_rank == 1
         assert rows[0].is_relevant == 1
+
+
+def test_gold_channel_coverage_names_absent_pool() -> None:
+    rows = [
+        StageRow(
+            query_id="Q",
+            query_type="argument",
+            query="q",
+            intent="matter_research",
+            candidate_id="c1",
+            document_id="DOC-IN",
+            matter_id="M1",
+            chunk_id="CHK-1",
+            retrieved_by="bm25|vector",
+            is_relevant=1,
+            gold_kind="document",
+            final_rank=12,
+        )
+    ]
+    coverage = gold_channel_coverage(rows, {"DOC-IN", "DOC-OUT"})
+    assert coverage["gold_in_pool"] == 1
+    assert coverage["gold_absent"] == 1
+    assert coverage["gold_in_final_top10"] == 0
+    assert coverage["channels"]["bm25"] == 1

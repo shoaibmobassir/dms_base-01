@@ -39,13 +39,20 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from typing import Any
 
 from app.db.pool import acquire, init_pool, pool_stats
 from app.embeddings.minilm import MiniLMEmbedder
 from app.observability.tracing import span
-from app.query.understand import ParsedQuery, understand
+from app.query.understand import ParsedQuery, query_class, understand
+from app.retrieval.matter_llm import (
+    MAX_SHORTLIST,
+    disambiguate_matters,
+    llm_resolve_enabled,
+    party_spans,
+)
 from app.retrieval.matter_scope import (
     active_matter_scope,
     adjust_fusion_weights,
@@ -204,6 +211,7 @@ async def _channel_graph_seed(ctx: RetrievalContext, limit: int) -> list[Candida
     async with acquire() as conn:
         rows = await _graph_store.seed(
             conn, seeds, ctx.member_id, limit=limit,
+            rel_types=ctx.relationship_types or None,
         )
     return [Candidate.from_db_row(r, "graph_seed") for r in rows]
 
@@ -246,6 +254,36 @@ async def _channel_matter_scope(ctx: RetrievalContext, limit: int) -> list[Candi
     return [Candidate.from_db_row(r, "matter_scope") for r in rows]
 
 
+def argument_scope_enabled(query_class_name: str, matter_ids: list[str]) -> bool:
+    """True only for the argument metric label after hard scope resolved."""
+    return query_class_name == "argument_support" and bool(matter_ids)
+
+
+def title_match_enabled(query_class_name: str) -> bool:
+    return query_class_name == "document_title"
+
+
+async def _channel_argument_scope(ctx: RetrievalContext, limit: int) -> list[Candidate]:
+    """Supporting-document heads for already resolved matters. ACL stays in SQL."""
+    if not ctx.matter_ids:
+        return []
+    async with acquire() as conn:
+        rows = await _matter_store.supporting_document_heads(
+            conn, ctx.matter_ids, ctx.member_id, limit=limit,
+        )
+    return [Candidate.from_db_row(r, "argument_scope") for r in rows]
+
+
+async def _channel_title_match(ctx: RetrievalContext, limit: int) -> list[Candidate]:
+    """Exact document-title heads after boilerplate strip. ACL stays in SQL."""
+    needle = ctx.query_search_text or ""
+    async with acquire() as conn:
+        rows = await _matter_store.document_title_heads(
+            conn, needle, ctx.member_id, limit=limit,
+        )
+    return [Candidate.from_db_row(r, "title_match") for r in rows]
+
+
 async def _channel_hierarchical(ctx: RetrievalContext, limit: int) -> list[Candidate]:
     """Matter → Document → Chunk cascade preferring version-scoped children."""
     query = ctx.query_search_text or ctx.query_raw
@@ -280,6 +318,8 @@ _CHANNEL_FNS = {
     "metadata": _channel_metadata,
     "matter": _channel_matter,
     "matter_scope": _channel_matter_scope,
+    "argument_scope": _channel_argument_scope,
+    "title_match": _channel_title_match,
     "graph_seed": _channel_graph_seed,
     "similar_matter": _channel_similar_matter,
     "hierarchical": _channel_hierarchical,
@@ -303,6 +343,7 @@ def _build_context(parsed: ParsedQuery, member_id: str | None, k: int) -> Retrie
         document_ids=list(parsed.document_ids),
         member_ids=list(parsed.member_ids),
         practice_area=parsed.practice_area,
+        relationship_types=list(parsed.relationship_types),
         entities=[],  # Will be populated by NER in Phase 8
         k=k,
     )
@@ -347,6 +388,13 @@ def _deduplicate(candidates: list[Candidate]) -> list[Candidate]:
     return list(best.values())
 
 
+# Dedupe keeps the highest raw_score channel as `c.channel`. These channels
+# must still contribute their own RRF term when they found the chunk, or a
+# typed lookup (argument supporting docs, exact title) is erased by a weaker
+# BM25/vector win on the same chunk. Not a global weight change.
+_PIN_CHANNELS = frozenset({"argument_scope", "title_match"})
+
+
 def _fuse_candidates(
     candidates: list[Candidate],
     weights: dict[str, float],
@@ -363,6 +411,12 @@ def _fuse_candidates(
     by_channel: dict[str, list[Candidate]] = defaultdict(list)
     for c in candidates:
         by_channel[c.channel].append(c)
+        seen = {c.channel}
+        for extra in c.provenance.channels_found_in or []:
+            if extra in seen or extra not in _PIN_CHANNELS:
+                continue
+            seen.add(extra)
+            by_channel[extra].append(c)
 
     # Sort each channel by raw_score descending
     for ch in by_channel:
@@ -396,20 +450,26 @@ async def _graph_expand(
     member_id: str | None,
     depth: int = 2,
     limit: int = 50,
+    rel_types: list[str] | None = None,
+    seed_matter_ids: list[str] | None = None,
 ) -> list[Candidate]:
     """Graph Operation B — expand from candidate matter IDs.
 
     Runs AFTER initial candidate pool. Discovers related matters/documents
-    the initial retrieval missed.
+    the initial retrieval missed. A named relationship walks only those
+    edge types, and only from the matter ids the analyser extracted.
     """
-    seed_matter_ids = list({c.matter_id for c in candidates if c.matter_id})
-    if not seed_matter_ids:
+    seed_ids = list(seed_matter_ids or []) or list(
+        {c.matter_id for c in candidates if c.matter_id}
+    )
+    if not seed_ids:
         return []
 
     async with acquire() as conn:
         rows = await _graph_store.expand(
-            conn, seed_matter_ids, depth=depth,
+            conn, seed_ids, depth=depth,
             member_id=member_id, limit=limit,
+            rel_types=rel_types,
         )
 
     expanded = []
@@ -470,6 +530,8 @@ async def retrieve_async(
     t0 = time.perf_counter()
     parsed = understand(query)
     latency["understand"] = round((time.perf_counter() - t0) * 1000, 1)
+    latency["intent"] = parsed.intent
+    latency["query_class"] = query_class(parsed)
 
     if parsed.intent == "empty" or not parsed.raw:
         return [], latency
@@ -501,6 +563,36 @@ async def retrieve_async(
                     corpus_docs = int(row[0]) if row else None
             except Exception:
                 corpus_docs = None
+        if not matters and parsed.intent == "matter_research" and latency.get("query_class") != "document_title":
+            needle = ctx.client_name or ctx.query_search_text or ctx.query_raw
+            spans = party_spans(needle)
+            if len(spans) >= 2:
+                async with acquire() as conn:
+                    shortlist = await _matter_store.shortlist_by_party_spans(
+                        conn, spans, ctx.member_id, limit=MAX_SHORTLIST + 1,
+                    )
+                latency["party_span_count"] = len(shortlist)
+                chosen: list[dict] = []
+                if len(shortlist) > MAX_SHORTLIST:
+                    latency["matter_resolution"] = "party_span_wide"
+                    shortlist = []
+                if len(shortlist) == 1:
+                    chosen = shortlist
+                    latency["matter_resolution"] = "party_span"
+                elif len(shortlist) > 1 and llm_resolve_enabled():
+                    t_llm = time.perf_counter()
+                    picked_id, status = await disambiguate_matters(needle, shortlist)
+                    latency["llm_resolution_ms"] = round((time.perf_counter() - t_llm) * 1000, 1)
+                    latency["matter_resolution"] = f"llm_{status}"
+                    if picked_id:
+                        chosen = [
+                            row for row in shortlist
+                            if str(row.get("matter_id") or "").upper() == picked_id
+                        ]
+                elif len(shortlist) > 1:
+                    latency["matter_resolution"] = "party_span_ambiguous"
+                if chosen:
+                    matters = chosen
         if matters:
             ctx.matter_ids = [str(m["matter_id"]) for m in matters]
             latency["matter_scope"] = scope_stats(matters, corpus_documents=corpus_docs)
@@ -512,10 +604,29 @@ async def retrieve_async(
             }
         latency["matter_scope_ms"] = round((time.perf_counter() - t_scope) * 1000, 1)
 
+    latency["scoped"] = "scoped" if ctx.matter_ids else "unscoped"
+    # Adopted: resolved matter-research is already scoped, so CE is optional.
+    # SCOPED_MATTER_RERANK=on keeps the cross-encoder for a typed ablation.
+    scoped_rerank = os.environ.get("SCOPED_MATTER_RERANK", "skip").strip().lower()
+    if scoped_rerank != "on" and parsed.intent == "matter_research" and ctx.matter_ids:
+        retrieval_plan.rerank = False
+        latency["scoped_rerank"] = "skip"
+    if latency.get("query_class") == "document_title":
+        retrieval_plan.rerank = False
     planned_channels = list(retrieval_plan.channels)
+    if parsed.skip_vector:
+        planned_channels = [c for c in planned_channels if c != "vector"]
+    if parsed.skip_rerank:
+        retrieval_plan.rerank = False
     if not policy.include_hierarchical_channel:
         planned_channels = [c for c in planned_channels if c != "hierarchical"]
     planned_channels = apply_channel_plan(planned_channels, parsed.intent, scope_mode)
+    if argument_scope_enabled(str(latency.get("query_class") or ""), ctx.matter_ids):
+        if "argument_scope" not in planned_channels:
+            planned_channels.append("argument_scope")
+    if title_match_enabled(str(latency.get("query_class") or "")):
+        if "title_match" not in planned_channels:
+            planned_channels.append("title_match")
     latency["channels_planned"] = planned_channels
 
     # ── Step 3: Parallel channel execution ───────────────────────────────
@@ -541,7 +652,11 @@ async def retrieve_async(
 
     all_candidates: list[Candidate] = []
     for name, candidates, elapsed in channel_results:
-        latency[name] = elapsed
+        # matter_scope holds the resolve stats dict; do not overwrite it with a timer.
+        if isinstance(latency.get(name), dict):
+            latency[f"{name}_channel_ms"] = elapsed
+        else:
+            latency[name] = elapsed
         latency[f"{name}_count"] = len(candidates)
         all_candidates.extend(candidates)
 
@@ -560,7 +675,9 @@ async def retrieve_async(
         with span("retrieval.graph_expansion", {"depth": retrieval_plan.graph_expansion_depth}):
             expanded = await _graph_expand(
                 deduped, member_id,
-                depth=retrieval_plan.graph_expansion_depth,
+                depth=1 if parsed.relationship_types else retrieval_plan.graph_expansion_depth,
+                rel_types=parsed.relationship_types or None,
+                seed_matter_ids=parsed.matter_ids if parsed.relationship_types else None,
             )
         if expanded:
             deduped.extend(expanded)
@@ -576,6 +693,11 @@ async def retrieve_async(
         retrieval_plan.weights, policy, intent=parsed.intent,
     )
     fusion_weights = adjust_fusion_weights(fusion_weights, parsed.intent, scope_mode)
+    if "argument_scope" in planned_channels:
+        # Typed to this path. Do not write this into _REPAIR_WEIGHTS.
+        fusion_weights["argument_scope"] = 2.5
+    if "title_match" in planned_channels:
+        fusion_weights["title_match"] = 2.5
     latency["fusion_weights"] = fusion_weights
     with span("retrieval.fusion"):
         fused = _fuse_candidates(
@@ -618,9 +740,34 @@ def retrieve(
     uses the pool. This preserves the call signature while channels
     are migrated.
     """
+    from app.cache.multi_tier import CacheTier, cache_get, cache_set
     from app.config import settings
+    from app.query.understand import understand
+    from app.retrieval.fusion_policy import active_policy
+    from app.retrieval.matter_scope import active_matter_scope
 
     final_k = k or settings.retrieve_k
+    parsed = understand(query)
+    scope = "|".join(
+        [
+            member_id or "",
+            f"k={final_k}",
+            active_policy().name,
+            active_matter_scope(),
+            parsed.intent,
+            query_class(parsed),
+            ",".join(parsed.relationship_types) or "-",
+            f"sv={int(parsed.skip_vector)}",
+            f"sr={int(parsed.skip_rerank)}",
+            os.environ.get("SCOPED_MATTER_RERANK", "skip").strip().lower() or "skip",
+            "llm=on" if llm_resolve_enabled() else "llm=off",
+        ]
+    )
+    cached = cache_get(CacheTier.RETRIEVAL, (query or "").strip().lower(), scope)
+    if isinstance(cached, dict) and isinstance(cached.get("hits"), list):
+        latency = dict(cached.get("latency") or {})
+        latency["cache"] = "hit"
+        return cached["hits"][:final_k], latency
 
     try:
         loop = asyncio.get_running_loop()
@@ -647,4 +794,10 @@ def retrieve(
             d["ce_score"] = c.provenance.ce_score
         hits.append(d)
 
+    cache_set(
+        CacheTier.RETRIEVAL,
+        (query or "").strip().lower(),
+        scope,
+        value={"hits": hits, "latency": latency},
+    )
     return hits, latency

@@ -1,0 +1,88 @@
+{
+  "corpus": "harbour-chambers-pcij-unsc-india",
+  "n": 170,
+  "k": 20,
+  "overall": {
+    "recall@5": 0.6271,
+    "recall@10": 0.6976,
+    "recall@20": 0.7329,
+    "hit@5": 0.9,
+    "hit@10": 0.9353,
+    "mrr": 0.7927,
+    "ndcg@10": 0.6902
+  },
+  "by_type": {
+    "argument": {
+      "n": 170,
+      "recall@10": 0.6976,
+      "hit@5": 0.9,
+      "hit@10": 0.9353,
+      "mrr": 0.7927,
+      "ndcg@10": 0.6902
+    }
+  },
+  "analyser_intents": {
+    "matter_research": 170
+  },
+  "channel_nonzero_rate": {
+    "bm25": 1.0,
+    "final": 1.0,
+    "graph_seed": 1.0,
+    "hierarchical": 0.2412,
+    "matter_scope": 1.0,
+    "metadata": 1.0,
+    "vector": 0.9882
+  },
+  "latency_ms": {
+    "p50": 626.3,
+    "p95": 865.8,
+    "mean": 648.8
+  },
+  "stage_latency_ms": {
+    "rerank": {
+      "n": 170,
+      "p50": 580.4,
+      "p95": 782.4
+    },
+    "parallel_wall_ms": {
+      "n": 170,
+      "p50": 36.1,
+      "p95": 116.3
+    },
+    "bm25": {
+      "n": 170,
+      "p50": 25.2,
+      "p95": 115.2
+    },
+    "vector": {
+      "n": 170,
+      "p50": 25.2,
+      "p95": 70.1
+    },
+    "matter_scope_ms": {
+      "n": 170,
+      "p50": 6.7,
+      "p95": 11.1
+    }
+  },
+  "matter_scope": {
+    "n": 0,
+    "resolved_rate": 0.0,
+    "median_document_universe": 0.0
+  },
+  "matter_scope_by_type": {},
+  "cache_repeat_ms": {
+    "n": 12,
+    "hits": 12,
+    "p50": 1.9,
+    "mean": 2.3,
+    "protocol": "immediate repeat of the first 12 questions while the retrieval TTL is still live"
+  },
+  "notes": [
+    "Negative rows score topic leakage, not empty result sets. Hybrid search always returns neighbours.",
+    "Permission gold is empty in this corpus (restricted_matters=0), so ACL is not a scored type.",
+    "Apex evals/dataset.jsonl is a different corpus and was not used.",
+    "cache_repeat_ms is an immediate repeat, not an end-of-run warm number. A multi-minute eval outlives the 5-minute L3 TTL."
+  ],
+  "filter": "argument"
+}

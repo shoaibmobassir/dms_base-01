@@ -2,14 +2,23 @@ from __future__ import annotations
 
 from psycopg.rows import dict_row
 
+from app.retrieval.matter_resolver import chunk_or_tsquery
+
 
 def keyword_search(conn, query: str, member_id: str | None, limit: int = 50) -> list[dict]:
-    sql = """
+    tsquery = chunk_or_tsquery(query)
+    if not tsquery:
+        return []
+    match_vec = (
+        "c.tsv || setweight(to_tsvector('english', coalesce(d.title, '')), 'A') "
+        "|| setweight(to_tsvector('english', coalesce(d.matter_code, '')), 'A')"
+    )
+    sql = f"""
         SELECT d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
                d.author_name, d.doc_date,
                m.client_name, m.court, m.practice_area,
                c.chunk_id, c.chunk_index, c.text,
-               ts_rank_cd(c.tsv, plainto_tsquery('english', %(query)s)) AS score,
+               ts_rank_cd({match_vec}, to_tsquery('english', %(tsquery)s)) AS score,
                'keyword' AS channel
         FROM chunks c
         JOIN documents d ON d.document_id = c.document_id
@@ -20,10 +29,10 @@ def keyword_search(conn, query: str, member_id: str | None, limit: int = 50) -> 
             OR p.restricted = FALSE
             OR %(member_id)s::text = ANY (p.allowed_members)
         )
-        AND c.tsv @@ plainto_tsquery('english', %(query)s)
+        AND ({match_vec}) @@ to_tsquery('english', %(tsquery)s)
         ORDER BY score DESC
         LIMIT %(limit)s
     """
     with conn.cursor(row_factory=dict_row) as cur:
-        cur.execute(sql, {"query": query, "member_id": member_id, "limit": limit})
+        cur.execute(sql, {"tsquery": tsquery, "member_id": member_id, "limit": limit})
         return list(cur.fetchall())

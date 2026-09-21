@@ -16,7 +16,7 @@ from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from app.db.pool import init_pool, pool_stats
+from app.db.pool import acquire, init_pool, pool_stats
 from app.query.understand import understand
 from app.retrieval.contracts import Candidate
 from app.retrieval.engine_v2 import (
@@ -25,7 +25,15 @@ from app.retrieval.engine_v2 import (
     _deduplicate,
     _fuse_candidates,
     _graph_expand,
+    _matter_store,
     _rerank_candidates,
+)
+from app.retrieval.fusion_policy import active_policy
+from app.retrieval.matter_scope import (
+    active_matter_scope,
+    apply_channel_plan,
+    scope_stats,
+    should_apply_matter_scope,
 )
 from app.retrieval.planner import plan as plan_retrieval
 
@@ -36,6 +44,7 @@ CHANNEL_RANK_KEYS = (
     "vector",
     "metadata",
     "matter",
+    "matter_scope",
     "hierarchical",
     "graph_seed",
     "similar_matter",
@@ -65,6 +74,7 @@ class StageRow:
     graph_seed_rank: int | None = None
     similar_matter_rank: int | None = None
     graph_expansion_rank: int | None = None
+    matter_scope_rank: int | None = None
 
     bm25_score: float | None = None
     vector_score: float | None = None
@@ -74,6 +84,7 @@ class StageRow:
     graph_seed_score: float | None = None
     similar_matter_score: float | None = None
     graph_expansion_score: float | None = None
+    matter_scope_score: float | None = None
 
     rrf_score: float | None = None
     rrf_rank: int | None = None
@@ -259,6 +270,34 @@ async def diagnose_query(
 
     retrieval_plan = plan_retrieval(parsed)
     ctx = _build_context(parsed, member_id, k)
+    scope_mode = active_matter_scope()
+    policy = active_policy()
+    latency["matter_scope_mode"] = scope_mode
+    latency["fusion_policy"] = policy.name
+    if should_apply_matter_scope(parsed.intent, scope_mode):
+        t_scope = time.perf_counter()
+        needle = ctx.query_search_text or ctx.query_raw
+        async with acquire() as conn:
+            matters = await _matter_store.resolve_matters(
+                conn, needle, ctx.member_id, limit=20,
+            )
+        if matters:
+            ctx.matter_ids = [str(item["matter_id"]) for item in matters]
+            latency["matter_scope"] = scope_stats(matters)
+        else:
+            latency["matter_scope"] = {
+                "matter_count": 0,
+                "document_universe": 0,
+                "fallback": "unscoped",
+            }
+        latency["matter_scope_ms"] = round((time.perf_counter() - t_scope) * 1000, 1)
+    latency["scoped"] = "scoped" if ctx.matter_ids else "unscoped"
+
+    planned = list(retrieval_plan.channels)
+    if not policy.include_hierarchical_channel:
+        planned = [name for name in planned if name != "hierarchical"]
+    planned = apply_channel_plan(planned, parsed.intent, scope_mode)
+    latency["channels_planned"] = planned
 
     async def _run(name: str) -> tuple[str, list[Candidate], float]:
         t = time.perf_counter()
@@ -273,7 +312,7 @@ async def diagnose_query(
         return name, results, round((time.perf_counter() - t) * 1000, 1)
 
     t_par = time.perf_counter()
-    channel_results = await asyncio.gather(*[_run(ch) for ch in retrieval_plan.channels])
+    channel_results = await asyncio.gather(*[_run(ch) for ch in planned])
     latency["parallel_wall_ms"] = round((time.perf_counter() - t_par) * 1000, 1)
 
     by_channel: dict[str, list[Candidate]] = {}
@@ -329,7 +368,7 @@ async def diagnose_query(
         query=query,
         query_type=query_type,
         intent=parsed.intent,
-        plan_channels=list(retrieval_plan.channels),
+        plan_channels=planned,
         plan_weights=dict(retrieval_plan.weights),
         rows=rows,
         latency_ms=latency,
@@ -418,6 +457,38 @@ def summarize_rows(rows: list[StageRow]) -> dict[str, Any]:
         "hierarchical_touched_relevant": len(hier_relevant),
         "hierarchical_only_relevant": len(hier_only_relevant),
         "final_relevant_doc_count_proxy": relevant_at(10),
+    }
+
+
+def gold_channel_coverage(rows: list[StageRow], gold_docs: set[str]) -> dict[str, Any]:
+    """Which channels already contain gold, and how much gold never entered the pool."""
+    if not gold_docs:
+        return {
+            "gold_docs": 0,
+            "gold_in_pool": 0,
+            "gold_absent": 0,
+            "gold_in_final_top10": 0,
+            "channels": {},
+        }
+    present = {row.document_id for row in rows if row.document_id in gold_docs}
+    final_top = {
+        row.document_id
+        for row in rows
+        if row.document_id in gold_docs and row.final_rank is not None and row.final_rank <= 10
+    }
+    channels: Counter = Counter()
+    for row in rows:
+        if row.document_id not in gold_docs:
+            continue
+        for name in (row.retrieved_by or "").split("|"):
+            if name:
+                channels[name] += 1
+    return {
+        "gold_docs": len(gold_docs),
+        "gold_in_pool": len(present),
+        "gold_absent": len(gold_docs - present),
+        "gold_in_final_top10": len(final_top),
+        "channels": dict(channels),
     }
 
 

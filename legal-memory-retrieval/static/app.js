@@ -46,7 +46,12 @@
     matterDetails: {},
     projectDetails: {},
     selectedProjectFolderId: '__all__',
-    projectDocSearch: ''
+    projectDocSearch: '',
+    activeChatSessionId: null,
+    chatSessions: [],
+    chatMessages: [],
+    chatStreaming: false,
+    chatModel: 'gemini-1.5-flash'
   };
 
   let firmDataCache = null;
@@ -327,6 +332,7 @@
   const UI = {
     base: '/ui',
     home: '/ui/home',
+    chat: '/ui/chat',
     ask: '/ui/ask',
     matters: '/ui/matters',
     projects: '/ui/projects',
@@ -342,6 +348,7 @@
 
   const VIEW_TITLES = {
     home: 'Home',
+    chat: 'Chat Assistant',
     ask: 'Ask Firm AI',
     matters: 'Matters',
     'matter-detail': 'Matter',
@@ -363,6 +370,7 @@
   function buildUrl(view, params = {}) {
     switch (view) {
       case 'home': return UI.home;
+      case 'chat': return UI.chat;
       case 'ask': return UI.ask;
       case 'matters': return UI.matters;
       case 'matter-detail':
@@ -410,7 +418,7 @@
     if (section === 'people' && id) return { view: 'person-detail', params: { personId: decodeURIComponent(id) } };
     if (section === 'knowledge' && id) return { view: 'knowledge', params: { tab: decodeURIComponent(id) } };
 
-    const listViews = ['home', 'ask', 'matters', 'projects', 'clients', 'documents', 'teams', 'people', 'knowledge', 'activity', 'tasks', 'architecture'];
+    const listViews = ['home', 'chat', 'ask', 'matters', 'projects', 'clients', 'documents', 'teams', 'people', 'knowledge', 'activity', 'tasks', 'architecture'];
     if (listViews.includes(section)) return { view: section, params: {} };
     return { view: 'home', params: {} };
   }
@@ -425,6 +433,7 @@
   // --- API ROUTES (one prefix per sidebar section) ---
   const API = {
     home: '/api/home',
+    chat: '/api/chat',
     answers: '/api/answers',
     retrieval: '/api/retrieval',
     matters: '/api/matters',
@@ -492,6 +501,13 @@
 
     renderWorkspace();
     renderRightPane();
+
+    if (view === 'chat') {
+      await loadChatSessions();
+      await loadActiveChatMessages();
+      renderWorkspace();
+      attachChatEvents();
+    }
 
     if (view === 'doc-detail' && params.docId && !getDocById(params.docId)) {
       showLoadingWorkspace('Loading document from database…');
@@ -764,6 +780,68 @@
   }
 
   window.lexosOpenSourceViewer = openDocumentSourceViewer;
+
+  async function openCitationViewer(docId, quoteText = '', page = 1, versionId = null) {
+    const overlay = document.getElementById('doc-source-viewer-overlay');
+    const titleEl = document.getElementById('viewer-doc-title');
+    const idEl = document.getElementById('viewer-doc-id');
+    const typeEl = document.getElementById('viewer-doc-type');
+    const versionEl = document.getElementById('viewer-doc-version');
+    const bodyEl = document.getElementById('viewer-document-body');
+
+    if (!overlay || !bodyEl) return;
+
+    bodyEl.innerHTML = `<div style="padding:40px 0;text-align:center;color:var(--text-muted);font-family:var(--font-mono);">Loading cited document and navigating to exact quote location...</div>`;
+    overlay.classList.add('open');
+    state.viewerOpen = true;
+
+    let docData = await apiFetch(`${API.documents}/${encodeURIComponent(docId)}/text`);
+    if (!docData || docData.detail) {
+      docData = await apiFetch(`${API.documents}/${encodeURIComponent(docId)}`);
+    }
+
+    const doc = docData || getDocById(docId) || {
+      document_id: docId,
+      title: `Document ${docId}`,
+      text: quoteText || 'Document content unavailable.',
+    };
+
+    state.currentViewerDoc = doc;
+
+    if (titleEl) titleEl.innerText = doc.filename || doc.title || docId;
+    if (idEl) idEl.innerText = doc.document_id || docId;
+    if (typeEl) typeEl.innerText = 'Contract / Document';
+    if (versionEl) versionEl.innerText = page ? `Page ${page}` : (versionId || 'v1 Final');
+
+    let bodyText = doc.text || doc.body || doc.chunk_text || '';
+    if (quoteText && bodyText) {
+      let idx = bodyText.toLowerCase().indexOf(quoteText.trim().toLowerCase());
+      if (idx >= 0) {
+        const before = escapeHtml(bodyText.substring(0, idx));
+        const match = escapeHtml(bodyText.substring(idx, idx + quoteText.length));
+        const after = escapeHtml(bodyText.substring(idx + quoteText.length));
+        bodyEl.innerHTML = `<div style="white-space:pre-wrap;font-size:13px;line-height:1.7;">${before}<mark id="match-1" class="dms-source-highlight" style="background:#fef08a;color:#713f12;padding:2px 4px;border-radius:2px;font-weight:600;">${match}</mark>${after}</div>`;
+      } else {
+        const words = quoteText.split(/\s+/).filter(w => w.length > 4);
+        let escaped = escapeHtml(bodyText);
+        if (words.length) {
+          const regex = new RegExp(`(${words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+          escaped = escaped.replace(regex, '<mark class="dms-source-highlight" style="background:#fef08a;color:#713f12;padding:1px 2px;">$1</mark>');
+        }
+        bodyEl.innerHTML = `<div style="white-space:pre-wrap;font-size:13px;line-height:1.7;">${escaped}</div>`;
+      }
+    } else {
+      bodyEl.innerHTML = `<div style="white-space:pre-wrap;font-size:13px;line-height:1.7;">${escapeHtml(bodyText || 'No document text found.')}</div>`;
+    }
+
+    setTimeout(() => {
+      const match = document.getElementById('match-1') || bodyEl.querySelector('.dms-source-highlight');
+      if (match) {
+        match.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 250);
+  }
+  window.lexosOpenCitation = openCitationViewer;
 
   function closeSourceViewer() {
     const overlay = document.getElementById('doc-source-viewer-overlay');
@@ -1052,6 +1130,10 @@
         ws.innerHTML = renderHomeScreen();
         attachHomeEvents();
         break;
+      case 'chat':
+        ws.innerHTML = renderChatScreen();
+        attachChatEvents();
+        break;
       case 'ask':
         ws.innerHTML = renderAskScreen();
         attachAskEvents();
@@ -1310,9 +1392,9 @@
           </div>
           <div class="suggested-pills">
             <span class="pill-label">Suggested:</span>
-            <button class="query-preset-pill" data-query="Have we handled a shareholder dispute involving oppression and minority rights before?">Shareholder oppression dispute</button>
-            <button class="query-preset-pill" data-query="Show similar SIAC arbitration matters with emergency arbitrator relief">SIAC emergency relief</button>
-            <button class="query-preset-pill" data-query="What indemnity cap and locked-box leakage clauses do we usually negotiate in M&A?">M&A indemnity cap precedent</button>
+            <button class="query-preset-pill" data-query="What is the matter code for Lotus — PCIJ Series A No. 10?">Lotus PCIJ matter</button>
+            <button class="query-preset-pill" data-query="Has MSEDCL argued floods constitute force majeure in APL 163/2018?">MSEDCL force majeure</button>
+            <button class="query-preset-pill" data-query="What is the matter code for Chorzow Factory — PCIJ Series A No. 9?">Chorzów Factory</button>
           </div>
         </div>
 
@@ -2089,6 +2171,403 @@
     renderRightPane();
   };
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CHAT ASSISTANT & REAL-TIME CITATION REVIEW (MIKE PARITY)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  async function loadChatSessions() {
+    try {
+      const data = await apiFetch(`${API.chat}/sessions?member_id=${encodeURIComponent(state.persona)}`);
+      state.chatSessions = Array.isArray(data) ? data : [];
+      if (!state.activeChatSessionId && state.chatSessions.length > 0) {
+        state.activeChatSessionId = state.chatSessions[0].id;
+      }
+    } catch (e) {
+      console.warn('Failed to load chat sessions:', e);
+      state.chatSessions = [];
+    }
+  }
+
+  async function loadActiveChatMessages() {
+    if (!state.activeChatSessionId) {
+      state.chatMessages = [];
+      return;
+    }
+    try {
+      const data = await apiFetch(`${API.chat}/sessions/${encodeURIComponent(state.activeChatSessionId)}`);
+      state.chatMessages = data?.messages || [];
+    } catch (e) {
+      console.warn('Failed to load chat messages:', e);
+      state.chatMessages = [];
+    }
+  }
+
+  async function createNewChatSession() {
+    try {
+      const created = await apiFetch(`${API.chat}/sessions`, {
+        method: 'POST',
+        body: JSON.stringify({
+          title: 'New Conversation',
+          member_id: state.persona,
+          model: state.chatModel
+        })
+      });
+      if (created?.id) {
+        state.activeChatSessionId = created.id;
+        state.chatMessages = [];
+        await loadChatSessions();
+        renderWorkspace();
+        attachChatEvents();
+      }
+    } catch (e) {
+      showToast('Could not create chat session.');
+    }
+  }
+
+  function formatMessageContentWithCitations(content, citations = []) {
+    if (!content) return '';
+    let html = escapeHtml(content)
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+
+    const citationMap = {};
+    if (Array.isArray(citations)) {
+      citations.forEach(c => {
+        if (c.ref) citationMap[c.ref] = c;
+      });
+    }
+
+    html = html.replace(/\[(\d+)\]/g, (match, refNum) => {
+      const cit = citationMap[refNum];
+      const docId = cit?.doc_id || cit?.document_id || '';
+      const quote = cit?.quotes?.[0]?.quote || cit?.quote || '';
+      const page = cit?.quotes?.[0]?.page || cit?.page || 1;
+      const isVerified = cit?.verified ? '✓' : '';
+      const tooltip = cit ? `Verified source: "${escapeHtml(quote.substring(0, 80))}..."` : 'View citation';
+      return `<button class="citation-pill" title="${tooltip}" onclick="window.lexosOpenCitation('${escapeHtml(docId)}', '${escapeHtml(quote)}', ${JSON.stringify(page)})">[${refNum}${isVerified ? ' ' + isVerified : ''}]</button>`;
+    });
+
+    return html;
+  }
+
+  function renderCitationSourcesTray(citations) {
+    if (!citations || !citations.length) return '';
+    return `
+      <div class="citation-sources-tray">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+          <span>✦</span> <span>Verified Source Citations (${citations.length})</span>
+        </div>
+        ${citations.map(c => {
+          const docId = c.doc_id || c.document_id || 'DOC';
+          const quote = c.quotes?.[0]?.quote || c.quote || '';
+          const page = c.quotes?.[0]?.page || c.page || 1;
+          const isVerified = c.verified !== false;
+          return `
+            <div class="citation-source-card">
+              <div style="display:flex;align-items:center;gap:8px;flex:1;overflow:hidden;">
+                <span class="citation-pill" style="margin:0;">[${c.ref}]</span>
+                <span class="version-tag">${escapeHtml(docId)}</span>
+                <span class="mono" style="font-size:10.5px;color:var(--text-muted);">Page ${page}</span>
+                <span style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px;">"${escapeHtml(quote)}"</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                ${isVerified ? '<span class="verified-badge">✓ Verified</span>' : '<span style="font-size:10px;color:var(--text-muted);">Unverified</span>'}
+                <button class="btn btn-secondary btn-sm" style="font-size:10.5px;padding:2px 8px;height:24px;" onclick="window.lexosOpenCitation('${escapeHtml(docId)}', '${escapeHtml(quote)}', ${JSON.stringify(page)})">Preview Excerpt →</button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function renderChatScreen() {
+    const activeSession = state.chatSessions.find(s => s.id === state.activeChatSessionId);
+    const sessionTitle = activeSession?.title || 'New Conversation';
+
+    const sessionsHtml = state.chatSessions.map(s => `
+      <div class="chat-session-item ${s.id === state.activeChatSessionId ? 'active' : ''}" data-session-id="${s.id}">
+        <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">
+          ${escapeHtml(s.title || 'Untitled Session')}
+        </div>
+        <button class="btn btn-ghost btn-sm delete-session-btn" data-session-id="${s.id}" style="padding:0 4px;font-size:11px;opacity:0.6;" title="Delete session">✕</button>
+      </div>
+    `).join('') || '<div style="font-size:11.5px;color:var(--text-muted);padding:10px;">No chat sessions yet.</div>';
+
+    const messagesHtml = (state.chatMessages || []).map(m => {
+      const isUser = m.role === 'user';
+      return `
+        <div class="chat-msg-row ${isUser ? 'user' : 'assistant'}">
+          ${!isUser ? '<div class="user-avatar" style="background:var(--accent-primary);color:#fff;font-size:11px;font-weight:700;">AI</div>' : ''}
+          <div class="chat-msg-bubble">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;">
+              ${isUser ? 'You' : 'LEXOS Assistant'}
+            </div>
+            ${m.events ? m.events.map(ev => `
+              <div class="tool-event-badge">
+                <span>⚡</span>
+                <span>${ev.type === 'doc_read' ? `Read document: ${escapeHtml(ev.filename || ev.document_id)}` : (ev.type === 'doc_find' ? `Searched in document: "${escapeHtml(ev.query)}"` : (ev.type === 'doc_created' ? `Generated ${escapeHtml(ev.filename)}` : escapeHtml(ev.type)))}</span>
+              </div>
+            `).join('') : ''}
+            <div>
+              ${formatMessageContentWithCitations(m.content, m.citations)}
+            </div>
+            ${!isUser && m.citations && m.citations.length ? renderCitationSourcesTray(m.citations) : ''}
+          </div>
+          ${isUser ? '<div class="user-avatar" style="font-size:11px;">YOU</div>' : ''}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="chat-view-container">
+        <!-- Sidebar -->
+        <aside class="chat-history-sidebar">
+          <button id="chat-new-session-btn" class="chat-new-btn">
+            <span>＋</span> New Conversation
+          </button>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;">Recent Conversations</div>
+          <div id="chat-sessions-list" class="chat-sessions-list">
+            ${sessionsHtml}
+          </div>
+        </aside>
+
+        <!-- Main Area -->
+        <div class="chat-main-area">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border-subtle);background:var(--bg-surface);">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:18px;">💬</span>
+              <div>
+                <h2 id="chat-active-title" style="font-size:14px;font-weight:700;color:var(--text-primary);">${escapeHtml(sessionTitle)}</h2>
+                <div style="font-size:11px;color:var(--text-muted);">Multi-turn legal assistant with 3-tier citation verification & document tools</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="status-badge-live"><span class="status-dot-pulse"></span> SSE Streaming Active</span>
+              <select id="chat-model-select" class="form-select" style="font-size:11px;padding:3px 8px;height:26px;">
+                <option value="gemini-1.5-flash" ${state.chatModel === 'gemini-1.5-flash' ? 'selected' : ''}>Gemini 1.5 Flash</option>
+                <option value="llama3-70b-8192" ${state.chatModel === 'llama3-70b-8192' ? 'selected' : ''}>Groq Llama 3 70B</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="chat-messages-container" class="chat-messages-scroll">
+            ${messagesHtml || `
+              <div style="padding:60px 20px;text-align:center;color:var(--text-muted);">
+                <div style="font-size:28px;margin-bottom:10px;color:var(--accent-primary);">✦</div>
+                <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Welcome to LEXOS Chat Assistant</div>
+                <div style="font-size:12px;max-width:520px;margin:0 auto;line-height:1.6;">
+                  Ask about institutional knowledge, analyze documents with exact verbatim citations, search within records, or draft legal memos with downloadable Word files.
+                </div>
+              </div>
+            `}
+          </div>
+
+          <div class="chat-input-bar-container">
+            <div class="chat-input-box">
+              <textarea id="chat-prompt-input" class="chat-textarea" placeholder="Ask a question, request document review, cite precedent, or draft a memo... (Shift+Enter for newline)"></textarea>
+              <button id="chat-send-btn" class="btn btn-primary" style="height:38px;padding:0 16px;">
+                <span>✦</span> Send
+              </button>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text-muted);">
+              <span>Tool execution & 3-tier citation verification enabled • Shift+Enter for newline</span>
+              <span class="mono">Fenced with dynamic nonces</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function attachChatEvents() {
+    const newBtn = document.getElementById('chat-new-session-btn');
+    if (newBtn) newBtn.addEventListener('click', createNewChatSession);
+
+    const modelSelect = document.getElementById('chat-model-select');
+    if (modelSelect) {
+      modelSelect.addEventListener('change', (e) => {
+        state.chatModel = e.target.value;
+      });
+    }
+
+    document.querySelectorAll('.chat-session-item').forEach(item => {
+      item.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-session-btn')) return;
+        const sid = item.dataset.sessionId;
+        state.activeChatSessionId = sid;
+        await loadActiveChatMessages();
+        renderWorkspace();
+        attachChatEvents();
+      });
+    });
+
+    document.querySelectorAll('.delete-session-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const sid = btn.dataset.sessionId;
+        await apiFetch(`${API.chat}/sessions/${encodeURIComponent(sid)}`, { method: 'DELETE' });
+        showToast('Chat session deleted.');
+        if (state.activeChatSessionId === sid) {
+          state.activeChatSessionId = null;
+        }
+        await loadChatSessions();
+        await loadActiveChatMessages();
+        renderWorkspace();
+        attachChatEvents();
+      });
+    });
+
+    const sendBtn = document.getElementById('chat-send-btn');
+    const input = document.getElementById('chat-prompt-input');
+
+    if (sendBtn && input) {
+      sendBtn.addEventListener('click', () => submitChatMessage());
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          submitChatMessage();
+        }
+      });
+    }
+
+    const container = document.getElementById('chat-messages-container');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  async function submitChatMessage() {
+    const input = document.getElementById('chat-prompt-input');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text || state.chatStreaming) return;
+
+    input.value = '';
+
+    if (!state.activeChatSessionId) {
+      const created = await apiFetch(`${API.chat}/sessions`, {
+        method: 'POST',
+        body: JSON.stringify({ title: 'New Conversation', member_id: state.persona, model: state.chatModel })
+      });
+      if (created?.id) {
+        state.activeChatSessionId = created.id;
+        await loadChatSessions();
+      } else {
+        showToast('Could not initiate chat session.');
+        return;
+      }
+    }
+
+    state.chatMessages.push({
+      role: 'user',
+      content: text,
+      created_at: new Date().toISOString()
+    });
+
+    const assistantMsgIndex = state.chatMessages.length;
+    state.chatMessages.push({
+      role: 'assistant',
+      content: 'Thinking and analyzing documents...',
+      events: [],
+      citations: [],
+      created_at: new Date().toISOString()
+    });
+
+    renderWorkspace();
+    attachChatEvents();
+
+    state.chatStreaming = true;
+
+    try {
+      const response = await fetch(`${API.chat}/sessions/${encodeURIComponent(state.activeChatSessionId)}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Member-Id': state.persona
+        },
+        body: JSON.stringify({ content: text, model: state.chatModel })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullAssistantText = '';
+      let collectedEvents = [];
+      let collectedCitations = [];
+
+      state.chatMessages[assistantMsgIndex].content = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const dataStr = line.slice(6).trim();
+          if (!dataStr || dataStr === '[DONE]') continue;
+
+          try {
+            const eventObj = JSON.parse(dataStr);
+            if (eventObj.type === 'text_delta') {
+              fullAssistantText += eventObj.text || '';
+              state.chatMessages[assistantMsgIndex].content = fullAssistantText;
+            } else if (eventObj.type === 'citation_data') {
+              collectedCitations.push(eventObj);
+              state.chatMessages[assistantMsgIndex].citations = collectedCitations;
+            } else if (eventObj.type === 'chat_title') {
+              const titleEl = document.getElementById('chat-active-title');
+              if (titleEl) titleEl.innerText = eventObj.title;
+              await loadChatSessions();
+            } else if (eventObj.type !== 'session_id' && eventObj.type !== 'done') {
+              collectedEvents.push(eventObj);
+              state.chatMessages[assistantMsgIndex].events = collectedEvents;
+            }
+          } catch (e) {
+            // Non-JSON SSE
+          }
+        }
+
+        const container = document.getElementById('chat-messages-container');
+        if (container) {
+          const msgBubble = container.querySelectorAll('.chat-msg-bubble')[assistantMsgIndex];
+          if (msgBubble) {
+            msgBubble.innerHTML = `
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;">LEXOS Assistant</div>
+              ${collectedEvents.map(ev => `
+                <div class="tool-event-badge">
+                  <span>⚡</span>
+                  <span>${ev.type === 'doc_read' ? `Read document: ${escapeHtml(ev.filename || ev.document_id)}` : (ev.type === 'doc_find' ? `Searched in document: "${escapeHtml(ev.query)}"` : (ev.type === 'doc_created' ? `Generated ${escapeHtml(ev.filename)}` : escapeHtml(ev.type)))}</span>
+                </div>
+              `).join('')}
+              <div>${formatMessageContentWithCitations(fullAssistantText, collectedCitations)}</div>
+              ${collectedCitations.length ? renderCitationSourcesTray(collectedCitations) : ''}
+            `;
+            container.scrollTop = container.scrollHeight;
+          }
+        }
+      }
+
+      await loadActiveChatMessages();
+      await loadChatSessions();
+    } catch (err) {
+      console.error('SSE Stream error:', err);
+      state.chatMessages[assistantMsgIndex].content = 'Failed to generate response. Please try again.';
+    } finally {
+      state.chatStreaming = false;
+      renderWorkspace();
+      attachChatEvents();
+    }
+  }
+
   // --- SCREEN 2: ASK THE FIRM (4-LAYER REASONING & HIGHLIGHTED SOURCES) ---
   function renderAskScreen() {
     const engineLabel = state.systemInfo?.retrieval_engine
@@ -2099,7 +2578,7 @@
         <div class="view-header">
           <div>
             <div class="view-header-title">Ask the Firm AI</div>
-            <div class="view-header-desc">Parallel retrieval fabric across 38,232 documents — planner → channels → fusion → rerank → cited answer.</div>
+            <div class="view-header-desc">Parallel retrieval fabric across ${(getFirmData().totals?.documents || getFirmData().stats?.documents || 0).toLocaleString()} documents — planner → channels → fusion → rerank → cited answer.</div>
           </div>
           <div class="view-header-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <span class="status-badge-live"><span class="status-dot-pulse"></span> ${escapeHtml(engineLabel)}</span>
@@ -2110,7 +2589,7 @@
         </div>
 
         <div class="ask-hero-box">
-          <textarea id="ask-main-input" class="ask-textarea" placeholder="Ask about past matters, arguments, precedents, clauses, or lawyers... (e.g. Have we handled a shareholder dispute involving oppression and minority rights before?)">${escapeHtml(state.askQuery)}</textarea>
+          <textarea id="ask-main-input" class="ask-textarea" placeholder="Ask about past matters, arguments, precedents, clauses, or lawyers... (e.g. What is the matter code for Lotus — PCIJ Series A No. 10?)">${escapeHtml(state.askQuery)}</textarea>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:8px;">
             <div class="scope-chips">
               <span class="pill-label">Scope:</span>
@@ -2123,10 +2602,10 @@
           </div>
           <div class="suggested-pills">
             <span class="pill-label">Presets:</span>
-            <button class="query-preset-pill" data-query="Have we previously advised on force majeure clauses?">Force majeure clauses</button>
-            <button class="query-preset-pill" data-query="What matters involve Narang Limited?">Narang Limited matters</button>
-            <button class="query-preset-pill" data-query="Have we handled a shareholder dispute involving oppression and minority rights before?">Shareholder oppression</button>
-            <button class="query-preset-pill" data-query="Find matters related to MTR-2017-00874 with a different client">Graph-related matters</button>
+            <button class="query-preset-pill" data-query="What is the matter code for Lotus — PCIJ Series A No. 10?">Lotus PCIJ</button>
+            <button class="query-preset-pill" data-query="Has MSEDCL argued floods constitute force majeure in APL 163/2018?">MSEDCL force majeure</button>
+            <button class="query-preset-pill" data-query="What is the matter code for UN Security Council resolutions — 1950?">UNSC 1950</button>
+            <button class="query-preset-pill" data-query="What is the matter code for Chorzow Factory — PCIJ Series A No. 9?">Chorzów Factory</button>
           </div>
         </div>
 

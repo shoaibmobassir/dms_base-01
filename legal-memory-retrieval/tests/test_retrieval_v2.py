@@ -415,6 +415,46 @@ class TestEngineV2Fusion:
         fused = _fuse_candidates([c_bm25, c_vec], {"bm25": 10.0, "vector": 0.1}, limit=10)
         assert fused[0].chunk_id == "A"
 
+    def test_pin_channel_survives_dedupe_winner(self):
+        from app.retrieval.contracts import Candidate
+        from app.retrieval.engine_v2 import _fuse_candidates
+
+        gold = Candidate(
+            chunk_id="GOLD", document_id="DOC-GOLD", matter_id="MTR-1",
+            channel="bm25", raw_score=0.05,
+        )
+        gold.provenance.channels_found_in = ["bm25", "title_match"]
+        noise = [
+            Candidate(
+                chunk_id=f"N{i}", document_id=f"DOC-{i}", matter_id="MTR-9",
+                channel="bm25", raw_score=1.0 - i * 0.01,
+            )
+            for i in range(15)
+        ]
+        fused = _fuse_candidates(
+            [gold, *noise], {"bm25": 1.0, "title_match": 2.5}, limit=10,
+        )
+        assert fused[0].chunk_id == "GOLD"
+
+    def test_non_pin_channels_are_not_double_counted(self):
+        from app.retrieval.contracts import Candidate
+        from app.retrieval.engine_v2 import _fuse_candidates
+
+        winner = Candidate(
+            chunk_id="A", document_id="DA", matter_id="MA",
+            channel="bm25", raw_score=0.9,
+        )
+        winner.provenance.channels_found_in = ["bm25", "vector"]
+        other = Candidate(
+            chunk_id="B", document_id="DB", matter_id="MB",
+            channel="bm25", raw_score=0.4,
+        )
+        fused = _fuse_candidates(
+            [winner, other], {"bm25": 1.0, "vector": 10.0}, limit=10,
+        )
+        assert fused[0].chunk_id == "A"
+        assert fused[0].fusion_score == round(1.0 / 61, 6)
+
     def test_fusion_empty_candidates(self):
         from app.retrieval.engine_v2 import _fuse_candidates
         assert _fuse_candidates([], {"bm25": 1.0}, limit=10) == []

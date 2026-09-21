@@ -21,6 +21,9 @@ from typing import Any
 
 from psycopg.rows import dict_row
 
+from app.retrieval.matter_resolver import chunk_or_tsquery
+from app.retrieval.matter_scope import MIN_CONTAINED_CODE_LEN, MIN_CONTAINED_TITLE_LEN
+
 
 # ── ACL fragment (shared across all stores) ──────────────────────────────────
 
@@ -57,24 +60,33 @@ class PgSearchStore:
         matter_clause = ""
         if matter_ids:
             matter_clause = "AND d.matter_id = ANY(%(matter_ids)s)"
+        tsquery = chunk_or_tsquery(query)
+        if not tsquery:
+            return []
+        # Title/code are weighted into the match vector so party names that
+        # live on the document header still retrieve when chunk body omits them.
+        match_vec = (
+            "c.tsv || setweight(to_tsvector('english', coalesce(d.title, '')), 'A') "
+            "|| setweight(to_tsvector('english', coalesce(d.matter_code, '')), 'A')"
+        )
         sql = f"""
             SELECT d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
                    d.author_name, d.doc_date,
                    m.client_name, m.court, m.practice_area,
                    c.chunk_id, c.chunk_index, c.text,
-                   ts_rank_cd(c.tsv, plainto_tsquery('english', %(query)s)) AS score
+                   ts_rank_cd({match_vec}, to_tsquery('english', %(tsquery)s)) AS score
             FROM chunks c
             JOIN documents d ON d.document_id = c.document_id
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN permissions p ON p.matter_id = c.matter_id
             WHERE {_ACL_WHERE}
-            AND c.tsv @@ plainto_tsquery('english', %(query)s)
+            AND ({match_vec}) @@ to_tsquery('english', %(tsquery)s)
             {matter_clause}
             ORDER BY score DESC
             LIMIT %(limit)s
         """
         params = {
-            "query": query,
+            "tsquery": tsquery,
             "member_id": member_id,
             "limit": limit,
             "matter_ids": matter_ids or ["__none__"],
@@ -177,25 +189,22 @@ class PgGraphStore:
         entities: list[str],
         member_id: str | None = None,
         limit: int = 50,
+        rel_types: list[str] | None = None,
     ) -> list[dict]:
         """Find documents connected to seed entities via graph relationships.
 
         This is Graph Operation A — runs in parallel with BM25/vector.
+        When rel_types is set, only those stored edge types are walked.
+        The lead-overlap heuristic stays on the untyped path only.
         """
         if not entities:
             return []
 
-        # Find related matter IDs through the relationships table
-        related_sql = """
-            SELECT DISTINCT m.matter_id
-            FROM (
-                SELECT r.target_id AS matter_id
-                FROM relationships r
-                WHERE r.source_id = ANY(%(seeds)s)
-                UNION
-                SELECT r.source_id AS matter_id
-                FROM relationships r
-                WHERE r.target_id = ANY(%(seeds)s)
+        typed = [t for t in (rel_types or []) if t]
+        rel_filter = "AND r.rel_type = ANY(%(rel_types)s)" if typed else ""
+        lead_overlap = ""
+        if not typed:
+            lead_overlap = """
                 UNION
                 SELECT m2.matter_id
                 FROM matters seed
@@ -207,6 +216,21 @@ class PgGraphStore:
                 WHERE seed.matter_id = ANY(%(seeds)s)
                   AND m2.client_id IS DISTINCT FROM seed.client_id
                   AND m2.matter_id <> seed.matter_id
+            """
+        # Find related matter IDs through the relationships table
+        related_sql = f"""
+            SELECT DISTINCT m.matter_id
+            FROM (
+                SELECT r.target_id AS matter_id
+                FROM relationships r
+                WHERE r.source_id = ANY(%(seeds)s)
+                  {rel_filter}
+                UNION
+                SELECT r.source_id AS matter_id
+                FROM relationships r
+                WHERE r.target_id = ANY(%(seeds)s)
+                  {rel_filter}
+                {lead_overlap}
             ) m
         """
         docs_sql = f"""
@@ -225,7 +249,12 @@ class PgGraphStore:
             ORDER BY d.matter_id, c.chunk_index
             LIMIT %(limit)s
         """
-        params = {"member_id": member_id, "seeds": entities, "limit": limit}
+        params = {
+            "member_id": member_id,
+            "seeds": entities,
+            "limit": limit,
+            "rel_types": typed,
+        }
         async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute(docs_sql, params)
             return list(await cur.fetchall())
@@ -237,6 +266,7 @@ class PgGraphStore:
         depth: int = 2,
         member_id: str | None = None,
         limit: int = 50,
+        rel_types: list[str] | None = None,
     ) -> list[dict]:
         """Multi-hop traversal from seed matter/document IDs.
 
@@ -249,21 +279,24 @@ class PgGraphStore:
         # Iterative expansion: find neighbors of neighbors up to `depth` hops
         visited: set[str] = set(seed_ids)
         frontier = list(seed_ids)
+        typed = [t for t in (rel_types or []) if t]
+        rel_filter = "AND r.rel_type = ANY(%(rel_types)s)" if typed else ""
 
         for _ in range(depth):
             if not frontier:
                 break
-            sql = """
+            sql = f"""
                 SELECT DISTINCT CASE
                     WHEN r.source_id = ANY(%(frontier)s) THEN r.target_id
                     ELSE r.source_id
                 END AS neighbor_id
                 FROM relationships r
-                WHERE r.source_id = ANY(%(frontier)s)
-                   OR r.target_id = ANY(%(frontier)s)
+                WHERE (r.source_id = ANY(%(frontier)s)
+                   OR r.target_id = ANY(%(frontier)s))
+                  {rel_filter}
             """
             async with conn.cursor(row_factory=dict_row) as cur:
-                await cur.execute(sql, {"frontier": frontier})
+                await cur.execute(sql, {"frontier": frontier, "rel_types": typed})
                 rows = await cur.fetchall()
             new_frontier = []
             for row in rows:
@@ -703,6 +736,9 @@ class PgMatterStore:
         if len(text) < 3:
             return []
         like = PgMetadataStore._like(text)
+        title_norm = "translate(lower(m.title), '\u2014\u2013', '--')"
+        code_norm = "translate(lower(m.matter_code), '\u2014\u2013', '--')"
+        needle_norm = "translate(lower(%(needle)s), '\u2014\u2013', '--')"
         sql = f"""
             SELECT m.matter_id, m.matter_code, m.title, m.practice_area,
                    cl.name AS client_name,
@@ -714,6 +750,12 @@ class PgMatterStore:
                        WHEN lower(m.title) = lower(%(needle)s) THEN 90.0
                        WHEN m.title ILIKE %(like)s ESCAPE '\\' THEN 70.0
                        WHEN m.matter_code ILIKE %(like)s ESCAPE '\\' THEN 60.0
+                       WHEN char_length(m.title) >= %(min_title)s
+                            AND position({title_norm} in {needle_norm}) > 0
+                         THEN 88.0 + LEAST(char_length(m.title), 50) / 100.0
+                       WHEN char_length(m.matter_code) >= %(min_code)s
+                            AND position({code_norm} in {needle_norm}) > 0
+                         THEN 86.0
                        ELSE 10.0
                      END
                    ) AS score
@@ -727,9 +769,17 @@ class PgMatterStore:
                 OR m.title ILIKE %(like)s ESCAPE '\\'
                 OR m.matter_code ILIKE %(like)s ESCAPE '\\'
                 OR %(needle)s = ANY(cl.aliases)
+                OR (
+                  char_length(m.title) >= %(min_title)s
+                  AND position({title_norm} in {needle_norm}) > 0
+                )
+                OR (
+                  char_length(m.matter_code) >= %(min_code)s
+                  AND position({code_norm} in {needle_norm}) > 0
+                )
               )
             GROUP BY m.matter_id, m.matter_code, m.title, m.practice_area, cl.name
-            ORDER BY score DESC, document_count DESC, m.matter_id
+            ORDER BY score DESC, char_length(m.title) DESC, document_count DESC, m.matter_id
             LIMIT %(limit)s
         """
         params = {
@@ -737,7 +787,59 @@ class PgMatterStore:
             "needle": text,
             "member_id": member_id,
             "limit": limit,
+            "min_title": MIN_CONTAINED_TITLE_LEN,
+            "min_code": MIN_CONTAINED_CODE_LEN,
         }
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(sql, params)
+            return list(await cur.fetchall())
+
+    async def shortlist_by_party_spans(
+        self,
+        conn,
+        spans: list[str],
+        member_id: str | None = None,
+        limit: int = 8,
+    ) -> list[dict]:
+        """Matters whose facts, title, or parties contain every span. ACL in SQL.
+
+        Used only after ILIKE/containment miss. Two or more spans are required
+        by the caller so a single country name cannot open the firm.
+        """
+        kept = [span.strip() for span in spans if span and len(span.strip()) >= 4][:4]
+        if len(kept) < 2:
+            return []
+        clauses = []
+        params: dict[str, Any] = {"member_id": member_id, "limit": limit}
+        for index, span in enumerate(kept):
+            key = f"span_{index}"
+            params[key] = PgMetadataStore._like(span)
+            clauses.append(
+                "("
+                f"coalesce(array_to_string(m.facts, ' '), '') ILIKE %({key})s ESCAPE '\\'"
+                f" OR m.title ILIKE %({key})s ESCAPE '\\'"
+                f" OR coalesce(m.opposing_party, '') ILIKE %({key})s ESCAPE '\\'"
+                f" OR cl.name ILIKE %({key})s ESCAPE '\\'"
+                ")"
+            )
+        sql = f"""
+            SELECT m.matter_id, m.matter_code, m.title, m.practice_area,
+                   cl.name AS client_name,
+                   m.opposing_party,
+                   array_to_string(m.facts, ' ') AS facts_text,
+                   COUNT(DISTINCT d.document_id) AS document_count,
+                   85.0 AS score
+            FROM matters m
+            JOIN clients cl ON cl.client_id = m.client_id
+            JOIN permissions p ON p.matter_id = m.matter_id
+            LEFT JOIN documents d ON d.matter_id = m.matter_id
+            WHERE {_ACL_WHERE}
+              AND {" AND ".join(clauses)}
+            GROUP BY m.matter_id, m.matter_code, m.title, m.practice_area,
+                     cl.name, m.opposing_party, m.facts
+            ORDER BY char_length(m.title) DESC, m.matter_id
+            LIMIT %(limit)s
+        """
         async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute(sql, params)
             return list(await cur.fetchall())
@@ -934,6 +1036,80 @@ class PgMatterStore:
             "matter_ids": matter_ids,
             "limit": limit,
         }
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(sql, params)
+            return list(await cur.fetchall())
+
+    async def supporting_document_heads(
+        self,
+        conn,
+        matter_ids: list[str],
+        member_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        """Chunk heads for documents stored as supporting a scoped matter's argument.
+
+        Looks up arguments by matter id only. Does not search issue or position text.
+        """
+        if not matter_ids:
+            return []
+        sql = f"""
+            SELECT DISTINCT ON (d.document_id)
+                   d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
+                   d.author_name, d.doc_date,
+                   m.client_name, m.court, m.practice_area,
+                   c.chunk_id, c.chunk_index, c.text,
+                   1.0 AS score
+            FROM arguments a
+            JOIN documents d ON d.document_id = ANY(a.supporting_documents)
+            JOIN matters m ON m.matter_id = d.matter_id
+            JOIN permissions p ON p.matter_id = d.matter_id
+            JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
+            WHERE {_ACL_WHERE}
+              AND a.matter_id = ANY(%(matter_ids)s)
+              AND d.matter_id = ANY(%(matter_ids)s)
+            ORDER BY d.document_id
+            LIMIT %(limit)s
+        """
+        params = {
+            "member_id": member_id,
+            "matter_ids": matter_ids,
+            "limit": limit,
+        }
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(sql, params)
+            return list(await cur.fetchall())
+
+    async def document_title_heads(
+        self,
+        conn,
+        title: str,
+        member_id: str | None = None,
+        limit: int = 20,
+    ) -> list[dict]:
+        """Exact document-title heads. Used only after title boilerplate is stripped."""
+        text = (title or "").strip()
+        if len(text) < 8:
+            return []
+        norm = (
+            text.replace("\u2014", "-").replace("\u2013", "-").replace("—", "-").replace("–", "-")
+        )
+        sql = f"""
+            SELECT d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
+                   d.author_name, d.doc_date,
+                   m.client_name, m.court, m.practice_area,
+                   c.chunk_id, c.chunk_index, c.text,
+                   1.0 AS score
+            FROM documents d
+            JOIN matters m ON m.matter_id = d.matter_id
+            JOIN permissions p ON p.matter_id = d.matter_id
+            JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
+            WHERE {_ACL_WHERE}
+              AND lower(replace(replace(d.title, '—', '-'), '–', '-')) = lower(%(norm)s)
+            ORDER BY d.document_id
+            LIMIT %(limit)s
+        """
+        params = {"member_id": member_id, "norm": norm, "limit": limit}
         async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute(sql, params)
             return list(await cur.fetchall())

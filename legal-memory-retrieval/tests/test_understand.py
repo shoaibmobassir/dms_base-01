@@ -1,4 +1,4 @@
-from app.query.understand import understand
+from app.query.understand import query_class, understand
 from app.sprint import CURRENT_SPRINT, FEATURES, health_payload
 
 
@@ -40,6 +40,35 @@ def test_graph_reasoning_intent() -> None:
     )
     assert parsed.intent == "graph_reasoning"
     assert parsed.matter_ids == ["MTR-2019-00001"]
+
+
+def test_related_matter_id_is_not_exact_lookup() -> None:
+    parsed = understand("Find matters related to MTR-1923-00001 for the same client.")
+    assert parsed.intent == "graph_reasoning"
+    assert parsed.matter_ids == ["MTR-1923-00001"]
+    assert parsed.relationship_types == ["same_client"]
+    assert parsed.skip_vector is True  # named matter id still skips open-corpus vector
+    assert parsed.skip_rerank is True  # a neighbour's text will not mention the question
+
+
+def test_named_relations_map_to_stored_edge_types() -> None:
+    assert understand("Which matter is precedent for MTR-1923-00001?").relationship_types == [
+        "precedent_for"
+    ]
+    assert understand(
+        "Find matters related to MTR-1923-00001 with similar facts."
+    ).relationship_types == ["similar_facts"]
+    assert understand(
+        "What matter is a follow-up to MTR-1923-00001?"
+    ).relationship_types == ["follow_up_to"]
+
+
+def test_lead_overlap_question_stays_untyped() -> None:
+    parsed = understand(
+        "Find matters related to MTR-2019-00001 handled by the same lead lawyer but for different clients."
+    )
+    assert parsed.intent == "graph_reasoning"
+    assert parsed.relationship_types == []
 
 
 def test_document_id() -> None:
@@ -86,6 +115,56 @@ def test_matters_involve_strips_to_client() -> None:
     parsed = understand("What matters involve Narang Limited?")
     assert parsed.intent == "matter_research"
     assert parsed.search_text == "Narang Limited"
+
+
+def test_argument_boilerplate_strips_to_title_without_new_intent() -> None:
+    parsed = understand(
+        "Which documents support our argument on Wimbledon — PCIJ Series A No. 1?"
+    )
+    assert parsed.intent == "matter_research"
+    assert parsed.search_text == "Wimbledon — PCIJ Series A No. 1"
+    assert query_class(parsed) == "argument_support"
+
+
+def test_document_title_boilerplate_strips_without_new_intent() -> None:
+    parsed = understand("Find the document titled Lotus Case Judgment")
+    assert parsed.intent == "matter_research"
+    assert parsed.search_text == "Lotus Case Judgment"
+    assert query_class(parsed) == "document_title"
+
+
+def test_wrapped_title_is_argument_support_without_new_intent() -> None:
+    papers = understand("Papers we filed in Wimbledon — PCIJ Series A No. 1")
+    assert papers.intent == "matter_research"
+    assert query_class(papers) == "argument_support"
+    record = understand(
+        "Where is the record of Mavrommatis Jerusalem — PCIJ Series A No. 5?"
+    )
+    assert record.intent == "matter_research"
+    assert query_class(record) == "argument_support"
+    holdout = understand(
+        "Docs that back our position on Wimbledon — PCIJ Series A No. 1"
+    )
+    assert holdout.intent == "matter_research"
+    assert query_class(holdout) == "argument_support"
+    supports = understand(
+        "What supports the argument in Chorzow Factory — PCIJ Series A No. 9?"
+    )
+    assert supports.intent == "matter_research"
+    assert query_class(supports) == "argument_support"
+
+
+def test_bare_title_is_not_argument_support() -> None:
+    parsed = understand("Wimbledon — PCIJ Series A No. 1")
+    assert query_class(parsed) == "other"
+
+
+def test_fact_paraphrase_without_document_language_is_not_argument_support() -> None:
+    parsed = understand(
+        "What was the matter where Acme challenged the bank's termination decision?"
+    )
+    assert parsed.intent == "matter_research"
+    assert query_class(parsed) == "other"
 
 
 def test_negative_style_question_is_not_exact() -> None:

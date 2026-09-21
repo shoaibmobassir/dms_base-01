@@ -115,6 +115,17 @@ def build_matter_query_rep(
     )
 
 
+def chunk_or_tsquery(query: str, *, max_terms: int = 16) -> str | None:
+    """OR-tsquery for chunk FTS so long questions are not AND-killed.
+
+    ``plainto_tsquery`` ANDs every token. A question like
+    "Has MSEDCL argued floods constitute force majeure" then matches
+    nothing even when each distinctive term exists in some chunk.
+    """
+    rep = build_matter_query_rep(query)
+    return to_or_tsquery(rep.lexical_terms(), max_terms=max_terms)
+
+
 def to_or_tsquery(terms: list[str], *, max_terms: int = 16) -> str | None:
     """Build a safe OR tsquery string from terms/phrases."""
     parts: list[str] = []

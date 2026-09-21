@@ -1,0 +1,50 @@
+{
+  "n_queries": 170,
+  "n_candidate_rows": 13606,
+  "k": 20,
+  "csv": "evals/last_harbour_argument_diagnose.csv",
+  "overall": {
+    "hit@10": 0.6,
+    "mrr": 0.4899,
+    "relevant@1": 0.4294,
+    "relevant@5": 0.5765,
+    "relevant@10": 0.6
+  },
+  "by_type": {
+    "argument": {
+      "n": 170,
+      "hit@10": 0.6,
+      "mrr": 0.4899,
+      "relevant@1": 0.4294,
+      "relevant@5": 0.5765,
+      "relevant@10": 0.6
+    }
+  },
+  "negative_false_positives": null,
+  "relevant_drop_stages": {
+    "reranker": 176,
+    "fusion_or_hierarchy_channel": 233,
+    "absent_from_pool": 68
+  },
+  "gold_channel_coverage": {
+    "gold_docs": 633,
+    "gold_in_pool": 217,
+    "gold_absent": 416,
+    "gold_in_final_top10": 168,
+    "queries_with_no_gold_in_pool": 68,
+    "channels": {
+      "bm25": 2087,
+      "vector": 975
+    }
+  },
+  "matter_scope": {
+    "resolved": 0,
+    "unscoped": 0
+  },
+  "relevant_channel_combos_top": {
+    "bm25": 1398,
+    "bm25|vector": 689,
+    "vector": 286
+  },
+  "hypothesis": "If fusion_or_hierarchy_channel dominates relevant_drop_stages, fix hierarchical/fusion policy (P5.5). If reranker dominates, defer to P5.8 \u2014 but still remove hierarchy score overrides first."
+}

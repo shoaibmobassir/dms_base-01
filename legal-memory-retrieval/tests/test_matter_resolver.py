@@ -27,6 +27,19 @@ def test_or_tsquery():
     assert "termination" in q
 
 
+def test_chunk_or_tsquery_does_not_and_kill_long_questions():
+    from app.retrieval.matter_resolver import chunk_or_tsquery
+
+    q = chunk_or_tsquery(
+        "Has MSEDCL argued floods constitute force majeure in APL 163/2018?"
+    )
+    assert q is not None
+    assert "msedcl" in q
+    assert "|" in q
+    # Distinctive tokens must be OR-able, not a single AND group.
+    assert q.count("&") < q.count("|") + 2
+
+
 def test_holder_coverage_and_min_k():
     ranked = [{"matter_id": f"M{i}"} for i in range(1, 21)]
     holders = {"M3", "M10", "M99"}

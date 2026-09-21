@@ -1,0 +1,333 @@
+{"question_id": "I-MAT-001", "expected_documents": [], "expected_matters": ["MTR-1923-00001"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-002", "expected_documents": [], "expected_matters": ["MTR-1924-00002"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-003", "expected_documents": [], "expected_matters": ["MTR-1924-00003"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-004", "expected_documents": [], "expected_matters": ["MTR-1925-00004"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-005", "expected_documents": [], "expected_matters": ["MTR-1925-00005"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-006", "expected_documents": [], "expected_matters": ["MTR-1925-00006"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-007", "expected_documents": [], "expected_matters": ["MTR-1926-00007"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-008", "expected_documents": [], "expected_matters": ["MTR-1926-00008"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-009", "expected_documents": [], "expected_matters": ["MTR-1927-00009"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-010", "expected_documents": [], "expected_matters": ["MTR-1927-00010"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-011", "expected_documents": [], "expected_matters": ["MTR-1927-00011"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-012", "expected_documents": [], "expected_matters": ["MTR-1927-00012"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-013", "expected_documents": [], "expected_matters": ["MTR-1927-00013"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-014", "expected_documents": [], "expected_matters": ["MTR-1928-00014"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-015", "expected_documents": [], "expected_matters": ["MTR-1928-00015"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-016", "expected_documents": [], "expected_matters": ["MTR-1928-00016"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-017", "expected_documents": [], "expected_matters": ["MTR-1928-00017"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-018", "expected_documents": [], "expected_matters": ["MTR-1929-00018"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-019", "expected_documents": [], "expected_matters": ["MTR-1928-00019"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-020", "expected_documents": [], "expected_matters": ["MTR-1929-00020"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-021", "expected_documents": [], "expected_matters": ["MTR-1929-00021"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-022", "expected_documents": [], "expected_matters": ["MTR-1929-00022"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-023", "expected_documents": [], "expected_matters": ["MTR-1929-00023"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-024", "expected_documents": [], "expected_matters": ["MTR-1930-00024"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-025", "expected_documents": [], "expected_matters": ["MTR-1931-00025"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-026", "expected_documents": [], "expected_matters": ["MTR-1931-00026"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-027", "expected_documents": [], "expected_matters": ["MTR-1931-00027"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-028", "expected_documents": [], "expected_matters": ["MTR-1931-00028"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-029", "expected_documents": [], "expected_matters": ["MTR-1932-00029"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-030", "expected_documents": [], "expected_matters": ["MTR-1932-00030"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-031", "expected_documents": [], "expected_matters": ["MTR-1931-00031"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-032", "expected_documents": [], "expected_matters": ["MTR-1932-00032"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-033", "expected_documents": [], "expected_matters": ["MTR-1932-00033"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-034", "expected_documents": [], "expected_matters": ["MTR-1932-00034"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-035", "expected_documents": [], "expected_matters": ["MTR-1932-00035"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-036", "expected_documents": [], "expected_matters": ["MTR-1933-00036"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-037", "expected_documents": [], "expected_matters": ["MTR-1933-00037"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-038", "expected_documents": [], "expected_matters": ["MTR-1933-00038"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-039", "expected_documents": [], "expected_matters": ["MTR-1933-00039"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-040", "expected_documents": [], "expected_matters": ["MTR-1933-00040"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-041", "expected_documents": [], "expected_matters": ["MTR-1933-00041"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-042", "expected_documents": [], "expected_matters": ["MTR-1933-00042"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-043", "expected_documents": [], "expected_matters": ["MTR-1933-00043"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-044", "expected_documents": [], "expected_matters": ["MTR-1933-00044"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-045", "expected_documents": [], "expected_matters": ["MTR-1933-00045"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-046", "expected_documents": [], "expected_matters": ["MTR-1933-00046"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-047", "expected_documents": [], "expected_matters": ["MTR-1934-00047"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-048", "expected_documents": [], "expected_matters": ["MTR-1934-00048"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-049", "expected_documents": [], "expected_matters": ["MTR-1935-00049"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-050", "expected_documents": [], "expected_matters": ["MTR-1935-00050"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-051", "expected_documents": [], "expected_matters": ["MTR-1936-00051"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-052", "expected_documents": [], "expected_matters": ["MTR-1936-00052"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-053", "expected_documents": [], "expected_matters": ["MTR-1936-00053"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-054", "expected_documents": [], "expected_matters": ["MTR-1936-00054"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-055", "expected_documents": [], "expected_matters": ["MTR-1937-00055"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-056", "expected_documents": [], "expected_matters": ["MTR-1937-00056"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-057", "expected_documents": [], "expected_matters": ["MTR-1937-00057"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-058", "expected_documents": [], "expected_matters": ["MTR-1938-00058"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-059", "expected_documents": [], "expected_matters": ["MTR-1938-00059"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-060", "expected_documents": [], "expected_matters": ["MTR-1938-00060"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-061", "expected_documents": [], "expected_matters": ["MTR-1939-00061"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-062", "expected_documents": [], "expected_matters": ["MTR-1939-00062"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-063", "expected_documents": [], "expected_matters": ["MTR-1939-00063"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-064", "expected_documents": [], "expected_matters": ["MTR-1939-00064"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-065", "expected_documents": [], "expected_matters": ["MTR-1940-00065"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-066", "expected_documents": [], "expected_matters": ["MTR-1922-00066"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-067", "expected_documents": [], "expected_matters": ["MTR-1922-00067"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-068", "expected_documents": [], "expected_matters": ["MTR-1922-00068"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-069", "expected_documents": [], "expected_matters": ["MTR-1922-00069"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-070", "expected_documents": [], "expected_matters": ["MTR-1923-00070"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-071", "expected_documents": [], "expected_matters": ["MTR-1923-00071"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-072", "expected_documents": [], "expected_matters": ["MTR-1923-00072"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-073", "expected_documents": [], "expected_matters": ["MTR-1923-00073"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-074", "expected_documents": [], "expected_matters": ["MTR-1924-00074"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-075", "expected_documents": [], "expected_matters": ["MTR-1925-00075"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-076", "expected_documents": [], "expected_matters": ["MTR-1925-00076"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-077", "expected_documents": [], "expected_matters": ["MTR-1925-00077"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-078", "expected_documents": [], "expected_matters": ["MTR-1926-00078"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-079", "expected_documents": [], "expected_matters": ["MTR-1927-00079"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-080", "expected_documents": [], "expected_matters": ["MTR-1928-00080"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-081", "expected_documents": [], "expected_matters": ["MTR-1928-00081"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-082", "expected_documents": [], "expected_matters": ["MTR-1930-00082"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-083", "expected_documents": [], "expected_matters": ["MTR-1930-00083"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-084", "expected_documents": [], "expected_matters": ["MTR-1946-00084"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-085", "expected_documents": [], "expected_matters": ["MTR-1947-00085"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-086", "expected_documents": [], "expected_matters": ["MTR-1948-00086"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-087", "expected_documents": [], "expected_matters": ["MTR-1949-00087"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-088", "expected_documents": [], "expected_matters": ["MTR-1950-00088"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-089", "expected_documents": [], "expected_matters": ["MTR-1951-00089"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-090", "expected_documents": [], "expected_matters": ["MTR-1952-00090"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-091", "expected_documents": [], "expected_matters": ["MTR-1953-00091"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-092", "expected_documents": [], "expected_matters": ["MTR-1954-00092"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-093", "expected_documents": [], "expected_matters": ["MTR-1955-00093"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-094", "expected_documents": [], "expected_matters": ["MTR-1956-00094"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-095", "expected_documents": [], "expected_matters": ["MTR-1957-00095"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-096", "expected_documents": [], "expected_matters": ["MTR-1958-00096"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-097", "expected_documents": [], "expected_matters": ["MTR-1959-00097"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-098", "expected_documents": [], "expected_matters": ["MTR-1960-00098"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-099", "expected_documents": [], "expected_matters": ["MTR-1961-00099"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-100", "expected_documents": [], "expected_matters": ["MTR-1962-00100"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-101", "expected_documents": [], "expected_matters": ["MTR-1963-00101"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-102", "expected_documents": [], "expected_matters": ["MTR-1964-00102"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-103", "expected_documents": [], "expected_matters": ["MTR-1965-00103"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-104", "expected_documents": [], "expected_matters": ["MTR-1966-00104"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-105", "expected_documents": [], "expected_matters": ["MTR-1967-00105"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-106", "expected_documents": [], "expected_matters": ["MTR-1968-00106"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-107", "expected_documents": [], "expected_matters": ["MTR-1969-00107"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-108", "expected_documents": [], "expected_matters": ["MTR-1970-00108"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-109", "expected_documents": [], "expected_matters": ["MTR-1971-00109"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-110", "expected_documents": [], "expected_matters": ["MTR-1972-00110"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-111", "expected_documents": [], "expected_matters": ["MTR-1973-00111"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-112", "expected_documents": [], "expected_matters": ["MTR-1974-00112"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-113", "expected_documents": [], "expected_matters": ["MTR-1975-00113"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-114", "expected_documents": [], "expected_matters": ["MTR-1976-00114"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-115", "expected_documents": [], "expected_matters": ["MTR-1977-00115"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-116", "expected_documents": [], "expected_matters": ["MTR-1978-00116"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-117", "expected_documents": [], "expected_matters": ["MTR-1979-00117"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-118", "expected_documents": [], "expected_matters": ["MTR-1980-00118"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-119", "expected_documents": [], "expected_matters": ["MTR-1981-00119"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-120", "expected_documents": [], "expected_matters": ["MTR-1982-00120"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-121", "expected_documents": [], "expected_matters": ["MTR-1983-00121"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-122", "expected_documents": [], "expected_matters": ["MTR-1984-00122"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-123", "expected_documents": [], "expected_matters": ["MTR-1985-00123"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-124", "expected_documents": [], "expected_matters": ["MTR-1986-00124"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-125", "expected_documents": [], "expected_matters": ["MTR-1987-00125"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-126", "expected_documents": [], "expected_matters": ["MTR-1988-00126"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-127", "expected_documents": [], "expected_matters": ["MTR-1989-00127"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-128", "expected_documents": [], "expected_matters": ["MTR-1990-00128"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-129", "expected_documents": [], "expected_matters": ["MTR-1991-00129"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-130", "expected_documents": [], "expected_matters": ["MTR-1992-00130"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-131", "expected_documents": [], "expected_matters": ["MTR-1993-00131"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-132", "expected_documents": [], "expected_matters": ["MTR-1994-00132"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-133", "expected_documents": [], "expected_matters": ["MTR-1995-00133"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-134", "expected_documents": [], "expected_matters": ["MTR-1996-00134"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-135", "expected_documents": [], "expected_matters": ["MTR-1997-00135"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-136", "expected_documents": [], "expected_matters": ["MTR-1998-00136"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-137", "expected_documents": [], "expected_matters": ["MTR-1999-00137"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-138", "expected_documents": [], "expected_matters": ["MTR-2000-00138"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-139", "expected_documents": [], "expected_matters": ["MTR-2001-00139"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-140", "expected_documents": [], "expected_matters": ["MTR-2002-00140"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-141", "expected_documents": [], "expected_matters": ["MTR-2003-00141"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-142", "expected_documents": [], "expected_matters": ["MTR-2004-00142"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-143", "expected_documents": [], "expected_matters": ["MTR-2005-00143"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-144", "expected_documents": [], "expected_matters": ["MTR-2006-00144"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-145", "expected_documents": [], "expected_matters": ["MTR-2007-00145"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-146", "expected_documents": [], "expected_matters": ["MTR-2008-00146"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-147", "expected_documents": [], "expected_matters": ["MTR-2009-00147"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-148", "expected_documents": [], "expected_matters": ["MTR-2010-00148"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-149", "expected_documents": [], "expected_matters": ["MTR-2011-00149"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-150", "expected_documents": [], "expected_matters": ["MTR-2012-00150"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-151", "expected_documents": [], "expected_matters": ["MTR-2013-00151"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-152", "expected_documents": [], "expected_matters": ["MTR-2014-00152"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-153", "expected_documents": [], "expected_matters": ["MTR-2015-00153"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-154", "expected_documents": [], "expected_matters": ["MTR-2016-00154"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-155", "expected_documents": [], "expected_matters": ["MTR-2017-00155"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-156", "expected_documents": [], "expected_matters": ["MTR-2018-00156"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-157", "expected_documents": [], "expected_matters": ["MTR-2019-00157"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-158", "expected_documents": [], "expected_matters": ["MTR-2020-00158"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-159", "expected_documents": [], "expected_matters": ["MTR-2021-00159"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-160", "expected_documents": [], "expected_matters": ["MTR-2022-00160"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-161", "expected_documents": [], "expected_matters": ["MTR-2023-00161"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-162", "expected_documents": [], "expected_matters": ["MTR-2024-00162"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-163", "expected_documents": [], "expected_matters": ["MTR-2025-00163"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-164", "expected_documents": [], "expected_matters": ["MTR-2026-00164"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-165", "expected_documents": [], "expected_matters": ["MTR-2025-00165"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-166", "expected_documents": [], "expected_matters": ["MTR-2018-00166"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-167", "expected_documents": [], "expected_matters": ["MTR-2026-00167"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-168", "expected_documents": [], "expected_matters": ["MTR-2025-00168"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-169", "expected_documents": [], "expected_matters": ["MTR-2026-00169"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-MAT-170", "expected_documents": [], "expected_matters": ["MTR-2026-00170"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-DOC-001", "expected_documents": ["DOC-00048"], "expected_matters": ["MTR-1928-00015"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-002", "expected_documents": ["DOC-00095"], "expected_matters": ["MTR-1931-00026"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-003", "expected_documents": ["DOC-00142"], "expected_matters": ["MTR-1933-00044"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-004", "expected_documents": ["DOC-00189"], "expected_matters": ["MTR-1937-00056"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-005", "expected_documents": ["DOC-00236"], "expected_matters": ["MTR-1925-00075"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-006", "expected_documents": ["DOC-00283"], "expected_matters": ["MTR-1947-00085"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-007", "expected_documents": ["DOC-00330"], "expected_matters": ["MTR-1949-00087"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-008", "expected_documents": ["DOC-00377"], "expected_matters": ["MTR-1956-00094"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-009", "expected_documents": ["DOC-00424"], "expected_matters": ["MTR-1961-00099"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-010", "expected_documents": ["DOC-00471"], "expected_matters": ["MTR-1965-00103"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-011", "expected_documents": ["DOC-00518"], "expected_matters": ["MTR-1968-00106"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-012", "expected_documents": ["DOC-00565"], "expected_matters": ["MTR-1971-00109"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-013", "expected_documents": ["DOC-00612"], "expected_matters": ["MTR-1974-00112"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-014", "expected_documents": ["DOC-00659"], "expected_matters": ["MTR-1976-00114"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-015", "expected_documents": ["DOC-00706"], "expected_matters": ["MTR-1979-00117"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-016", "expected_documents": ["DOC-00753"], "expected_matters": ["MTR-1981-00119"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-017", "expected_documents": ["DOC-00800"], "expected_matters": ["MTR-1983-00121"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-018", "expected_documents": ["DOC-00847"], "expected_matters": ["MTR-1986-00124"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-019", "expected_documents": ["DOC-00894"], "expected_matters": ["MTR-1989-00127"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-020", "expected_documents": ["DOC-00941"], "expected_matters": ["MTR-1990-00128"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-021", "expected_documents": ["DOC-00988"], "expected_matters": ["MTR-1992-00130"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-022", "expected_documents": ["DOC-01035"], "expected_matters": ["MTR-1992-00130"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-023", "expected_documents": ["DOC-01082"], "expected_matters": ["MTR-1993-00131"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-024", "expected_documents": ["DOC-01129"], "expected_matters": ["MTR-1993-00131"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-025", "expected_documents": ["DOC-01176"], "expected_matters": ["MTR-1994-00132"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-026", "expected_documents": ["DOC-01223"], "expected_matters": ["MTR-1994-00132"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-027", "expected_documents": ["DOC-01270"], "expected_matters": ["MTR-1995-00133"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-028", "expected_documents": ["DOC-01317"], "expected_matters": ["MTR-1996-00134"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-029", "expected_documents": ["DOC-01599"], "expected_matters": ["MTR-2001-00139"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-030", "expected_documents": ["DOC-01646"], "expected_matters": ["MTR-2002-00140"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-031", "expected_documents": ["DOC-01693"], "expected_matters": ["MTR-2002-00140"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-032", "expected_documents": ["DOC-01740"], "expected_matters": ["MTR-2003-00141"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-033", "expected_documents": ["DOC-01787"], "expected_matters": ["MTR-2004-00142"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-034", "expected_documents": ["DOC-01834"], "expected_matters": ["MTR-2004-00142"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-035", "expected_documents": ["DOC-01881"], "expected_matters": ["MTR-2005-00143"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-036", "expected_documents": ["DOC-01928"], "expected_matters": ["MTR-2006-00144"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-037", "expected_documents": ["DOC-01975"], "expected_matters": ["MTR-2006-00144"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-038", "expected_documents": ["DOC-02022"], "expected_matters": ["MTR-2007-00145"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-039", "expected_documents": ["DOC-02069"], "expected_matters": ["MTR-2008-00146"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-DOC-040", "expected_documents": ["DOC-02116"], "expected_matters": ["MTR-2008-00146"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-CODE-001", "expected_documents": [], "expected_matters": ["MTR-1925-00005"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-002", "expected_documents": [], "expected_matters": ["MTR-1927-00010"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-003", "expected_documents": [], "expected_matters": ["MTR-1928-00015"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-004", "expected_documents": [], "expected_matters": ["MTR-1929-00020"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-005", "expected_documents": [], "expected_matters": ["MTR-1931-00025"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-006", "expected_documents": [], "expected_matters": ["MTR-1932-00030"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-007", "expected_documents": [], "expected_matters": ["MTR-1932-00035"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-008", "expected_documents": [], "expected_matters": ["MTR-1933-00040"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-009", "expected_documents": [], "expected_matters": ["MTR-1933-00045"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-010", "expected_documents": [], "expected_matters": ["MTR-1935-00050"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-011", "expected_documents": [], "expected_matters": ["MTR-1937-00055"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-012", "expected_documents": [], "expected_matters": ["MTR-1938-00060"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-013", "expected_documents": [], "expected_matters": ["MTR-1940-00065"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-014", "expected_documents": [], "expected_matters": ["MTR-1923-00070"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-015", "expected_documents": [], "expected_matters": ["MTR-1925-00075"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-016", "expected_documents": [], "expected_matters": ["MTR-1928-00080"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-017", "expected_documents": [], "expected_matters": ["MTR-1947-00085"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-018", "expected_documents": [], "expected_matters": ["MTR-1952-00090"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-019", "expected_documents": [], "expected_matters": ["MTR-1957-00095"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-020", "expected_documents": [], "expected_matters": ["MTR-1962-00100"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-021", "expected_documents": [], "expected_matters": ["MTR-1967-00105"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-022", "expected_documents": [], "expected_matters": ["MTR-1972-00110"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-023", "expected_documents": [], "expected_matters": ["MTR-1977-00115"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-024", "expected_documents": [], "expected_matters": ["MTR-1982-00120"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-025", "expected_documents": [], "expected_matters": ["MTR-1987-00125"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-026", "expected_documents": [], "expected_matters": ["MTR-1992-00130"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-027", "expected_documents": [], "expected_matters": ["MTR-1997-00135"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-028", "expected_documents": [], "expected_matters": ["MTR-2002-00140"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-029", "expected_documents": [], "expected_matters": ["MTR-2007-00145"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-030", "expected_documents": [], "expected_matters": ["MTR-2012-00150"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-031", "expected_documents": [], "expected_matters": ["MTR-2017-00155"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-032", "expected_documents": [], "expected_matters": ["MTR-2022-00160"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-033", "expected_documents": [], "expected_matters": ["MTR-2025-00165"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CODE-034", "expected_documents": [], "expected_matters": ["MTR-2026-00170"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-001", "expected_documents": [], "expected_matters": ["MTR-1926-00008", "MTR-1928-00014", "MTR-1928-00016", "MTR-1929-00018", "MTR-1937-00057", "MTR-1938-00058", "MTR-1939-00062", "MTR-1939-00063", "MTR-1939-00064", "MTR-1940-00065"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-002", "expected_documents": [], "expected_matters": ["MTR-1924-00003", "MTR-1925-00004"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-003", "expected_documents": [], "expected_matters": ["MTR-2026-00167"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-004", "expected_documents": [], "expected_matters": ["MTR-1933-00041", "MTR-1933-00046"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-005", "expected_documents": [], "expected_matters": ["MTR-2025-00168"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-006", "expected_documents": [], "expected_matters": ["MTR-1932-00033", "MTR-1933-00038", "MTR-1933-00040"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-007", "expected_documents": [], "expected_matters": ["MTR-1938-00060", "MTR-1939-00061"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-008", "expected_documents": [], "expected_matters": ["MTR-1927-00010", "MTR-1929-00020", "MTR-1929-00021", "MTR-1929-00022", "MTR-1930-00024", "MTR-1931-00031", "MTR-1934-00047", "MTR-1937-00056"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-009", "expected_documents": [], "expected_matters": ["MTR-1925-00006", "MTR-1926-00007", "MTR-1927-00009", "MTR-1927-00012", "MTR-1927-00013", "MTR-1928-00015", "MTR-1928-00017", "MTR-1928-00019", "MTR-1931-00025", "MTR-1933-00037", "MTR-1933-00039", "MTR-1933-00042", "MTR-1933-00043", "MTR-1933-00044", "MTR-1933-00045"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-010", "expected_documents": [], "expected_matters": ["MTR-1924-00002", "MTR-1925-00005", "MTR-1927-00011"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-011", "expected_documents": [], "expected_matters": ["MTR-2026-00169"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-012", "expected_documents": [], "expected_matters": ["MTR-1936-00051", "MTR-1936-00053"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-013", "expected_documents": [], "expected_matters": ["MTR-1938-00059"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-014", "expected_documents": [], "expected_matters": ["MTR-1931-00026", "MTR-1931-00027", "MTR-1931-00028", "MTR-1932-00029", "MTR-1932-00030", "MTR-1932-00035", "MTR-1935-00049", "MTR-1935-00050", "MTR-1922-00066", "MTR-1922-00067", "MTR-1922-00068", "MTR-1922-00069", "MTR-1923-00070", "MTR-1923-00071", "MTR-1923-00072", "MTR-1923-00073", "MTR-1924-00074", "MTR-1925-00075", "MTR-1925-00076", "MTR-1925-00077", "MTR-1926-00078", "MTR-1927-00079", "MTR-1928-00080", "MTR-1928-00081", "MTR-1930-00082", "MTR-1930-00083"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-015", "expected_documents": [], "expected_matters": ["MTR-2025-00165", "MTR-2018-00166"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-016", "expected_documents": [], "expected_matters": ["MTR-1937-00055"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-017", "expected_documents": [], "expected_matters": ["MTR-2026-00170"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-018", "expected_documents": [], "expected_matters": ["MTR-1936-00052", "MTR-1936-00054"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-019", "expected_documents": [], "expected_matters": ["MTR-1933-00036"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-020", "expected_documents": [], "expected_matters": ["MTR-1923-00001", "MTR-1929-00023", "MTR-1932-00032", "MTR-1932-00034", "MTR-1934-00048"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-CLI-021", "expected_documents": [], "expected_matters": ["MTR-1946-00084", "MTR-1947-00085", "MTR-1948-00086", "MTR-1949-00087", "MTR-1950-00088", "MTR-1951-00089", "MTR-1952-00090", "MTR-1953-00091", "MTR-1954-00092", "MTR-1955-00093", "MTR-1956-00094", "MTR-1957-00095", "MTR-1958-00096", "MTR-1959-00097", "MTR-1960-00098", "MTR-1961-00099", "MTR-1962-00100", "MTR-1963-00101", "MTR-1964-00102", "MTR-1965-00103", "MTR-1966-00104", "MTR-1967-00105", "MTR-1968-00106", "MTR-1969-00107", "MTR-1970-00108", "MTR-1971-00109", "MTR-1972-00110", "MTR-1973-00111", "MTR-1974-00112", "MTR-1975-00113", "MTR-1976-00114", "MTR-1977-00115", "MTR-1978-00116", "MTR-1979-00117", "MTR-1980-00118", "MTR-1981-00119", "MTR-1982-00120", "MTR-1983-00121", "MTR-1984-00122", "MTR-1985-00123", "MTR-1986-00124", "MTR-1987-00125", "MTR-1988-00126", "MTR-1989-00127", "MTR-1990-00128", "MTR-1991-00129", "MTR-1992-00130", "MTR-1993-00131", "MTR-1994-00132", "MTR-1995-00133", "MTR-1996-00134", "MTR-1997-00135", "MTR-1998-00136", "MTR-1999-00137", "MTR-2000-00138", "MTR-2001-00139", "MTR-2002-00140", "MTR-2003-00141", "MTR-2004-00142", "MTR-2005-00143", "MTR-2006-00144", "MTR-2007-00145", "MTR-2008-00146", "MTR-2009-00147", "MTR-2010-00148", "MTR-2011-00149", "MTR-2012-00150", "MTR-2013-00151", "MTR-2014-00152", "MTR-2015-00153", "MTR-2016-00154", "MTR-2017-00155", "MTR-2018-00156", "MTR-2019-00157", "MTR-2020-00158", "MTR-2021-00159", "MTR-2022-00160", "MTR-2023-00161", "MTR-2024-00162", "MTR-2025-00163", "MTR-2026-00164"], "gold_target": "matter", "should_abstain": false}
+{"question_id": "I-REL-001", "expected_documents": [], "expected_matters": ["MTR-1925-00004"], "gold_target": "matter", "should_abstain": false, "relationship": "same_client"}
+{"question_id": "I-REL-002", "expected_documents": [], "expected_matters": ["MTR-1926-00007", "MTR-1927-00009", "MTR-1927-00012", "MTR-1927-00013", "MTR-1928-00015"], "gold_target": "matter", "should_abstain": false, "relationship": "same_client"}
+{"question_id": "I-REL-003", "expected_documents": [], "expected_matters": ["MTR-1927-00009", "MTR-1927-00012", "MTR-1927-00013", "MTR-1928-00015", "MTR-1928-00017"], "gold_target": "matter", "should_abstain": false, "relationship": "same_client"}
+{"question_id": "I-REL-004", "expected_documents": [], "expected_matters": ["MTR-1927-00012", "MTR-1927-00013", "MTR-1928-00015", "MTR-1928-00017", "MTR-1928-00019"], "gold_target": "matter", "should_abstain": false, "relationship": "same_client"}
+{"question_id": "I-REL-005", "expected_documents": [], "expected_matters": ["MTR-1927-00013", "MTR-1928-00015", "MTR-1928-00017", "MTR-1928-00019", "MTR-1931-00025"], "gold_target": "matter", "should_abstain": false, "relationship": "same_client"}
+{"question_id": "I-REL-006", "expected_documents": [], "expected_matters": ["MTR-1928-00015", "MTR-1928-00017", "MTR-1928-00019", "MTR-1931-00025", "MTR-1933-00037"], "gold_target": "matter", "should_abstain": false, "relationship": "same_client"}
+{"question_id": "I-REL-007", "expected_documents": [], "expected_matters": ["MTR-1929-00018"], "gold_target": "matter", "should_abstain": false, "relationship": "precedent_for"}
+{"question_id": "I-REL-008", "expected_documents": [], "expected_matters": ["MTR-1929-00018"], "gold_target": "matter", "should_abstain": false, "relationship": "similar_facts"}
+{"question_id": "I-REL-009", "expected_documents": [], "expected_matters": ["MTR-1928-00019"], "gold_target": "matter", "should_abstain": false, "relationship": "precedent_for"}
+{"question_id": "I-REL-010", "expected_documents": [], "expected_matters": ["MTR-1928-00019"], "gold_target": "matter", "should_abstain": false, "relationship": "similar_facts"}
+{"question_id": "I-REL-011", "expected_documents": [], "expected_matters": ["MTR-1930-00024", "MTR-1931-00031"], "gold_target": "matter", "should_abstain": false, "relationship": "precedent_for"}
+{"question_id": "I-REL-012", "expected_documents": [], "expected_matters": ["MTR-1930-00024", "MTR-1931-00031"], "gold_target": "matter", "should_abstain": false, "relationship": "similar_facts"}
+{"question_id": "I-REL-013", "expected_documents": [], "expected_matters": ["MTR-1931-00031"], "gold_target": "matter", "should_abstain": false, "relationship": "precedent_for"}
+{"question_id": "I-REL-014", "expected_documents": [], "expected_matters": ["MTR-1931-00031"], "gold_target": "matter", "should_abstain": false, "relationship": "similar_facts"}
+{"question_id": "I-REL-015", "expected_documents": [], "expected_matters": ["MTR-1932-00033", "MTR-1932-00034", "MTR-1932-00035", "MTR-1933-00036", "MTR-1933-00037", "MTR-1933-00038", "MTR-1933-00039", "MTR-1933-00040", "MTR-1933-00041", "MTR-1933-00042", "MTR-1933-00043", "MTR-1933-00044", "MTR-1933-00045", "MTR-1933-00046", "MTR-1934-00047", "MTR-1934-00048", "MTR-1935-00049", "MTR-1935-00050", "MTR-1936-00051", "MTR-1936-00052", "MTR-1936-00053", "MTR-1936-00054", "MTR-1937-00055", "MTR-1937-00056", "MTR-1937-00057", "MTR-1938-00058", "MTR-1938-00059", "MTR-1938-00060", "MTR-1939-00061", "MTR-1939-00062", "MTR-1939-00063", "MTR-1939-00064", "MTR-1940-00065", "MTR-1922-00066", "MTR-1922-00067", "MTR-1922-00068", "MTR-1922-00069", "MTR-1923-00070", "MTR-1923-00071", "MTR-1923-00072", "MTR-1923-00073", "MTR-1924-00074", "MTR-1925-00075", "MTR-1925-00076", "MTR-1925-00077", "MTR-1926-00078", "MTR-1927-00079", "MTR-1928-00080", "MTR-1928-00081", "MTR-1930-00082", "MTR-1930-00083"], "gold_target": "matter", "should_abstain": false, "relationship": "precedent_for"}
+{"question_id": "I-REL-016", "expected_documents": [], "expected_matters": ["MTR-1932-00033", "MTR-1932-00034", "MTR-1932-00035", "MTR-1933-00036", "MTR-1933-00037", "MTR-1933-00038", "MTR-1933-00039", "MTR-1933-00040", "MTR-1933-00041", "MTR-1933-00042", "MTR-1933-00043", "MTR-1933-00044", "MTR-1933-00045", "MTR-1933-00046", "MTR-1934-00047", "MTR-1934-00048", "MTR-1935-00049", "MTR-1935-00050", "MTR-1936-00051", "MTR-1936-00052", "MTR-1936-00053", "MTR-1936-00054", "MTR-1937-00055", "MTR-1937-00056", "MTR-1937-00057", "MTR-1938-00058", "MTR-1938-00059", "MTR-1938-00060", "MTR-1939-00061", "MTR-1939-00062", "MTR-1939-00063", "MTR-1939-00064", "MTR-1940-00065", "MTR-1922-00066", "MTR-1922-00067", "MTR-1922-00068", "MTR-1922-00069", "MTR-1923-00070", "MTR-1923-00071", "MTR-1923-00072", "MTR-1923-00073", "MTR-1924-00074", "MTR-1925-00075", "MTR-1925-00076", "MTR-1925-00077", "MTR-1926-00078", "MTR-1927-00079", "MTR-1928-00080", "MTR-1928-00081", "MTR-1930-00082", "MTR-1930-00083"], "gold_target": "matter", "should_abstain": false, "relationship": "similar_facts"}
+{"question_id": "I-REL-017", "expected_documents": [], "expected_matters": ["MTR-1933-00038", "MTR-1933-00040"], "gold_target": "matter", "should_abstain": false, "relationship": "precedent_for"}
+{"question_id": "I-REL-018", "expected_documents": [], "expected_matters": ["MTR-1933-00038", "MTR-1933-00040"], "gold_target": "matter", "should_abstain": false, "relationship": "similar_facts"}
+{"question_id": "I-REL-019", "expected_documents": [], "expected_matters": ["MTR-1953-00091"], "gold_target": "matter", "should_abstain": false, "relationship": "follow_up_to"}
+{"question_id": "I-REL-020", "expected_documents": [], "expected_matters": ["MTR-1954-00092"], "gold_target": "matter", "should_abstain": false, "relationship": "follow_up_to"}
+{"question_id": "I-REL-021", "expected_documents": [], "expected_matters": ["MTR-1955-00093"], "gold_target": "matter", "should_abstain": false, "relationship": "follow_up_to"}
+{"question_id": "I-REL-022", "expected_documents": [], "expected_matters": ["MTR-1956-00094"], "gold_target": "matter", "should_abstain": false, "relationship": "follow_up_to"}
+{"question_id": "I-REL-023", "expected_documents": [], "expected_matters": ["MTR-1957-00095"], "gold_target": "matter", "should_abstain": false, "relationship": "follow_up_to"}
+{"question_id": "I-REL-024", "expected_documents": [], "expected_matters": ["MTR-1958-00096"], "gold_target": "matter", "should_abstain": false, "relationship": "follow_up_to"}
+{"question_id": "I-PARA-001", "expected_documents": ["DOC-00001", "DOC-00002", "DOC-00003", "DOC-00004", "DOC-00005"], "expected_matters": ["MTR-1923-00001"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-002", "expected_documents": ["DOC-00016"], "expected_matters": ["MTR-1925-00005"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-003", "expected_documents": ["DOC-00029", "DOC-00030"], "expected_matters": ["MTR-1927-00009"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-004", "expected_documents": ["DOC-00045", "DOC-00046"], "expected_matters": ["MTR-1927-00013"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-005", "expected_documents": ["DOC-00056", "DOC-00057", "DOC-00058", "DOC-00059", "DOC-00060"], "expected_matters": ["MTR-1928-00017"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-006", "expected_documents": ["DOC-00071", "DOC-00072", "DOC-00073", "DOC-00074"], "expected_matters": ["MTR-1929-00021"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-007", "expected_documents": ["DOC-00088", "DOC-00089", "DOC-00090", "DOC-00091"], "expected_matters": ["MTR-1931-00025"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-008", "expected_documents": ["DOC-00103", "DOC-00104", "DOC-00105", "DOC-00106"], "expected_matters": ["MTR-1932-00029"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-009", "expected_documents": ["DOC-00118", "DOC-00119"], "expected_matters": ["MTR-1932-00033"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-010", "expected_documents": ["DOC-00128"], "expected_matters": ["MTR-1933-00037"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-011", "expected_documents": ["DOC-00135"], "expected_matters": ["MTR-1933-00041"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-012", "expected_documents": ["DOC-00143"], "expected_matters": ["MTR-1933-00045"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-013", "expected_documents": ["DOC-00158", "DOC-00159", "DOC-00160"], "expected_matters": ["MTR-1935-00049"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-014", "expected_documents": ["DOC-00169", "DOC-00170", "DOC-00171", "DOC-00172", "DOC-00173"], "expected_matters": ["MTR-1936-00053"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-015", "expected_documents": ["DOC-00190", "DOC-00191", "DOC-00192"], "expected_matters": ["MTR-1937-00057"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-016", "expected_documents": ["DOC-00199", "DOC-00200", "DOC-00201", "DOC-00202", "DOC-00203"], "expected_matters": ["MTR-1939-00061"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-017", "expected_documents": ["DOC-00220"], "expected_matters": ["MTR-1940-00065"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-018", "expected_documents": ["DOC-00227", "DOC-00228"], "expected_matters": ["MTR-1922-00069"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-019", "expected_documents": ["DOC-00234"], "expected_matters": ["MTR-1923-00073"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-020", "expected_documents": ["DOC-00240", "DOC-00241"], "expected_matters": ["MTR-1925-00077"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-021", "expected_documents": ["DOC-00252", "DOC-00253"], "expected_matters": ["MTR-1928-00081"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-022", "expected_documents": ["DOC-00275", "DOC-00276", "DOC-00277", "DOC-00278", "DOC-00279"], "expected_matters": ["MTR-1947-00085"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-023", "expected_documents": ["DOC-00349", "DOC-00350", "DOC-00351", "DOC-00352", "DOC-00353"], "expected_matters": ["MTR-1951-00089"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-024", "expected_documents": ["DOC-00365", "DOC-00366", "DOC-00367", "DOC-00368", "DOC-00369"], "expected_matters": ["MTR-1955-00093"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-025", "expected_documents": ["DOC-00391"], "expected_matters": ["MTR-1959-00097"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-026", "expected_documents": ["DOC-00437", "DOC-00438", "DOC-00439", "DOC-00440", "DOC-00441"], "expected_matters": ["MTR-1963-00101"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-027", "expected_documents": ["DOC-00492", "DOC-00493", "DOC-00494", "DOC-00495", "DOC-00496"], "expected_matters": ["MTR-1967-00105"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-028", "expected_documents": ["DOC-00551", "DOC-00552", "DOC-00553", "DOC-00554", "DOC-00555"], "expected_matters": ["MTR-1971-00109"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-029", "expected_documents": ["DOC-00626", "DOC-00627", "DOC-00628", "DOC-00629", "DOC-00630"], "expected_matters": ["MTR-1975-00113"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-030", "expected_documents": ["DOC-00703", "DOC-00704", "DOC-00705", "DOC-00706", "DOC-00707"], "expected_matters": ["MTR-1979-00117"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-031", "expected_documents": ["DOC-00788", "DOC-00789", "DOC-00790", "DOC-00791", "DOC-00792"], "expected_matters": ["MTR-1983-00121"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-032", "expected_documents": ["DOC-00853", "DOC-00854", "DOC-00855", "DOC-00856", "DOC-00857"], "expected_matters": ["MTR-1987-00125"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-033", "expected_documents": ["DOC-00943", "DOC-00944", "DOC-00945", "DOC-00946", "DOC-00947"], "expected_matters": ["MTR-1991-00129"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-034", "expected_documents": ["DOC-01229", "DOC-01230", "DOC-01231", "DOC-01232", "DOC-01233"], "expected_matters": ["MTR-1995-00133"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-035", "expected_documents": ["DOC-01479", "DOC-01480", "DOC-01481", "DOC-01482", "DOC-01483"], "expected_matters": ["MTR-1999-00137"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-036", "expected_documents": ["DOC-01714", "DOC-01715", "DOC-01716", "DOC-01717", "DOC-01718"], "expected_matters": ["MTR-2003-00141"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-037", "expected_documents": ["DOC-01998", "DOC-01999", "DOC-02000", "DOC-02001", "DOC-02002"], "expected_matters": ["MTR-2007-00145"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-038", "expected_documents": ["DOC-02226", "DOC-02227", "DOC-02228", "DOC-02229", "DOC-02230"], "expected_matters": ["MTR-2011-00149"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-039", "expected_documents": ["DOC-02455", "DOC-02456", "DOC-02457", "DOC-02458", "DOC-02459"], "expected_matters": ["MTR-2015-00153"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-PARA-040", "expected_documents": ["DOC-02711", "DOC-02712", "DOC-02713", "DOC-02714", "DOC-02715"], "expected_matters": ["MTR-2019-00157"], "gold_target": "document", "should_abstain": false}
+{"question_id": "I-NEG-001", "expected_documents": [], "expected_matters": [], "gold_target": "absent", "absent_terms": ["quantum computing", "patent pool"], "should_abstain": true}
+{"question_id": "I-NEG-002", "expected_documents": [], "expected_matters": [], "gold_target": "absent", "absent_terms": ["nodule mining", "deep-sea"], "should_abstain": true}
+{"question_id": "I-NEG-003", "expected_documents": [], "expected_matters": [], "gold_target": "absent", "absent_terms": ["nft", "non-fungible"], "should_abstain": true}
+{"question_id": "I-NEG-004", "expected_documents": [], "expected_matters": [], "gold_target": "absent", "absent_terms": ["drone corridor", "urban air mobility"], "should_abstain": true}

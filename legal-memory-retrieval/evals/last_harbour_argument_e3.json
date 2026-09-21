@@ -1,0 +1,95 @@
+{
+  "corpus": "harbour-chambers-pcij-unsc-india",
+  "n": 170,
+  "k": 20,
+  "overall": {
+    "recall@5": 0.7854,
+    "recall@10": 0.8654,
+    "recall@20": 0.9066,
+    "hit@5": 0.9765,
+    "hit@10": 1.0,
+    "mrr": 0.9101,
+    "ndcg@10": 0.8501
+  },
+  "by_type": {
+    "argument": {
+      "n": 170,
+      "recall@10": 0.8654,
+      "hit@5": 0.9765,
+      "hit@10": 1.0,
+      "mrr": 0.9101,
+      "ndcg@10": 0.8501
+    }
+  },
+  "analyser_intents": {
+    "matter_research": 170
+  },
+  "channel_nonzero_rate": {
+    "argument_scope": 1.0,
+    "bm25": 1.0,
+    "final": 1.0,
+    "graph_seed": 1.0,
+    "hierarchical": 0.2412,
+    "matter_scope": 1.0,
+    "metadata": 1.0,
+    "vector": 0.9882
+  },
+  "latency_ms": {
+    "p50": 564.7,
+    "p95": 812.6,
+    "mean": 606.2
+  },
+  "stage_latency_ms": {
+    "rerank": {
+      "n": 170,
+      "p50": 522.4,
+      "p95": 711.7
+    },
+    "parallel_wall_ms": {
+      "n": 170,
+      "p50": 32.5,
+      "p95": 111.8
+    },
+    "bm25": {
+      "n": 170,
+      "p50": 24.1,
+      "p95": 108.1
+    },
+    "vector": {
+      "n": 170,
+      "p50": 21.7,
+      "p95": 47.0
+    },
+    "matter_scope_ms": {
+      "n": 170,
+      "p50": 6.1,
+      "p95": 10.5
+    }
+  },
+  "matter_scope": {
+    "n": 170,
+    "resolved_rate": 1.0,
+    "median_document_universe": 6.0
+  },
+  "matter_scope_by_type": {
+    "argument": {
+      "n": 170,
+      "resolved_rate": 1.0,
+      "median_document_universe": 6.0
+    }
+  },
+  "cache_repeat_ms": {
+    "n": 12,
+    "hits": 12,
+    "p50": 1.8,
+    "mean": 1.9,
+    "protocol": "immediate repeat of the first 12 questions while the retrieval TTL is still live"
+  },
+  "notes": [
+    "Negative rows score topic leakage, not empty result sets. Hybrid search always returns neighbours.",
+    "Permission gold is empty in this corpus (restricted_matters=0), so ACL is not a scored type.",
+    "Apex evals/dataset.jsonl is a different corpus and was not used.",
+    "cache_repeat_ms is an immediate repeat, not an end-of-run warm number. A multi-minute eval outlives the 5-minute L3 TTL."
+  ],
+  "filter": "argument"
+}
