@@ -2,6 +2,20 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-09-21 — FirmOS workspace UI (Precentis product language)
+
+Rebuilt `/ui` SPA shell and directory pages to wine/ink/paper product language
+(LegalWorkspace IA patterns independently implemented). Build output in
+`legal-memory-retrieval/static/`. No retrieval behaviour change.
+
+## 2026-09-21 — New React frontend (Stitch design system)
+
+Replaced the vanilla `static/app.js` SPA with Vite + React + TypeScript under
+`legal-memory-retrieval/frontend/`. Visual system from Google Stitch project
+`LEXOS Legal Memory DMS` / design system **LEXOS Chambers Ink** (teal ink +
+brass + parchment). Legacy UI archived at `static/_legacy/`. FastAPI still
+serves the built app at `/ui`. Word taskpane unchanged. No retrieval/eval impact.
+
 ## 2026-09-19 — Universal source sync Phase 0 (FakeConnector)
 
 Started the universal document sync engine behind `SOURCES_SYNC_ENABLED` (default **off**). No retrieval fusion / matter-scope changes. No new dependencies (reuses `cryptography`, Redis).

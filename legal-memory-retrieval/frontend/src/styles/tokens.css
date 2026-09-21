@@ -1,0 +1,72 @@
+/* Precentis-aligned product palette — wine / ink / paper
+   Independent tokens for FirmOS app shell (not a copy of Precentis markup). */
+:root {
+  --radius: 0.25rem;
+  --radius-lg: 0.5rem;
+
+  --background: oklch(0.965 0.004 20);
+  --foreground: oklch(0.19 0.012 20);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.012 20);
+  --primary: oklch(0.38 0.15 2);
+  --primary-foreground: oklch(0.98 0.004 20);
+  --secondary: oklch(0.91 0.008 20);
+  --secondary-foreground: oklch(0.24 0.015 20);
+  --muted: oklch(0.925 0.006 20);
+  --muted-foreground: oklch(0.48 0.02 20);
+  --accent: oklch(0.88 0.035 8);
+  --accent-foreground: oklch(0.32 0.11 2);
+  --destructive: oklch(0.55 0.2 27);
+  --border: oklch(0.86 0.01 20);
+  --input: oklch(0.86 0.01 20);
+  --ring: oklch(0.43 0.14 2);
+  --ink: oklch(0.16 0.012 20);
+  --paper: oklch(0.985 0.003 20);
+  --wine: oklch(0.34 0.14 2);
+  --wine-soft: oklch(0.92 0.028 7);
+  --steel: oklch(0.58 0.015 250);
+
+  /* Hex fallbacks for older engines */
+  --background-hex: #f6f2f2;
+  --foreground-hex: #1e1212;
+  --primary-hex: #7c043c;
+  --wine-hex: #670025;
+  --ink-hex: #1a0e0e;
+  --paper-hex: #fdfbfb;
+  --border-hex: #ded5d5;
+  --muted-fg-hex: #695959;
+
+  /* App aliases (pages use these) */
+  --on-primary: var(--primary-foreground);
+  --surface: var(--paper);
+  --surface-cream: var(--paper);
+  --surface-bright: var(--paper);
+  --surface-container: var(--muted);
+  --surface-container-low: var(--secondary);
+  --surface-container-high: var(--accent);
+  --surface-container-highest: var(--wine-soft);
+  --surface-container-lowest: var(--card);
+  --surface-variant: var(--secondary);
+  --on-surface: var(--foreground);
+  --on-surface-variant: var(--muted-foreground);
+  --outline: var(--steel);
+  --outline-variant: var(--border);
+  --primary-fixed: var(--wine-soft);
+  --primary-fixed-dim: var(--accent);
+  --error: var(--destructive);
+  --error-container: var(--wine-soft);
+  --charcoal: var(--ink);
+  --navy-accent: var(--wine);
+
+  --nav-width: 256px;
+  --header-h: 52px;
+  --gutter: 28px;
+  --margin-desktop: 48px;
+  --inspector-width: 300px;
+  --reading-column: 680px;
+
+  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-display: 'DM Serif Display', 'Times New Roman', serif;
+  --font-serif: var(--font-display);
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}

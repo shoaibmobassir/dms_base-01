@@ -307,4 +307,41 @@ Mike source used as coding basis: NO
 New dependencies introduced: None (reuses cryptography, redis already in tree)
 IP notes: Independent architecture from requirements in docs/universal-document-sync-engine-plan.md. Not derived from Mike connector code, schemas, or UI.
 
+### Feature: LEXOS React frontend (Stitch-designed)
+Date: 2026-09-21
+Mike observation (product level only): Legal DMS products need a workspace shell with matters, documents, ask/chat, and ACL-aware navigation. Observed only as a general product category — Mike UI/source was not used as a template.
+Requirement (technology-independent): Lawyers need a browser UI to browse ACL-scoped matters/documents, ask firm-memory questions with citations, and run a multi-turn chat assistant against the same APIs.
+Our design decisions:
+  - New Vite + React + TypeScript app under `legal-memory-retrieval/frontend/`
+  - Visual system from Google Stitch (project LEXOS Legal Memory DMS / Chambers Ink) — independent of Mike
+  - FastAPI continues to serve the production build at `/ui`; legacy SPA archived at `static/_legacy/`
+  - Routes and API client designed for our existing `/api/*` contracts
+Mike source used as coding basis: NO
+New dependencies introduced: react, react-dom, react-router-dom, vite, typescript (MIT)
+IP notes: No Mike HTML/CSS/JS copied. Stitch HTML is design reference only; runtime UI is original React.
+
+### Feature: FirmOS UI restyle — Precentis palette + Apple-minimal shell
+Date: 2026-09-21
+Mike observation (product level only): Legal workspaces typically use a persistent left nav, list views, and a calm reading canvas. Observed only as a general UX pattern category.
+Requirement (technology-independent): The product UI should feel institutional and minimal — warm paper surfaces, a restrained accent for actions, typography-led hierarchy, and low chrome density.
+Our design decisions:
+  - Color/type inspired by Precentis marketing tokens (wine / ink / paper, Manrope + DM Serif Display) remapped into our own CSS variables
+  - Apple-like product minimalism: hairline rules, quiet sidebar active state, statement search field
+  - No Precentis or Mike markup/components copied; independent React shell and CSS
+Mike source used as coding basis: NO
+New dependencies introduced: None (Google Fonts CDN only)
+IP notes: Palette inspiration from Precentis `styles.css` tokens only; implementation is original.
+
+### Feature: FirmOS workspace shell — LegalWorkspace product patterns
+Date: 2026-09-21
+Mike observation (product level only): Barristers/law-firm software commonly separates “workspace” navigation (overview, ask, matters) from “manage” directories (people, clients), with sticky context headers and calm directory tables.
+Requirement (technology-independent): Present a single product workspace with grouped nav, firm context, overview metrics, an Ask composer, and consistent directory list pages — minimal chrome, wine accent for selection, ink for primary actions.
+Our design decisions:
+  - Independent `AppShell` with Workspace / Manage groups, 256px sidebar, sticky header crumbs
+  - Overview + Ask + directory pages using our own `page-intro` / `directory-tools` language
+  - Precentis LegalWorkspace observed for product IA only; no markup, CSS class names, or component bodies copied
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: Clean-room from product requirements. Mike remains research-only (AGPLv3).
+
 
