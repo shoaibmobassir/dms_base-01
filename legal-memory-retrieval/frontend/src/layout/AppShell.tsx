@@ -17,6 +17,7 @@ const WORKSPACE_NAV: NavItem[] = [
   { to: '/ask', label: 'Ask FirmOS', icon: 'auto_awesome' },
   { to: '/chat', label: 'Chat', icon: 'forum' },
   { to: '/matters', label: 'Matters', icon: 'folder_open' },
+  { to: '/projects', label: 'Projects', icon: 'account_tree' },
   { to: '/documents', label: 'Documents', icon: 'description' },
   { to: '/knowledge', label: 'Knowledge', icon: 'auto_stories' },
 ]
@@ -25,8 +26,8 @@ const MANAGE_NAV: NavItem[] = [
   { to: '/clients', label: 'Clients', icon: 'corporate_fare' },
   { to: '/people', label: 'People', icon: 'group' },
   { to: '/activity', label: 'Activity', icon: 'schedule' },
-  { to: '/approvals', label: 'Approvals', icon: 'fact_check', badge: '3' },
-  { to: '/settings', label: 'Settings', icon: 'settings' },
+  { to: '/tasks', label: 'Tasks', icon: 'event' },
+  { to: '/architecture', label: 'Architecture', icon: 'schema' },
 ]
 
 function NavEntries({ items }: { items: NavItem[] }) {
@@ -55,16 +56,18 @@ function crumbLabel(pathname: string) {
     ask: 'Ask FirmOS',
     chat: 'Chat',
     matters: 'Matters',
+    projects: 'Projects',
     documents: 'Documents',
     knowledge: 'Knowledge',
     clients: 'Clients',
     people: 'People',
     activity: 'Activity',
+    tasks: 'Tasks',
+    architecture: 'Architecture',
     approvals: 'Approvals',
     settings: 'Settings',
     support: 'Support',
     teams: 'Teams',
-    tasks: 'Tasks',
   }
   return map[seg || ''] || 'Workspace'
 }
@@ -119,21 +122,20 @@ export function AppShell() {
           </button>
         </div>
 
-        <div className="firm-switcher">
+        <div className="firm-switcher" aria-label="Current firm">
           <span className="avatar avatar-ink">AC</span>
           <span>
             <b>Apex Chambers</b>
             <small>Firm workspace</small>
           </span>
-          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-            expand_more
-          </span>
         </div>
 
-        <p className="nav-label">Workspace</p>
-        <NavEntries items={WORKSPACE_NAV} />
-        <p className="nav-label nav-label-lower">Manage</p>
-        <NavEntries items={MANAGE_NAV} />
+        <div className="sidebar-scroll">
+          <p className="nav-label">Workspace</p>
+          <NavEntries items={WORKSPACE_NAV} />
+          <p className="nav-label nav-label-lower">Manage</p>
+          <NavEntries items={MANAGE_NAV} />
+        </div>
 
         <div className="sidebar-bottom">
           <NavLink to="/support" className="help-link">
@@ -178,16 +180,10 @@ export function AppShell() {
             <kbd>⌘K</kbd>
           </button>
           <div className="header-actions">
-            <button type="button" className="icon-button" aria-label="Notifications">
-              <span className="material-symbols-outlined" style={{ fontSize: 19 }}>
-                notifications
-              </span>
-              <i />
-            </button>
             <button
               type="button"
               className="header-avatar"
-              aria-label="Account"
+              aria-label="Open command palette"
               onClick={() => setPaletteOpen(true)}
             >
               <span className="avatar">{initials}</span>

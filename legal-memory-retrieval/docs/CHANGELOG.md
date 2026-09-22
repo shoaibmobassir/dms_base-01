@@ -2,6 +2,14 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-09-21 — FirmOS UI feature parity with legacy SPA
+
+Ported working main-branch UI capabilities into the React SPA: Projects workspace
+(create, detail, folders, milestones, export, versions/diff), matter detail tabs,
+Ask debug/provenance + source viewer, Knowledge vault, client/people detail,
+honest metadata ingest, Activity/Tasks tables, Architecture/system info, chat
+model picker. Removed dead CTAs and fake badges. No retrieval behaviour change.
+
 ## 2026-09-21 — FirmOS workspace UI (Precentis product language)
 
 Rebuilt `/ui` SPA shell and directory pages to wine/ink/paper product language

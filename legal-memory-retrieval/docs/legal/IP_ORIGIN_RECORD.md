@@ -344,4 +344,16 @@ Mike source used as coding basis: NO
 New dependencies introduced: None
 IP notes: Clean-room from product requirements. Mike remains research-only (AGPLv3).
 
+### Feature: FirmOS React parity with prior LEXOS SPA workflows
+Date: 2026-09-21
+Mike observation (product level only): Legal DMS products need project workstreams, matter deep-dives, knowledge libraries, and citation viewers. Observed only as product capability categories.
+Requirement (technology-independent): Restore working firm workflows (projects with folders/milestones, matter tabs, ask provenance, knowledge lists, client detail, activity/tasks, architecture docs) in the FirmOS React UI against existing FastAPI routes.
+Our design decisions:
+  - Independent React pages/components calling our `/api/projects`, `/api/matters/*`, `/api/knowledge/*`, `/api/retrieval/debug`, `/api/system/*` contracts
+  - Behavioural reference: our prior `static/_legacy/` SPA (not Mike); no Mike source used
+  - Honest labels for metadata ingest; no fake notification/approval chrome
+Mike source used as coding basis: NO
+New dependencies introduced: None
+IP notes: Migration from our own legacy UI requirements into React. Mike remains research-only (AGPLv3).
+
 

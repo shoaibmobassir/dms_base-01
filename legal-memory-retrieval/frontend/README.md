@@ -1,13 +1,11 @@
-# LEXOS Frontend
+# FirmOS Frontend
 
 Vite + React + TypeScript UI for Legal Memory Retrieval.
 
 ## Design
 
-Visual system derived from Google Stitch project **LEXOS Legal Memory DMS**
-(`projects/12684557508759543147`), design system **LEXOS Chambers Ink**
-(`assets/9266921015715142831`): teal ink `#0B3D4A`, brass accent, parchment
-panels, Libre Caslon Text + IBM Plex Sans.
+Visual system: **FirmOS Wine / Ink / Paper** — see [`DESIGN.md`](./DESIGN.md).
+Tokens live in `src/styles/tokens.css`.
 
 Legacy vanilla SPA archived at `../static/_legacy/`.
 

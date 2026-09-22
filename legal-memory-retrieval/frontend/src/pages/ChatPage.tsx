@@ -8,6 +8,7 @@ import {
 } from '../api/chat'
 import type { ChatMessage, ChatSession } from '../api/types'
 import { useApp } from '../context/AppContext'
+import { SourceViewer } from '../components/SourceViewer'
 import './chat.css'
 
 function eventLabel(ev: Record<string, unknown>) {
@@ -25,6 +26,11 @@ export function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
+  const [model, setModel] = useState('gemini-1.5-flash')
+  const [viewer, setViewer] = useState<{
+    documentId: string
+    chunkId?: string
+  } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   async function refreshSessions() {
@@ -69,7 +75,7 @@ export function ChatPage() {
   }, [messages, streaming])
 
   async function onNew() {
-    const created = await createSession()
+    const created = await createSession('New Conversation', model)
     await refreshSessions()
     setActiveId(created.id)
     setMessages([])
@@ -91,7 +97,7 @@ export function ChatPage() {
 
     let sessionId = activeId
     if (!sessionId) {
-      const created = await createSession()
+      const created = await createSession('New Conversation', model)
       sessionId = created.id
       setActiveId(sessionId)
       await refreshSessions()
@@ -205,11 +211,23 @@ export function ChatPage() {
               Multi-turn assistant with citation verification
             </div>
           </div>
-          {streaming ? (
-            <span className="badge-live">
-              <span className="pulse" /> Streaming
-            </span>
-          ) : null}
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <select
+              className="form-input"
+              style={{ width: 'auto', minWidth: 180 }}
+              value={model}
+              aria-label="Model"
+              onChange={(e) => setModel(e.target.value)}
+            >
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+              <option value="llama-3.3-70b-versatile">Groq Llama 3.3 70B</option>
+            </select>
+            {streaming ? (
+              <span className="badge-live">
+                <span className="pulse" /> Streaming
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="chat-messages" ref={scrollRef}>
@@ -227,7 +245,7 @@ export function ChatPage() {
               >
                 <div className="chat-bubble">
                   <div className="chat-role">
-                    {m.role === 'user' ? 'You' : 'LEXOS Assistant'}
+                    {m.role === 'user' ? 'You' : 'FirmOS Assistant'}
                   </div>
                   {(m.events || []).map((ev, i) => (
                     <div key={i} className="tool-badge">
@@ -237,16 +255,31 @@ export function ChatPage() {
                   <div className="chat-content">{m.content || (streaming && idx === messages.length - 1 ? '…' : '')}</div>
                   {(m.citations || []).length ? (
                     <div className="cite-tray">
-                      {(m.citations || []).map((c, i) => (
-                        <div key={i} className="cite-card">
-                          <span className="chip">
-                            {String(c.document_id || c.doc_id || `cite-${i + 1}`)}
-                          </span>
-                          <span>
-                            {String(c.title || c.quote || c.filename || 'Source')}
-                          </span>
-                        </div>
-                      ))}
+                      {(m.citations || []).map((c, i) => {
+                        const docId = String(c.document_id || c.doc_id || '')
+                        const chunkId = c.chunk_id
+                          ? String(c.chunk_id)
+                          : undefined
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            className="cite-card"
+                            onClick={() => {
+                              if (docId) setViewer({ documentId: docId, chunkId })
+                            }}
+                          >
+                            <span className="chip">
+                              {docId || `cite-${i + 1}`}
+                            </span>
+                            <span>
+                              {String(
+                                c.title || c.quote || c.filename || 'Source',
+                              )}
+                            </span>
+                          </button>
+                        )
+                      })}
                     </div>
                   ) : null}
                 </div>
@@ -279,6 +312,14 @@ export function ChatPage() {
           </button>
         </div>
       </div>
+
+      {viewer ? (
+        <SourceViewer
+          documentId={viewer.documentId}
+          chunkId={viewer.chunkId}
+          onClose={() => setViewer(null)}
+        />
+      ) : null}
     </div>
   )
 }

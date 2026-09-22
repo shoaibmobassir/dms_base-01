@@ -32,12 +32,6 @@ export function MattersPage() {
             A clear view of live work, firm context and recent activity.
           </p>
         </div>
-        <button type="button" className="button button-primary">
-          <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
-            add
-          </span>
-          New matter
-        </button>
       </div>
 
       <section className="directory-tools">

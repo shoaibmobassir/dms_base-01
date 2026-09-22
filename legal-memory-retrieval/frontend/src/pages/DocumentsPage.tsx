@@ -1,10 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ingestDocument } from '../api/documents'
 import { useApp } from '../context/AppContext'
 
 export function DocumentsPage() {
-  const { documents } = useApp()
+  const { documents, matters, people, refresh, toast } = useApp()
   const [q, setQ] = useState('')
+  const [showIngest, setShowIngest] = useState(false)
+  const [title, setTitle] = useState('')
+  const [matterId, setMatterId] = useState(matters[0]?.matter_id || '')
+  const [body, setBody] = useState('')
+  const [docType, setDocType] = useState('Contract Draft')
+  const [saving, setSaving] = useState(false)
   const navigate = useNavigate()
 
   const filtered = useMemo(() => {
@@ -20,6 +27,37 @@ export function DocumentsPage() {
     )
   }, [documents, q])
 
+  async function onIngest(e: FormEvent) {
+    e.preventDefault()
+    if (!title.trim() || !matterId || !body.trim()) {
+      toast('Title, matter and body are required')
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await ingestDocument({
+        title: title.trim(),
+        matter_id: matterId,
+        body: body.trim(),
+        document_type: docType,
+        author_name: people[0]?.name,
+        status: 'Draft',
+      })
+      await refresh()
+      toast(
+        `Ingested ${res.document_id || 'document'} (${res.chunks_indexed ?? 0} chunks)`,
+      )
+      setShowIngest(false)
+      setTitle('')
+      setBody('')
+      if (res.document_id) navigate(`/documents/${res.document_id}`)
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Ingest failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <>
       <div className="page-intro">
@@ -30,13 +68,91 @@ export function DocumentsPage() {
             Indexed filings and firm work product, searchable across matters.
           </p>
         </div>
-        <button type="button" className="button button-primary">
+        <button
+          type="button"
+          className="button button-primary"
+          onClick={() => setShowIngest((v) => !v)}
+        >
           <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
             upload
           </span>
-          Upload
+          {showIngest ? 'Hide ingest' : 'Metadata ingest'}
         </button>
       </div>
+
+      {showIngest ? (
+        <section className="ingest-panel">
+          <p className="eyebrow">Dev ingest</p>
+          <h2 style={{ fontSize: '1.2rem', margin: '4px 0 8px' }}>
+            Register document text (not binary upload)
+          </h2>
+          <p className="lede" style={{ marginTop: 0 }}>
+            Posts JSON metadata + body to <span className="mono">POST /api/documents/ingest</span>.
+            Does not upload files from disk.
+          </p>
+          <form onSubmit={(e) => void onIngest(e)}>
+            <label>
+              Title
+              <input
+                className="form-input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              Matter
+              <select
+                className="form-input"
+                value={matterId}
+                onChange={(e) => setMatterId(e.target.value)}
+                required
+              >
+                {matters.map((m) => (
+                  <option key={m.matter_id} value={m.matter_id}>
+                    {m.matter_code || m.matter_id} — {m.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Type
+              <input
+                className="form-input"
+                value={docType}
+                onChange={(e) => setDocType(e.target.value)}
+              />
+            </label>
+            <label>
+              Body text
+              <textarea
+                className="form-textarea"
+                rows={6}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                required
+                placeholder="Paste document text to index…"
+              />
+            </label>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => setShowIngest(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="button button-primary"
+                disabled={saving}
+              >
+                {saving ? 'Ingesting…' : 'Ingest'}
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : null}
 
       <section className="directory-tools">
         <div className="inline-search">

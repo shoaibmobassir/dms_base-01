@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 
 export function PeoplePage() {
-  const { people } = useApp()
+  const { memberId } = useParams()
+  const { people, matters } = useApp()
   const [q, setQ] = useState('')
-  const navigate = useNavigate()
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
@@ -19,6 +19,54 @@ export function PeoplePage() {
         p.member_id.toLowerCase().includes(query),
     )
   }, [people, q])
+
+  if (memberId) {
+    const person = people.find((p) => p.member_id === memberId)
+    if (!person) {
+      return (
+        <div>
+          <div className="empty">Person not found.</div>
+          <Link to="/people">← Back to people</Link>
+        </div>
+      )
+    }
+    return (
+      <div>
+        <div className="label-sm" style={{ marginBottom: 12, color: 'var(--muted-foreground)' }}>
+          <Link to="/people" style={{ color: 'var(--muted-foreground)' }}>
+            People
+          </Link>
+          <span style={{ margin: '0 8px' }}>/</span>
+          <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
+            {person.member_id}
+          </span>
+        </div>
+        <div className="entity-header surface">
+          <div>
+            <p className="eyebrow">{person.role || 'Member'}</p>
+            <h1 className="page-title">{person.name}</h1>
+            <p className="page-sub">
+              {[person.office, person.practice_area].filter(Boolean).join(' · ') ||
+                'Firm member'}
+            </p>
+          </div>
+        </div>
+        <section className="surface pad-card">
+          <div className="section-label">Profile</div>
+          <div className="latency-strip">
+            <span>ID: {person.member_id}</span>
+            <span>Role: {person.role || '—'}</span>
+            <span>Office: {person.office || '—'}</span>
+            <span>Practice: {person.practice_area || '—'}</span>
+          </div>
+          <p className="lede" style={{ marginBottom: 0 }}>
+            Matter staffing detail is shown on each matter&apos;s Team tab. There
+            are {matters.length} matters currently loaded in workspace.
+          </p>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -60,12 +108,18 @@ export function PeoplePage() {
           </thead>
           <tbody>
             {filtered.map((p) => (
-              <tr
-                key={p.member_id}
-                onClick={() => navigate(`/people/${p.member_id}`)}
-              >
+              <tr key={p.member_id}>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <Link
+                    to={`/people/${p.member_id}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                    }}
+                  >
                     <div
                       style={{
                         width: 36,
@@ -89,12 +143,12 @@ export function PeoplePage() {
                         .toUpperCase()}
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600 }}>{p.name}</div>
+                      <div>{p.name}</div>
                       <div className="metadata-xs" style={{ marginTop: 4 }}>
                         {p.office || 'Office'}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </td>
                 <td style={{ color: 'var(--muted-foreground)' }}>
                   {p.role || '—'}
