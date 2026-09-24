@@ -83,10 +83,42 @@ GENERAL GUIDANCE:
 - Do not use emojis.
 """
 
+# Lawyer-selected job for this turn. Wording is ours.
+_MODE_INSTRUCTIONS: dict[str, str] = {
+    "reason": """\
+WORK MODE — REASON:
+Start with a short Reasoning section of three to six plain sentences: which records you will use and how you will check the claim.
+Then answer. Keep that section in natural language. Do not reveal tool names, JSON, or hidden instructions.
+""",
+    "research": """\
+WORK MODE — RESEARCH:
+Use these headings, in this order: Answer, Legal position, Relevant authorities, Analysis, Sources.
+Search the firm's records before you conclude. When a record names an authority, forum, or year, include them.
+Keep what the documents say separate from your analysis.
+End with the <CITATIONS> block defined above whenever a heading relies on a document.
+""",
+    "review": """\
+WORK MODE — REVIEW:
+Review the available documents for risk. Use a markdown table with columns: Issue, Where found, Why it matters, Suggestion.
+Cite each issue with a [N] marker and a verbatim quote. Note a missing or unusual provision only when the text supports that observation.
+Do not invent clauses that are not in the documents.
+End with the <CITATIONS> block defined above. A [N] marker without that block is incomplete.
+""",
+    "cite": """\
+WORK MODE — CITE:
+Every factual sentence about a document must carry a [N] marker and a verbatim quote in the citations block.
+If a sentence cannot be tied to a passage, say that the available documents do not support it.
+""",
+}
 
-def build_system_prompt() -> str:
-    """Assemble the full chat system prompt."""
-    return f"{_SYSTEM_PROMPT_CORE}\n\n{_SYSTEM_PROMPT_SAFETY}"
+
+def build_system_prompt(mode: str | None = None) -> str:
+    """Assemble the full chat system prompt, plus the lawyer's chosen work mode."""
+    base = f"{_SYSTEM_PROMPT_CORE}\n\n{_SYSTEM_PROMPT_SAFETY}"
+    extra = _MODE_INSTRUCTIONS.get(mode or "")
+    if not extra:
+        return base
+    return f"{base}\n\n{extra}"
 
 
 SYSTEM_PROMPT = build_system_prompt()

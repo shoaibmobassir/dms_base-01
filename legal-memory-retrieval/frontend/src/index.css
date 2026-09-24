@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --paper: oklch(0.985 0.003 20);
+        --ink: oklch(0.16 0.012 20);
+        --wine: oklch(0.34 0.14 2);
+        --wine-soft: oklch(0.92 0.028 7);
+
+        --background: oklch(0.965 0.004 20);
+        --foreground: oklch(0.19 0.012 20);
+
+        --card: oklch(1 0 0);
+        --card-foreground: oklch(0.19 0.012 20);
+        --popover: oklch(1 0 0);
+        --popover-foreground: oklch(0.19 0.012 20);
+
+        --primary: oklch(0.38 0.15 2);
+        --primary-foreground: oklch(0.98 0.004 20);
+
+        --secondary: oklch(0.91 0.008 20);
+        --secondary-foreground: oklch(0.22 0.012 20);
+
+        --muted: oklch(0.925 0.006 20);
+        --muted-foreground: oklch(0.48 0.02 20);
+
+        --accent: oklch(0.88 0.035 8);
+        --accent-foreground: oklch(0.32 0.11 2);
+
+        --border: oklch(0.86 0.01 20);
+        --input: oklch(0.86 0.01 20);
+        --ring: oklch(0.43 0.14 2);
+
+        --destructive: oklch(0.55 0.2 27);
+        --destructive-foreground: oklch(0.98 0.004 20);
+
+        --success: oklch(0.5 0.09 150);
+        --warning: oklch(0.62 0.13 70);
+
+        --radius: 0.5rem;
+
+        --font-display: 'DM Serif Display', Georgia, serif;
+        --font-sans: 'Manrope', system-ui, sans-serif;
+        --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+        /* Citation / cited-passage highlight — amber, distinct from wine selection. */
+        --highlight: oklch(0.9 0.09 85 / 0.55);
+        color-scheme: light;
+    }
+
+    /* Dark: same warm hue (20) so it reads as the same product; wine lifts for contrast. */
+    .dark {
+        --paper: oklch(0.2 0.008 20);
+        --ink: oklch(0.94 0.006 20);
+        --wine: oklch(0.74 0.12 5);
+        --wine-soft: oklch(0.3 0.06 5);
+
+        --background: oklch(0.17 0.008 20);
+        --foreground: oklch(0.93 0.006 20);
+
+        --card: oklch(0.22 0.009 20);
+        --card-foreground: oklch(0.93 0.006 20);
+        --popover: oklch(0.23 0.009 20);
+        --popover-foreground: oklch(0.93 0.006 20);
+
+        --primary: oklch(0.62 0.15 3);
+        --primary-foreground: oklch(0.98 0.004 20);
+
+        --secondary: oklch(0.27 0.01 20);
+        --secondary-foreground: oklch(0.9 0.006 20);
+
+        --muted: oklch(0.26 0.009 20);
+        --muted-foreground: oklch(0.7 0.015 20);
+
+        --accent: oklch(0.32 0.05 8);
+        --accent-foreground: oklch(0.9 0.04 8);
+
+        --border: oklch(0.32 0.01 20);
+        --input: oklch(0.34 0.01 20);
+        --ring: oklch(0.7 0.13 5);
+
+        --destructive: oklch(0.65 0.19 27);
+        --destructive-foreground: oklch(0.98 0.004 20);
+
+        --success: oklch(0.72 0.12 150);
+        --warning: oklch(0.8 0.13 75);
+
+        --highlight: oklch(0.55 0.11 75 / 0.4);
+        color-scheme: dark;
+    }
+}
+
+@layer base {
+    * {
+        border-color: var(--border);
+    }
+    html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+    body {
+        margin: 0;
+        background-color: var(--background);
+        color: var(--foreground);
+        font-family: var(--font-sans);
+    }
+    ::selection {
+        background: var(--wine-soft);
+        color: var(--wine);
+    }
+    :focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+    }
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: color-mix(in oklab, var(--foreground) 18%, transparent);
+        border-radius: 999px;
+        border: 3px solid var(--background);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: color-mix(in oklab, var(--foreground) 30%, transparent);
+    }
+}
+
+@layer components {
+    .font-display {
+        font-family: var(--font-display);
+        font-weight: 400;
+        letter-spacing: -0.01em;
+    }
+    .font-mono-id {
+        font-family: var(--font-mono);
+        font-feature-settings: "tnum";
+        letter-spacing: 0.01em;
+    }
+    .eyebrow {
+        font-family: var(--font-sans);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted-foreground);
+    }
+    .meta-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted-foreground);
+    }
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        font-size: 20px;
+        line-height: 1;
+        user-select: none;
+    }
+    .paper-grain {
+        background-image: radial-gradient(
+            color-mix(in oklab, var(--foreground) 2%, transparent) 0.5px,
+            transparent 0.5px
+        );
+        background-size: 4px 4px;
+    }
+}
+
+@layer utilities {
+    .animate-rise {
+        animation: rise 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .animate-fade {
+        animation: fade 180ms ease both;
+    }
+    @keyframes rise {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .animate-rise, .animate-fade { animation: none !important; }
+        * { transition-duration: 0.001ms !important; }
+    }
+}

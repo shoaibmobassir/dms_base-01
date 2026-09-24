@@ -5,13 +5,19 @@ from typing import Literal, Never
 import httpx
 
 from app.answers.extractive import extractive_answer
-from app.answers.llm import gemini_complete, groq_complete, parse_model_json
+from app.answers.llm import (
+    bedrock_complete,
+    gemini_complete,
+    groq_complete,
+    parse_model_json,
+)
 from app.config import settings
+from app.llm.bedrock_client import bedrock_configured
 from app.query.understand import understand
 from app.retrieval.engine import retrieve
 from app.sprint import CURRENT_SPRINT, FEATURES
 
-Provider = Literal["extractive", "groq", "gemini"]
+Provider = Literal["extractive", "groq", "gemini", "bedrock"]
 
 
 def _provider() -> Provider:
@@ -22,6 +28,10 @@ def _provider() -> Provider:
         return "groq"
     if name == "gemini":
         return "gemini"
+    if name == "bedrock":
+        return "bedrock"
+    if bedrock_configured():
+        return "bedrock"
     if settings.groq_api_key:
         return "groq"
     if settings.gemini_api_key:
@@ -153,6 +163,24 @@ def _generate(provider: Provider, query: str, hits: list[dict]) -> dict:
             fallback = extractive_answer(query, hits)
             if not fallback.get("abstained"):
                 fallback["provider"] = "extractive_after_gemini_abstain"
+                return fallback
+        return parsed
+    if provider == "bedrock":
+        if not bedrock_configured():
+            return extractive_answer(query, hits)
+        try:
+            raw = bedrock_complete(settings.bedrock_model, query, hits)
+        except httpx.HTTPError:
+            fallback = extractive_answer(query, hits)
+            fallback["provider"] = "extractive_after_bedrock_error"
+            return fallback
+        parsed = parse_model_json(raw, hits)
+        parsed["provider"] = "bedrock"
+        parsed["model"] = settings.bedrock_model
+        if parsed.get("abstained") and hits:
+            fallback = extractive_answer(query, hits)
+            if not fallback.get("abstained"):
+                fallback["provider"] = "extractive_after_bedrock_abstain"
                 return fallback
         return parsed
     exhausted: Never = provider

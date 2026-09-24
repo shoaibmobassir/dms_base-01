@@ -1,4 +1,8 @@
+from pathlib import Path
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from psycopg.rows import dict_row
 
@@ -16,6 +20,7 @@ from app.api.ingest_jobs import (
     run_ingest_job,
 )
 from app.api.schemas import IngestDocumentRequest, IngestJobRequest, VersionCreate, DevelopingVersionRequest
+from app.audit import events as audit
 from app.auth.deps import resolve_member
 from app.db.connection import connect
 from app.documents import (
@@ -82,7 +87,7 @@ def documents_list(
         FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
         WHERE {where}
-        ORDER BY d.doc_date DESC NULLS LAST
+        ORDER BY d.doc_date DESC NULLS LAST, d.document_id DESC
         LIMIT %(limit)s OFFSET %(offset)s
     """
     count_sql = f"""
@@ -150,15 +155,24 @@ def document_detail(
     highlight_chunk: str | None = Query(default=None, description="chunk_id to highlight"),
     chunk_id: str | None = Query(default=None, description="alias for highlight_chunk"),
     q: str | None = Query(default=None),
+    lean: bool = Query(default=False, description="Header only — no body or chunks"),
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
     chunk = highlight_chunk or chunk_id
-    result = document_detail_enriched(
-        document_id,
-        member_id,
-        highlight_chunk=chunk,
-        q=q,
-    )
+    try:
+        result = document_detail_enriched(
+            document_id,
+            member_id,
+            highlight_chunk=chunk,
+            q=q,
+            lean=lean,
+        )
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            audit.record("document.view", member_id=member_id, outcome="denied", object_type="document", object_id=document_id)
+        raise
+    audit.record("document.view", member_id=member_id, object_type="document", object_id=document_id,
+                 matter_id=result.get("matter_id"))
     result["service"] = SERVICE
     return result
 
@@ -179,6 +193,7 @@ def _check_doc_access(document_id: str, member_id: str | None) -> None:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(access_sql, params)
             if not cur.fetchone():
+                audit.record("document.access", member_id=member_id, outcome="denied", object_type="document", object_id=doc_id)
                 raise HTTPException(status_code=404, detail="Document not found or access denied")
 
 
@@ -269,8 +284,11 @@ def document_diff_endpoint(
 @router.get("/{document_id}/chunks")
 def document_chunks_endpoint(
     document_id: str,
+    offset: int = Query(default=0, ge=0),
+    limit: int | None = Query(default=None, ge=1, le=200),
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
+    """Return chunks for a document. Pass limit to page; omit for the full set."""
     doc_id = document_id.upper()
     params = {"doc_id": doc_id, "member_id": member_id}
     access_sql = f"""
@@ -284,11 +302,31 @@ def document_chunks_endpoint(
             if not cur.fetchone():
                 raise HTTPException(status_code=404, detail="Document not found or access denied")
             cur.execute(
-                "SELECT chunk_id, chunk_index, text FROM chunks"
-                " WHERE document_id = %(doc_id)s ORDER BY chunk_index",
+                "SELECT COUNT(*) AS n FROM chunks WHERE document_id = %(doc_id)s",
                 {"doc_id": doc_id},
             )
-            return {"service": SERVICE, "document_id": doc_id, "chunks": list(cur.fetchall())}
+            total = int(cur.fetchone()["n"])
+            if limit is None:
+                cur.execute(
+                    "SELECT chunk_id, chunk_index, text FROM chunks"
+                    " WHERE document_id = %(doc_id)s ORDER BY chunk_index",
+                    {"doc_id": doc_id},
+                )
+            else:
+                cur.execute(
+                    "SELECT chunk_id, chunk_index, text FROM chunks"
+                    " WHERE document_id = %(doc_id)s ORDER BY chunk_index"
+                    " LIMIT %(limit)s OFFSET %(offset)s",
+                    {"doc_id": doc_id, "limit": limit, "offset": offset},
+                )
+            return {
+                "service": SERVICE,
+                "document_id": doc_id,
+                "chunks": list(cur.fetchall()),
+                "total": total,
+                "offset": offset,
+                "limit": limit,
+            }
 
 
 @router.get("/{document_id}/versions/{version_id}/chunks")
@@ -333,9 +371,11 @@ def get_chunk_context_envelope(
 def get_version_blocks_endpoint(
     document_id: str,
     version_id: str,
+    offset: int = Query(default=0, ge=0, alias="from"),
+    limit: int | None = Query(default=None, ge=1, le=200),
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
-    """Retrieve canonical AST blocks with deterministic offsets and SHA-256 hashes."""
+    """Canonical AST blocks. Pass from+limit to page; omit limit for the full set."""
     _check_doc_access(document_id, member_id)
 
     blocks = get_version_blocks(version_id)
@@ -346,12 +386,70 @@ def get_version_blocks_endpoint(
             save_canonical_blocks(parsed)
             blocks = [b.to_dict() for b in parsed]
 
+    total = len(blocks)
+    if limit is not None:
+        blocks = blocks[offset : offset + limit]
+
     return {
         "service": SERVICE,
         "document_id": document_id,
         "version_id": version_id,
         "blocks": blocks,
-        "total_blocks": len(blocks),
+        "total": total,
+        "total_blocks": total,
+        "from": offset,
+        "limit": limit,
+    }
+
+
+@router.get("/{document_id}/versions/{version_id}/outline")
+def get_version_outline_endpoint(
+    document_id: str,
+    version_id: str,
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Heading tree for the left outline. Native headings only."""
+    _check_doc_access(document_id, member_id)
+    with connect() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                SELECT block_id, section_id, section_title, page_number, sequence, block_type
+                FROM document_blocks
+                WHERE version_id = %(vid)s
+                  AND (
+                    block_type = 'heading'
+                    OR (section_id IS NOT NULL AND section_id <> '')
+                  )
+                ORDER BY sequence ASC
+                """,
+                {"vid": version_id},
+            )
+            rows = list(cur.fetchall())
+    # Prefer explicit headings; fall back to any block that carries a section_id.
+    headings = [r for r in rows if r.get("block_type") == "heading"]
+    if not headings:
+        headings = rows
+    outline = []
+    for i, row in enumerate(headings):
+        title = row.get("section_title") or row.get("section_id") or f"Section {i + 1}"
+        outline.append(
+            {
+                "block_id": row["block_id"],
+                "section_id": row.get("section_id"),
+                "section_title": title,
+                "page_number": row.get("page_number") or 1,
+                "sequence": row.get("sequence"),
+                "index": i,
+                "outline_source": "native",
+            }
+        )
+    return {
+        "service": SERVICE,
+        "document_id": document_id,
+        "version_id": version_id,
+        "outline": outline,
+        "outline_source": "native" if outline else None,
     }
 
 
@@ -491,68 +589,102 @@ def list_annotations_endpoint(
 # ---------------------------------------------------------------------------
 
 @router.get("/{document_id}/download")
-def document_download(document_id: str):
+def document_download(
+    document_id: str,
+    version_id: str | None = Query(default=None, description="defaults to the current version"),
+    member_id: str | None = Depends(resolve_member),
+):
+    """Download the original file of a document version, or an assistant-generated file.
+
+    Access is decided before any bytes are read: the matter ACL for documents, the
+    owner for generated files. Unknown ids and denied access are both 404.
     """
-    Generate a download URL for a document. For local object store,
-    serves the file directly. For S3, generates a presigned URL.
-    """
-    import os
-    from fastapi.responses import FileResponse
-    from app.config import settings
+    from fastapi.responses import Response
+
+    from app.chat.tools.generation_tools import generated_dir
+    from app.storage.object_store import get_object_store
 
     with connect() as conn:
-        row = conn.execute(
-            "SELECT document_id, filename FROM documents WHERE document_id = %s",
+        doc = conn.execute(
+            "SELECT document_id, title, current_version_id, source_uri, mime_type FROM documents WHERE document_id = %s",
             (document_id,),
         ).fetchone()
-        if not row:
-            # Check generated files
-            gen_dir = os.path.join(settings.object_store_root, "generated")
-            if os.path.isdir(gen_dir):
-                for f in os.listdir(gen_dir):
-                    if f.startswith(document_id):
-                        return FileResponse(
-                            os.path.join(gen_dir, f),
-                            filename=f.split("_", 1)[-1] if "_" in f else f,
-                        )
+
+    if doc is None:
+        with connect() as conn:
+            art = conn.execute(
+                "SELECT owner_member_id, filename, storage_path, mime_type FROM generated_artifacts WHERE artifact_id = %s",
+                (document_id,),
+            ).fetchone()
+        # Generated files belong to the member whose conversation produced them.
+        if art is None or art["owner_member_id"] is None or art["owner_member_id"] != member_id:
+            audit.record("document.download", member_id=member_id, outcome="denied", object_type="generated", object_id=document_id)
             raise HTTPException(status_code=404, detail="Document not found")
+        audit.record("document.download", member_id=member_id, object_type="generated", object_id=document_id,
+                     detail={"filename": art["filename"]})
+        path = Path(art["storage_path"]).resolve()
+        if not path.is_relative_to(generated_dir()) or not path.is_file():
+            raise HTTPException(status_code=404, detail="Document file not available for download")
+        return FileResponse(path, filename=art["filename"], media_type=art["mime_type"])
 
-    filename = row["filename"]
-    # Try local object store path
-    local_path = os.path.join(settings.object_store_root, settings.tenant_id, document_id, filename)
-    if os.path.isfile(local_path):
-        return FileResponse(local_path, filename=filename)
-
-    raise HTTPException(status_code=404, detail="Document file not available for download")
+    _check_doc_access(document_id, member_id)
+    vid = version_id or doc["current_version_id"]
+    uri, mime = doc["source_uri"], doc["mime_type"]
+    if vid:
+        with connect() as conn:
+            ver = conn.execute(
+                "SELECT storage_uri, mime_type FROM document_versions WHERE version_id = %s AND document_id = %s",
+                (vid, document_id),
+            ).fetchone()
+        if ver is None and version_id:
+            raise HTTPException(status_code=404, detail="Version not found")
+        if ver and ver["storage_uri"]:
+            uri, mime = ver["storage_uri"], ver["mime_type"] or mime
+    if not uri:
+        raise HTTPException(status_code=404, detail="Document file not available for download")
+    try:
+        data = get_object_store().get(uri)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Document file not available for download") from None
+    audit.record("document.download", member_id=member_id, object_type="document", object_id=document_id,
+                 matter_id=audit.matter_of_document(document_id), detail={"version_id": vid})
+    ext = Path(uri).suffix or ""
+    filename = doc["title"] if Path(doc["title"]).suffix else f"{doc['title']}{ext}"
+    return Response(
+        content=data,
+        media_type=mime or "application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
+    )
 
 
 @router.get("/{document_id}/text")
-def document_text(document_id: str, member=Depends(resolve_member)):
+def document_text(document_id: str, member_id: str | None = Depends(resolve_member)):
     """
-    Return the full extracted text of a document by joining all its chunks.
-    Used by the chat agent for read_document tool calls.
+    Return the full extracted text of a document by joining its leaf chunks.
+    Used by the chat agent for read_document tool calls and the source viewer.
     """
+    _check_doc_access(document_id, member_id)
     with connect() as conn:
         row = conn.execute(
-            "SELECT document_id, filename FROM documents WHERE document_id = %s",
-            (document_id,),
+            "SELECT document_id, title FROM documents WHERE document_id = %s",
+            (document_id.upper(),),
         ).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Document not found")
 
         chunks = conn.execute(
             """
-            SELECT chunk_text FROM chunks
-            WHERE document_id = %s
+            SELECT text FROM chunks
+            WHERE document_id = %s AND NOT is_parent
             ORDER BY chunk_index ASC
             """,
-            (document_id,),
+            (row["document_id"],),
         ).fetchall()
 
-    full_text = "\n".join(c["chunk_text"] for c in chunks) if chunks else ""
+    full_text = "\n".join(c["text"] for c in chunks) if chunks else ""
     return {
-        "document_id": document_id,
-        "filename": row["filename"],
+        "document_id": row["document_id"],
+        "title": row["title"],
         "text": full_text,
         "chunk_count": len(chunks),
     }

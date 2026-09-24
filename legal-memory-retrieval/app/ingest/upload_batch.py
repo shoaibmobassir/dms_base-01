@@ -7,12 +7,14 @@ FirmOS Immediate Next tasks 3–5:
 """
 from __future__ import annotations
 
+import io
 import json
 import logging
 import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import BinaryIO
 
 from psycopg.rows import dict_row
 
@@ -21,9 +23,9 @@ from app.db.connection import connect
 from app.documents import create_version
 from app.ingest.extractors.dispatch import extract_from_bytes
 from app.ingest.jobs import complete_job, create_job, mark_item, register_items
+from app.ingest.upload_policy import ScannedFile, UploadRejected, hash_and_measure, scan_for_malware
 from app.storage.object_store import (
     build_storage_key,
-    content_sha256_bytes,
     get_object_store,
     guess_mime,
 )
@@ -41,7 +43,7 @@ def _now() -> datetime:
 def create_upload_batch(
     *,
     matter_id: str,
-    files: list[tuple[str, bytes]],
+    files: list[tuple[str, bytes | BinaryIO]],
     client_id: str | None = None,
     tenant_id: str | None = None,
     created_by: str | None = None,
@@ -49,10 +51,29 @@ def create_upload_batch(
     """
     Persist raw files to object storage, create upload_batches + ingest_job.
 
-    ``files``: list of (relative_path, content_bytes). Paths preserve folder hierarchy.
+    ``files``: list of (relative_path, bytes or a seekable binary file). Paths preserve
+    folder hierarchy. Every file is checked (type from its bytes, size, count, batch
+    total) before anything is stored; files are then streamed, never read whole.
+    Raises ``UploadRejected`` for policy violations, ``ValueError`` for a bad matter.
     """
     if not files:
         raise ValueError("No files provided")
+    if len(files) > settings.max_upload_files:
+        raise UploadRejected(f"At most {settings.max_upload_files} files per batch")
+
+    mb = 1024 * 1024
+    staged: list[tuple[str, BinaryIO, ScannedFile]] = []
+    total = 0
+    for rel_path, data in files:
+        fileobj: BinaryIO = io.BytesIO(data) if isinstance(data, (bytes, bytearray)) else data
+        rel = rel_path.replace("\\", "/").lstrip("/")
+        if any(part == ".." for part in rel.split("/")):
+            raise UploadRejected(f"{rel_path}: path may not contain '..'")
+        scanned = hash_and_measure(Path(rel).name, fileobj, settings.max_upload_file_mb * mb)
+        total += scanned.size
+        if total > settings.max_upload_batch_mb * mb:
+            raise UploadRejected(f"Batch is larger than the {settings.max_upload_batch_mb} MB limit")
+        staged.append((rel, fileobj, scanned))
 
     tenant = tenant_id or settings.tenant_id
     store = get_object_store()
@@ -86,7 +107,7 @@ def create_upload_batch(
                     "tid": tenant,
                     "mid": matter_id,
                     "cid": client,
-                    "n": len(files),
+                    "n": len(staged),
                     "jid": job_id,
                     "by": created_by,
                     "ts": _now(),
@@ -97,10 +118,9 @@ def create_upload_batch(
             manifest_entries: list[dict] = []
             source_uris: list[str] = []
 
-            for rel_path, data in files:
-                rel = rel_path.replace("\\", "/").lstrip("/")
+            for rel, fileobj, scanned in staged:
                 name = Path(rel).name
-                sha = content_sha256_bytes(data)
+                sha = scanned.sha256
                 mime = guess_mime(name)
                 # Provisional document id for key stability (final DOC id may differ)
                 provisional_doc = f"DOC-{uuid.uuid4().hex[:10].upper()}"
@@ -112,14 +132,14 @@ def create_upload_batch(
                     version_number=1,
                     filename=name,
                 )
-                uri = store.put(key, data, content_type=mime)
+                uri = store.put_file(key, fileobj, content_type=mime)
                 entry = {
                     "relative_path": rel,
                     "filename": name,
                     "storage_uri": uri,
                     "storage_key": key,
                     "content_sha256": sha,
-                    "size_bytes": len(data),
+                    "size_bytes": scanned.size,
                     "mime_type": mime,
                     "provisional_document_id": provisional_doc,
                     "status": "pending",
@@ -142,7 +162,7 @@ def create_upload_batch(
                         "rel": rel,
                         "uri": uri,
                         "sha": sha,
-                        "sz": len(data),
+                        "sz": scanned.size,
                         "mime": mime,
                         "pdid": provisional_doc,
                     },
@@ -162,7 +182,7 @@ def create_upload_batch(
         "client_id": client,
         "tenant_id": tenant,
         "status": "pending",
-        "total_files": len(files),
+        "total_files": len(staged),
         "files": [
             {
                 "relative_path": e["relative_path"],
@@ -262,6 +282,7 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
     failed = 0
     skipped = 0
     errors: list[dict] = []
+    indexed_docs: list[str] = []
 
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -280,11 +301,31 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
     for f in batch["files"]:
         rel = f["relative_path"]
         uri = f["storage_uri"]
-        if f["status"] in ("indexed", "skipped"):
+        if f["status"] in ("indexed", "skipped", "quarantined"):
             skipped += 1
             continue
+        with connect() as conn:  # heartbeat: a live worker keeps its batch claimed
+            conn.execute("UPDATE upload_batches SET updated_at = %s WHERE batch_id = %s", (_now(), batch_id))
+            conn.commit()
         try:
             data = store.get(uri)
+            signature = scan_for_malware(data)  # raises if the scanner is unavailable
+            if signature:
+                with connect() as conn:
+                    conn.execute(
+                        """
+                        UPDATE upload_batch_files
+                        SET status = 'quarantined', error = %(err)s, processed_at = %(ts)s
+                        WHERE batch_id = %(bid)s AND relative_path = %(rel)s
+                        """,
+                        {"err": f"malware detected: {signature}", "ts": _now(), "bid": batch_id, "rel": rel},
+                    )
+                    conn.commit()
+                    mark_item(conn, job_id, uri, "failed", error=f"quarantined: {signature}")
+                log.warning("upload quarantined: batch=%s file=%s signature=%s", batch_id, rel, signature)
+                failed += 1
+                errors.append({"relative_path": rel, "error": "quarantined: malware detected"})
+                continue
             extracted = _extract_document(f.get("filename") or Path(rel).name, data)
             text, page_count = extracted.text, extracted.page_count
             folder_path = str(Path(rel).parent).replace("\\", "/")
@@ -335,19 +376,35 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
                         doc_id = prow["provisional_document_id"]
 
                     title = Path(rel).name
+                    # Matter code, client and uploader name so the document lists like any other.
+                    cur.execute(
+                        """
+                        SELECT m.matter_code,
+                               (SELECT name FROM members WHERE member_id = %(by)s) AS author
+                        FROM matters m WHERE m.matter_id = %(mid)s
+                        """,
+                        {"mid": matter_id, "by": created_by},
+                    )
+                    meta = cur.fetchone() or {}
                     cur.execute(
                         """
                         INSERT INTO documents (
-                            document_id, matter_id, title, document_type, body,
+                            document_id, matter_id, matter_code, client_id, title, document_type, body,
+                            author_id, author_name, doc_date,
                             status, version, content_sha256, mime_type, folder_id,
                             folder_path, ingest_job_id, ingested_at, source_uri
                         ) VALUES (
-                            %(did)s, %(mid)s, %(title)s, %(dtype)s, %(body)s,
+                            %(did)s, %(mid)s, %(mcode)s, %(cid)s, %(title)s, %(dtype)s, %(body)s,
+                            %(author_id)s, %(author)s, CURRENT_DATE,
                             'Draft', 'v1.0', %(sha)s, %(mime)s, %(fid)s,
                             %(fpath)s, %(jid)s, %(ts)s, %(uri)s
                         )
                         """,
                         {
+                            "mcode": meta.get("matter_code"),
+                            "cid": client_id,
+                            "author_id": created_by if meta.get("author") else None,
+                            "author": meta.get("author"),
                             "did": doc_id,
                             "mid": matter_id,
                             "title": title,
@@ -368,7 +425,7 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
                 document_id=doc_id,
                 body=text[:500000],
                 title=title,
-                author_name=created_by or "upload",
+                author_name=meta.get("author") or created_by or "upload",
                 source="upload",
                 version_status="draft",
                 change_summary=f"Uploaded from {rel}",
@@ -419,6 +476,7 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
                     sha=f["content_sha256"],
                 )
             indexed += 1
+            indexed_docs.append(doc_id)
         except Exception as exc:  # noqa: BLE001 — isolate per file
             log.exception("upload batch file failed: %s", rel)
             failed += 1
@@ -436,6 +494,15 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
                     )
                     conn.commit()
                 mark_item(conn, job_id, uri, "failed", error=err)
+
+    # Vectors for the new chunks, so uploads are found by semantic retrieval too.
+    if indexed_docs:
+        try:
+            from app.embeddings.pending import embed_pending_chunks
+
+            embed_pending_chunks(indexed_docs)
+        except Exception:  # noqa: BLE001 — keyword search still works; embed.py can backfill
+            log.exception("embedding uploaded chunks failed for batch %s", batch_id)
 
     status = "completed" if failed == 0 else ("completed_with_errors" if indexed else "failed")
     with connect() as conn:

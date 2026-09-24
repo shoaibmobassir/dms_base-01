@@ -66,10 +66,20 @@ class FileAttachment(BaseModel):
     content_type: Optional[str] = None
 
 
+class WorkMode(str, Enum):
+    """How the next answer should be shaped. Chosen by the lawyer, not inferred."""
+
+    reason = "reason"
+    research = "research"
+    review = "review"
+    cite = "cite"
+
+
 class ChatMessageCreate(BaseModel):
     content: str
     role: MessageRole = MessageRole.user
     files: Optional[list[FileAttachment]] = None
+    mode: Optional[WorkMode] = None
 
 
 class ChatMessage(BaseModel):

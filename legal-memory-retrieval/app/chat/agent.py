@@ -30,7 +30,7 @@ from app.chat.models import (
     SSEEventType,
 )
 from app.chat.spotlight import generate_nonce, spotlight
-from app.chat.system_prompt import SYSTEM_PROMPT
+from app.chat.system_prompt import build_system_prompt
 from app.chat.tools.document_tools import (
     DocIndex,
     DocStore,
@@ -46,6 +46,7 @@ from app.chat.tools.schema import ALL_TOOLS
 from app.chat.verify_citations import verify_document_citation
 from app.config import settings
 from app.db.connection import connect
+from app.llm.bedrock_client import bedrock_configured, chat_complete
 from app.observability.metrics import (
     CHAT_CITATION_RESULTS,
     CHAT_TOOL_CALLS,
@@ -159,6 +160,7 @@ def dispatch_tool_call(
         result = generate_docx(
             arguments.get("title", "Document"),
             arguments.get("sections", []),
+            owner_member_id=member_id,
         )
         if "event" in result:
             events.append(result.pop("event"))
@@ -168,6 +170,7 @@ def dispatch_tool_call(
         result = generate_excel(
             arguments.get("title", "Workbook"),
             arguments.get("sheets", []),
+            owner_member_id=member_id,
         )
         if "event" in result:
             events.append(result.pop("event"))
@@ -317,12 +320,29 @@ def citation_result_label(citation: dict[str, Any], had_source: bool) -> str:
 # Build LLM messages from chat history + context
 # ---------------------------------------------------------------------------
 
+def reasoning_status(mode: str | None, document_count: int) -> str:
+    """One plain sentence the lawyer sees while the answer is prepared."""
+    scope = (
+        f"{document_count} document{'s' if document_count != 1 else ''} in scope"
+        if document_count
+        else "no documents in scope yet"
+    )
+    lines = {
+        "reason": f"Reasoning over {scope}.",
+        "research": f"Researching authorities across {scope}.",
+        "review": f"Reviewing the documents in {scope}.",
+        "cite": f"Preparing citations from {scope}.",
+    }
+    return lines.get(mode or "", f"Reading {scope}.")
+
+
 def build_llm_messages(
     history: list[ChatMessage],
     user_message: str,
     doc_index: DocIndex,
     nonce: str,
     max_pairs: int | None = None,
+    mode: str | None = None,
 ) -> list[dict[str, Any]]:
     """Build the LLM message array: system + windowed history + current user."""
     doc_availability = build_doc_availability(doc_index)
@@ -330,7 +350,7 @@ def build_llm_messages(
         f"- {d['doc_id']}: {d['filename']}" for d in doc_availability
     )
 
-    system_content = SYSTEM_PROMPT
+    system_content = build_system_prompt(mode)
     if doc_availability:
         system_content += f"\n\nAVAILABLE DOCUMENTS:\n{doc_list_str}"
 
@@ -373,19 +393,58 @@ def _call_llm(
     model: str | None = None,
 ) -> dict[str, Any]:
     """
-    Call the LLM with tool support. Returns the raw response dict.
-    Supports Gemini (via google-genai) and falls back to Groq.
+    Call the LLM with tool support.
+    Preference: Bedrock → Gemini → Groq → local stub.
     """
-    # Try Gemini first
+    if bedrock_configured():
+        return _call_bedrock(messages, tools, model)
     if settings.gemini_api_key:
         return _call_gemini(messages, tools, model)
-    # Fallback to Groq
     if settings.groq_api_key:
         return _call_groq(messages, tools, model)
-    # No API key — return a basic response
     return {
         "content": "I apologise, but I cannot process your request at the moment. No LLM API key is configured.",
         "tool_calls": [],
+    }
+
+
+def _call_bedrock(
+    messages: list[dict[str, Any]],
+    tools: list[dict[str, Any]],
+    model: str | None = None,
+) -> dict[str, Any]:
+    """Call Amazon Bedrock Mantle with OpenAI-compatible tool calling."""
+    model_id = model or settings.bedrock_model or "zai.glm-5"
+    # Mantle expects OpenAI-style messages; drop unsupported fields carefully but
+    # keep the tool-calling linkage, or the round after a tool call is rejected (400).
+    clean_messages: list[dict[str, Any]] = []
+    for msg in messages:
+        role = str(msg.get("role") or "user")
+        content = msg.get("content")
+        if content is None:
+            content = ""
+        if not isinstance(content, str):
+            content = json.dumps(content)
+        clean: dict[str, Any] = {"role": role, "content": content}
+        if role == "assistant" and msg.get("tool_calls"):
+            clean["tool_calls"] = msg["tool_calls"]
+        if role == "tool":
+            clean["tool_call_id"] = msg.get("tool_call_id") or str(uuid.uuid4())
+            if msg.get("name"):
+                clean["name"] = msg["name"]
+        clean_messages.append(clean)
+
+    result = chat_complete(
+        clean_messages,
+        model=model_id,
+        temperature=0.3,
+        max_tokens=8192,
+        tools=tools or None,
+        timeout=120.0,
+    )
+    return {
+        "content": result.get("content") or "",
+        "tool_calls": result.get("tool_calls") or [],
     }
 
 
@@ -512,6 +571,8 @@ def run_chat_agent(
     doc_index: DocIndex,
     model: str | None = None,
     member_id: str | None = None,
+    mode: str | None = None,
+    hit_count: int | None = None,
 ) -> Generator[str, None, dict[str, Any]]:
     """
     Execute the multi-round tool-use agent loop.
@@ -526,7 +587,15 @@ def run_chat_agent(
     nonce = generate_nonce()
     doc_store: DocStore = {}
     all_events: list[dict[str, Any]] = []
-    messages = build_llm_messages(history, user_message, doc_index, nonce)
+    document_count = hit_count if hit_count is not None else len(doc_index)
+    opening = {
+        "type": "reasoning",
+        "text": reasoning_status(mode, document_count),
+        "mode": mode or "answer",
+    }
+    all_events.append(opening)
+    yield sse_event("reasoning", {"text": opening["text"], "mode": opening["mode"]})
+    messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode)
     tools = ALL_TOOLS
     request_id = current_request_id() or "-"
     tools_paused = False
@@ -648,6 +717,10 @@ def run_chat_agent(
         CHAT_CITATION_RESULTS.labels(
             result=citation_result_label(verified, had_source),
         ).inc()
+        # doc_id is a per-turn alias ("doc-0"); attach the real document for the UI.
+        entry = doc_index.get(doc_id)
+        if entry is not None:
+            verified = {**verified, "document_id": entry.document_id, "title": entry.filename}
         verified_citations.append(verified)
         # Stream citation data
         yield sse_event("citation_data", verified)
@@ -675,6 +748,8 @@ def run_chat_agent_sync(
     doc_index: DocIndex,
     model: str | None = None,
     member_id: str | None = None,
+    mode: str | None = None,
+    hit_count: int | None = None,
 ) -> dict[str, Any]:
     """
     Run the agent loop synchronously, collecting all SSE events.
@@ -683,7 +758,14 @@ def run_chat_agent_sync(
     """
     sse_events: list[str] = []
     gen = run_chat_agent(
-        conn, user_message, history, doc_index, model, member_id=member_id,
+        conn,
+        user_message,
+        history,
+        doc_index,
+        model,
+        member_id=member_id,
+        mode=mode,
+        hit_count=hit_count,
     )
 
     result = {"full_text": "", "events": [], "citations": []}

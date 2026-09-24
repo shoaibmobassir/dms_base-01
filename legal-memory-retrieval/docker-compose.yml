@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 20
 
-    redis:
+  redis:
     image: redis:7-alpine
     ports:
       - "6380:6379"
@@ -34,6 +34,52 @@ services:
     volumes:
       - firmos_minio:/data
 
+  # Production-shaped API + SPA:  docker compose --profile app up --build
+  # Supply real values in .env.production (see .env.example); the container refuses
+  # to start with development defaults.
+  api:
+    profiles: ["app"]
+    build: .
+    image: precentis-api:local
+    # .env.production must define DATABASE_URL (host "postgres"), AUTH_ENABLED=true,
+    # CORS_ORIGINS, OIDC_*, INGEST_MODE=queue, MALWARE_SCANNER and non-default secrets
+    # (the container refuses to start otherwise). Secrets can instead be files in ./secrets.
+    env_file:
+      - path: .env.production
+        required: false
+    environment:
+      REDIS_URL: redis://redis:6379
+      SECRETS_DIR: /run/secrets/precentis
+    volumes:
+      - objects:/app/data/object_store
+      - ./secrets:/run/secrets/precentis:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # Parses, indexes and embeds queued uploads (INGEST_MODE=queue) off the API process.
+  worker:
+    profiles: ["app"]
+    image: precentis-api:local
+    command: ["python", "-m", "app.workers.ingest"]
+    env_file:
+      - path: .env.production
+        required: false
+    environment:
+      REDIS_URL: redis://redis:6379
+      SECRETS_DIR: /run/secrets/precentis
+    volumes:
+      - objects:/app/data/object_store
+      - ./secrets:/run/secrets/precentis:ro
+    depends_on:
+      api:
+        condition: service_started
+
 volumes:
   legal_pg:
   firmos_minio:
+  objects:

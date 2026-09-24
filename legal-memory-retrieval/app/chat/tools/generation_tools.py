@@ -8,12 +8,63 @@ from __future__ import annotations
 import io
 import os
 import uuid
+from pathlib import Path
 from typing import Any
 
 from app.config import settings
+from app.db.connection import connect
+from app.storage.object_store import sanitize_segment
+
+DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
-def generate_docx(title: str, sections: list[dict[str, Any]]) -> dict[str, Any]:
+def generated_dir() -> Path:
+    return (Path(settings.object_store_root) / "generated").resolve()
+
+
+def _safe_filename(title: str, ext: str) -> str:
+    # Titles come from the model (and so, indirectly, from document text): never
+    # let them carry path separators or traversal segments into a filesystem path.
+    flat = title.replace("/", " ").replace("\\", " ").replace(" ", "_")
+    stem = sanitize_segment(flat).replace("/", "_")[:120] or "document"
+    return f"{stem}.{ext}"
+
+
+def _store(save: Any, title: str, ext: str, mime: str, owner_member_id: str | None) -> dict[str, Any]:
+    """Save a generated file under generated/<artifact_id>/ and record its owner."""
+    artifact_id = str(uuid.uuid4())
+    filename = _safe_filename(title, ext)
+    folder = generated_dir() / artifact_id
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / filename
+    save(str(path))
+    with connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO generated_artifacts
+                (artifact_id, owner_member_id, filename, storage_path, mime_type, size_bytes)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (artifact_id, owner_member_id, filename, str(path), mime, path.stat().st_size),
+        )
+        conn.commit()
+    download_url = f"/api/documents/{artifact_id}/download"
+    return {
+        "filename": filename,
+        "download_url": download_url,
+        "document_id": artifact_id,
+        "version_id": str(uuid.uuid4()),
+        "event": {
+            "type": "doc_created",
+            "filename": filename,
+            "download_url": download_url,
+            "document_id": artifact_id,
+        },
+    }
+
+
+def generate_docx(title: str, sections: list[dict[str, Any]], owner_member_id: str | None = None) -> dict[str, Any]:
     """
     Generate a Word (.docx) document from structured section content.
     Returns a download URL and document metadata.
@@ -60,29 +111,10 @@ def generate_docx(title: str, sections: list[dict[str, Any]]) -> dict[str, Any]:
                         if col_idx < len(headers):
                             table.rows[row_idx + 1].cells[col_idx].text = str(cell_val)
 
-    # Save to object store
-    filename = f"{title.replace(' ', '_')}.docx"
-    doc_id = str(uuid.uuid4())
-    version_id = str(uuid.uuid4())
-    file_path = _save_generated_file(doc_id, filename, doc)
-
-    download_url = f"/api/documents/{doc_id}/download"
-    return {
-        "filename": filename,
-        "download_url": download_url,
-        "document_id": doc_id,
-        "version_id": version_id,
-        "event": {
-            "type": "doc_created",
-            "filename": filename,
-            "download_url": download_url,
-            "document_id": doc_id,
-            "version_id": version_id,
-        },
-    }
+    return _store(doc.save, title, "docx", DOCX_MIME, owner_member_id)
 
 
-def generate_excel(title: str, sheets: list[dict[str, Any]]) -> dict[str, Any]:
+def generate_excel(title: str, sheets: list[dict[str, Any]], owner_member_id: str | None = None) -> dict[str, Any]:
     """
     Generate an Excel (.xlsx) workbook from structured sheet data.
     Returns a download URL and document metadata.
@@ -111,36 +143,4 @@ def generate_excel(title: str, sheets: list[dict[str, Any]]) -> dict[str, Any]:
             for col_idx, cell_val in enumerate(row, 1):
                 ws.cell(row=row_idx, column=col_idx, value=cell_val)
 
-    filename = f"{title.replace(' ', '_')}.xlsx"
-    doc_id = str(uuid.uuid4())
-    version_id = str(uuid.uuid4())
-
-    # Save to object store
-    output_dir = os.path.join(settings.object_store_root, "generated")
-    os.makedirs(output_dir, exist_ok=True)
-    file_path = os.path.join(output_dir, f"{doc_id}_{filename}")
-    wb.save(file_path)
-
-    download_url = f"/api/documents/{doc_id}/download"
-    return {
-        "filename": filename,
-        "download_url": download_url,
-        "document_id": doc_id,
-        "version_id": version_id,
-        "event": {
-            "type": "doc_created",
-            "filename": filename,
-            "download_url": download_url,
-            "document_id": doc_id,
-            "version_id": version_id,
-        },
-    }
-
-
-def _save_generated_file(doc_id: str, filename: str, doc: Any) -> str:
-    """Save a generated DOCX file to the local object store."""
-    output_dir = os.path.join(settings.object_store_root, "generated")
-    os.makedirs(output_dir, exist_ok=True)
-    file_path = os.path.join(output_dir, f"{doc_id}_{filename}")
-    doc.save(file_path)
-    return file_path
+    return _store(wb.save, title, "xlsx", XLSX_MIME, owner_member_id)

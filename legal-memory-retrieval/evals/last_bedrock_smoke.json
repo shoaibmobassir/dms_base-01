@@ -1,0 +1,48 @@
+{
+  "chat": {
+    "openai.gpt-6-luna": {
+      "ok": false,
+      "ms": 1121.1,
+      "preview": null,
+      "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'https://bedrock-mantle.us-east-1.api.aws/openai/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401"
+    },
+    "openai.gpt-5.6-luna": {
+      "ok": false,
+      "ms": 930.9,
+      "preview": null,
+      "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'https://bedrock-mantle.us-east-1.api.aws/openai/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401"
+    },
+    "zai.glm-5": {
+      "ok": true,
+      "ms": 1532.8,
+      "preview": "{\"ok\": true}",
+      "error": null
+    },
+    "moonshotai.kimi-k2.5": {
+      "ok": true,
+      "ms": 2717.8,
+      "preview": " {\"ok\": true}",
+      "error": null
+    },
+    "deepseek.v3.2": {
+      "ok": true,
+      "ms": 1485.4,
+      "preview": "{\"ok\": true}",
+      "error": null
+    }
+  },
+  "embeddings": {
+    "cohere.embed-v4:0": {
+      "ok": false,
+      "ms": 1335.1,
+      "dim": null,
+      "error": "HTTPStatusError: Client error '403 Forbidden' for url 'https://bedrock-runtime.us-east-1.amazonaws.com/model/cohere.embed-v4%3A0/invoke'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403"
+    },
+    "amazon.titan-embed-text-v2:0": {
+      "ok": false,
+      "ms": 1241.2,
+      "dim": null,
+      "error": "HTTPStatusError: Client error '429 Too Many Requests' for url 'https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-embed-text-v2%3A0/invoke'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"
+    }
+  }
+}

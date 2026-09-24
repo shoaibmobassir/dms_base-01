@@ -72,3 +72,34 @@ Before adding any package:
 ## AGPL / GPL flag
 
 Any package under AGPL or GPL **must not be added to production dependencies** without explicit legal review, because their copyleft could extend to our proprietary code distributed over a network.
+
+---
+
+## Frontend npm dependencies (`frontend/package.json`)
+
+Added 2026-09-22 for FirmOS Vite SPA. No AGPL/GPL/SSPL packages.
+
+| Package | License (typical) | Copyleft? | Approved |
+|---------|-------------------|-----------|----------|
+| react / react-dom | MIT | No | ✅ |
+| react-router-dom | MIT | No | ✅ |
+| @tanstack/react-query | MIT | No | ✅ |
+| @radix-ui/react-* (dialog, dropdown-menu, scroll-area, separator, slot, tabs, tooltip) | MIT | No | ✅ |
+| class-variance-authority | Apache-2.0 | No | ✅ |
+| clsx / tailwind-merge | MIT | No | ✅ |
+| cmdk | MIT | No | ✅ |
+| lucide-react | ISC | No | ✅ |
+| sonner | MIT | No | ✅ |
+| tailwindcss-animate | MIT | No | ✅ |
+| vite / @vitejs/plugin-react | MIT | No | ✅ |
+| typescript | Apache-2.0 | No | ✅ |
+| tailwindcss / postcss / autoprefixer | MIT | No | ✅ |
+
+**Not included (intentionally):** Emergent overlay packages, PostHog, CRA/CRACO, axios.
+
+
+### Added 2026-09-24 (production plan 06)
+
+| Package | License | Copyleft? | Scope | Approved |
+|---------|---------|-----------|-------|----------|
+| @playwright/test 1.63.0 | Apache-2.0 | No | devDependency (browser tests only; not shipped) | ✅ |

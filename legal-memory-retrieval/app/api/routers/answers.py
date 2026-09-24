@@ -6,7 +6,9 @@ from app.api.schemas import AskRequest
 from app.api.hits import hit_payload_highlighted
 from app.answers.format import format_dms_response
 from app.answers.generate import answer_question
+from app.audit import events as audit
 from app.auth.deps import resolve_member
+from app.config import settings
 from app.db.connection import connect
 from app.observability.metrics import (
     ABSTENTIONS,
@@ -15,6 +17,7 @@ from app.observability.metrics import (
     record_latency_breakdown,
 )
 from app.observability.tracing import span
+from app.resilience.rate_limit import check_rate_limit
 
 router = APIRouter(tags=["answers"])
 
@@ -24,6 +27,11 @@ def ask_endpoint(
     body: AskRequest,
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
+    check_rate_limit(
+        f"ask:{member_id or 'anon'}",
+        limit=settings.rate_limit_ask_per_minute,
+        window_seconds=60.0,
+    )
     REQUEST_TOTAL.labels(endpoint="ask").inc()
     t0 = time.perf_counter()
     with span("ask", {"query": body.query[:120], "member_id": member_id or ""}):
@@ -54,6 +62,11 @@ def ask_endpoint(
         pass  # fail gracefully — DMS fields are additive
 
     result["service"] = "answers"
+    cited = sorted({str(c.get("document_id")) for c in result.get("sources") or [] if c.get("document_id")})
+    audit.record("ask", member_id=member_id, object_type="question", detail={
+        "prompt": body.query, "abstained": bool(result.get("abstained")),
+        "cited_documents": cited, "provider": result.get("provider"),
+    })
     return result
 
 

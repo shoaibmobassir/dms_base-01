@@ -3,6 +3,45 @@
 
 > **Goal:** Build a production system capable of ingesting thousands of files/folders, preserving document/matter context, indexing hundreds of long documents, and completing targeted reviews across 100s–1,000s of documents with parallel retrieval, reasoning, verification, caching, provenance, and observability.
 
+**Status date:** 2026-09-24. The phase checklists below are the original backlog. Where they disagree with the code, this section wins. Engineering blockers are in `legal-memory-retrieval/PRODUCTION_READINESS_REVIEW.md`. The sell/no-sell reading is in `docs/enterprise-production-readiness-review.md`.
+
+### Where the work actually lives
+
+Implementation is `legal-memory-retrieval/`, not the `firmos/` tree sketched in Part XVI. Since the last time this plan was the source of truth:
+
+- Production plans 01–06 are done (security hotfixes, Postgres seed, SPA prune, API wiring, chat loop, DB-backed contract tests). Plan 07 is in progress: boot guard, pooled DB connections, Dockerfile, readiness, contract CI, and rate limits are in. Cookie/OIDC login is deferred.
+- The lawyer UI is a Vite React SPA (Home, Ask, Chat, Matters, Documents, Clients, People, Calendar, Arguments, Settings) rendered only from API data.
+- Ask/chat can use Amazon Bedrock when `AWS_BEARER_TOKEN_BEDROCK` is set. Retrieval embeddings stay MiniLM 384-d.
+
+### Phase status
+
+| Phases | Topic | Status | Notes |
+|--------|--------|--------|-------|
+| 1 | Domain model | **Partial** | Members, clients, matters, documents, versions, chunks, permissions, findings, annotations, review jobs exist. `Tenant` is not a required key on those core tables. No row-level security. |
+| 2 | Immutable versions | **Partial** | `document_versions`, content hash, current version, version API. Not every definition-of-done proof (triple upload, duplicate detection) is a release gate. |
+| 3 | Object storage | **Partial** | Local store and optional S3/MinIO. Layout is not a firm bucket with KMS. |
+| 4–5 | Async ingest and folders | **Partial** | Upload batches keep relative paths and isolate per-file failure. The API still buffers each file in memory. No separate worker fleet, size cap, or malware scan. |
+| 6–8 | Parse, anchors, hierarchical chunks | **Partial** | Extract, blocks, evidence anchors, and hierarchical chunks exist for the corpus pipeline. Not every format in the target list is production-grade. |
+| 9–10 | Summaries, entities, graph | **Partial** | Relationship and intelligence tables exist. They are not a complete cached intelligence layer. |
+| 11–12 | Hybrid and hierarchical retrieval | **Done for pilot** | BM25, vector, metadata, graph, fusion (`p55_repair_ce_protect`), cross-encoder, hard matter scope, ACL before rank. Eval-gated. |
+| 13–14 | Query planning and context | **Partial** | Matter resolver and cited ask/chat context. Not a general review planner. |
+| 15–19 | Review engine, findings, diff, annotations | **Partial** | Server routes and schema. No product UI. Do not treat as delivered review. |
+| 20–22 | Cache, parallelism, degradation | **Partial** | Redis cache, rate limit on answers/chat, per-file ingest isolation. No load-test evidence, no tenant quotas. |
+| 23 | Storage strategy | **Open** | Single Postgres + pgvector. No measured reason to split search. |
+| 24 | GraphRAG | **Deferred** | Graph channel exists inside fusion. A separate graph database stays out until an eval says the current graph is the bottleneck. |
+| 25 | Authorization | **Partial** | Matter ACL, API keys, production boot guard, chat ownership. No firm IdP, no tenant RLS. Dev mode trusts `X-Member-Id`. |
+| 26 | Audit | **Open** | Manifest signing pieces. No customer-exportable audit stream. |
+| 27 | Tracing | **Partial** | OpenTelemetry hooks and request IDs. No SLOs or paging. |
+| 28–29 | Retrieval benchmark | **Done for the lab corpus** | Harbour and independent holdouts in `docs/CHANGELOG.md`. Not a customer-corpus acceptance set, and CI does not run the eval. |
+| 30 | Review-quality eval | **Open** | |
+| 31 | Architecture simulator | **Open** | |
+| 32 | Core APIs | **Partial** | The SPA’s resources are backed. Workflows, tabular, Word, caselaw, and sources are authenticated and not product-complete. |
+| 33–34 | Viewer and review UI | **Open** | Document detail and history exist. The viewer and review mode in `docs/ui-roadmap/` are plan only. |
+| 35 | Load test | **Open** | |
+| 36 | Sequence | **See milestones below** | Retrieval and a lab UI landed out of order relative to a pure reading of milestone 1 (tenant). That does not close production. |
+
+Unchecked boxes in Parts I–XV remain the backlog for anything marked Partial or Open.
+
 ---
 
 # 0. Product Goal & Non-Negotiable Principles
@@ -1782,57 +1821,57 @@ Do not hard-code a "100 documents in one minute" promise until the benchmark pro
 
 ## Milestone 1 — Core data layer
 
-- [ ] PostgreSQL
-- [ ] Tenant
-- [ ] Client
-- [ ] Matter
-- [ ] Folder
-- [ ] Document
-- [ ] DocumentVersion
-- [ ] AuditEvent
+- [x] PostgreSQL
+- [ ] Tenant (no tenant key or RLS on members, clients, matters, documents)
+- [x] Client
+- [x] Matter
+- [ ] Folder (upload paths and project folders; not a first-class matter folder tree)
+- [x] Document
+- [x] DocumentVersion
+- [ ] AuditEvent (no append-only customer audit stream)
 
-**Output:** stable document/version model.
+**Output:** stable document/version model for one firm. Tenant and audit are still open.
 
 ---
 
 ## Milestone 2 — Storage + upload
 
-- [ ] S3/MinIO
-- [ ] Upload API
-- [ ] Folder upload
-- [ ] Manifest
-- [ ] Checksums
+- [x] S3/MinIO (optional profile; local disk is the default)
+- [x] Upload API
+- [x] Folder upload (relative paths on the batch)
+- [ ] Manifest (not a release-grade ingest manifest)
+- [ ] Checksums as a caller-visible guarantee
 - [ ] Idempotency
 
-**Output:** safely ingest thousands of files without processing them yet.
+**Output:** lab ingest works. It is not yet safe for thousands of untrusted files: the API buffers each upload, with no size cap or malware scan.
 
 ---
 
 ## Milestone 3 — Async ingestion
 
-- [ ] Workflow engine
-- [ ] Queues
+- [ ] Workflow engine (playbooks exist; they are not the ingest control plane)
+- [ ] Queues (Redis helpers for source sync; ingest run is still in-process)
 - [ ] Workers
 - [ ] Retry
-- [ ] Progress
-- [ ] Failure isolation
+- [x] Progress (batch status can be read)
+- [x] Failure isolation (per-file failure on batch run)
 
-**Output:** production-like ingestion pipeline.
+**Output:** production-like ingestion pipeline. Not met.
 
 ---
 
 ## Milestone 4 — Canonical document model
 
-- [ ] PDF parsing
+- [x] PDF parsing (corpus pipeline)
 - [ ] OCR fallback
-- [ ] DOCX parsing
-- [ ] Pages
-- [ ] Sections
-- [ ] Blocks
-- [ ] Tables
-- [ ] Anchors
+- [x] DOCX parsing (corpus pipeline)
+- [ ] Pages as the canonical layer (blocks are the anchor; page rendition is UI-roadmap work)
+- [x] Sections
+- [x] Blocks
+- [ ] Tables as a first-class review object
+- [x] Anchors (`block_id`, offsets, quote)
 
-**Output:** every document becomes structured data.
+**Output:** every document becomes structured data. Met for the lab corpus, not for arbitrary firm uploads.
 
 ---
 
@@ -1840,37 +1879,37 @@ Do not hard-code a "100 documents in one minute" promise until the benchmark pro
 
 - [ ] PDF viewer
 - [ ] Page navigation
-- [ ] Search
-- [ ] Stable highlights
-- [ ] Version timeline
+- [x] Search (matter/document search API and command palette)
+- [ ] Stable highlights in the viewer
+- [x] Version timeline (document history page)
 
-**Output:** usable document workspace.
+**Output:** usable document workspace. Not met. Detail and history exist; the viewer in `docs/ui-roadmap/03_DOCUMENT_VIEWER.md` does not.
 
 ---
 
 ## Milestone 6 — Retrieval
 
-- [ ] BM25
-- [ ] Vector
-- [ ] Metadata
-- [ ] Hybrid fusion
-- [ ] Reranker
-- [ ] Hierarchical retrieval
+- [x] BM25
+- [x] Vector (MiniLM 384-d; Bedrock embedder is opt-in and needs a re-embed)
+- [x] Metadata
+- [x] Hybrid fusion (`p55_repair_ce_protect`, hard matter scope)
+- [x] Reranker
+- [x] Hierarchical retrieval (parent/leaf chunks)
 
-**Output:** high-quality evidence retrieval.
+**Output:** high-quality evidence retrieval on the lab corpus. This milestone is met for a pilot of search, not for a 100k-page review.
 
 ---
 
 ## Milestone 7 — Intelligence
 
-- [ ] Document summaries
+- [ ] Document summaries (not a complete cached layer)
 - [ ] Section summaries
 - [ ] Entities
-- [ ] Relationships
-- [ ] Graph
+- [x] Relationships (graph channel inside retrieval)
+- [x] Graph (same channel; no separate graph database)
 - [ ] Intelligence cache
 
-**Output:** compressed document knowledge layer.
+**Output:** compressed document knowledge layer. Not met.
 
 ---
 
@@ -1880,44 +1919,46 @@ Do not hard-code a "100 documents in one minute" promise until the benchmark pro
 - [ ] Parallel map
 - [ ] Reduce
 - [ ] Verify
-- [ ] Findings
-- [ ] Evidence
-- [ ] Synthesis
+- [x] Findings (schema and routes; no review UI)
+- [x] Evidence (anchors and citation ids on ask/chat)
+- [ ] Synthesis (cited answers exist; map-reduce review does not)
 
-**Output:** multi-document review.
+**Output:** multi-document review. Not met. Ask/chat is evidence-backed Q&A, not this review engine.
 
 ---
 
 ## Milestone 9 — Version intelligence
 
-- [ ] Lexical diff
+- [x] Lexical diff (version diff support exists)
 - [ ] Semantic diff
 - [ ] Legal impact
 - [ ] Finding comparison
 - [ ] Version-aware embeddings/intelligence
 
-**Output:** Git-like legal document version intelligence.
+**Output:** Git-like legal document version intelligence. Not met.
 
 ---
 
 ## Milestone 10 — Production hardening
 
-- [ ] ACL
+- [x] ACL (SQL before rank; SPA reads and chat ownership; generated-file download still has a bypass — see the production review)
 - [ ] Audit
-- [ ] OTel
-- [ ] Metrics
+- [x] OTel (hooks present; no operational baseline)
+- [x] Metrics (Prometheus hooks, readiness probe)
 - [ ] Cost tracking
-- [ ] Caching
-- [ ] Rate limits
+- [x] Caching (Redis; non-authoritative)
+- [x] Rate limits (answers and chat messages)
 - [ ] Backpressure
-- [ ] Graceful degradation
+- [ ] Graceful degradation as a tested behaviour
 - [ ] Load testing
 
-**Output:** production candidate.
+**Output:** production candidate. Not met. Also in place, and not a substitute for this milestone: Dockerfile, Compose `app` profile, contract CI, and a production boot guard.
 
 ---
 
 # Part XVI — Suggested Repository Structure
+
+The sketch below was a greenfield layout. The running code is `legal-memory-retrieval/` (`app/`, `frontend/`, `evals/`, `docker-compose.yml`, `Dockerfile`). Do not create a parallel `firmos/` tree to match this diagram.
 
 ```text
 firmos/
@@ -2203,9 +2244,9 @@ OpenTelemetry
 
 # Part XIX — The Immediate Next 10 Tasks
 
-Do **not** start by building GraphRAG or the final UI.
+These ten tasks were the original start. They are done in `legal-memory-retrieval/` (see the status table at the top). Do **not** start GraphRAG or a second database next.
 
-Start here:
+Historical start:
 
 1. [x] Freeze the domain model: `Tenant → Client → Matter → Folder → Document → Version`.
 2. [x] Implement PostgreSQL migrations.
@@ -2218,7 +2259,9 @@ Start here:
 9. [x] Implement BM25 + vector retrieval behind a common `RetrievalEngine` interface.
 10. [x] Build a 100-document benchmark before adding more infrastructure.
 
-> **Progress (2026-09-05):** P5.5 CE-protect frozen + **exact repair**. Eval: R@10 **.739**, Hit@10 **.926**, MRR **.805** (gate **PASS**). Exact Hit@10 **.996**. Next: matter/semantic query-type policies — not GraphRAG.
+> **Progress (2026-09-05):** P5.5 CE-protect frozen + **exact repair**. Eval: R@10 **.739**, Hit@10 **.926**, MRR **.805** (gate **PASS**). Exact Hit@10 **.996**.
+>
+> **Progress (2026-09-24):** Those ten tasks are in the tree. Later retrieval work (matter scope, paraphrase holdouts, Harbour scores) is in `legal-memory-retrieval/docs/CHANGELOG.md` and is not repeated here. Do not start GraphRAG or a second vector database. Next engineering work is the production review’s open P0s: firm IdP, dedicated silo, the download ACL residual, and workerised upload — then the UI roadmap’s document viewer. The 100 → 10,000 document ladder below is still unmeasured.
 
 Then expand:
 
@@ -2235,28 +2278,26 @@ and only introduce infrastructure when benchmark data shows the current componen
 
 # Definition of "Production Ready"
 
-The system should not be considered production-ready merely because it can answer questions over PDFs.
+The system should not be considered production-ready merely because it can answer questions over PDFs. As of 2026-09-24 it is a lab system that can do that, with a SPA, on one firm’s schema. The boxes below are the bar. Checked means the lab behaviour exists. The deployment, tenancy, and scale boxes stay open, so the bar is not met.
 
-It should satisfy all of these:
-
-- [ ] Documents and folders retain their original hierarchy.
-- [ ] Every version is immutable.
-- [ ] Previous versions remain searchable.
-- [ ] Every chunk can reconstruct its matter/document context.
-- [ ] AI findings point to exact source evidence.
+- [x] Documents and folders retain their original hierarchy (upload batch relative paths; not a full matter folder product).
+- [x] Every version is immutable (version create does not rewrite prior versions).
+- [ ] Previous versions remain searchable (version history is browsable; retrieval is not proven against every prior version).
+- [x] Every chunk can reconstruct its matter/document context.
+- [x] AI findings point to exact source evidence (ask/chat citations are retrieved ids; review findings are not a product).
 - [ ] Highlights survive re-rendering/OCR changes.
-- [ ] Retrieval combines lexical, semantic, metadata and graph signals.
-- [ ] Retrieval is hierarchical.
+- [x] Retrieval combines lexical, semantic, metadata and graph signals.
+- [x] Retrieval is hierarchical.
 - [ ] Large reviews execute with bounded parallelism.
 - [ ] Review uses Map → Reduce → Verify.
-- [ ] Failed documents do not fail the entire review.
+- [x] Failed documents do not fail the entire review (per-file batch isolation only).
 - [ ] Expensive intelligence is cached by content/version.
-- [ ] Permissions are enforced before model access.
-- [ ] Every answer is traceable to evidence.
+- [x] Permissions are enforced before model access (ACL in retrieval SQL and on chat). Residual: generated-file download can return bytes before the ACL check.
+- [x] Every answer is traceable to evidence (citation contract on ask/chat).
 - [ ] Every review has an end-to-end trace.
-- [ ] Retrieval and review quality are continuously benchmarked.
+- [x] Retrieval quality is benchmarked on the frozen lab sets. Review quality is not. CI does not run the retrieval eval.
 - [ ] 1,000-document / 100-page average workloads have been load tested.
-- [ ] Cost and latency are measured rather than guessed.
+- [ ] Cost and latency are measured on a production shape (lab latency is in the changelog; there is no firm load test).
 
 ---
 

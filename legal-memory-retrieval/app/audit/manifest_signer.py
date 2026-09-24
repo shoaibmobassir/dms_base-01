@@ -3,7 +3,7 @@ Manifest Signer: Generates Tamper-Evident Signed Legal Export ZIP Packages (SHA-
 Clean-room independent implementation.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 import hashlib
 import hmac
 import io
@@ -42,7 +42,7 @@ class ManifestSigner:
             # 2. Construct Manifest object
             manifest_obj = {
                 "title": export_title,
-                "created_at": datetime.utcnow().isoformat() + "Z",
+                "created_at": datetime.now(UTC).replace(tzinfo=None).isoformat() + "Z",
                 "issuer": "FirmOS Legal Intelligence & DMS",
                 "spec_version": "1.0-tamper-evident",
                 "metadata": metadata,

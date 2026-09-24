@@ -3,7 +3,7 @@ DOCX Redline Generator: Produces native Microsoft Word OpenXML Tracked Changes (
 Clean-room independent implementation.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 import io
 import os
 from typing import List, Optional, Tuple
@@ -36,7 +36,7 @@ class DocxRedlineGenerator:
 
         matcher = difflib.SequenceMatcher(None, orig_paras, rev_paras)
         revision_id = 1
-        now_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        now_str = datetime.now(UTC).replace(tzinfo=None).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
             if tag == "equal":
