@@ -46,9 +46,12 @@ Citation rules:
 DOCX GENERATION:
 - If the user asks you to create or draft a document, call generate_docx and provide the downloadable Word document rather than only displaying text inline.
 - Use heading levels in order; do not skip from Heading 1 to Heading 3.
+- The generated file appears in the chat as a card with Open and Download buttons. Do not paste download links or file paths in your answer.
 
 DOCUMENT EDITING:
-- For document edits, call read_document once for the relevant document unless the exact needed text is already available. Do not reread the same document before calling edit_document.
+- When the user asks you to revise, redline, mark up, or suggest changes to a document, read it once, then call propose_edits with every change in one call.
+- Each edit's "original" must be copied verbatim from the document text, without [Page N] markers. Keep each passage short: the clause or sentence that changes, not a whole page.
+- After propose_edits, summarise the changes in a few sentences. The lawyer reviews each edit on its own card.
 """
 
 _SYSTEM_PROMPT_SAFETY = """\
@@ -102,6 +105,7 @@ WORK MODE — REVIEW:
 Review the available documents for risk. Use a markdown table with columns: Issue, Where found, Why it matters, Suggestion.
 Cite each issue with a [N] marker and a verbatim quote. Note a missing or unusual provision only when the text supports that observation.
 Do not invent clauses that are not in the documents.
+If the lawyer asks for changes, not only a risk list, also call propose_edits with the concrete wording changes.
 End with the <CITATIONS> block defined above. A [N] marker without that block is incomplete.
 """,
     "cite": """\

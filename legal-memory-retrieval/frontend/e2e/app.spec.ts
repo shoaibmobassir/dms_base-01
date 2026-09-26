@@ -148,6 +148,51 @@ test("chat opens with suggestions from the member's open matters", async ({ page
   await expect(page.getByTestId("chat-input")).toBeVisible();
 });
 
+// ── document viewer beside the chat ───────────────────────────────────────────
+
+test("attached PDF opens beside the chat with page and zoom controls", async ({ page, request }) => {
+  const docs = await api<{ items: { document_id: string; title: string }[] }>(request, "/api/documents?q=.pdf&limit=20");
+  let pdf: { document_id: string; title: string } | undefined;
+  for (const d of docs.items) {
+    const res = await request.get(`/api/documents/${d.document_id}/render`);
+    if (res.ok() && (res.headers()["content-type"] ?? "").includes("pdf")) {
+      pdf = d;
+      break;
+    }
+  }
+  test.skip(!pdf, "no PDF original in the seeded corpus");
+
+  await page.goto("/ui/chat");
+  await page.getByTitle("Add Context").click();
+  await page.getByText("Select matter documents").click();
+  await page.getByTestId("document-picker-search").fill(pdf!.document_id);
+  await page.getByTestId("document-picker-item").filter({ hasText: pdf!.document_id }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("composer-attachments")).toContainText(pdf!.title);
+
+  await page.getByTestId("composer-attachment-open").click();
+  const viewer = page.getByTestId("document-viewer");
+  await expect(viewer).toBeVisible();
+  await expect(page.getByTestId("viewer-page-count")).toHaveText(/\/ \d+/);
+  const pages = Number((await page.getByTestId("viewer-page-count").innerText()).replace(/\D/g, ""));
+  const first = page.locator('[data-testid="viewer-page"][data-page="1"]');
+  const box = (await first.boundingBox())!;
+  expect(box.height / box.width).toBeGreaterThan(1.2); // portrait page keeps its shape
+
+  if (pages > 1) {
+    await page.getByTestId("viewer-next").click();
+    await expect(page.getByTestId("viewer-page-input")).toHaveValue("2");
+    await page.getByTestId("viewer-page-input").fill(String(pages));
+    await page.getByTestId("viewer-page-input").press("Enter");
+    await expect(page.getByTestId("viewer-page-input")).toHaveValue(String(pages));
+  }
+  const before = await page.getByTestId("viewer-zoom").innerText();
+  await page.getByTestId("viewer-zoom-in").click();
+  await expect(page.getByTestId("viewer-zoom")).not.toHaveText(before);
+  await page.getByTestId("viewer-fit-width").click();
+  await expect(page.getByTestId("viewer-zoom")).toHaveText(before);
+});
+
 // These call the configured LLM; opt in with E2E_LLM=1.
 test.describe("chat with the language model", () => {
   test.skip(!process.env.E2E_LLM, "set E2E_LLM=1 to exercise the language model");
@@ -164,6 +209,13 @@ test.describe("chat with the language model", () => {
     const answer = page.getByTestId("assistant-message").last();
     await expect(answer.getByTestId("chat-sources")).toBeVisible({ timeout: 150_000 });
     await expect(page.getByTestId("chat-title")).not.toHaveText(/Untitled|New conversation/);
+
+    // A citation opens the source beside the chat, on its page, with the words marked.
+    await answer.getByTestId("chat-citation-1").first().click();
+    await expect(page.getByTestId("citation-document-panel")).toBeVisible();
+    await expect(
+      page.locator(".viewer-highlight, [data-testid=viewer-ocr-highlight], [data-testid=citation-highlight]").first(),
+    ).toBeVisible({ timeout: 30_000 });
 
     // Delete through the conversation drawer (confirm step), then the URL resets to a new chat.
     await page.getByRole("button", { name: "Conversations" }).click();

@@ -1,5 +1,5 @@
 import { ApiError, apiFetch, authHeaders } from './client'
-import type { ChatEvent, ChatMessage, ChatModel, ChatSession, Citation } from './types'
+import type { Attachment, ChatEvent, ChatMessage, ChatModel, ChatSession, Citation, EditProposal } from './types'
 
 const enc = encodeURIComponent
 
@@ -38,12 +38,30 @@ export function listSuggestions() {
   return apiFetch<{ suggestions: string[] }>('/api/chat/suggestions').then((r) => r.suggestions)
 }
 
+/** Record accept / reject on one suggested edit. */
+export function decideEdit(sessionId: string, messageId: string, editId: string, status: EditProposal['status']) {
+  return apiFetch<EditProposal>(
+    `/api/chat/sessions/${enc(sessionId)}/messages/${enc(messageId)}/edits/${enc(editId)}`,
+    { method: 'PATCH', body: JSON.stringify({ status }) },
+  )
+}
+
+/** Build a tracked-changes Word file from the accepted edits to one document. */
+export function exportEdits(sessionId: string, messageId: string, documentId: string) {
+  return apiFetch<{ filename: string; download_url: string; document_id: string; applied: number }>(
+    `/api/chat/sessions/${enc(sessionId)}/messages/${enc(messageId)}/edits/export?document_id=${enc(documentId)}`,
+    { method: 'POST' },
+  )
+}
+
 export type StreamHandlers = {
   onDelta: (text: string) => void
   onEvent: (event: ChatEvent) => void
   onCitation: (citation: Citation) => void
   onTitle: (title: string) => void
   onError: (message: string) => void
+  /** Server id of the assistant message being written (needed to save edit decisions). */
+  onStart?: (assistantMessageId: string) => void
 }
 
 /**
@@ -57,12 +75,12 @@ export async function streamMessage(
   content: string,
   handlers: StreamHandlers,
   signal: AbortSignal,
-  options?: { mode?: WorkMode },
+  options?: { mode?: WorkMode; files?: Attachment[] },
 ): Promise<void> {
   const res = await fetch(`/api/chat/sessions/${enc(sessionId)}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ content, mode: options?.mode }),
+    body: JSON.stringify({ content, mode: options?.mode, files: options?.files?.length ? options.files : undefined }),
     signal,
   })
   if (!res.ok || !res.body) {
@@ -104,6 +122,8 @@ export async function streamMessage(
           handlers.onError(String(event.message ?? 'The assistant failed to answer.'))
           break
         case 'session_id':
+          if (typeof event.assistant_message_id === 'string') handlers.onStart?.(event.assistant_message_id)
+          break
         case 'done':
           break
         default:

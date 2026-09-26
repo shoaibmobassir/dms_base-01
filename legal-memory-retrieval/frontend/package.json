@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copy-pdfjs-assets.mjs",
     "dev": "vite",
-    "prebuild": "node -e \"require('fs').rmSync('../static/assets',{recursive:true,force:true})\"",
+    "prebuild": "node -e \"require('fs').rmSync('../static/assets',{recursive:true,force:true})\" && node scripts/copy-pdfjs-assets.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test"
@@ -24,6 +25,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "lucide-react": "^0.516.0",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.15.0",

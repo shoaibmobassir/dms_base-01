@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class DocEntry:
     """Metadata for one document available in the chat context."""
-    __slots__ = ("doc_id", "document_id", "filename", "text", "version_id", "version_number")
+    __slots__ = ("doc_id", "document_id", "filename", "text", "version_id", "version_number", "attached")
 
     def __init__(
         self,
@@ -36,7 +36,9 @@ class DocEntry:
         text: str = "",
         version_id: str | None = None,
         version_number: int | None = None,
+        attached: bool = False,
     ):
+        self.attached = attached
         self.doc_id = doc_id
         self.document_id = document_id
         self.filename = filename
@@ -81,10 +83,31 @@ def build_doc_index_from_hits(hits: list[dict[str, Any]]) -> DocIndex:
     return index
 
 
+def add_documents_to_index(index: DocIndex, documents: list[tuple[str, str]]) -> DocIndex:
+    """Put documents the lawyer attached first in the index, ahead of retrieval hits.
+
+    `documents` is [(document_id, filename)]. Existing entries keep their slug.
+    """
+    known = {entry.document_id for entry in index.values()}
+    added: DocIndex = {}
+    for document_id, filename in documents:
+        if document_id in known:
+            for entry in index.values():
+                if entry.document_id == document_id:
+                    entry.attached = True
+            continue
+        if not document_id:
+            continue
+        known.add(document_id)
+        slug = f"doc-{len(index) + len(added)}"
+        added[slug] = DocEntry(doc_id=slug, document_id=document_id, filename=filename or document_id, attached=True)
+    return {**added, **index}
+
+
 def build_doc_availability(index: DocIndex) -> list[dict[str, str]]:
     """Return a list of {doc_id, filename} for the system prompt."""
     return [
-        {"doc_id": slug, "filename": entry.filename}
+        {"doc_id": slug, "filename": entry.filename, "attached": entry.attached}
         for slug, entry in index.items()
     ]
 
@@ -184,6 +207,7 @@ def find_in_document(
         matches.append({
             "match": m.group(),
             "context": text[start:end],
+            "page": page_at(text, m.start()),
             "start": m.start(),
             "end": m.end(),
         })
@@ -242,7 +266,7 @@ def search_firm_records(
                 doc_id=slug,
                 document_id=document_id,
                 filename=str(filename),
-                text=str(hit.get("text") or ""),
+                # Leave text empty: a hit is one chunk, and read_document must load the whole document.
                 version_id=_hit_version(hit),
             )
         snippet = " ".join(str(hit.get("text") or "").split())[:280]
@@ -351,16 +375,68 @@ def _lookup_version(conn: Any, document_id: str) -> str | None:
 # DB helpers
 # ---------------------------------------------------------------------------
 
-def _fetch_document_text(conn, document_id: str) -> str:
-    """Fetch the full extracted text for a document from the chunks table."""
+PAGE_MARKER_RE = re.compile(r"^\[Page (\d+)\]$", re.MULTILINE)
+
+
+def fetch_document_pages(conn, document_id: str) -> list[tuple[int, str]]:
+    """Return [(page_number, text)] for the current version, in reading order.
+
+    Prefers extraction blocks (exact page per block). Falls back to leaf chunks,
+    which carry the page of their first block. Parent chunks are skipped because
+    they repeat their children's text.
+    """
     rows = conn.execute(
         """
-        SELECT text FROM chunks
-        WHERE document_id = %s
-        ORDER BY chunk_index ASC
+        SELECT b.page_number, b.text
+        FROM document_blocks b
+        JOIN documents d ON d.document_id = b.document_id
+        WHERE b.document_id = %s
+          AND (d.current_version_id IS NULL OR b.version_id = d.current_version_id)
+        ORDER BY b.sequence ASC
         """,
         (document_id,),
     ).fetchall()
     if not rows:
+        rows = conn.execute(
+            """
+            SELECT page_number, text FROM chunks
+            WHERE document_id = %s AND NOT COALESCE(is_parent, false)
+            ORDER BY chunk_index ASC
+            """,
+            (document_id,),
+        ).fetchall()
+
+    pages: list[tuple[int, list[str]]] = []
+    for row in rows:
+        page = int(row["page_number"] or 1)
+        text = str(row["text"] or "").strip()
+        if not text:
+            continue
+        if pages and pages[-1][0] == page:
+            pages[-1][1].append(text)
+        else:
+            pages.append((page, [text]))
+    return [(page, "\n".join(parts)) for page, parts in pages]
+
+
+def paged_text(pages: list[tuple[int, str]]) -> str:
+    """Join pages with the [Page N] markers the citation rules refer to."""
+    return "\n\n".join(f"[Page {page}]\n{text}" for page, text in pages)
+
+
+def page_at(text: str, offset: int) -> int | None:
+    """Page number in effect at a character offset of paged_text output."""
+    page = None
+    for match in PAGE_MARKER_RE.finditer(text):
+        if match.start() > offset:
+            break
+        page = int(match.group(1))
+    return page
+
+
+def _fetch_document_text(conn, document_id: str) -> str:
+    """Full extracted text with [Page N] markers, so citations can name a real page."""
+    pages = fetch_document_pages(conn, document_id)
+    if not pages:
         return "Document could not be read."
-    return "\n".join(str(r["text"] or "") for r in rows)
+    return paged_text(pages)

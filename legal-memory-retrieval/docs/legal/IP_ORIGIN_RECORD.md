@@ -383,3 +383,12 @@ Our design: Optional `mode` on our existing chat message request. Mode text is o
 Mike NOT used as: source code basis
 Dependencies: none
 IP notes: Product-level workflow only. No Mike files, styles, or components were copied.
+
+### Feature: Chat workspace completion — step timeline, clarifying form, edit review, paged viewer
+Date: 2026-09-25
+Inspiration: Mike product observation — the assistant shows its working steps, asks clarifying questions in a form, proposes document edits the user can accept or reject, and opens cited sources beside the chat with the passage highlighted.
+Requirement: See `docs/plan/chat-workspace-cleanroom-plan.md` §1 (R1–R9) and §2 (viewer).
+Our design: Our own `DocumentViewer` (pdf.js canvas + text layer, fit-width/fit-page, pages rendered near the viewport, page box, zoom, draggable split) with a quote locator that searches the cited page, its neighbours, then all pages; OCR word boxes (`GET /api/documents/{id}/pages/{n}/words`) for highlights on scanned pages; `GET /api/documents/{id}/render` (PDF as is, office files via optional converter, else text view); `[Page N]`-marked document text so citations carry real pages, corrected from the verified quote position; `tool_started`/`tool_finished` events for a step timeline; `propose_edits` tool with accept/reject endpoints and tracked-changes Word export; attachments kept in scope and named to the model; clarifying-question form.
+Mike NOT used as: source code basis. Mike was reviewed for features and behaviour only; implementation must start in a session that has not opened Mike source.
+Dependencies: pdfjs-dist (Apache-2.0); LibreOffice headless (MPL-2.0, separate process — pending owner approval).
+IP notes: No Mike code, names, prompts, event names, or layouts carried into the plan.

@@ -15,3 +15,5 @@ frontend/playwright-report/
 # Mounted secret files (SECRETS_DIR)
 secrets/
 backups/
+frontend/public/pdfjs/
+data/object_store/render_cache/

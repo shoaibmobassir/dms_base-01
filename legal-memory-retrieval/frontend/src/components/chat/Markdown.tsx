@@ -94,6 +94,8 @@ export function Markdown({ text, renderCitation }: { text: string; renderCitatio
     // Ordered or Unordered Lists
     if (/^\s*([-*•]|\d+[.)])\s+/.test(line)) {
       const ordered = /^\s*\d+[.)]\s+/.test(line);
+      // Items separated by blank lines arrive as separate lists: keep the written number.
+      const start = ordered ? Number(line.match(/\d+/)?.[0] ?? 1) : undefined;
       const items: string[] = [];
       while (i < lines.length && /^\s*([-*•]|\d+[.)])\s+/.test(lines[i])) {
         items.push(lines[i].replace(/^\s*([-*•]|\d+[.)])\s+/, ""));
@@ -101,7 +103,7 @@ export function Markdown({ text, renderCitation }: { text: string; renderCitatio
       }
       const ListTag = ordered ? "ol" : "ul";
       blocks.push(
-        <ListTag key={blocks.length} className={ordered ? "my-2 list-decimal space-y-1.5 pl-6" : "my-2 list-disc space-y-1.5 pl-6"}>
+        <ListTag key={blocks.length} start={ordered && start !== 1 ? start : undefined} className={ordered ? "my-2 list-decimal space-y-1.5 pl-6" : "my-2 list-disc space-y-1.5 pl-6"}>
           {items.map((it, j) => (
             <li key={j}>{inline(it)}</li>
           ))}

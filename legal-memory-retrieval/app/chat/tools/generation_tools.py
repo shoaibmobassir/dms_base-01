@@ -64,6 +64,17 @@ def _store(save: Any, title: str, ext: str, mime: str, owner_member_id: str | No
     }
 
 
+def store_generated_bytes(data: bytes, title: str, ext: str, mime: str, owner_member_id: str | None) -> dict[str, Any]:
+    """Store already-built file bytes as a generated artifact. Returns filename, url, id."""
+    def save(path: str) -> None:
+        Path(path).write_bytes(data)
+
+    stored = _store(save, title, ext, mime, owner_member_id)
+    stored.pop("event", None)
+    stored.pop("version_id", None)
+    return stored
+
+
 def generate_docx(title: str, sections: list[dict[str, Any]], owner_member_id: str | None = None) -> dict[str, Any]:
     """
     Generate a Word (.docx) document from structured section content.
