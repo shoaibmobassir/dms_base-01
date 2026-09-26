@@ -15,6 +15,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from app.audit import events as audit
+from app.auth.deps import resolve_member
 from app.chat.agent import run_chat_agent, sse_done, sse_event
 from app.chat.models import (
     ChatMessage,
@@ -23,9 +25,12 @@ from app.chat.models import (
     ChatSessionCreate,
     ChatSessionPatch,
     MessageRole,
+    SessionStatus,
 )
 from app.chat.store import (
     append_message,
+    get_message,
+    set_message_events,
     create_session,
     delete_session,
     get_messages,
@@ -35,9 +40,21 @@ from app.chat.store import (
     update_assistant_message,
 )
 from app.chat.title_generator import generate_chat_title
-from app.chat.tools.document_tools import build_doc_index_from_hits
+from app.api.acl import ACL_CLAUSE
+from app.chat.tools.document_tools import (
+    DocIndex,
+    add_documents_to_index,
+    build_doc_index_from_hits,
+    fetch_document_pages,
+    paged_text,
+)
+from app.chat.tools.review_tools import EDIT_STATUSES, apply_accepted_edits, strip_page_markers
+from pydantic import BaseModel
+from app.config import settings
 from app.db.connection import connect
+from app.llm.bedrock_client import bedrock_configured
 from app.observability.request_id import current_request_id
+from app.resilience.rate_limit import check_rate_limit
 from app.retrieval.engine import retrieve
 
 logger = logging.getLogger(__name__)
@@ -55,44 +72,123 @@ def chat_health() -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Models and suggestions
+# ---------------------------------------------------------------------------
+
+def available_models() -> list[dict[str, Any]]:
+    """Models the chat agent can actually call.
+
+    The agent picks the provider by configuration (Bedrock → Gemini → Groq), so only
+    the active provider's model is offered — a model id from another provider would
+    be sent to the wrong API.
+    """
+    if bedrock_configured():
+        provider, model = "bedrock", settings.bedrock_model
+    elif settings.gemini_api_key:
+        provider, model = "gemini", settings.gemini_model
+    elif settings.groq_api_key:
+        provider, model = "groq", settings.groq_model
+    else:
+        return []
+    return [{"id": model, "label": model, "provider": provider, "default": True}]
+
+
+def _resolve_model(requested: str | None) -> str | None:
+    """Return ``requested`` if the active provider serves it, else the default model."""
+    models = available_models()
+    ids = {m["id"] for m in models}
+    if requested in ids:
+        return requested
+    return models[0]["id"] if models else None
+
+
+@router.get("/models")
+def list_models() -> dict:
+    models = available_models()
+    return {"service": "chat", "models": models, "configured": bool(models)}
+
+
+@router.get("/suggestions")
+def chat_suggestions(member_id: str | None = Depends(resolve_member)) -> dict:
+    """Starter questions drawn from the caller's most recent open matters."""
+    sql = f"""
+        SELECT m.matter_code, m.title, m.court
+        FROM matters m
+        LEFT JOIN permissions p ON p.matter_id = m.matter_id
+        WHERE m.status = 'Open' AND {ACL_CLAUSE}
+        ORDER BY m.opened_date DESC NULLS LAST, m.matter_id DESC
+        LIMIT 3
+    """
+    with connect() as conn:
+        rows = conn.execute(sql, {"member_id": member_id}).fetchall()
+    suggestions: list[str] = []
+    for r in rows:
+        suggestions.append(f"Summarise the arguments filed so far in {r['title']}.")
+        if r["court"]:
+            suggestions.append(f"What relief has been sought before the {r['court']} in {r['matter_code']}?")
+    return {"service": "chat", "suggestions": suggestions[:4]}
+
+
+# ---------------------------------------------------------------------------
 # Session CRUD
 # ---------------------------------------------------------------------------
 
+def _owned_session(conn, session_id: str, member_id: str | None) -> ChatSession:
+    """Return the session if the caller owns it; 404 otherwise (never leak existence).
+
+    An anonymous caller (dev mode, no X-Member-Id) may only reach unowned sessions.
+    """
+    session = get_session(conn, session_id)
+    # Deleting archives the row; to the owner it is gone.
+    if not session or session.member_id != member_id or session.status != SessionStatus.active:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    return session
+
+
 @router.post("/sessions", response_model=ChatSession)
-def create_chat_session(req: ChatSessionCreate):
-    """Create a new chat session."""
+def create_chat_session(
+    req: ChatSessionCreate,
+    member_id: str | None = Depends(resolve_member),
+):
+    """Create a new chat session owned by the caller."""
+    owned = req.model_copy(update={"member_id": member_id, "model": _resolve_model(req.model)})
     with connect() as conn:
-        session = create_session(conn, req)
+        session = create_session(conn, owned)
     return session
 
 
 @router.get("/sessions", response_model=list[ChatSession])
 def list_chat_sessions(
-    member_id: str | None = Query(None),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    member_id: str | None = Depends(resolve_member),
 ):
-    """List chat sessions, optionally filtered by member_id."""
+    """List the caller's chat sessions, newest first."""
+    if member_id is None:
+        return []
     with connect() as conn:
         sessions = list_sessions(conn, member_id=member_id, limit=limit, offset=offset)
     return sessions
 
 
 @router.get("/sessions/{session_id}")
-def get_chat_session(session_id: str):
+def get_chat_session(session_id: str, member_id: str | None = Depends(resolve_member)):
     """Get a chat session with all its messages."""
     with connect() as conn:
-        session = get_session(conn, session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Chat session not found")
+        session = _owned_session(conn, session_id, member_id)
         messages = get_messages(conn, session_id)
     return {"session": session, "messages": messages}
 
 
 @router.patch("/sessions/{session_id}", response_model=ChatSession)
-def update_chat_session(session_id: str, patch: ChatSessionPatch):
+def update_chat_session(
+    session_id: str,
+    patch: ChatSessionPatch,
+    member_id: str | None = Depends(resolve_member),
+):
     """Update session title, model, or status."""
     with connect() as conn:
+        _owned_session(conn, session_id, member_id)
         updated = patch_session(conn, session_id, patch)
         if not updated:
             raise HTTPException(status_code=404, detail="Chat session not found")
@@ -100,9 +196,10 @@ def update_chat_session(session_id: str, patch: ChatSessionPatch):
 
 
 @router.delete("/sessions/{session_id}", status_code=204)
-def delete_chat_session(session_id: str):
+def delete_chat_session(session_id: str, member_id: str | None = Depends(resolve_member)):
     """Soft-delete a chat session."""
     with connect() as conn:
+        _owned_session(conn, session_id, member_id)
         deleted = delete_session(conn, session_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Chat session not found")
@@ -112,17 +209,48 @@ def delete_chat_session(session_id: str):
 # SSE streaming message endpoint
 # ---------------------------------------------------------------------------
 
+def _with_attachments(conn, index: DocIndex, history: list[ChatMessage], member_id: str | None) -> DocIndex:
+    """Documents attached anywhere in this conversation stay in scope, ahead of search hits."""
+    ids: list[str] = []
+    for msg in history:
+        for f in msg.files or []:
+            if f.document_id and f.document_id not in ids:
+                ids.append(f.document_id)
+    if not ids:
+        return index
+    rows = conn.execute(
+        f"""
+        SELECT d.document_id, d.title
+        FROM documents d
+        LEFT JOIN permissions p ON p.matter_id = d.matter_id
+        WHERE d.document_id = ANY(%(ids)s) AND {ACL_CLAUSE}
+        """,
+        {"ids": ids, "member_id": member_id},
+    ).fetchall()
+    titles = {r["document_id"]: r["title"] for r in rows}
+    return add_documents_to_index(index, [(i, titles[i]) for i in ids if i in titles])
+
+
 @router.post("/sessions/{session_id}/messages")
-def send_message(session_id: str, req: ChatMessageCreate):
+def send_message(
+    session_id: str,
+    req: ChatMessageCreate,
+    member_id: str | None = Depends(resolve_member),
+):
     """
     Send a user message and receive an SSE-streamed assistant response.
     The response includes text deltas, tool events, citations, and [DONE].
     """
+    check_rate_limit(
+        f"chat:{member_id or 'anon'}",
+        limit=settings.rate_limit_chat_per_minute,
+        window_seconds=60.0,
+    )
     with connect() as conn:
-        session = get_session(conn, session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Chat session not found")
+        session = _owned_session(conn, session_id, member_id)
 
+        audit.record("chat.prompt", member_id=member_id, object_type="chat_session", object_id=session_id,
+                     matter_id=session.matter_id, detail={"prompt": req.content})
         # Persist the user message
         user_msg = append_message(
             conn,
@@ -147,7 +275,7 @@ def send_message(session_id: str, req: ChatMessageCreate):
             hits = []
 
         # Build document index from retrieval hits
-        doc_index = build_doc_index_from_hits(hits)
+        doc_index = _with_attachments(conn, build_doc_index_from_hits(hits), history, session.member_id)
 
         # Reserve assistant message ID
         assistant_msg = append_message(
@@ -158,8 +286,14 @@ def send_message(session_id: str, req: ChatMessageCreate):
             model=session.model,
         )
 
+    model = _resolve_model(session.model)
+
     def stream_response():
-        """Generator that yields SSE events from the agent loop."""
+        """Generator that yields SSE events from the agent loop.
+
+        If the client disconnects (the lawyer pressed Stop) the generator is closed
+        at a ``yield``; the ``finally`` block still saves the partial answer.
+        """
         # Emit session and message IDs
         yield sse_event("session_id", {
             "session_id": session_id,
@@ -167,68 +301,78 @@ def send_message(session_id: str, req: ChatMessageCreate):
         })
 
         full_text = ""
-        all_events = []
-        all_citations = []
+        all_events: list[dict[str, Any]] = []
+        all_citations: list[dict[str, Any]] = []
+        completed = False
 
         with connect() as stream_conn:
-            gen = run_chat_agent(
-                stream_conn,
-                req.content,
-                history,
-                doc_index,
-                session.model,
-                member_id=session.member_id,
-            )
-
             try:
-                while True:
-                    sse_chunk = next(gen)
-                    yield sse_chunk
-
-                    # Parse SSE to collect full text
-                    if sse_chunk.startswith("data: "):
-                        data_str = sse_chunk[6:].strip()
-                        if data_str and data_str != "[DONE]":
-                            try:
-                                data = json.loads(data_str)
-                                if data.get("type") == "text_delta":
-                                    full_text += data.get("text", "")
-                                elif data.get("type") == "citation_data":
-                                    all_citations.append(data)
-                                elif data.get("type") not in ("session_id", "done"):
-                                    all_events.append(data)
-                            except json.JSONDecodeError:
-                                pass
-
-            except StopIteration as e:
-                result = e.value or {}
-                full_text = result.get("full_text", full_text)
-                all_events = result.get("events", all_events)
-                all_citations = result.get("citations", all_citations)
-
-            # Auto-generate title if this is the first user message
-            if not session.title:
-                try:
-                    title = generate_chat_title(req.content)
-                    patch_session(stream_conn, session_id, ChatSessionPatch(title=title))
-                    yield sse_event("chat_title", {
-                        "session_id": session_id,
-                        "title": title,
-                    })
-                except Exception as exc:
-                    logger.warning("[chat] title generation failed: %s", exc)
-
-            # Update the reserved assistant message with final content
-            try:
-                update_assistant_message(
+                gen = run_chat_agent(
                     stream_conn,
-                    assistant_msg.id,
-                    content=full_text,
-                    events=all_events if all_events else None,
-                    citations=all_citations if all_citations else None,
+                    req.content,
+                    history,
+                    doc_index,
+                    model,
+                    member_id=session.member_id,
+                    mode=req.mode.value if req.mode else None,
+                    hit_count=len(doc_index),
                 )
-            except Exception as exc:
-                logger.error("[chat] failed to save assistant message: %s", exc)
+                try:
+                    while True:
+                        sse_chunk = next(gen)
+                        # Parse SSE to collect full text
+                        if sse_chunk.startswith("data: "):
+                            data_str = sse_chunk[6:].strip()
+                            if data_str and data_str != "[DONE]":
+                                try:
+                                    data = json.loads(data_str)
+                                    if data.get("type") == "text_delta":
+                                        full_text += data.get("text", "")
+                                    elif data.get("type") == "citation_data":
+                                        all_citations.append(data)
+                                    elif data.get("type") not in ("session_id", "done"):
+                                        all_events.append(data)
+                                except json.JSONDecodeError:
+                                    pass
+                        yield sse_chunk
+                except StopIteration as e:
+                    result = e.value or {}
+                    full_text = result.get("full_text", full_text)
+                    all_events = result.get("events", all_events)
+                    all_citations = result.get("citations", all_citations)
+                    completed = True
+
+                # Auto-generate title if this is the first user message
+                if not session.title:
+                    try:
+                        title = generate_chat_title(req.content)
+                        patch_session(stream_conn, session_id, ChatSessionPatch(title=title))
+                        yield sse_event("chat_title", {
+                            "session_id": session_id,
+                            "title": title,
+                        })
+                    except Exception as exc:
+                        logger.warning("[chat] title generation failed: %s", exc)
+            finally:
+                if not completed:
+                    all_events.append({"type": "stopped"})
+                audit.record("chat.answer", member_id=member_id, object_type="chat_session", object_id=session_id,
+                             matter_id=session.matter_id, detail={
+                                 "completed": completed,
+                                 "cited_documents": sorted({str(c.get("document_id")) for c in all_citations if c.get("document_id")}),
+                                 "chars": len(full_text),
+                             })
+                # Update the reserved assistant message with final (or partial) content
+                try:
+                    update_assistant_message(
+                        stream_conn,
+                        assistant_msg.id,
+                        content=full_text,
+                        events=all_events if all_events else None,
+                        citations=all_citations if all_citations else None,
+                    )
+                except Exception as exc:
+                    logger.error("[chat] failed to save assistant message: %s", exc)
 
     return StreamingResponse(
         stream_response(),
@@ -246,7 +390,11 @@ def send_message(session_id: str, req: ChatMessageCreate):
 # ---------------------------------------------------------------------------
 
 @router.post("/sessions/{session_id}/ask")
-def ask_sync(session_id: str, req: ChatMessageCreate):
+def ask_sync(
+    session_id: str,
+    req: ChatMessageCreate,
+    member_id: str | None = Depends(resolve_member),
+):
     """
     Synchronous message endpoint — sends a message and returns the full
     assistant response as JSON (no streaming). Useful for testing.
@@ -254,9 +402,7 @@ def ask_sync(session_id: str, req: ChatMessageCreate):
     from app.chat.agent import run_chat_agent_sync
 
     with connect() as conn:
-        session = get_session(conn, session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Chat session not found")
+        session = _owned_session(conn, session_id, member_id)
 
         # Persist user message
         append_message(conn, session_id, role=MessageRole.user, content=req.content, files=req.files)
@@ -268,7 +414,7 @@ def ask_sync(session_id: str, req: ChatMessageCreate):
         except Exception:
             hits = []
 
-        doc_index = build_doc_index_from_hits(hits)
+        doc_index = _with_attachments(conn, build_doc_index_from_hits(hits), history, session.member_id)
 
         # Run agent synchronously
         result = run_chat_agent_sync(
@@ -276,8 +422,10 @@ def ask_sync(session_id: str, req: ChatMessageCreate):
             req.content,
             history,
             doc_index,
-            session.model,
+            _resolve_model(session.model),
             member_id=session.member_id,
+            mode=req.mode.value if req.mode else None,
+            hit_count=len(doc_index),
         )
 
         # Save assistant response
@@ -304,3 +452,89 @@ def ask_sync(session_id: str, req: ChatMessageCreate):
         "events": result.get("events", []),
         "citations": result.get("citations", []),
     }
+
+
+# ---------------------------------------------------------------------------
+# Suggested edits: accept / reject, then export as tracked changes
+# ---------------------------------------------------------------------------
+
+class EditDecision(BaseModel):
+    status: str
+
+
+def _edit_groups(events: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    return [e for e in (events or []) if e.get("type") == "edit_proposals"]
+
+
+@router.patch("/sessions/{session_id}/messages/{message_id}/edits/{edit_id}")
+def decide_edit(
+    session_id: str,
+    message_id: str,
+    edit_id: str,
+    body: EditDecision,
+    member_id: str | None = Depends(resolve_member),
+):
+    """Record the lawyer's decision on one suggested edit."""
+    if body.status not in EDIT_STATUSES:
+        raise HTTPException(status_code=422, detail=f"status must be one of {', '.join(EDIT_STATUSES)}")
+    with connect() as conn:
+        _owned_session(conn, session_id, member_id)
+        msg = get_message(conn, session_id, message_id)
+        if msg is None:
+            raise HTTPException(status_code=404, detail="Message not found")
+        events = list(msg.events or [])
+        found = None
+        for group in _edit_groups(events):
+            for edit in group.get("edits", []):
+                if edit.get("id") == edit_id:
+                    edit["status"] = body.status
+                    found = edit
+        if found is None:
+            raise HTTPException(status_code=404, detail="Edit not found")
+        set_message_events(conn, message_id, events)
+    audit.record("chat.edit_decision", member_id=member_id, object_type="chat_message", object_id=message_id,
+                 detail={"edit_id": edit_id, "status": body.status})
+    return found
+
+
+@router.post("/sessions/{session_id}/messages/{message_id}/edits/export")
+def export_edits(
+    session_id: str,
+    message_id: str,
+    document_id: str = Query(..., description="The edited document"),
+    member_id: str | None = Depends(resolve_member),
+):
+    """Build a Word file showing the accepted edits as tracked changes."""
+    from app.chat.tools.generation_tools import store_generated_bytes
+    from app.drafting.docx_redline_generator import DocxRedlineGenerator
+
+    with connect() as conn:
+        _owned_session(conn, session_id, member_id)
+        msg = get_message(conn, session_id, message_id)
+        if msg is None:
+            raise HTTPException(status_code=404, detail="Message not found")
+        edits = [
+            e for g in _edit_groups(msg.events) if g.get("document_id") == document_id
+            for e in g.get("edits", [])
+        ]
+        if not any(e.get("status") == "accepted" for e in edits):
+            raise HTTPException(status_code=409, detail="Accept at least one edit first")
+        row = conn.execute("SELECT title FROM documents WHERE document_id = %s", (document_id,)).fetchone()
+        pages = fetch_document_pages(conn, document_id)
+    if not pages:
+        raise HTTPException(status_code=404, detail="Document text not available")
+
+    original = strip_page_markers(paged_text(pages))
+    revised, applied = apply_accepted_edits(original, edits)
+    if applied == 0:
+        raise HTTPException(status_code=409, detail="None of the accepted edits could be placed in the document")
+    title = f"{(row or {}).get('title') or document_id} (suggested edits)"
+    data = DocxRedlineGenerator().create_tracked_diff_docx(original, revised, title=title)
+    stored = store_generated_bytes(
+        data, title, "docx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        member_id,
+    )
+    audit.record("chat.edit_export", member_id=member_id, object_type="chat_message", object_id=message_id,
+                 detail={"document_id": document_id, "applied": applied})
+    return {**stored, "applied": applied}

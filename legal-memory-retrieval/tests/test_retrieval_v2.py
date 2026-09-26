@@ -775,29 +775,37 @@ class TestEdgeCases:
         )
         assert len(ctx.query_raw) == 50000
 
-    def test_pool_not_initialized_raises(self):
-        """acquire() should raise RuntimeError when pool isn't initialized."""
+    def test_acquire_opens_a_pool_for_the_running_loop(self, monkeypatch):
+        """Pools are per event loop: acquire() on a fresh loop opens that loop's pool."""
         import app.db.pool as pool_mod
-        original_pool = pool_mod._pool
-        pool_mod._pool = None
-        try:
-            async def _test():
-                async with pool_mod.acquire() as conn:
-                    pass
-            with pytest.raises(RuntimeError, match="not initialized"):
-                asyncio.run(_test())
-        finally:
-            pool_mod._pool = original_pool
+        monkeypatch.setattr(pool_mod, "_pools", {})
 
-    def test_pool_stats_when_not_initialized(self):
-        import app.db.pool as pool_mod
-        original_pool = pool_mod._pool
-        pool_mod._pool = None
-        try:
+        async def _test():
+            async with pool_mod.acquire() as conn:
+                cur = await conn.execute("SELECT 1 AS one")
+                row = await cur.fetchone()
             stats = pool_mod.pool_stats()
-            assert stats == {"initialized": False}
-        finally:
-            pool_mod._pool = original_pool
+            await pool_mod.close_pool()
+            return row, stats
+
+        row, stats = asyncio.run(_test())
+        assert row["one"] == 1
+        assert stats["initialized"] is True and stats["pools"] == 1
+
+    def test_pool_stats_when_not_initialized(self, monkeypatch):
+        import app.db.pool as pool_mod
+        monkeypatch.setattr(pool_mod, "_pools", {})
+        assert pool_mod.pool_stats() == {"initialized": False}
+
+    def test_sync_retrieve_reuses_worker_loops(self):
+        """Repeated sync calls run on the same long-lived loops (no per-call asyncio.run)."""
+        from app.db.loop import _loops, run_sync
+
+        async def _loop_id():
+            return id(asyncio.get_running_loop())
+
+        seen = {run_sync(_loop_id()) for _ in range(12)}
+        assert seen <= {id(loop) for loop in _loops()}
 
 
 class TestQueryUnderstandingEdgeCases:

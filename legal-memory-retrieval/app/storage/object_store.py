@@ -11,8 +11,9 @@ from __future__ import annotations
 import hashlib
 import mimetypes
 import re
+import shutil
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import BinaryIO, Protocol, runtime_checkable
 
 from app.config import settings
 
@@ -57,6 +58,9 @@ class ObjectStore(Protocol):
     def put(self, key: str, data: bytes, *, content_type: str | None = None) -> str:
         """Store bytes; return canonical storage_uri."""
 
+    def put_file(self, key: str, fileobj: BinaryIO, *, content_type: str | None = None) -> str:
+        """Stream a file object (from its current position); return canonical storage_uri."""
+
     def get(self, key_or_uri: str) -> bytes:
         ...
 
@@ -81,12 +85,16 @@ class LocalObjectStore:
         key = key_or_uri
         if key.startswith("file://"):
             key = key[len("file://") :]
-            # Allow absolute file:// paths under root
             p = Path(key)
-            if p.is_absolute():
-                return p
-        # Strip root prefix if someone passed a full path as key
-        return self.root / key.lstrip("/")
+            candidate = p if p.is_absolute() else self.root / key.lstrip("/")
+        else:
+            candidate = self.root / key.lstrip("/")
+        # Never resolve outside the store root: a stored URI or key must not be able
+        # to name an arbitrary server file (e.g. file:///etc/passwd or ../../.env).
+        resolved = candidate.resolve()
+        if not resolved.is_relative_to(self.root):
+            raise FileNotFoundError(key_or_uri)
+        return resolved
 
     def uri_for(self, key: str) -> str:
         return f"file://{self._path(key)}"
@@ -102,6 +110,15 @@ class LocalObjectStore:
             )
         return self.uri_for(key)
 
+    def put_file(self, key: str, fileobj: BinaryIO, *, content_type: str | None = None) -> str:
+        path = self._path(key)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("wb") as out:
+            shutil.copyfileobj(fileobj, out, length=1024 * 1024)
+        if content_type:
+            path.with_suffix(path.suffix + ".content_type").write_text(content_type, encoding="utf-8")
+        return self.uri_for(key)
+
     def get(self, key_or_uri: str) -> bytes:
         path = self._path(key_or_uri)
         if not path.is_file():
@@ -109,7 +126,10 @@ class LocalObjectStore:
         return path.read_bytes()
 
     def exists(self, key_or_uri: str) -> bool:
-        return self._path(key_or_uri).is_file()
+        try:
+            return self._path(key_or_uri).is_file()
+        except FileNotFoundError:
+            return False
 
     def delete(self, key_or_uri: str) -> None:
         path = self._path(key_or_uri)
@@ -171,6 +191,12 @@ class S3ObjectStore:
         k = self._key(key)
         extra = {"ContentType": content_type} if content_type else {}
         self._client.put_object(Bucket=self.bucket, Key=k, Body=data, **extra)
+        return self.uri_for(k)
+
+    def put_file(self, key: str, fileobj: BinaryIO, *, content_type: str | None = None) -> str:
+        k = self._key(key)
+        extra = {"ExtraArgs": {"ContentType": content_type}} if content_type else {}
+        self._client.upload_fileobj(fileobj, self.bucket, k, **extra)  # multipart for large files
         return self.uri_for(k)
 
     def get(self, key_or_uri: str) -> bytes:

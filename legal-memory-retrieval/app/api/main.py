@@ -1,11 +1,14 @@
 from contextlib import asynccontextmanager
 import logging
 import os
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+from app.api.routers import access as access_router
+from app.api.routers import admin as admin_router
 from app.api.routers import (
     activity,
     answers,
@@ -31,13 +34,28 @@ from app.api.routers import (
     word_router,
     caselaw_router,
     audit_router,
+    auth_router,
 )
+from app.api.limits import BodySizeLimitMiddleware
+from app.api.security_headers import SecurityHeadersMiddleware
+from app.auth.deps import resolve_member
+from app.config import settings
+from app.db.connection import close_sync_pool, init_sync_pool
+from app.db import loop as loop_workers
+from app.observability import warmup
 from app.db.pool import close_pool, init_pool
 from app.observability.request_id import RequestIDMiddleware
 from app.observability.tracing import setup_tracing
 from app.sprint import CURRENT_SPRINT
 
 logger = logging.getLogger(__name__)
+
+from app.observability import redaction  # noqa: E402
+
+redaction.install()
+
+if settings.env == "production" and (_problems := settings.production_problems()):
+    raise RuntimeError("Refusing to start with unsafe production settings:\n  - " + "\n  - ".join(_problems))
 
 SERVICE_CATALOG = {
     "system": {"prefix": "/api/system", "health": "/api/system/health"},
@@ -62,6 +80,8 @@ SERVICE_CATALOG = {
     "word": {"prefix": "/api/word", "health": "/api/word/health"},
     "caselaw": {"prefix": "/api/caselaw", "health": "/api/caselaw/health"},
     "audit": {"prefix": "/api/audit", "health": "/api/audit/health"},
+    "access": {"prefix": "/api/access", "health": "/api/access/health"},
+    "admin": {"prefix": "/api/admin", "health": "/api/admin/health"},
     "chat": {"prefix": "/api/chat", "health": "/api/chat/health"},
     "sources": {"prefix": "/api/sources", "health": "/api/sources/health"},
 }
@@ -70,16 +90,24 @@ SERVICE_CATALOG = {
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     setup_tracing()
-    # Initialize async connection pool for parallel retrieval engine
+    try:
+        init_sync_pool()
+    except Exception as exc:
+        logger.warning("Sync pool init failed (lazy connect will retry): %s", exc)
     try:
         await init_pool()
         logger.info("Async connection pool initialized")
     except Exception as exc:
         logger.warning("Async pool init failed (v1 engine will still work): %s", exc)
+    if settings.env != "test" and os.environ.get("WARM_MODELS", "1") != "0":
+        warmup.start_background()
+    else:
+        warmup.skip()
     yield
-    # Cleanup
     await close_pool()
-    logger.info("Async connection pool closed")
+    loop_workers.shutdown()
+    close_sync_pool()
+    logger.info("Connection pools closed")
 
 
 app = FastAPI(
@@ -87,61 +115,93 @@ app = FastAPI(
     version="1.0.0",
     description="Production-grade Legal Document Management & Institutional Memory Intelligence Engine",
     lifespan=lifespan,
+    # Interactive docs expose the whole API surface and load scripts from a CDN.
+    docs_url=None if settings.env == "production" else "/docs",
+    redoc_url=None if settings.env == "production" else "/redoc",
+    openapi_url=None if settings.env == "production" else "/openapi.json",
 )
 
+_cors_origins = settings.cors_origin_list
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    # Credentials may only be combined with an explicit origin allow-list.
+    allow_credentials="*" not in _cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Request-ID"],
 )
+app.add_middleware(BodySizeLimitMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 # Added last so it is outermost and still echoes the id on streamed responses.
 app.add_middleware(RequestIDMiddleware)
 
+# System (health, info, firm branding) is public so probes and the sign-in screen work.
 app.include_router(system.router, prefix="/api/system")
-app.include_router(home.router, prefix="/api/home")
-app.include_router(retrieval.router, prefix="/api/retrieval")
-app.include_router(answers.router, prefix="/api/answers")
-app.include_router(matters.router, prefix="/api/matters")
-app.include_router(documents_router.router, prefix="/api/documents")
-app.include_router(projects.router, prefix="/api/projects")
-app.include_router(clients.router, prefix="/api/clients")
-app.include_router(people.router, prefix="/api/people")
-app.include_router(search.router, prefix="/api/search")
-app.include_router(teams.router, prefix="/api/teams")
-app.include_router(knowledge.router, prefix="/api/knowledge")
-app.include_router(activity.router, prefix="/api/activity")
-app.include_router(tasks.router, prefix="/api/tasks")
-app.include_router(reviews.router, prefix="/api/reviews")
-app.include_router(uploads.router, prefix="/api/uploads")
-app.include_router(tabular.router, prefix="/api/tabular")
-app.include_router(workflows_router.router, prefix="/api/workflows")
-app.include_router(drafting_router.router, prefix="/api/drafting")
-app.include_router(word_router.router, prefix="/api/word")
-app.include_router(caselaw_router.router, prefix="/api/caselaw")
-app.include_router(audit_router.router, prefix="/api/audit")
-app.include_router(chat_router.router, prefix="/api/chat")
-app.include_router(sources.router, prefix="/api/sources")
+# Sign-in endpoints create identity, so they can't require it (revocation checks the caller itself).
+app.include_router(auth_router.router, prefix="/api/auth")
+
+# Everything else requires an identity: with AUTH_ENABLED=true that means a valid API
+# key, even on routers whose handlers don't read the member themselves.
+_AUTHED_ROUTERS = [
+    (home, "home"),
+    (retrieval, "retrieval"),
+    (answers, "answers"),
+    (matters, "matters"),
+    (documents_router, "documents"),
+    (clients, "clients"),
+    (people, "people"),
+    (search, "search"),
+    (teams, "teams"),
+    (knowledge, "knowledge"),
+    (tasks, "tasks"),
+    (reviews, "reviews"),
+    (uploads, "uploads"),
+    (tabular, "tabular"),
+    (workflows_router, "workflows"),
+    (drafting_router, "drafting"),
+    (word_router, "word"),
+    (caselaw_router, "caselaw"),
+    (audit_router, "audit"),
+    (access_router, "access"),
+    (admin_router, "admin"),
+    (chat_router, "chat"),
+    (sources, "sources"),
+]
+if settings.enable_legacy_projects:
+    _AUTHED_ROUTERS += [(projects, "projects"), (activity, "activity")]
+else:
+    SERVICE_CATALOG.pop("projects", None)
+    SERVICE_CATALOG.pop("activity", None)
+
+for _module, _name in _AUTHED_ROUTERS:
+    app.include_router(_module.router, prefix=f"/api/{_name}", dependencies=[Depends(resolve_member)])
 
 
-_static_dir = os.path.join(os.path.dirname(__file__), "..", "..", "static")
+_static_dir = Path(__file__).resolve().parents[2] / "static"
 
 
 def _spa_index() -> FileResponse:
-    return FileResponse(os.path.join(_static_dir, "index.html"))
+    return FileResponse(_static_dir / "index.html")
 
 
-if os.path.isdir(_static_dir):
+def _static_asset(rest: str) -> Path | None:
+    """Return the file for ``rest`` only if it resolves inside ``static/``."""
+    asset = (_static_dir / rest).resolve()
+    if asset.is_relative_to(_static_dir) and asset.is_file():
+        return asset
+    return None
+
+
+if _static_dir.is_dir():
 
     @app.get("/ui")
     @app.get("/ui/{rest:path}")
     def spa_ui(rest: str = "") -> FileResponse:
         """Serve static assets; all other /ui/* paths fall back to the SPA shell."""
         if rest:
-            asset = os.path.join(_static_dir, rest)
-            if os.path.isfile(asset):
+            asset = _static_asset(rest)
+            if asset is not None:
                 return FileResponse(asset)
         return _spa_index()
 

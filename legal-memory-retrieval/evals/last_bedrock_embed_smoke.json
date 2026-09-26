@@ -1,0 +1,12 @@
+{
+  "cohere.embed-v4:0": {
+    "ok": false,
+    "dim": null,
+    "error": "Client error '403 Forbidden' for url 'https://bedrock-runtime.us-east-2.amazonaws.com/model/cohere.embed-v4%3A0/invoke'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403"
+  },
+  "amazon.titan-embed-text-v2:0": {
+    "ok": false,
+    "dim": null,
+    "error": "Client error '403 Forbidden' for url 'https://bedrock-runtime.us-east-2.amazonaws.com/model/amazon.titan-embed-text-v2%3A0/invoke'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403"
+  }
+}

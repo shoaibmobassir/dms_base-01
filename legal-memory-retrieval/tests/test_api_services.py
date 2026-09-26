@@ -58,13 +58,10 @@ def test_clients_list() -> None:
     assert resp.json()["service"] == "clients"
 
 
-def test_projects_list() -> None:
+def test_legacy_projects_unmounted_by_default() -> None:
+    # No UI since the frontend prune; re-enable with ENABLE_LEGACY_PROJECTS=true.
     client = TestClient(app)
-    resp = client.get("/api/projects?limit=5", headers=HEADERS)
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["service"] == "projects"
-    assert "items" in body
+    assert client.get("/api/projects?limit=5", headers=HEADERS).status_code == 404
 
 
 def test_teams_list() -> None:
@@ -81,11 +78,9 @@ def test_knowledge_arguments() -> None:
     assert resp.json()["service"] == "knowledge"
 
 
-def test_activity_feed() -> None:
+def test_legacy_activity_unmounted_by_default() -> None:
     client = TestClient(app)
-    resp = client.get("/api/activity?limit=5", headers=HEADERS)
-    assert resp.status_code == 200
-    assert resp.json()["service"] == "activity"
+    assert client.get("/api/activity?limit=5", headers=HEADERS).status_code == 404
 
 
 def test_tasks_list() -> None:

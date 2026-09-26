@@ -12,8 +12,8 @@ MATTER_CODE_RE = re.compile(r"\b[A-Z]{3}/[A-Z]{3}/\d{4}/\d{4}\b")
 ACL = """
     (
         (%(member_id)s::text IS NULL)
-        OR p.restricted = FALSE
-        OR %(member_id)s::text = ANY (p.allowed_members)
+        OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+            AND NOT (%(member_id)s::text = ANY (p.denied_members)))
     )
 """
 

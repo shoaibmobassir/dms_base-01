@@ -205,7 +205,13 @@ def parse_from_extracted(
 
 
 def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
-    """Persist a list of canonical blocks into PostgreSQL."""
+    """Persist canonical blocks, one row per (version_id, sequence).
+
+    Re-parsing a version (reindex, review, diff, lazy block load) updates the
+    existing rows instead of appending copies. The stored block_id is kept and
+    written back onto each ``DocumentBlock`` so callers that link chunks or
+    anchors to blocks use the persisted id.
+    """
     if not blocks:
         return 0
 
@@ -223,10 +229,20 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
                         %(sec_id)s, %(sec_title)s, %(btype)s, %(text)s, %(thash)s,
                         %(soff)s, %(eoff)s, %(meta)s
                     )
-                    ON CONFLICT (block_id) DO UPDATE SET
+                    ON CONFLICT (version_id, sequence) DO UPDATE SET
+                        -- A parse without page spans puts every block on page 1;
+                        -- keep the page a page-aware parse recorded earlier.
+                        page_number = CASE WHEN EXCLUDED.page_number <> 1 THEN EXCLUDED.page_number
+                                           ELSE document_blocks.page_number END,
+                        section_id = EXCLUDED.section_id,
+                        section_title = EXCLUDED.section_title,
+                        block_type = EXCLUDED.block_type,
                         text = EXCLUDED.text,
                         text_hash = EXCLUDED.text_hash,
+                        start_offset = EXCLUDED.start_offset,
+                        end_offset = EXCLUDED.end_offset,
                         metadata = EXCLUDED.metadata
+                    RETURNING block_id
                     """,
                     {
                         "bid": b.block_id,
@@ -244,6 +260,9 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
                         "meta": json.dumps(b.metadata),
                     },
                 )
+                row = cur.fetchone()
+                if row:
+                    b.block_id = row["block_id"] if isinstance(row, dict) else row[0]
             conn.commit()
     return len(blocks)
 

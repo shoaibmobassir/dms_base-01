@@ -72,3 +72,44 @@ Before adding any package:
 ## AGPL / GPL flag
 
 Any package under AGPL or GPL **must not be added to production dependencies** without explicit legal review, because their copyleft could extend to our proprietary code distributed over a network.
+
+---
+
+## Frontend npm dependencies (`frontend/package.json`)
+
+Added 2026-09-22 for FirmOS Vite SPA. No AGPL/GPL/SSPL packages.
+
+| Package | License (typical) | Copyleft? | Approved |
+|---------|-------------------|-----------|----------|
+| react / react-dom | MIT | No | ✅ |
+| react-router-dom | MIT | No | ✅ |
+| @tanstack/react-query | MIT | No | ✅ |
+| @radix-ui/react-* (dialog, dropdown-menu, scroll-area, separator, slot, tabs, tooltip) | MIT | No | ✅ |
+| class-variance-authority | Apache-2.0 | No | ✅ |
+| clsx / tailwind-merge | MIT | No | ✅ |
+| cmdk | MIT | No | ✅ |
+| lucide-react | ISC | No | ✅ |
+| sonner | MIT | No | ✅ |
+| tailwindcss-animate | MIT | No | ✅ |
+| vite / @vitejs/plugin-react | MIT | No | ✅ |
+| typescript | Apache-2.0 | No | ✅ |
+| tailwindcss / postcss / autoprefixer | MIT | No | ✅ |
+
+**Not included (intentionally):** Emergent overlay packages, PostHog, CRA/CRACO, axios.
+
+
+### Added 2026-09-24 (production plan 06)
+
+| Package | License | Copyleft? | Scope | Approved |
+|---------|---------|-----------|-------|----------|
+| @playwright/test 1.63.0 | Apache-2.0 | No | devDependency (browser tests only; not shipped) | ✅ |
+
+### Added 2026-09-25 (chat workspace viewer)
+
+| Package | License | Copyleft? | Scope | Approved |
+|---------|---------|-----------|-------|----------|
+| pdfjs-dist 6.x | Apache-2.0 | No | Frontend runtime (PDF page rendering + text layer for highlights) | ✅ |
+| pdf.js runtime assets (`wasm/`, `standard_fonts/`, `cmaps/`, `iccs/` from pdfjs-dist) | Apache-2.0 (pdf.js), BSD-2 (OpenJPEG), BSD-3 (PDFium JBIG2), MIT (qcms); fonts under their bundled licences | No | Frontend runtime; copied to `public/pdfjs/` by `scripts/copy-pdfjs-assets.mjs` (decodes scanned-page images) | ✅ |
+| Tesseract OCR (system binary) | Apache-2.0 | No | Separate process: ingest OCR (existing) and `app/documents/page_words.py` word boxes for highlights on scanned pages | ✅ |
+| Poppler `pdftoppm` (system binary) | GPL-2.0/3.0 | Yes (strong) | Not bundled or linked; invoked as a separate process by ingest OCR (existing) and `page_words.py`. Was already in use but unrecorded | ⏳ Pending owner approval (GPL tool, process boundary only) |
+| LibreOffice (system binary, optional) | MPL-2.0 | Weak (file-level) | Not bundled or linked; invoked as a separate process by `app/documents/pdf_render.py` only if installed on the server | ⏳ Pending owner approval — code works without it (Word files fall back to the text view) |

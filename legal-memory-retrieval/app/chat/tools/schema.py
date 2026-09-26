@@ -260,6 +260,128 @@ ASK_INPUTS = {
 }
 
 
+PROPOSE_EDITS = {
+    "type": "function",
+    "function": {
+        "name": "propose_edits",
+        "description": (
+            "Suggest specific changes to one document for the lawyer to accept or "
+            "reject. Read the document first. Each edit replaces an exact passage "
+            "copied verbatim from the document with new wording, and gives a short reason."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "doc_id": {"type": "string", "description": "The document to edit (e.g. 'doc-0')."},
+                "edits": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "original": {
+                                "type": "string",
+                                "description": "Exact passage from the document to replace. Copy it verbatim; do not include [Page N] markers.",
+                            },
+                            "proposed": {
+                                "type": "string",
+                                "description": "Replacement wording. Empty string to delete the passage.",
+                            },
+                            "reason": {"type": "string", "description": "One sentence on why."},
+                        },
+                        "required": ["original", "proposed", "reason"],
+                    },
+                },
+            },
+            "required": ["doc_id", "edits"],
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Firm knowledge tools (Ask the Firm layer)
+# ---------------------------------------------------------------------------
+
+ASK_FIRM = {
+    "type": "function",
+    "function": {
+        "name": "ask_firm",
+        "description": (
+            "Ask the firm's knowledge desk a question about the firm's own matters, clients, "
+            "documents or people (e.g. 'what is the long stop date?', 'who led our work on X?', "
+            "'which matters have we handled for Acme?'). Resolves the matter, reads the matter "
+            "record, team and the most relevant passages, and returns a draft answer plus "
+            "verbatim passages (with doc-N labels) you can quote and cite. Prefer this over "
+            "search_firm_records for factual questions about firm matters."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "question": {"type": "string", "description": "The question in plain language."},
+                "scope": {
+                    "type": "string",
+                    "description": "Optional matter code, matter id, matter title or client name to limit the question to.",
+                },
+            },
+            "required": ["question"],
+        },
+    },
+}
+
+RESOLVE_MATTER = {
+    "type": "function",
+    "function": {
+        "name": "resolve_matter",
+        "description": (
+            "Identify which firm matter a description refers to (parties, subject, facts, "
+            "code or title), e.g. 'the series B deal where the seed investor sold its shares'. "
+            "Returns the resolved matter or ranked candidates with confidence."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {"query": {"type": "string", "description": "Description of the matter."}},
+            "required": ["query"],
+        },
+    },
+}
+
+GET_MATTER_PROFILE = {
+    "type": "function",
+    "function": {
+        "name": "get_matter_profile",
+        "description": (
+            "Get a matter's full record: parties, facts, legal issues, status, forum, team with "
+            "roles, open deadlines and its documents (as doc-N labels you can read)."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {"matter": {"type": "string", "description": "Matter code, matter id or title."}},
+            "required": ["matter"],
+        },
+    },
+}
+
+FIND_PEOPLE = {
+    "type": "function",
+    "function": {
+        "name": "find_people",
+        "description": (
+            "Find firm members: the team on a matter (pass `matter`), or people with expertise, "
+            "a role or an office (pass `query`, e.g. 'expert in boundary disputes', 'partner in Delhi')."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Expertise, role or office to look for."},
+                "matter": {"type": "string", "description": "Matter code, id or title to list its team."},
+            },
+        },
+    },
+}
+
+
 # ---------------------------------------------------------------------------
 # Workflow tools
 # ---------------------------------------------------------------------------
@@ -299,6 +421,10 @@ READ_WORKFLOW = {
 # ---------------------------------------------------------------------------
 
 CORE_TOOLS = [
+    ASK_FIRM,
+    RESOLVE_MATTER,
+    GET_MATTER_PROFILE,
+    FIND_PEOPLE,
     SEARCH_FIRM_RECORDS,
     READ_DOCUMENT,
     FETCH_DOCUMENTS,
@@ -306,6 +432,7 @@ CORE_TOOLS = [
     GENERATE_DOCX,
     GENERATE_EXCEL,
     ASK_INPUTS,
+    PROPOSE_EDITS,
 ]
 
 WORKFLOW_TOOLS = [LIST_WORKFLOWS, READ_WORKFLOW]

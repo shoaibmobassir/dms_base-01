@@ -425,6 +425,16 @@ class TestBug006SyncWrapperPoolHandling:
     initialized in that new thread's event loop.
     """
 
+    @pytest.fixture(autouse=True)
+    def _no_retrieval_cache(self):
+        # Every test here queries "test" with a mocked engine. Without this, the
+        # first result is cached (Redis/in-process) and served to the next test —
+        # and fake hits leak into the shared cache for real callers.
+        with patch("app.cache.multi_tier.cache_get", return_value=None), patch(
+            "app.cache.multi_tier.cache_set"
+        ):
+            yield
+
     def test_sync_wrapper_formats_output_correctly(self):
         """Sync wrapper must convert Candidates to dicts with
         fused_score, score, and ce_score fields."""

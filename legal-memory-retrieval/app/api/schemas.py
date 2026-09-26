@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
 class RetrieveRequest(BaseModel):
@@ -6,9 +8,17 @@ class RetrieveRequest(BaseModel):
     k: int = 20
 
 
+class AskScope(BaseModel):
+    """What an Ask-the-Firm question is limited to (set by matter / client pages)."""
+
+    type: Literal["matter", "client", "auto"] = "auto"
+    value: str = Field(min_length=1, max_length=200)
+
+
 class AskRequest(BaseModel):
     query: str
     k: int = 10
+    scope: AskScope | None = None
 
 
 class ProjectCreate(BaseModel):

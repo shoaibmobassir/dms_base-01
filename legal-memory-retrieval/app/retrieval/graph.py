@@ -8,8 +8,8 @@ from app.retrieval.route import MATTER_ID_RE
 ACL = """
     (
         (%(member_id)s::text IS NULL)
-        OR p.restricted = FALSE
-        OR %(member_id)s::text = ANY (p.allowed_members)
+        OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+            AND NOT (%(member_id)s::text = ANY (p.denied_members)))
     )
 """
 

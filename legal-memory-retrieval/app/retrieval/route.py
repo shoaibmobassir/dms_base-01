@@ -3,7 +3,8 @@ from __future__ import annotations
 import re
 
 MATTER_ID_RE = re.compile(r"\bMTR-\d{4}-\d+\b", re.I)
-MATTER_CODE_RE = re.compile(r"\b[A-Z]{3}/[A-Z]{3}/\d{4}/\d{4}\b")
+# Firm matter codes: PIL/HAG/0005/1925, CORP/BLR/0901/2026 (2–6 letter segments).
+MATTER_CODE_RE = re.compile(r"\b[A-Z]{2,6}/[A-Z]{2,6}/\d{3,4}/\d{4}\b")
 EXACT_HINT_RE = re.compile(
     r"\b(matter code|what happened in|document id|doc-\d+)\b",
     re.I,

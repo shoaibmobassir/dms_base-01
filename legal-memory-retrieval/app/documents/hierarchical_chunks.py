@@ -169,16 +169,26 @@ def build_hierarchical_chunks(
 
 
 def save_version_chunks(chunks: list[HierarchicalChunk]) -> int:
-    """Persist hierarchical chunks for a version (does not overwrite other versions)."""
+    """Persist the search chunks for a document's *current* version.
+
+    The retrieval index holds one version per document (the current one): chunk rows
+    are unique per (document_id, chunk_index), and indexing superseded text would put
+    stale clauses into answers. Earlier versions keep their body and blocks in
+    ``document_versions`` / ``document_blocks``, so citations to them still resolve.
+    Chunks for a non-current version are not indexed (returns 0).
+    """
     if not chunks:
         return 0
+    doc_id, vid = chunks[0].document_id, chunks[0].version_id
     with connect() as conn:
         with conn.cursor() as cur:
-            # Remove prior chunks for THIS version only (immutable re-parse safe)
-            cur.execute(
-                "DELETE FROM chunks WHERE version_id = %(vid)s",
-                {"vid": chunks[0].version_id},
-            )
+            cur.execute("SELECT current_version_id FROM documents WHERE document_id = %s", (doc_id,))
+            row = cur.fetchone()
+            current = None if row is None else (row["current_version_id"] if isinstance(row, dict) else row[0])
+            if current != vid:
+                return 0
+            # Replace whatever the document had indexed (older version or legacy chunks).
+            cur.execute("DELETE FROM chunks WHERE document_id = %(did)s", {"did": doc_id})
             for c in chunks:
                 cur.execute(
                     """

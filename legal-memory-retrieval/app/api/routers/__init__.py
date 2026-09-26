@@ -23,6 +23,7 @@ from app.api.routers import (
     word_router,
     caselaw_router,
     audit_router,
+    auth_router,
 )
 
 __all__ = [
@@ -48,5 +49,6 @@ __all__ = [
     "word_router",
     "caselaw_router",
     "audit_router",
+    "auth_router",
 ]
 

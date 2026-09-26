@@ -200,6 +200,24 @@ def update_assistant_message(
     conn.commit()
 
 
+def get_message(conn, session_id: str, message_id: str) -> ChatMessage | None:
+    """One message of a session, or None."""
+    row = conn.execute(
+        "SELECT * FROM chat_messages WHERE id = %s AND session_id = %s",
+        (message_id, session_id),
+    ).fetchone()
+    return _row_to_message(row) if row else None
+
+
+def set_message_events(conn, message_id: str, events: list[dict[str, Any]]) -> None:
+    """Replace a message's stored events (used when the lawyer accepts or rejects an edit)."""
+    conn.execute(
+        "UPDATE chat_messages SET events = %s WHERE id = %s",
+        (json.dumps(events) if events else None, message_id),
+    )
+    conn.commit()
+
+
 def get_messages(conn, session_id: str) -> list[ChatMessage]:
     """Fetch all messages for a session, in chronological order."""
     rows = conn.execute(
