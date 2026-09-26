@@ -1,3 +1,7 @@
+import { useMatterAccessStatus } from "@/api/access";
+import { ApiError } from "@/api/client";
+import { LockedMatter } from "@/components/access/LockedMatter";
+import { MatterAccessTab } from "@/components/access/MatterAccessTab";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,13 +24,16 @@ import { initials, useApp } from "@/context/AppContext";
 import { dueLabel } from "@/pages/CalendarPage";
 import { cn } from "@/lib/utils";
 
-const TABS = ["Overview", "Documents", "Timeline", "Deadlines", "People", "Arguments", "Related"] as const;
+const TABS = ["Overview", "Documents", "Timeline", "Deadlines", "People", "Arguments", "Related", "Access"] as const;
 type Tab = (typeof TABS)[number];
 
 export function MatterDetailPage() {
   const { id = "" } = useParams();
   const matter = useMatter(id);
 
+  if (matter.isError && matter.error instanceof ApiError && matter.error.status === 404) {
+    return <LockedMatter matterId={id} />;
+  }
   return (
     <QueryState query={matter} loading={<p className="text-sm text-muted-foreground">Loading matter…</p>}>
       {(detail) => <MatterView key={detail.matter.matter_id} detail={detail} />}
@@ -61,6 +68,8 @@ function PinAction({ matterId }: { matterId: string }) {
 function MatterView({ detail }: { detail: MatterDetail }) {
   const { matter: m, team } = detail;
   const [tab, setTab] = useState<Tab>("Overview");
+  const status = useMatterAccessStatus(m.matter_id, true);
+  const tabs = TABS.filter((t) => t !== "Access" || status.data?.level === "manage");
 
   return (
     <div className="space-y-8">
@@ -70,7 +79,7 @@ function MatterView({ detail }: { detail: MatterDetail }) {
         subtitle={m.client_name ? <ClientLink id={m.client_id} name={m.client_name} /> : undefined}
         actions={
           <>
-            <Action to={`/ask?scope=${encodeURIComponent(m.matter_code)}`} primary icon="forum" testId="matter-ask">
+            <Action to={`/ask?scope=${encodeURIComponent(m.matter_code)}&scopeType=matter`} primary icon="forum" testId="matter-ask">
               Ask about this matter
             </Action>
             <PinAction matterId={m.matter_id} />
@@ -89,7 +98,7 @@ function MatterView({ detail }: { detail: MatterDetail }) {
 
       <div className="sticky top-0 z-10 -mx-6 border-b border-border bg-background/90 px-6 backdrop-blur lg:-mx-10 lg:px-10">
         <div className="flex gap-1 overflow-x-auto" role="tablist">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <button
               key={t}
               type="button"
@@ -138,6 +147,7 @@ function MatterView({ detail }: { detail: MatterDetail }) {
           ))}
         {tab === "Arguments" && <ArgumentsTab matterId={m.matter_id} />}
         {tab === "Related" && <RelatedTab matterId={m.matter_id} />}
+        {tab === "Access" && <MatterAccessTab matterId={m.matter_id} />}
       </div>
     </div>
   );

@@ -163,6 +163,7 @@ def create_version(
             body, document_id, version_id, page_spans=page_spans
         )
         block_count = save_canonical_blocks(blocks)
+        sync_page_count(version_id)
         hchunks = build_hierarchical_chunks(
             blocks,
             document_id=document_id,
@@ -182,6 +183,26 @@ def create_version(
     out["block_count"] = block_count
     out["chunk_count"] = chunk_count
     return out
+
+
+def sync_page_count(version_id: str) -> None:
+    """Record the version's page count from its blocks when it has real pages.
+
+    The viewer pages by ``page_count``; without it a 3-page agreement was shown
+    as 40 five-block "parts". Only set when blocks span more than one page, so
+    documents without page information keep the part-based reader.
+    """
+    with connect() as conn:
+        conn.execute(
+            """
+            UPDATE document_versions v
+            SET page_count = b.pages
+            FROM (SELECT max(page_number) AS pages FROM document_blocks WHERE version_id = %(vid)s) b
+            WHERE v.version_id = %(vid)s AND v.page_count IS NULL AND b.pages > 1
+            """,
+            {"vid": version_id},
+        )
+        conn.commit()
 
 
 def reindex_current_version(document_id: str) -> dict:
@@ -205,6 +226,7 @@ def reindex_current_version(document_id: str) -> dict:
         raise ValueError(f"Document {document_id} has no current version")
     blocks = parse_canonical_blocks(row["body"], document_id, row["version_id"])
     block_count = save_canonical_blocks(blocks)
+    sync_page_count(row["version_id"])
     chunks = build_hierarchical_chunks(
         blocks,
         document_id=document_id,

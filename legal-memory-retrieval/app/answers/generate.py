@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Literal, Never
 
-import httpx
-
 from app.answers.extractive import extractive_answer
 from app.answers.llm import (
     bedrock_complete,
@@ -134,7 +132,7 @@ def _generate(provider: Provider, query: str, hits: list[dict]) -> dict:
             raw = groq_complete(
                 settings.groq_api_key, settings.groq_model, query, hits
             )
-        except httpx.HTTPError:
+        except Exception:  # any provider failure degrades to extractive, never a 500
             fallback = extractive_answer(query, hits)
             fallback["provider"] = "extractive_after_groq_error"
             return fallback
@@ -153,7 +151,7 @@ def _generate(provider: Provider, query: str, hits: list[dict]) -> dict:
             raw = gemini_complete(
                 settings.gemini_api_key, settings.gemini_model, query, hits
             )
-        except httpx.HTTPError:
+        except Exception:  # any provider failure degrades to extractive, never a 500
             fallback = extractive_answer(query, hits)
             fallback["provider"] = "extractive_after_gemini_error"
             return fallback
@@ -170,7 +168,7 @@ def _generate(provider: Provider, query: str, hits: list[dict]) -> dict:
             return extractive_answer(query, hits)
         try:
             raw = bedrock_complete(settings.bedrock_model, query, hits)
-        except httpx.HTTPError:
+        except Exception:  # any provider failure degrades to extractive, never a 500
             fallback = extractive_answer(query, hits)
             fallback["provider"] = "extractive_after_bedrock_error"
             return fallback

@@ -145,8 +145,8 @@ async def _fts_evidence(
           AND c.tsv @@ to_tsquery('english', %(tsquery)s)
           AND (
             (%(member_id)s::text IS NULL)
-            OR p.restricted = FALSE
-            OR %(member_id)s::text = ANY (p.allowed_members)
+            OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+                AND NOT (%(member_id)s::text = ANY (p.denied_members)))
           )
         ORDER BY score DESC
         LIMIT %(limit)s
@@ -260,8 +260,8 @@ async def vector_evidence_search(
           AND c.{column} IS NOT NULL
           AND (
             (%(member_id)s::text IS NULL)
-            OR p.restricted = FALSE
-            OR %(member_id)s::text = ANY (p.allowed_members)
+            OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+                AND NOT (%(member_id)s::text = ANY (p.denied_members)))
           )
         ORDER BY c.{column} <=> %(qvec)s::vector
         LIMIT %(limit)s

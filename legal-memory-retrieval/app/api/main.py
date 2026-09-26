@@ -1,11 +1,14 @@
 from contextlib import asynccontextmanager
 import logging
+import os
 from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+from app.api.routers import access as access_router
+from app.api.routers import admin as admin_router
 from app.api.routers import (
     activity,
     answers,
@@ -38,6 +41,8 @@ from app.api.security_headers import SecurityHeadersMiddleware
 from app.auth.deps import resolve_member
 from app.config import settings
 from app.db.connection import close_sync_pool, init_sync_pool
+from app.db import loop as loop_workers
+from app.observability import warmup
 from app.db.pool import close_pool, init_pool
 from app.observability.request_id import RequestIDMiddleware
 from app.observability.tracing import setup_tracing
@@ -75,6 +80,8 @@ SERVICE_CATALOG = {
     "word": {"prefix": "/api/word", "health": "/api/word/health"},
     "caselaw": {"prefix": "/api/caselaw", "health": "/api/caselaw/health"},
     "audit": {"prefix": "/api/audit", "health": "/api/audit/health"},
+    "access": {"prefix": "/api/access", "health": "/api/access/health"},
+    "admin": {"prefix": "/api/admin", "health": "/api/admin/health"},
     "chat": {"prefix": "/api/chat", "health": "/api/chat/health"},
     "sources": {"prefix": "/api/sources", "health": "/api/sources/health"},
 }
@@ -92,8 +99,13 @@ async def lifespan(_app: FastAPI):
         logger.info("Async connection pool initialized")
     except Exception as exc:
         logger.warning("Async pool init failed (v1 engine will still work): %s", exc)
+    if settings.env != "test" and os.environ.get("WARM_MODELS", "1") != "0":
+        warmup.start_background()
+    else:
+        warmup.skip()
     yield
     await close_pool()
+    loop_workers.shutdown()
     close_sync_pool()
     logger.info("Connection pools closed")
 
@@ -151,6 +163,8 @@ _AUTHED_ROUTERS = [
     (word_router, "word"),
     (caselaw_router, "caselaw"),
     (audit_router, "audit"),
+    (access_router, "access"),
+    (admin_router, "admin"),
     (chat_router, "chat"),
     (sources, "sources"),
 ]

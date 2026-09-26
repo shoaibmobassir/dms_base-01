@@ -16,6 +16,24 @@ export type CitedSource = {
 };
 
 type MatchedMatter = { matter_id: string; matter_code: string; title: string; client_name?: string; court?: string };
+type AnswerPerson = { member_id: string; name: string; role?: string; office?: string; role_on_matter?: string };
+type ResolvedScope = { kind?: string; label?: string; method?: string };
+
+function scopeMethodLabel(method?: string): string {
+  if (!method) return "";
+  if (method.startsWith("resolver")) return "Matter identified from your description";
+  if (method.includes("client")) return "All matters for this client";
+  return "Scope you selected";
+}
+
+/** People the answer is about: ranked people results, else the teams of the matters in scope. */
+function answerPeople(result: AskResult): AnswerPerson[] {
+  const direct = (result.people as AnswerPerson[] | undefined) ?? [];
+  if (direct.length) return direct;
+  const cards = (result.matter_cards as { team?: AnswerPerson[] }[] | undefined) ?? [];
+  if (cards.length !== 1) return [];
+  return cards[0].team ?? [];
+}
 
 function str(v: unknown): string | undefined {
   return v === null || v === undefined || v === "" ? undefined : String(v);
@@ -41,23 +59,83 @@ export function citedSources(result: AskResult): CitedSource[] {
   return out;
 }
 
-/** Split text on DOC-##### references and render each as a clickable citation chip. */
-export function withCitationChips(text: string, onCite: (documentId: string) => void): ReactNode[] {
-  return text.split(/(\[?\(?DOC-\d+\)?\]?)/g).map((part, i) => {
-    const m = part.match(/DOC-\d+/);
-    if (!m) return <Fragment key={i}>{part}</Fragment>;
+// Evidence ids the Ask-the-Firm answer cites: documents (numeric corpus ids or hex
+// ids for uploads), matter records and people.
+const EVIDENCE_ID = String.raw`DOC-(?:\d+|[0-9A-F]{8,})|MTR-\d{4}-\d+|MEM-\d+`;
+const CITE_GROUP_RE = new RegExp(String.raw`[(\[]\s*((?:${EVIDENCE_ID})(?:\s*[,;]\s*(?:${EVIDENCE_ID}))*)\s*[)\]]|(${EVIDENCE_ID})`, "gi");
+const EVIDENCE_ID_RE = new RegExp(EVIDENCE_ID, "gi");
+
+const CHIP =
+  "mx-0.5 inline-flex items-center rounded-[3px] bg-wine-soft px-1 align-baseline font-mono-id text-[11px] font-semibold text-wine transition-colors hover:bg-wine hover:text-primary-foreground";
+
+function CitationChip({ id, onCite }: { id: string; onCite: (documentId: string) => void }) {
+  const upper = id.toUpperCase();
+  if (upper.startsWith("MTR-")) {
     return (
-      <button
-        key={i}
-        type="button"
-        onClick={() => onCite(m[0])}
-        className="mx-0.5 inline-flex items-center rounded-[3px] bg-wine-soft px-1 align-baseline font-mono-id text-[11px] font-semibold text-wine transition-colors hover:bg-wine hover:text-primary-foreground"
-        data-testid={`citation-${m[0]}`}
-      >
-        {m[0]}
-      </button>
+      <Link to={`/matters/${upper}`} className={CHIP} data-testid={`citation-${upper}`} title="Matter record">
+        {upper}
+      </Link>
     );
-  });
+  }
+  if (upper.startsWith("MEM-")) {
+    return (
+      <Link to={`/people/${upper}`} className={CHIP} data-testid={`citation-${upper}`} title="Firm member">
+        {upper}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={() => onCite(upper)} className={CHIP} data-testid={`citation-${upper}`}>
+      {upper}
+    </button>
+  );
+}
+
+/** Render DOC / MTR / MEM references (bare or in "(A, B)" groups) as citation chips. */
+export function withCitationChips(text: string, onCite: (documentId: string) => void): ReactNode[] {
+  const out: ReactNode[] = [];
+  let last = 0;
+  let key = 0;
+  for (const m of text.matchAll(CITE_GROUP_RE)) {
+    const start = m.index ?? 0;
+    if (start > last) out.push(<Fragment key={key++}>{text.slice(last, start)}</Fragment>);
+    for (const id of (m[1] ?? m[2] ?? "").match(EVIDENCE_ID_RE) ?? []) {
+      out.push(<CitationChip key={key++} id={id} onCite={onCite} />);
+    }
+    last = start + m[0].length;
+  }
+  if (last < text.length) out.push(<Fragment key={key++}>{text.slice(last)}</Fragment>);
+  return out;
+}
+
+/** Minimal markdown: paragraphs, "- " bullet lists and "#" headings, with citation chips inline. */
+export function AnswerBody({ text, onCite }: { text: string; onCite: (documentId: string) => void }) {
+  const blocks = text.replace(/\r/g, "").split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
+  const inline = (t: string) => withCitationChips(t.replace(/\*\*(.+?)\*\*/g, "$1"), onCite);
+  return (
+    <div className="space-y-4 text-[16px] leading-[1.75] text-foreground">
+      {blocks.map((block, i) => {
+        const lines = block.split("\n");
+        const heading = block.match(/^#{1,4}\s+(.*)$/);
+        if (heading && lines.length === 1) {
+          return <h3 key={i} className="font-display text-lg text-ink">{inline(heading[1])}</h3>;
+        }
+        const items = lines.filter((l) => /^\s*[-*•]\s+/.test(l));
+        if (items.length > 0) {
+          const lead = lines.filter((l) => !/^\s*[-*•]\s+/.test(l)).join(" ").trim();
+          return (
+            <div key={i}>
+              {lead && <p className="mb-2">{inline(lead)}</p>}
+              <ul className="list-disc space-y-1 pl-6">
+                {items.map((l, j) => <li key={j}>{inline(l.replace(/^\s*[-*•]\s+/, ""))}</li>)}
+              </ul>
+            </div>
+          );
+        }
+        return <p key={i} className="whitespace-pre-wrap">{inline(block)}</p>;
+      })}
+    </div>
+  );
 }
 
 export function AIAssembling({ label = "Searching the firm's records within your access scope…" }: { label?: string }) {
@@ -77,6 +155,18 @@ export function AIAnswer({ result }: { result: AskResult }) {
     inspector?.open({ type: "document", id: documentId, chunkId: src?.chunk_id });
   };
 
+  const status = String(result.status ?? "");
+  const answer = String(result.answer ?? "").trim();
+
+  if (result.abstained && (status === "not_found" || result.reason === "scope_not_found") && answer) {
+    return (
+      <div className="space-y-4 rounded-lg border border-border bg-card p-6" data-testid="ai-not-found">
+        <div className="eyebrow text-muted-foreground">No matching matter</div>
+        <AnswerBody text={answer} onCite={openDoc} />
+      </div>
+    );
+  }
+
   if (result.abstained) {
     return (
       <div className="rounded-lg border border-border bg-card p-6" data-testid="ai-abstained">
@@ -89,7 +179,14 @@ export function AIAnswer({ result }: { result: AskResult }) {
     );
   }
 
-  const paragraphs = (result.answer ?? "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const provider = String(result.provider ?? "");
+  const caption = provider.startsWith("extractive")
+    ? "Assembled from retrieved passages (the language model did not produce a grounded answer)."
+    : provider === "records"
+      ? "Assembled from the firm's matter records (the language model was unavailable)."
+      : provider
+        ? `Generated by ${provider} from the firm's records and passages cited above.`
+        : "";
 
   return (
     <div className="space-y-8" data-testid="ai-answer">
@@ -99,20 +196,30 @@ export function AIAnswer({ result }: { result: AskResult }) {
           <p className="font-display text-xl leading-snug text-ink">{withCitationChips(String(result.key_finding), openDoc)}</p>
         </div>
       )}
-      <div className="space-y-4 text-[16px] leading-[1.75] text-foreground">
-        {paragraphs.map((p, i) => (
-          <p key={i} className="whitespace-pre-wrap">
-            {withCitationChips(p, openDoc)}
-          </p>
-        ))}
-      </div>
-      {result.provider && (
-        <p className="text-xs text-muted-foreground">
-          {String(result.provider).startsWith("extractive")
-            ? "Assembled from retrieved passages (the language model did not produce a grounded answer)."
-            : `Generated by ${String(result.provider)} from the passages below.`}
+      {status === "insufficient" && (
+        <p className="rounded-md border border-border bg-secondary/50 px-3 py-2 text-sm text-muted-foreground" data-testid="ai-partial">
+          The records found concern this matter but do not fully answer the question.
         </p>
       )}
+      <AnswerBody text={answer} onCite={openDoc} />
+      {caption && <p className="text-xs text-muted-foreground" data-testid="ai-provider">{caption}</p>}
+    </div>
+  );
+}
+
+/** The answer while the model is still writing (replaced by AIAnswer when final). */
+export function AIStreaming({ keyFinding, text }: { keyFinding: string; text: string }) {
+  const inspector = useInspector();
+  const openDoc = (documentId: string) => inspector?.open({ type: "document", id: documentId });
+  return (
+    <div className="space-y-8" data-testid="ai-streaming" aria-busy="true">
+      {keyFinding && (
+        <div className="rounded-lg border border-wine/30 bg-wine-soft/40 p-5">
+          <div className="meta-label mb-1 text-wine">Key finding</div>
+          <p className="font-display text-xl leading-snug text-ink">{withCitationChips(keyFinding, openDoc)}</p>
+        </div>
+      )}
+      {text ? <AnswerBody text={text} onCite={openDoc} /> : <AIAssembling label="Writing the answer…" />}
     </div>
   );
 }
@@ -122,9 +229,35 @@ export function AnswerContext({ result }: { result: AskResult }) {
   const inspector = useInspector();
   const sources = citedSources(result);
   const matters = (result.matchedMatters as MatchedMatter[] | undefined) ?? [];
+  const people = answerPeople(result);
+  const scope = result.resolved_scope as ResolvedScope | null | undefined;
 
   return (
     <div className="space-y-8">
+      {scope && scope.label && (
+        <div data-testid="answer-scope">
+          <SectionLabel>Answered for</SectionLabel>
+          <p className="text-sm text-foreground">{scope.label}</p>
+          <p className="text-xs text-muted-foreground">{scopeMethodLabel(scope.method)}</p>
+        </div>
+      )}
+      {people.length > 0 && (
+        <div>
+          <SectionLabel>People ({people.length})</SectionLabel>
+          <ul className="space-y-2" data-testid="answer-people">
+            {people.map((p) => (
+              <li key={p.member_id}>
+                <Link to={`/people/${p.member_id}`} className="group block">
+                  <span className="block text-sm group-hover:text-wine">{p.name}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {[p.role, p.role_on_matter, p.office].filter(Boolean).join(" · ")}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div>
         <SectionLabel>Sources ({sources.length})</SectionLabel>
         {sources.length === 0 ? (

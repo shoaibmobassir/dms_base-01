@@ -33,8 +33,8 @@ def semantic_search(conn, query: str, member_id: str | None, limit: int = 50) ->
         WHERE c.embedding IS NOT NULL
         AND (
             (%(member_id)s::text IS NULL)
-            OR p.restricted = FALSE
-            OR %(member_id)s::text = ANY (p.allowed_members)
+            OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+                AND NOT (%(member_id)s::text = ANY (p.denied_members)))
         )
         ORDER BY c.embedding <=> %(qvec)s
         LIMIT %(limit)s

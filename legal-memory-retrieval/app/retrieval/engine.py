@@ -128,7 +128,10 @@ def retrieve_legacy(
 
     # Cache check
     channel_list = [c for c in RUN_ORDER if c in wanted]
-    cached = cache_get(query, member_id, channel_list)
+    from app.api.acl import acl_epoch
+
+    cache_member = f"{member_id or ''}|acl={acl_epoch()}"  # ACL changes invalidate cached hits
+    cached = cache_get(query, cache_member, channel_list)
     if cached is not None:
         latency["cache"] = "hit"
         return cached[:k], latency
@@ -187,5 +190,5 @@ def retrieve_legacy(
         latency["rerank"] = round((time.perf_counter() - t3) * 1000, 1)
 
     result = fused[:k]
-    cache_set(query, member_id, channel_list, result)
+    cache_set(query, cache_member, channel_list, result)
     return result, latency

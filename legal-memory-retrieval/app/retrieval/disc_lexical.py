@@ -317,8 +317,8 @@ async def score_documents_disc(
         WHERE d.matter_id = ANY(%(matter_ids)s)
           AND (
             (%(member_id)s::text IS NULL)
-            OR p.restricted = FALSE
-            OR %(member_id)s::text = ANY (p.allowed_members)
+            OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+                AND NOT (%(member_id)s::text = ANY (p.denied_members)))
           )
     """
     params = {

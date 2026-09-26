@@ -6,12 +6,15 @@ import { Icon } from "@/components/common/primitives";
 export function AskComposer({
   examples = [],
   scopeLabel,
+  scopeType,
   large,
   placeholder = "Ask anything about the firm's work…",
 }: {
   examples?: string[];
   /** A matter code / client name the question is about; sent along with the question. */
   scopeLabel?: string;
+  /** Whether scopeLabel names a matter or a client ("auto" lets the server decide). */
+  scopeType?: "matter" | "client" | "auto";
   large?: boolean;
   placeholder?: string;
 }) {
@@ -21,7 +24,10 @@ export function AskComposer({
   const submit = (text?: string) => {
     const query = (text ?? q).trim();
     if (!query) return;
-    navigate(`/ask?q=${encodeURIComponent(query)}${scopeLabel ? `&scope=${encodeURIComponent(scopeLabel)}` : ""}`);
+    const scoped = scopeLabel
+      ? `&scope=${encodeURIComponent(scopeLabel)}${scopeType && scopeType !== "auto" ? `&scopeType=${scopeType}` : ""}`
+      : "";
+    navigate(`/ask?q=${encodeURIComponent(query)}${scoped}`);
   };
 
   return (

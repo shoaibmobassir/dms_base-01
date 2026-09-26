@@ -41,7 +41,7 @@ RUN useradd --system --uid 10001 --home /app firmos \
 USER firmos
 
 EXPOSE 8000
-HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
+HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=5 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/system/ready', timeout=4).status == 200 else 1)"
 
 # Migrations are idempotent; apply them before serving.

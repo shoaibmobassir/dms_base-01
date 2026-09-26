@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useAsk } from "@/api/resources";
-import { AIAnswer, AIAssembling, AnswerContext } from "@/components/ai/AIAnswer";
+import { useAskStream } from "@/api/ask";
+import type { AskScopeType } from "@/api/resources";
+import type { AskResult } from "@/api/types";
+import { AIAnswer, AIAssembling, AIStreaming, AnswerContext } from "@/components/ai/AIAnswer";
 import { AskComposer } from "@/components/ai/AskComposer";
 import { ErrorState, Eyebrow, Icon, PageHeader, SectionLabel } from "@/components/common/primitives";
 
@@ -16,10 +18,22 @@ export function AskPage() {
   const [params, setParams] = useSearchParams();
   const q = params.get("q");
   const scope = params.get("scope");
-  // A scope (matter code or client name) is sent as part of the question so the
-  // retrieval engine's matter resolver can use it.
-  const effective = q ? (scope ? `${scope}: ${q}` : q) : null;
-  const ask = useAsk(effective);
+  const rawType = params.get("scopeType");
+  const scopeType: AskScopeType = rawType === "matter" || rawType === "client" ? rawType : "auto";
+  const [runKey, setRunKey] = useState(0);
+  const ask = useAskStream(q, scope ? { type: scopeType, value: scope } : null, runKey);
+  // Until the final answer arrives, the context column shows what was gathered.
+  const context: AskResult | null =
+    ask.result ??
+    (ask.evidence
+      ? {
+          sources: ask.evidence.sources,
+          resolved_scope: ask.evidence.resolved_scope,
+          people: ask.evidence.people,
+          matter_cards: ask.evidence.matter_cards,
+          matchedMatters: (ask.evidence.matter_cards ?? []).map((c) => ({ ...c, similarity: 99 })),
+        }
+      : null);
   const [history, setHistory] = useState<string[]>([]);
 
   useEffect(() => {
@@ -36,7 +50,7 @@ export function AskPage() {
             Answers are drawn only from matters and documents you are authorised to access, and every claim links to its source.
           </p>
         </div>
-        <AskComposer large examples={EXAMPLES} scopeLabel={scope ?? undefined} />
+        <AskComposer large examples={EXAMPLES} scopeLabel={scope ?? undefined} scopeType={scopeType} />
       </div>
     );
   }
@@ -50,7 +64,7 @@ export function AskPage() {
             <button
               key={h}
               type="button"
-              onClick={() => setParams({ q: h, ...(scope ? { scope } : {}) })}
+              onClick={() => setParams({ q: h, ...(scope ? { scope, scopeType } : {}) })}
               className={`block w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${h === q ? "bg-wine-soft font-medium text-wine" : "text-muted-foreground hover:bg-secondary"}`}
             >
               {h}
@@ -66,18 +80,23 @@ export function AskPage() {
           </div>
         )}
         <PageHeader eyebrow="Ask the Firm" title={q} className="mb-8" />
-        {ask.isFetching && <AIAssembling />}
-        {ask.isError && (
-          <ErrorState title="The answer could not be produced" description={ask.error.message} onRetry={() => void ask.refetch()} />
+        {ask.phase === "gathering" && <AIAssembling />}
+        {ask.phase === "writing" && <AIStreaming keyFinding={ask.keyFinding} text={ask.text} />}
+        {ask.phase === "error" && (
+          <ErrorState
+            title="The answer could not be produced"
+            description={ask.error ?? "Unknown error"}
+            onRetry={() => setRunKey((k) => k + 1)}
+          />
         )}
-        {ask.data && !ask.isFetching && <AIAnswer result={ask.data} />}
+        {ask.phase === "done" && ask.result && <AIAnswer result={ask.result} />}
         <div className="mt-10">
           <SectionLabel>Ask a follow-up</SectionLabel>
-          <AskComposer scopeLabel={scope ?? undefined} placeholder="Ask a follow-up question…" />
+          <AskComposer scopeLabel={scope ?? undefined} scopeType={scopeType} placeholder="Ask a follow-up question…" />
         </div>
       </div>
 
-      <aside className="order-3 hidden lg:block">{ask.data && !ask.isFetching && <AnswerContext result={ask.data} />}</aside>
+      <aside className="order-3 hidden lg:block">{context && <AnswerContext result={context} />}</aside>
     </div>
   );
 }

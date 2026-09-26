@@ -3,6 +3,10 @@ import { cn } from "@/lib/utils";
 import { Icon } from "@/components/common/primitives";
 import { usePinnedMatters, useRecentConversations } from "@/api/resources";
 import { useApp } from "@/context/AppContext";
+import { can, useMyAccess } from "@/api/access";
+
+// Admin shows only for people who administer something (plan §5).
+const ADMIN_PERMISSIONS = ["users.manage", "teams.manage", "roles.manage", "walls.manage", "audit.read"];
 
 type NavItemConfig = { to: string; icon: string; label: string; end?: boolean };
 
@@ -13,7 +17,8 @@ export const NAV_GROUPS: { label: string; items: NavItemConfig[] }[] = [
     label: "Work",
     items: [
       { to: "/", icon: "home", label: "Home", end: true },
-      { to: "/chat", icon: "chat", label: "Chat" },
+      { to: "/chat", icon: "chat", label: "Assistant" },
+      { to: "/ask", icon: "forum", label: "Ask the Firm" },
       { to: "/matters", icon: "gavel", label: "Matters" },
       { to: "/documents", icon: "description", label: "Documents" },
       { to: "/calendar", icon: "event", label: "Calendar" },
@@ -104,6 +109,12 @@ export function Sidebar({ collapsed, onNavigate }: { collapsed?: boolean; onNavi
   const recent = useRecentConversations();
   const firmMeta = [firm?.descriptor, firm?.office].filter(Boolean).join(" · ");
 
+  const me = useMyAccess();
+  const showAdmin = ADMIN_PERMISSIONS.some((p) => can(me.data, p));
+  const navGroups = NAV_GROUPS.map((g) =>
+    g.label === "Manage" && showAdmin ? { ...g, items: [{ to: "/admin", icon: "admin_panel_settings", label: "Admin" }, ...g.items] } : g,
+  );
+
   return (
     <nav className="flex h-full flex-col bg-paper" aria-label="Primary" data-testid="sidebar" onClick={onNavigate}>
       <Link to="/" className={cn("flex items-center gap-2.5 px-5 pb-4 pt-5", collapsed && "justify-center px-0")}>
@@ -122,7 +133,7 @@ export function Sidebar({ collapsed, onNavigate }: { collapsed?: boolean; onNavi
       )}
 
       <div className="flex-1 overflow-y-auto px-3 pb-6 pt-2">
-        {NAV_GROUPS.map((group) => (
+        {navGroups.map((group) => (
           <div key={group.label} className="mb-5">
             {!collapsed && <div className="meta-label px-3 pb-1.5 text-[10px]">{group.label}</div>}
             <div className="space-y-0.5">

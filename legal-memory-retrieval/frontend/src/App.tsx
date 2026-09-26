@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { AdminPage } from "@/pages/AdminPage";
 import { AppShell } from "@/components/shell/AppShell";
 import { HomePage } from "@/pages/HomePage";
 import { AskPage } from "@/pages/AskPage";
@@ -23,6 +24,7 @@ function App() {
         <Route path="/ask" element={<AskPage />} />
         {/* One route so opening a new conversation's URL mid-answer doesn't remount the page. */}
         <Route path="/chat/:sessionId?" element={<ChatPage />} />
+        <Route path="/assistant" element={<Navigate to="/chat" replace />} />
         <Route path="/matters" element={<MattersPage />} />
         <Route path="/matters/:id" element={<MatterDetailPage />} />
         <Route path="/documents" element={<DocumentsPage />} />
@@ -37,6 +39,7 @@ function App() {
         <Route path="/arguments" element={<ArgumentsPage />} />
         <Route path="/teams" element={<Navigate to="/settings#teams" replace />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppShell>

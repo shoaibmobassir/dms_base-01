@@ -308,6 +308,11 @@ export type AskResult = {
   key_finding?: string
   abstained?: boolean
   reason?: string
+  /** answered | not_found | insufficient | fallback */
+  status?: string
+  people?: Array<Record<string, unknown>>
+  matter_cards?: Array<Record<string, unknown>>
+  resolved_scope?: { kind?: string; label?: string; method?: string; matter_ids?: string[] } | null
   structured_citations?: Array<Record<string, unknown>>
   sources?: Array<Record<string, unknown>>
   provider?: string

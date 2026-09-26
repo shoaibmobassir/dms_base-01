@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     env: str = "development"  # development | production
     # false trusts the X-Member-Id header (dev only); true requires X-Api-Key.
     auth_enabled: bool = False
+    # With auth off, X-Member-Id is trusted only from loopback clients unless this is
+    # set (e.g. a dev container reached over a Docker bridge). Never set it in a cloud.
+    dev_auth_any_host: bool = False
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     # Server directories bulk ingest jobs may read (comma list). Empty = the
     # knowledge-base workspace; set explicitly in production.

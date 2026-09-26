@@ -25,7 +25,7 @@ export function ClientDetailPage() {
             title={c.name}
             subtitle="What the firm has observed working with this client — each note traceable to the matter it came from."
             actions={
-              <Action to={`/ask?scope=${encodeURIComponent(c.name)}`} primary icon="forum">
+              <Action to={`/ask?scope=${encodeURIComponent(c.name)}&scopeType=client`} primary icon="forum">
                 Ask about this client
               </Action>
             }

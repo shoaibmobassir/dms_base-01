@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import re
 
-DOC_ID_RE = re.compile(r"\bDOC-\d+\b", re.I)
+# Corpus ids are numeric (DOC-00071); uploaded documents get hex ids (DOC-E9058749C1).
+DOC_ID_RE = re.compile(r"\bDOC-(?:\d+|[0-9A-F]{8,})\b", re.I)
 
 
 def extract_document_ids(text: str) -> list[str]:

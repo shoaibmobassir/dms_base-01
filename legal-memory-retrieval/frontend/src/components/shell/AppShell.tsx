@@ -71,7 +71,8 @@ function useSidebarWidth() {
 const BOTTOM_NAV = [
   { to: "/", icon: "home", label: "Home", end: true },
   { to: "/matters", icon: "gavel", label: "Matters" },
-  { to: "/chat", icon: "chat", label: "Chat" },
+  { to: "/chat", icon: "chat", label: "Assistant" },
+  { to: "/ask", icon: "forum", label: "Ask" },
   { to: "/documents", icon: "description", label: "Documents" },
   { to: "/settings", icon: "person", label: "Profile" },
 ];
@@ -79,7 +80,7 @@ const BOTTOM_NAV = [
 function BottomNav() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-paper pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-border bg-paper pb-[env(safe-area-inset-bottom)] md:hidden"
       aria-label="Primary (mobile)"
       data-testid="bottom-nav"
     >

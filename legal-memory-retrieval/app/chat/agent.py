@@ -43,6 +43,12 @@ from app.chat.tools.document_tools import (
     read_document,
     search_firm_records,
 )
+from app.chat.tools.firm_tools import (
+    ask_firm_tool,
+    find_people_tool,
+    get_matter_profile_tool,
+    resolve_matter_tool,
+)
 from app.chat.tools.generation_tools import generate_docx, generate_excel
 from app.chat.tools.review_tools import propose_edits
 from app.chat.tools.schema import ALL_TOOLS
@@ -63,6 +69,10 @@ logger = logging.getLogger(__name__)
 MAX_TOOL_ROUNDS = 10
 _RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 _DB_TOOLS = frozenset({
+    "ask_firm",
+    "resolve_matter",
+    "get_matter_profile",
+    "find_people",
     "read_document",
     "search_firm_records",
     "fetch_documents",
@@ -73,6 +83,8 @@ _KNOWN_TOOLS = _DB_TOOLS | frozenset({
     "generate_docx",
     "generate_excel",
     "ask_inputs",
+    "list_workflows",
+    "read_workflow",
 })
 
 
@@ -191,6 +203,34 @@ def dispatch_tool_call(
             events.append(result.pop("event"))
         return result, events
 
+    elif name in _FIRM_TOOLS:
+        result = _FIRM_TOOLS[name](arguments, doc_index, conn, member_id)
+        if "event" in result:
+            events.append(result.pop("event"))
+        return result, events
+
+    elif name == "list_workflows":
+        from app.workflows.catalog_loader import get_catalog_loader
+
+        return {"workflows": [
+            {"id": wf.id, "title": wf.title, "description": wf.description, "category": wf.category}
+            for wf in get_catalog_loader().list_workflows()
+        ]}, events
+
+    elif name == "read_workflow":
+        from app.workflows.catalog_loader import get_catalog_loader
+
+        wf = get_catalog_loader().get_workflow(str(arguments.get("workflow_id") or ""))
+        if wf is None:
+            return {"error": f"Unknown workflow: {arguments.get('workflow_id')}"}, events
+        return {
+            "id": wf.id, "title": wf.title, "description": wf.description, "inputs": wf.inputs,
+            "steps": [
+                {k: v for k, v in (("id", st.id), ("type", st.type), ("title", st.title), ("query", st.query), ("prompt", st.prompt)) if v}
+                for st in wf.steps
+            ],
+        }, events
+
     elif name == "ask_inputs":
         items = _named_items(arguments.get("items", []), doc_index)
         event = {"type": "ask_inputs", "items": items}
@@ -199,6 +239,20 @@ def dispatch_tool_call(
 
     else:
         return {"error": f"Unknown tool: {name}"}, events
+
+
+_FIRM_TOOLS = {
+    "ask_firm": lambda a, idx, conn, mid: ask_firm_tool(
+        str(a.get("question") or ""), a.get("scope") or None, idx, conn, mid,
+    ),
+    "resolve_matter": lambda a, idx, conn, mid: resolve_matter_tool(str(a.get("query") or ""), conn, mid),
+    "get_matter_profile": lambda a, idx, conn, mid: get_matter_profile_tool(
+        str(a.get("matter") or ""), idx, conn, mid,
+    ),
+    "find_people": lambda a, idx, conn, mid: find_people_tool(
+        str(a.get("query") or ""), a.get("matter") or None, conn, mid,
+    ),
+}
 
 
 def _named_items(items: Any, doc_index: DocIndex) -> list[dict[str, Any]]:
@@ -243,6 +297,19 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
         return f"Preparing suggested edits to {doc_name}"
     if name == "ask_inputs":
         return "Asking you to clarify"
+    if name == "ask_firm":
+        question = str(arguments.get("question") or "").strip()
+        return f"Checking the firm's records: “{question}”" if question else "Checking the firm's records"
+    if name == "resolve_matter":
+        return f"Identifying the matter for “{query}”" if query else "Identifying the matter"
+    if name == "get_matter_profile":
+        return f"Opening the matter record for {arguments.get('matter') or 'the matter'}"
+    if name == "find_people":
+        if arguments.get("matter"):
+            return f"Looking up the team on {arguments['matter']}"
+        return f"Finding colleagues for “{query}”" if query else "Finding colleagues"
+    if name in {"list_workflows", "read_workflow"}:
+        return "Checking firm workflows"
     return "Working"
 
 
@@ -250,6 +317,8 @@ def tool_deadline_seconds(name: str) -> float:
     """Wall-clock bound for one tool. Find-in-document is shorter than retrieve."""
     if name == "find_in_document":
         return settings.chat_find_timeout_seconds
+    if name == "ask_firm":  # retrieval plus its own grounded LLM answer
+        return max(settings.chat_tool_timeout_seconds, 75.0)
     return settings.chat_tool_timeout_seconds
 
 

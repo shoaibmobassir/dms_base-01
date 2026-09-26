@@ -30,8 +30,8 @@ from app.retrieval.matter_scope import MIN_CONTAINED_CODE_LEN, MIN_CONTAINED_TIT
 _ACL_WHERE = """
     (
         (%(member_id)s::text IS NULL)
-        OR p.restricted = FALSE
-        OR %(member_id)s::text = ANY (p.allowed_members)
+        OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+            AND NOT (%(member_id)s::text = ANY (p.denied_members)))
     )
 """
 
@@ -65,10 +65,9 @@ class PgSearchStore:
             return []
         # Title/code are weighted into the match vector so party names that
         # live on the document header still retrieve when chunk body omits them.
-        match_vec = (
-            "c.tsv || setweight(to_tsvector('english', coalesce(d.title, '')), 'A') "
-            "|| setweight(to_tsvector('english', coalesce(d.matter_code, '')), 'A')"
-        )
+        # chunks.tsv_full = chunk text + document title/code at weight A, stored and
+        # GIN-indexed (migration 20260926b); the per-row concatenation it replaces forced a seq scan.
+        match_vec = "c.tsv_full"
         sql = f"""
             SELECT d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
                    d.author_name, d.doc_date,

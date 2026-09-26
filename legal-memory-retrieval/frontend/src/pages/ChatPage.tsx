@@ -805,7 +805,7 @@ function EmptyThread({ suggestions, onPick }: { suggestions: string[]; onPick: (
             key={idx}
             type="button"
             onClick={() => onPick(card.query)}
-            data-testid="chat-suggestion"
+            data-testid="chat-starter"
             className="group flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-wine/30 hover:bg-secondary/50"
           >
             <div className="mb-1.5 flex items-center gap-2">

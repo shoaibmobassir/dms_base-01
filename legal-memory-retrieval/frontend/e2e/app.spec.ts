@@ -33,7 +33,7 @@ test("shell shows the firm from the database and only wired sections", async ({ 
   await expect(page.getByTestId("firm-identity")).toContainText(firm.name);
 
   const nav = page.getByTestId("sidebar");
-  for (const label of ["Home", "Chat", "Matters", "Documents", "Calendar", "Arguments", "Clients", "People", "Settings"]) {
+  for (const label of ["Home", "Assistant", "Ask the Firm", "Matters", "Documents", "Calendar", "Arguments", "Clients", "People", "Settings"]) {
     await expect(nav.getByRole("link", { name: label, exact: true })).toBeVisible();
   }
   await expect(nav).toContainText("Precentis");
@@ -316,6 +316,11 @@ test("Acme sample matter was ingested through the upload pipeline", async ({ pag
   await page.getByTestId("matter-tab-documents").click();
   await expect(page.getByTestId("matter-documents")).toContainText("Share Purchase Agreement.docx");
   await page.getByTestId("matter-documents").getByText("Share Purchase Agreement.docx").click();
-  await expect(page.getByTestId("document-body")).toContainText("fifteen (15) days"); // current version = v2
-  await expect(page.getByTestId("doc-history")).toContainText("(2)");
+  // Current version = v2. The body is shown page by page; the amended clause is on page 2.
+  await expect(page.getByTestId("document-body")).not.toBeEmpty();
+  await page.getByTestId("document-page-input").fill("2");
+  await page.getByTestId("document-page-input").press("Enter");
+  await expect(page.getByTestId("document-body")).toContainText("fifteen (15) days");
+  // Two versions in the history, the open one being the current v2.
+  await expect(page.getByTestId("document-version-chip")).toContainText("2");
 });

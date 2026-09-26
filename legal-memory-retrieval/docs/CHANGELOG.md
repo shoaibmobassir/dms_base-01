@@ -2,6 +2,47 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-09-27 — Phase 1: access model, admin portal, access requests (plan §5)
+
+- New source of truth for access: `firm_roles`/`role_permissions`/`member_roles`, `teams`/`team_members` (seeded from practice areas and offices), `matter_access` (open / team / restricted + hide existence), `matter_grants` (member or team, read/edit/manage, reason, expiry), `matter_screens` (deny, always wins), `access_requests` (`20260927a`). `permissions` is now compiled from them by `acl_compile_matter()` triggers; the migration proves the backfill changed no matter's permissions. `matter_members` gains `started_at`/`ended_at`.
+- Every ACL clause (10 definitions, ~75 queries) also enforces `denied_members`.
+- Security fix found by the new test matrix: retrieval caches (engine v2 and legacy) served results cached before a screen/revocation. Cache keys now include an ACL epoch (`max(permissions.compiled_at)`, indexed in `20260927b`).
+- APIs: `/api/access/*` (me, matter access summary/status, mode with optimistic `row_version`, grants, screens, requests and decisions) and `/api/admin/*` (roles, users + role assignment with last-admin guard, teams CRUD + members, walls overview). All changes audited (`access.*`, `admin.*`).
+- Restricting a matter keeps the manager who restricted it inside the wall (manage grant).
+- Dev mode (`AUTH_ENABLED=false`) trusts `X-Member-Id` only from loopback clients (`DEV_AUTH_ANY_HOST` to override locally).
+- UI: matter **Access** tab (mode cards, hide-existence, team, grants with expiry, screens for risk & compliance, pending requests, change history); locked-matter page with **Request access** (hidden matters stay indistinguishable from missing); **Admin** page (users & roles, teams, ethical walls, access requests), shown only to people with an admin permission.
+- Tests: `tests/test_admin_access.py` (12, through HTTP: screens block matter/document/search/Ask, team mode, team grants, stale writes, request flow, hidden matters, audit, loopback-only dev auth); `frontend/e2e/access.spec.ts` (3). Playwright now runs with one worker (specs share the database). `pytest tests/`: 687 passed; Playwright: 22 passed, 3 LLM-gated skipped.
+- Not yet: document-level private/restricted overrides (planned as PostgreSQL RLS with per-connection member context), SCIM/Entra group sync for teams.
+
+## 2026-09-26 — Phase 0 stabilisation (plan §16)
+
+- BM25 match vector stored as `chunks.tsv_full` (chunk text + document title/code at weight A) with a GIN index and triggers (`20260926b`). Same vector, same ranking; worst-case common-word query 921 → 435 ms. Soak (300 requests, 20-way bursts): p50 1.77 → 0.69 s, p95 25 → 9.0 s, channel timeouts 3 → 0. p95 target of 4 s at 20-way not yet met (CPU-bound cross-encoder on a laptop).
+- `document_blocks` unique per (version, sequence) (`20260926c`): re-parsing had appended full copies (Acme SPA v2 ×4). `save_canonical_blocks` upserts and returns the stored ids; a parse without page spans keeps earlier page numbers.
+- Version `page_count` synced from blocks (`app.documents.sync_page_count`, backfill `20260926d`): the viewer showed a 3-page agreement as 40 five-block parts.
+- Streaming Ask: `POST /api/answers/stream` (SSE: evidence → key_finding → delta → final; final = same payload as `POST /api/answers`, deterministic records answer if validation fails). Ask page renders evidence immediately and the answer as it is written.
+- `/api/system/ready` is 503 until retrieval models are warm and every migration is applied (`app/observability/warmup.py`); Docker health-check start period 120 s.
+- Tests: `test_wall_retrieval` queries title + body passage instead of a generic OCR header; Playwright Acme test pages to the clause; chat starter cards use `chat-starter`. CI runs the Ask the Firm and firm-tool tests with `WARM_MODELS=0`. `pytest tests/`: 675 passed.
+
+## 2026-09-26 — Ask the Firm rebuilt as a KM desk; Assistant firm tools; pool-leak fix
+
+Why: benchmarks (in-process `retrieve()` R@10) were green while the live page failed. A live HTTP eval exposed it: `POST /api/answers` on 109 DB-derived KM questions passed **25.7%**, with 64/109 answers falling back to "Retrieved firm records for…".
+
+Root causes (all reproduced over HTTP + DB):
+- Scoped questions: the UI sent `"<code>: q"`; with rerank skipped under hard scope, RRF put the metadata channel's title-only chunks first, and `_pack_context` kept **one chunk per document** → the LLM saw headings and abstained.
+- Ask never read `matter_members`/`members` → every "who worked on…" question failed.
+- Async pool opened on uvicorn's loop but used from per-request `asyncio.run()` loops → stranded connections, channels waiting the 30 s pool timeout and silently returning `[]`.
+- `DOC_ID_RE` / `MATTER_CODE_RE` rejected hex document ids and 4-letter codes (`CORP/BLR/…`).
+
+Shipped:
+- `app/km/`: structured scope (`AskRequest.scope`), in-matter passage ranking (BM25 + exact vector + CE, heading/duplicate filter, per-doc cap), matter records + staffing + people search as citable evidence (DOC/MTR/MEM ids validated), matter resolver (IDF identity fields, verbatim-title bonus, dominant/cluster rules, `matter_profiles` embeddings), named-client lists, explicit `not_found`, deterministic records fallback.
+- Assistant tools `ask_firm`, `resolve_matter`, `get_matter_profile`, `find_people`; `list_workflows`/`read_workflow` now dispatch.
+- Per-loop async pools + `app/db/loop.py` loop workers; per-channel timeout (`RETRIEVAL_CHANNEL_TIMEOUT_S`, 20 s) reported in `latency_ms.channel_timeouts`; model warm-up at startup.
+- UI: Chat → **Assistant**; **Ask the Firm** back in the sidebar/mobile nav; scope sent as `{type, value}`; DOC/MTR/MEM citation chips, people and scope panels, not-found state.
+
+Measured (`evals/km_live_eval.py`, HTTP, n=109, gold from SQL): pass **25.7% → 96–99%** (runs vary by LLM latency on the slow-channel check), extractive fallbacks **64 → 0**, evidence p95 ≈ 1.9 s (LLM dominates end-to-end latency). Retrieval engine ranking unchanged (A/B on `evals/retrieval_eval.py`, see below). Migration: `20260926a_matter_profiles.sql`; rebuild with `python scripts/build_matter_profiles.py`.
+
+Known gaps: BM25 channel concatenates title vectors per row (seq scan, ~0.9 s on common terms) → p95 degrades under 20-way concurrency (`evals/soak_retrieval.py`); `tests/test_security.py::test_wall_retrieval` fails identically on the previous commit (generic query no longer ranks the insider's matter in the top 20; no leak).
+
 ## 2026-09-23 — Amazon Bedrock AI layer (Ask / chat)
 
 Added Bedrock as the cloud AI provider for Ask-the-Firm and chat via `AWS_BEARER_TOKEN_BEDROCK` (Mantle Chat Completions + Runtime InvokeModel embeddings). Default answer path prefers Bedrock when the bearer token is set. Production retrieval embeddings stay MiniLM 384-d (`EMBEDDING_PROVIDER=minilm`); Bedrock embedders are opt-in behind `app/embeddings/factory.py` and require a re-embed before use in retrieval. No fusion / eval metric change. Smoke: `python scripts/bedrock_smoke.py`.

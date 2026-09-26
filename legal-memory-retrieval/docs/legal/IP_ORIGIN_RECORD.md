@@ -392,3 +392,27 @@ Our design: Our own `DocumentViewer` (pdf.js canvas + text layer, fit-width/fit-
 Mike NOT used as: source code basis. Mike was reviewed for features and behaviour only; implementation must start in a session that has not opened Mike source.
 Dependencies: pdfjs-dist (Apache-2.0); LibreOffice headless (MPL-2.0, separate process — pending owner approval).
 IP notes: No Mike code, names, prompts, event names, or layouts carried into the plan.
+
+### Feature: Ask the Firm knowledge desk (app/km) and Assistant firm tools
+Date: 2026-09-26
+Mike observation (product level only): None. Not inspired by Mike; requested by the product owner (KM-team workflow: find matters, documents, people and facts). Mike was not opened during design or implementation.
+Requirement (technology-independent): A lawyer asks about the firm's own work — optionally limited to a matter or client — and gets a direct, cited answer covering matter facts, document passages and who is/was staffed, or an explicit "no matching matter" when nothing in their access scope fits. The drafting assistant can call the same capability. Ethical walls apply to every read.
+Our design decisions:
+  - Structured scope on `POST /api/answers` (`scope: {type, value}`); legacy "X: question" prefix still accepted in strict mode
+  - Evidence-first orchestration (`app/km/answer.py`): matter records, staffing (`matter_members`), people search, in-matter passages (BM25 + exact vector scan + cross-encoder, heading/duplicate filtering, per-document caps)
+  - Matter resolver over identity fields with IDF weighting, verbatim-title bonus, margin/cluster rules and `matter_profiles` embeddings (new table, our schema)
+  - Citations validated against evidence ids (DOC / MTR / MEM); deterministic records fallback instead of passage dumps
+  - Assistant tools `ask_firm`, `resolve_matter`, `get_matter_profile`, `find_people` (our names and schemas)
+  - Per-event-loop async pools + long-lived loop workers (`app/db/loop.py`) replacing per-request `asyncio.run`
+Mike source used as coding basis: NO
+New dependencies introduced: none
+IP notes: Independent design from the user's requirement and our existing code.
+
+### Feature: Access model — roles, teams, matter modes, grants, screens, access requests, admin portal
+Date: 2026-09-27
+Mike observation (product level only): None. Requirement from the product owner and the plan (§5); the layout of the firm's own `code_pre` prototype (Permissions page) was the only UI reference.
+Requirement (technology-independent): Firms control who can see each matter (firm-open, team-only, restricted), exclude conflicted people absolutely, grant people or teams time-boxed access, let lawyers request access, and administer roles and teams, with every change audited and enforced in every search and page.
+Our design decisions: source-of-truth tables compiled into the existing `permissions` table by database triggers; screens as `denied_members` checked in every ACL clause; ACL epoch in retrieval cache keys; permission keys per role; optimistic concurrency on mode changes.
+Mike source used as coding basis: NO
+New dependencies introduced: none
+IP notes: Independent design.

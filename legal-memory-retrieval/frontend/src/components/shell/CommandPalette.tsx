@@ -17,7 +17,7 @@ import { useDebounced } from "@/lib/use-debounced";
 const QUICK_LINKS = [
   { label: "Home", to: "/", icon: "home" },
   { label: "Ask the Firm", to: "/ask", icon: "forum" },
-  { label: "Chat", to: "/chat", icon: "chat" },
+  { label: "Assistant", to: "/chat", icon: "chat" },
   { label: "Matters", to: "/matters", icon: "gavel" },
   { label: "Clients", to: "/clients", icon: "apartment" },
   { label: "Documents", to: "/documents", icon: "description" },

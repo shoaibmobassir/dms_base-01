@@ -333,10 +333,17 @@ function WorkspaceFrame({
               )}
               {rightTab === "ai" && (
                 <div className="space-y-3 text-sm text-muted-foreground">
-                  <p>Ask about this document from Chat. Selection actions land here next.</p>
-                  <Button asChild variant="outline" size="sm">
-                    <Link to={doc.matter_id ? `/chat?matter=${doc.matter_id}` : "/chat"}>Open Chat</Link>
-                  </Button>
+                  <p>Ask about this document in the Assistant, or ask the firm about its matter.</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link to={doc.matter_id ? `/chat?matter=${doc.matter_id}` : "/chat"}>Open Assistant</Link>
+                    </Button>
+                    {doc.matter_code && (
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/ask?scope=${encodeURIComponent(doc.matter_code)}&scopeType=matter`}>Ask the Firm</Link>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

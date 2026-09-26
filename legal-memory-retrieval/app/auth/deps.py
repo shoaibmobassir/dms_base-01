@@ -43,6 +43,7 @@ def _audit_denied(reason: str, member_id: str | None = None) -> None:
 
 
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+_LOOPBACK = {"127.0.0.1", "::1", "localhost", "testclient"}
 
 
 def resolve_member(
@@ -61,7 +62,16 @@ def resolve_member(
       X-Member-Id is never an identity; if sent, it must match the resolved member.
     """
     if not settings.auth_enabled:
-        return x_member_id  # dev mode: trust header, None = admin/anonymous
+        # Dev mode trusts X-Member-Id (none = anonymous admin). That is only safe on the
+        # developer's own machine, so any other client address is refused.
+        host = request.client.host if request.client else ""
+        if host not in _LOOPBACK and not settings.dev_auth_any_host:
+            _audit_denied(f"auth disabled; non-loopback client {host}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Sign-in is disabled on this server; it only accepts local requests",
+            )
+        return x_member_id
 
     from app.auth import sessions
 

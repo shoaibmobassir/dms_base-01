@@ -6,6 +6,8 @@
 
 Evidence for this revision: `docs/production-plan/` (plans 01–06 done, 07 in progress), `docs/production-plan/AUDIT.md` (2026-09-24), `docs/CHANGELOG.md` (Bedrock AI layer 2026-09-23, SPA rebuild 2026-09-22), and a read of the current auth, Compose, container, CI, and document-download paths.
 
+> **Update 2026-09-26.** Superseded in part by the plan “Precentis DMS — Production Readiness, Azure Deployment & Next-Steps Plan”. Verified in code since 24 Sep: generated-file downloads are owner-checked (P0-02 residual closed); `static/_legacy` is gone and the Word task pane renders text nodes (P0-05); uploads are size-capped and spooled (P0-06 partly); an OIDC login/session flow exists (P0-04 partly). Phase 0 (26 Sep): per-event-loop DB pools (no stranded connections), stored/indexed BM25 vector (`chunks.tsv_full`), streaming Ask (`POST /api/answers/stream`), readiness gated on model warm-up and migrations, block de-duplication + page counts for versions. Full `pytest tests/`: 675 passed, 0 failed. Still open: tenant key/RLS, IaC, backups drill, pen test, admin/access model, write paths.
+
 ## What changed since 21 September
 
 | 21 Sep finding | 24 Sep state |

@@ -23,6 +23,8 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
+  // Specs share one seeded database and some change access or pins; run them one at a time.
+  workers: 1,
   reporter: [["list"]],
   use: {
     channel: process.env.E2E_BROWSER_CHANNEL ?? "chrome",

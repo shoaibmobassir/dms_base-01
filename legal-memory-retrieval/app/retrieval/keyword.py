@@ -9,10 +9,9 @@ def keyword_search(conn, query: str, member_id: str | None, limit: int = 50) -> 
     tsquery = chunk_or_tsquery(query)
     if not tsquery:
         return []
-    match_vec = (
-        "c.tsv || setweight(to_tsvector('english', coalesce(d.title, '')), 'A') "
-        "|| setweight(to_tsvector('english', coalesce(d.matter_code, '')), 'A')"
-    )
+    # chunks.tsv_full = chunk text + document title/code at weight A, stored and
+    # GIN-indexed (migration 20260926b); the per-row concatenation it replaces forced a seq scan.
+    match_vec = "c.tsv_full"
     sql = f"""
         SELECT d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
                d.author_name, d.doc_date,
@@ -26,8 +25,8 @@ def keyword_search(conn, query: str, member_id: str | None, limit: int = 50) -> 
         JOIN permissions p ON p.matter_id = c.matter_id
         WHERE (
             (%(member_id)s::text IS NULL)
-            OR p.restricted = FALSE
-            OR %(member_id)s::text = ANY (p.allowed_members)
+            OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+                AND NOT (%(member_id)s::text = ANY (p.denied_members)))
         )
         AND ({match_vec}) @@ to_tsquery('english', %(tsquery)s)
         ORDER BY score DESC

@@ -28,7 +28,8 @@ def health() -> dict:
 
 @router.get("/ready")
 def ready() -> JSONResponse:
-    """Readiness: 200 only when Postgres and Redis answer. /health stays liveness-only."""
+    """Readiness: 200 only when Postgres and Redis answer, every migration is applied and
+    the retrieval models are loaded. /health stays liveness-only."""
     from app.cache.redis import _get_client
 
     checks: dict[str, str] = {}
@@ -43,8 +44,27 @@ def ready() -> JSONResponse:
         checks["redis"] = "ok" if client is not None and client.ping() else "unavailable"
     except Exception as exc:
         checks["redis"] = f"error: {type(exc).__name__}"
+    checks["migrations"] = _migrations_check()
+    from app.observability import warmup
+
+    checks["models"] = "ok" if warmup.state() in {"ok", "skipped"} else warmup.state()
     ok = all(v == "ok" for v in checks.values())
     return JSONResponse({"service": "system", "ready": ok, "checks": checks}, status_code=200 if ok else 503)
+
+
+_MIGRATIONS_DIR = Path(__file__).resolve().parents[2] / "db" / "migrations"
+
+
+def _migrations_check() -> str:
+    """"ok" when every migration file on disk is recorded as applied."""
+    try:
+        files = {p.name for p in _MIGRATIONS_DIR.glob("*.sql")}
+        with connect() as conn:
+            applied = {r["filename"] for r in conn.execute("SELECT filename FROM schema_migrations")}
+        missing = sorted(files - applied)
+        return "ok" if not missing else f"pending: {', '.join(missing[:3])}"
+    except Exception as exc:
+        return f"error: {type(exc).__name__}"
 
 
 @router.get("/metrics")

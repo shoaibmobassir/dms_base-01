@@ -207,11 +207,20 @@ def test_wall_retrieval(client, walls: list[Wall]):
     w = walls[0]
     with connect() as conn:  # query with the document's own words so any corpus matches
         chunk = conn.execute(
-            "SELECT text FROM chunks WHERE document_id = %s AND NOT is_parent ORDER BY chunk_index LIMIT 1", (w.document_id,)
+            """
+            SELECT c.text, d.title FROM chunks c JOIN documents d USING (document_id)
+            WHERE c.document_id = %s AND NOT c.is_parent
+            ORDER BY length(c.text) DESC, c.chunk_index LIMIT 1
+            """,
+            (w.document_id,),
         ).fetchone()
     if not chunk:
         pytest.skip("restricted document has no indexed text")
-    body = {"query": " ".join(chunk["text"].split()[:12]), "k": 20}
+    # Title + a passage from the body: the first words of a scanned file are often a
+    # generic header ("LEAGUE OF NATIONS ...") shared by dozens of unrelated documents.
+    words = chunk["text"].split()
+    middle = words[len(words) // 3: len(words) // 3 + 12]
+    body = {"query": f"{chunk['title']} {' '.join(middle)}", "k": 20}
     out = client.post("/api/retrieval", json=body, headers=as_member(w.outsider)).json()
     ins = client.post("/api/retrieval", json=body, headers=as_member(w.insider)).json()
     hits_key = "hits" if "hits" in out else "results"

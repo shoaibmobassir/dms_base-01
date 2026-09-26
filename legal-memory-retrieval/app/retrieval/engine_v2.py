@@ -88,6 +88,10 @@ from app.storage.postgres import (
 
 logger = logging.getLogger(__name__)
 
+# Safety bound: a channel that exceeds this is dropped and reported in
+# latency["channel_timeouts"] instead of stalling the request.
+CHANNEL_TIMEOUT_S = float(os.environ.get("RETRIEVAL_CHANNEL_TIMEOUT_S", "20"))
+
 # ── Stores (singleton-ish, stateless so safe to share) ───────────────────────
 
 _search_store = PgSearchStore()
@@ -640,7 +644,11 @@ async def retrieve_async(
         limit = channel_limit(name, default=50, policy=policy)
         try:
             with span(f"retrieval.{name}", {"intent": parsed.intent}):
-                results = await fn(ctx, limit=limit)
+                results = await asyncio.wait_for(fn(ctx, limit=limit), CHANNEL_TIMEOUT_S)
+        except TimeoutError:
+            logger.warning("Channel %s timed out after %.1fs", name, CHANNEL_TIMEOUT_S)
+            latency.setdefault("channel_timeouts", []).append(name)
+            results = []
         except Exception as exc:
             logger.warning("Channel %s failed: %s", name, exc, exc_info=True)
             results = []
@@ -740,6 +748,7 @@ def retrieve(
     uses the pool. This preserves the call signature while channels
     are migrated.
     """
+    from app.api.acl import acl_epoch
     from app.cache.multi_tier import CacheTier, cache_get, cache_set
     from app.config import settings
     from app.query.understand import understand
@@ -761,6 +770,7 @@ def retrieve(
             f"sr={int(parsed.skip_rerank)}",
             os.environ.get("SCOPED_MATTER_RERANK", "skip").strip().lower() or "skip",
             "llm=on" if llm_resolve_enabled() else "llm=off",
+            f"acl={acl_epoch()}",  # a screen or revoked grant must not be served from cache
         ]
     )
     cached = cache_get(CacheTier.RETRIEVAL, (query or "").strip().lower(), scope)
@@ -769,20 +779,11 @@ def retrieve(
         latency["cache"] = "hit"
         return cached["hits"][:final_k], latency
 
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
+    # Run on a long-lived loop worker: the async pool is bound to its loop, so a
+    # per-call asyncio.run() loop would strand pooled connections.
+    from app.db.loop import run_sync
 
-    if loop and loop.is_running():
-        # We're already in an async context (e.g., FastAPI) — use nest_asyncio
-        # or create a new thread. For simplicity, run in a new thread.
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(asyncio.run, retrieve_async(query, member_id, final_k))
-            candidates, latency = future.result()
-    else:
-        candidates, latency = asyncio.run(retrieve_async(query, member_id, final_k))
+    candidates, latency = run_sync(retrieve_async(query, member_id, final_k))
 
     # Convert Candidates → dicts for backward compat with API / answers
     hits = []

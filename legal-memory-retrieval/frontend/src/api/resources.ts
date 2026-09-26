@@ -3,7 +3,6 @@ import { useApp } from '@/context/AppContext'
 import { apiFetch, qs } from './client'
 import type {
   ArgumentItem,
-  AskResult,
   ChatSession,
   ClientDetail,
   ClientItem,
@@ -207,13 +206,7 @@ export const useSearch = (q: string) =>
     q.trim().length >= 2,
   )
 
-export const useAsk = (query: string | null) =>
-  useScopedQuery(
-    ['ask', query],
-    () => apiFetch<AskResult>('/api/answers', { method: 'POST', body: JSON.stringify({ query, k: 10 }) }),
-    !!query,
-    { once: true },
-  )
+export type AskScopeType = 'matter' | 'client' | 'auto'
 
 export const useSystemInfo = () => useScopedQuery(['system-info'], () => apiFetch<SystemInfo>('/api/system/info'))
 

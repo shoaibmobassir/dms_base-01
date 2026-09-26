@@ -7,8 +7,10 @@ Embeddings: bedrock-runtime InvokeModel.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
+from collections.abc import Iterator
 from typing import Any
 
 import httpx
@@ -141,6 +143,46 @@ def chat_complete(
         "finish_reason": choice.get("finish_reason"),
         "raw": data,
     }
+
+
+def chat_stream(
+    messages: list[dict[str, str]],
+    *,
+    model: str | None = None,
+    temperature: float = 0.0,
+    max_tokens: int = 4096,
+    timeout: float = 90.0,
+) -> Iterator[str]:
+    """Stream text deltas from OpenAI-compatible chat completions (``stream: true``)."""
+    model_id = resolve_chat_model(model)
+    body: dict[str, Any] = {
+        "model": model_id,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": True,
+    }
+    with httpx.Client(timeout=timeout) as client:
+        with client.stream("POST", _mantle_chat_url(model_id), headers=_auth_headers(), json=body) as resp:
+            if resp.status_code >= 400:
+                resp.read()
+                logger.warning("Bedrock stream error model=%s status=%s body=%s",
+                               model_id, resp.status_code, resp.text[:500])
+            resp.raise_for_status()
+            for line in resp.iter_lines():
+                if not line or not line.startswith("data:"):
+                    continue
+                data = line[5:].strip()
+                if data == "[DONE]":
+                    break
+                try:
+                    chunk = json.loads(data)
+                except json.JSONDecodeError:
+                    continue
+                for choice in chunk.get("choices") or []:
+                    delta = (choice.get("delta") or {}).get("content")
+                    if delta:
+                        yield delta
 
 
 async def achat_complete(

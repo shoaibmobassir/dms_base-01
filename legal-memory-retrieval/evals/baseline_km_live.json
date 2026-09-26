@@ -1,0 +1,2735 @@
+{
+  "summary": {
+    "n": 109,
+    "pass_rate": 0.2569,
+    "p50_s": 4.22,
+    "p95_s": 17.03,
+    "mean_s": 6.13,
+    "scope_mode": "prefix",
+    "categories": {
+      "client_matters": {
+        "n": 7,
+        "pass_rate": 0.1429,
+        "check_fail_counts": {
+          "grounded": 2,
+          "http_200": 0,
+          "matters_recall": 6,
+          "no_slow_channel": 0
+        }
+      },
+      "ethical_wall": {
+        "n": 4,
+        "pass_rate": 1.0,
+        "check_fail_counts": {
+          "http_200": 0,
+          "no_leak": 0,
+          "no_slow_channel": 0
+        }
+      },
+      "lead_unscoped": {
+        "n": 19,
+        "pass_rate": 0.0,
+        "check_fail_counts": {
+          "grounded": 15,
+          "http_200": 0,
+          "matter": 4,
+          "no_slow_channel": 6,
+          "people": 19
+        }
+      },
+      "negative": {
+        "n": 3,
+        "pass_rate": 0.0,
+        "check_fail_counts": {
+          "clean_negative": 3,
+          "http_200": 0,
+          "no_dump": 3,
+          "no_slow_channel": 0
+        }
+      },
+      "paraphrase_lowercase": {
+        "n": 6,
+        "pass_rate": 0.5,
+        "check_fail_counts": {
+          "grounded": 0,
+          "http_200": 0,
+          "matter": 3,
+          "no_slow_channel": 1
+        }
+      },
+      "people_expertise": {
+        "n": 19,
+        "pass_rate": 0.0,
+        "check_fail_counts": {
+          "grounded": 19,
+          "http_200": 0,
+          "no_slow_channel": 0,
+          "people": 19
+        }
+      },
+      "people_on_matter": {
+        "n": 19,
+        "pass_rate": 0.0,
+        "check_fail_counts": {
+          "grounded": 16,
+          "http_200": 0,
+          "matter": 0,
+          "no_slow_channel": 1,
+          "people": 19
+        }
+      },
+      "scoped_fact": {
+        "n": 13,
+        "pass_rate": 0.2308,
+        "check_fail_counts": {
+          "facts_all": 10,
+          "grounded": 6,
+          "http_200": 0,
+          "matter": 0,
+          "no_slow_channel": 1
+        }
+      },
+      "scoped_overview": {
+        "n": 19,
+        "pass_rate": 0.8947,
+        "check_fail_counts": {
+          "facts_any": 2,
+          "grounded": 1,
+          "http_200": 0,
+          "matter": 0,
+          "no_slow_channel": 0
+        }
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "OVR-PIL/HAG/0025/1931",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1931-00025"
+      ],
+      "top_matters": [
+        "MTR-1931-00025"
+      ],
+      "slow_channels": [],
+      "answer": "PIL/HAG/0025/1931 is the firm's file code for the Advisory Opinion on Access to German Minority Schools in Upper Silesia, issued by the Permanent Court of International Justice on 15 May 1931. The reference PIL/HAG/0025/1931 corresponds to an Advisory Opinion issued by the Permanent Court of International Justice on 15 May 1931, concerning access to German minority schools in Upper Silesia (DOC-00",
+      "seconds": 9.19
+    },
+    {
+      "id": "TEAM-PIL/HAG/0025/1931",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": false
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1931-00025"
+      ],
+      "top_matters": [
+        "MTR-1931-00025"
+      ],
+      "slow_channels": [
+        "bm25",
+        "graph_seed",
+        "hierarchical",
+        "matter_scope_channel_ms",
+        "metadata"
+      ],
+      "answer": "Retrieved firm records for: PIL/HAG/0025/1931: who is working on this matter? Retrieved firm records for: PIL/HAG/0025/1931: who is working on this matter?\n\n[DOC-00088] Advisory Opinion — German Minority Schools (1931-05-15): COUR PERMANENTE DE JUSTICE INTERNATIONALE SÉRIE A IB ARRÊTS, ORDONNANCES E T AVIS CONSULTATIFS FASCICULE No 40 ACCÈS AUX ECOLES MINORITAIRES ALLEMANDES EN HAUTE-SILÉSIE AVIS ",
+      "seconds": 7.87
+    },
+    {
+      "id": "LEAD-PIL/HAG/0025/1931",
+      "category": "lead_unscoped",
+      "query": "who led our work on German Minority Schools?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": false
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1931-00025"
+      ],
+      "slow_channels": [
+        "bm25",
+        "rerank",
+        "vector"
+      ],
+      "answer": "Retrieved firm records for: who led our work on German Minority Schools? Retrieved firm records for: who led our work on German Minority Schools?\n\n[DOC-00089] Advisory Opinion — German Minority Schools (1931-05-15): that many persons responsible for the education of children who do not speak the language of the Minority have, never- theless, requested that these children be admitted as pupils in M",
+      "seconds": 6.4
+    },
+    {
+      "id": "RESP-PIL/HAG/0025/1931",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "facts_all": false,
+        "no_slow_channel": false
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1931-00025"
+      ],
+      "top_matters": [
+        "MTR-1931-00025"
+      ],
+      "slow_channels": [
+        "matter_scope_ms"
+      ],
+      "answer": "Retrieved firm records for: PIL/HAG/0025/1931: who was the other side in this matter? Retrieved firm records for: PIL/HAG/0025/1931: who was the other side in this matter?\n\n[DOC-00088] Advisory Opinion — German Minority Schools (1931-05-15): COUR PERMANENTE DE JUSTICE INTERNATIONALE SÉRIE A IB ARRÊTS, ORDONNANCES E T AVIS CONSULTATIFS FASCICULE No 40 ACCÈS AUX ECOLES MINORITAIRES ALLEMANDES EN HAU",
+      "seconds": 1.33
+    },
+    {
+      "id": "PARA-PIL/HAG/0025/1931",
+      "category": "paraphrase_lowercase",
+      "query": "the case where germany went against poland over german minority schools",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1931-00025"
+      ],
+      "slow_channels": [],
+      "answer": "Germany brought a case against Poland before the Permanent Court of International Justice in 1931 concerning German minority schools in Upper Silesia, arising from Polish authorities' rejection of applications for children's admission to German schools following an administrative enquiry in 1926. The matter involved Germany initiating proceedings against Poland before the Permanent Court of Intern",
+      "seconds": 4.47
+    },
+    {
+      "id": "OVR-PIL/HAG/0078/1926",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1926-00078"
+      ],
+      "top_matters": [
+        "MTR-1926-00078"
+      ],
+      "slow_channels": [],
+      "answer": "PIL/HAG/0078/1926 is the internal file code for a 1926 Advisory Opinion from the Permanent Court of International Justice concerning the International Labour Organization's competence to regulate the personal work of employers. The reference PIL/HAG/0078/1926 corresponds to an Advisory Opinion issued by the Permanent Court of International Justice on July 23, 1926 (DOC-00242). The opinion is title",
+      "seconds": 3.25
+    },
+    {
+      "id": "TEAM-PIL/HAG/0078/1926",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1926-00078"
+      ],
+      "top_matters": [
+        "MTR-1926-00078"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: PIL/HAG/0078/1926: who is working on this matter? Retrieved firm records for: PIL/HAG/0078/1926: who is working on this matter?\n\n[DOC-00242] Advisory Opinion — I L O Competence Employer (1926-07-23): PUBLICATIONS DE LA COUR PERMANENTE DE JUSTICE INTERNATIONALE B - P 73 S~RIE Le 23 juillet 1926 RECUEIL DES AVIS CON SULTATIFS COMPETENCE DE L'ORGANISATION INTERNATIO- NALE ",
+      "seconds": 1.41
+    },
+    {
+      "id": "LEAD-PIL/HAG/0078/1926",
+      "category": "lead_unscoped",
+      "query": "who led our work on I L O Competence Employer?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1926-00078"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who led our work on I L O Competence Employer? Retrieved firm records for: who led our work on I L O Competence Employer?\n\n[DOC-00242] Advisory Opinion — I L O Competence Employer (1926-07-23): earners, generally or by classes, asks whether the Organization can exercise this cornpetence in a case in which the legislation proposed for the protection of the wage-earner wo",
+      "seconds": 1.36
+    },
+    {
+      "id": "OVR-PIL/HAG/0034/1932",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00034"
+      ],
+      "top_matters": [
+        "MTR-1932-00034"
+      ],
+      "slow_channels": [],
+      "answer": "PIL/HAG/0034/1932 is the firm's file code for an Annex concerning the interpretation of the Memel Statute, dated 11 August 1932, relating to proceedings before the Permanent Court of International Justice. The reference PIL/HAG/0034/1932 corresponds to an Annex document titled 'Interpretation Memel Statute' dated 11 August 1932 (DOC-00120). This document forms part of Matter MTR-1932-00034 and was",
+      "seconds": 2.96
+    },
+    {
+      "id": "TEAM-PIL/HAG/0034/1932",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00034"
+      ],
+      "top_matters": [
+        "MTR-1932-00034"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: PIL/HAG/0034/1932: who is working on this matter? Retrieved firm records for: PIL/HAG/0034/1932: who is working on this matter?\n\n[DOC-00120] Annex — Interpretation Memel Statute (1932-08-11): of 8th meeting, December ~ g t h ,1923 ; brief analysis of the Memel question prepared by the Secretariat. Minutes of the 9th meeting, December 17th, 1923. ,, ,, ,, 10th ,, 9 >I > ",
+      "seconds": 1.26
+    },
+    {
+      "id": "LEAD-PIL/HAG/0034/1932",
+      "category": "lead_unscoped",
+      "query": "who led our work on Interpretation Memel Statute?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1932-00034",
+        "MTR-1932-00032"
+      ],
+      "slow_channels": [],
+      "answer": "Sir William Malkin, K.C., K.C.M.G., C.B., represented the United Kingdom as lead counsel in the Interpretation of the Memel Statute cases before the Permanent Court of International Justice in 1932. The firm's work on the Interpretation of the Memel Statute was led by Sir William Malkin, K.C., K.C.M.G., C.B., who represented the Government of His Britannic Majesty in the United Kingdom of Great Br",
+      "seconds": 3.32
+    },
+    {
+      "id": "RESP-PIL/HAG/0034/1932",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "facts_all": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00034"
+      ],
+      "top_matters": [
+        "MTR-1932-00034"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: PIL/HAG/0034/1932: who was the other side in this matter? Retrieved firm records for: PIL/HAG/0034/1932: who was the other side in this matter?\n\n[DOC-00120] Annex — Interpretation Memel Statute (1932-08-11): of 8th meeting, December ~ g t h ,1923 ; brief analysis of the Memel question prepared by the Secretariat. Minutes of the 9th meeting, December 17th, 1923. ,, ,, ,,",
+      "seconds": 1.98
+    },
+    {
+      "id": "PARA-PIL/HAG/0034/1932",
+      "category": "paraphrase_lowercase",
+      "query": "the case where united kingdom went against lithuania over interpretation memel statute",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1932-00034",
+        "MTR-1932-00032"
+      ],
+      "slow_channels": [],
+      "answer": "The United Kingdom, together with France, Italy, and Japan, brought a case against Lithuania before the Permanent Court of International Justice in 1932 concerning the interpretation of the Memel Statute, with the central dispute being whether the Governor of the Memel Territory had the right to dismiss the President of the Directorate. The United Kingdom, acting jointly with the French Republic, ",
+      "seconds": 3.88
+    },
+    {
+      "id": "OVR-PIL/HAG/0072/1923",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1923-00072"
+      ],
+      "top_matters": [
+        "MTR-1923-00072"
+      ],
+      "slow_channels": [],
+      "answer": "PIL/HAG/0072/1923 is the firm's file code for the Permanent Court of International Justice's 1923 Advisory Opinion on the Acquisition of Polish Nationality, rendered for the League of Nations Council. The reference PIL/HAG/0072/1923 corresponds to an Advisory Opinion issued by the Permanent Court of International Justice on September 15, 1923, concerning the Acquisition of Polish Nationality (DOC-",
+      "seconds": 7.28
+    },
+    {
+      "id": "TEAM-PIL/HAG/0072/1923",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1923-00072"
+      ],
+      "top_matters": [
+        "MTR-1923-00072"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: PIL/HAG/0072/1923: who is working on this matter? Retrieved firm records for: PIL/HAG/0072/1923: who is working on this matter?\n\n[DOC-00232] Advisory Opinion — Acquisition Polish Nationality (1923-09-15): PUBLICATIONS DE LA COUR PERMANENTE DE JUSTICE INTERNATIONALE. Le 15 septembre 1923 RECUEIL DES AVIS CONSULTATIFS ACQUISITION DE LA NATIONALITÉ POLONAISE PUBLICATIONS O",
+      "seconds": 5.98
+    },
+    {
+      "id": "LEAD-PIL/HAG/0072/1923",
+      "category": "lead_unscoped",
+      "query": "who led our work on Acquisition Polish Nationality?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1923-00072"
+      ],
+      "slow_channels": [],
+      "answer": "The Advisory Opinion on Acquisition Polish Nationality was issued by the Permanent Court of International Justice, with Judge Weiss presiding as Vice-President alongside a panel of judges including Lord Finlay, Nyholm, de Bustamante, Altamira, Oda, Anzilotti, Huber, and Deputy-Judge Wang. The work on Acquisition Polish Nationality was led by Judge WEISS, who served as Vice-President of the Permane",
+      "seconds": 5.21
+    },
+    {
+      "id": "OVR-PIL/HAG/0003/1924",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1924-00003"
+      ],
+      "top_matters": [
+        "MTR-1924-00003"
+      ],
+      "slow_channels": [],
+      "answer": "PIL/HAG/0003/1924 refers to a 1924 case before the Permanent Court of International Justice concerning the interpretation of Paragraph 4 of the Annex to Article 179 of the Treaty of Neuilly, a post-World War I peace treaty between Bulgaria and the Allied Powers. The code PIL/HAG/0003/1924 designates a matter before the Permanent Court of International Justice involving a dispute between the Govern",
+      "seconds": 4.32
+    },
+    {
+      "id": "TEAM-PIL/HAG/0003/1924",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1924-00003"
+      ],
+      "top_matters": [
+        "MTR-1924-00003"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: PIL/HAG/0003/1924: who is working on this matter? Retrieved firm records for: PIL/HAG/0003/1924: who is working on this matter?\n\n[DOC-00013] Annex — Neuilly (1924-09-12): ANNEX. TREATY OF NEUILLY, ARTICLE 179, ANNEX, PARAGRAPH 4 (English iext.) \"Al1 property, rights and interests of Bulgarian nationals within the territory of any Allied or Associated Power and the net p",
+      "seconds": 2.58
+    },
+    {
+      "id": "LEAD-PIL/HAG/0003/1924",
+      "category": "lead_unscoped",
+      "query": "who led our work on Neuilly?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1924-00003",
+        "MTR-1932-00035",
+        "MTR-1969-00107",
+        "MTR-1974-00112",
+        "MTR-1982-00120"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who led our work on Neuilly? Retrieved firm records for: who led our work on Neuilly?\n\n[DOC-00014] Judgment — Neuilly (1924-09-12): TRAITÉ DE NEUILLY, ARTICLE 179, ANNEXE, PARAGRAPHE 4 (INTERPRETATION, PUBLICATIONS OF THE PERMANENT COURT OF INTERNATIONAL JUSTICE. SERIES A - NO.3 September 12th, 1924 COLLECTION OF JUDGMENTS TREATY OF NE.UILLY, ARTICLE 179, ANNEX, PARAGRA",
+      "seconds": 1.71
+    },
+    {
+      "id": "RESP-PIL/HAG/0003/1924",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1924-00003"
+      ],
+      "top_matters": [
+        "MTR-1924-00003"
+      ],
+      "slow_channels": [],
+      "answer": "The other side in matter PIL/HAG/0003/1924 was the Government of the Greek Republic, which appeared as the opposing party to Bulgaria before the Permanent Court of International Justice. The matter PIL/HAG/0003/1924 concerned the interpretation of Paragraph 4 of the Annex following Article 179 of the Treaty of Neuilly, which was brought before the Permanent Court of International Justice sitting a",
+      "seconds": 2.48
+    },
+    {
+      "id": "PARA-PIL/HAG/0003/1924",
+      "category": "paraphrase_lowercase",
+      "query": "the case where bulgaria went against greece over neuilly",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": false,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1946-00084",
+        "MTR-1924-00003",
+        "MTR-1932-00030",
+        "MTR-1939-00062",
+        "MTR-1940-00065"
+      ],
+      "slow_channels": [],
+      "answer": "Bulgaria and Greece had multiple disputes arising from the Treaty of Neuilly (1919), including a 1924 PCIJ case concerning Bulgarian reparations for the 1916 occupation of Greek Eastern Macedonia, and a separate dispute over the Greco-Bulgarian emigration convention. The dispute between Bulgaria and Greece concerning the Treaty of Neuilly came before the Permanent Court of International Justice in",
+      "seconds": 7.04
+    },
+    {
+      "id": "OVR-PIL/HAG/0052/1936",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1936-00052"
+      ],
+      "top_matters": [
+        "MTR-1936-00052"
+      ],
+      "slow_channels": [],
+      "answer": "PIL/HAG/0052/1936 is the firm's internal reference code for the Losinger & Co. case before the Permanent Court of International Justice, specifically an Order dated 27 June 1936 addressing a preliminary objection. The reference PIL/HAG/0052/1936 corresponds to a matter in the firm's records concerning the Losinger & Co. case before the Permanent Court of International Justice (PCIJ). The document ",
+      "seconds": 4.03
+    },
+    {
+      "id": "TEAM-PIL/HAG/0052/1936",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1936-00052"
+      ],
+      "top_matters": [
+        "MTR-1936-00052"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: PIL/HAG/0052/1936: who is working on this matter? Retrieved firm records for: PIL/HAG/0052/1936: who is working on this matter?\n\n[DOC-00168] Order — Losinger (1936-06-27): COUR PERMANENTE DE JUSTICE INTERNATIONALE sÉRIE A / B ARRÊTS, ORDONNANCES E T AVIS CONSULTATIFS FASCICULE No 67 AFFAIRE LOSINGER & Cie, S. A. (EXCEPTION PRÉLIMINAIRE) ORDONNANCE DU 27 JUIN 1936 ORDER ",
+      "seconds": 1.38
+    },
+    {
+      "id": "LEAD-PIL/HAG/0052/1936",
+      "category": "lead_unscoped",
+      "query": "who led our work on Losinger?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1936-00052",
+        "MTR-1936-00054"
+      ],
+      "slow_channels": [],
+      "answer": "Professor Georges Sauser-Hall of the University of Geneva served as the Agent for the Swiss Government in the Losinger proceedings before the Permanent Court of International Justice. The firm's work on the Losinger matter was led by Professor Georges Sauser-Hall, who was appointed as Agent for the Swiss Government in the proceedings before the Permanent Court of International Justice (DOC-00176).",
+      "seconds": 2.71
+    },
+    {
+      "id": "RESP-PIL/HAG/0052/1936",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "facts_all": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1936-00052"
+      ],
+      "top_matters": [
+        "MTR-1936-00052"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: PIL/HAG/0052/1936: who was the other side in this matter? Retrieved firm records for: PIL/HAG/0052/1936: who was the other side in this matter?\n\n[DOC-00168] Order — Losinger (1936-06-27): COUR PERMANENTE DE JUSTICE INTERNATIONALE sÉRIE A / B ARRÊTS, ORDONNANCES E T AVIS CONSULTATIFS FASCICULE No 67 AFFAIRE LOSINGER & Cie, S. A. (EXCEPTION PRÉLIMINAIRE) ORDONNANCE DU 27 ",
+      "seconds": 1.35
+    },
+    {
+      "id": "PARA-PIL/HAG/0052/1936",
+      "category": "paraphrase_lowercase",
+      "query": "the case where switzerland went against yugoslavia over losinger",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": false,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1936-00054",
+        "MTR-1936-00052",
+        "MTR-1998-00136"
+      ],
+      "slow_channels": [],
+      "answer": "Switzerland instituted proceedings against Yugoslavia before the Permanent Court of International Justice in November 1935 regarding the Losinger & Co. case, which involved a contract dispute dating to 1929, but the proceedings were discontinued by mutual agreement and removed from the Court's list in December 1936. Switzerland initiated proceedings against Yugoslavia before the Permanent Court of",
+      "seconds": 5.46
+    },
+    {
+      "id": "OVR-PIL/HAG/0005/1925",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1925-00005"
+      ],
+      "top_matters": [
+        "MTR-1925-00005"
+      ],
+      "slow_channels": [],
+      "answer": "PIL/HAG/0005/1925 is the firm's internal file code for the Mavrommatis Jerusalem Concessions case, a 1925 judgment by the Permanent Court of International Justice in a matter where Greece brought claims against another state regarding concession rights in Jerusalem. The reference PIL/HAG/0005/1925 corresponds to the matter file code for the Mavrommatis Jerusalem Concessions case. This matter is in",
+      "seconds": 4.17
+    },
+    {
+      "id": "TEAM-PIL/HAG/0005/1925",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1925-00005"
+      ],
+      "top_matters": [
+        "MTR-1925-00005"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: PIL/HAG/0005/1925: who is working on this matter? Retrieved firm records for: PIL/HAG/0005/1925: who is working on this matter?\n\n[DOC-00016] Judgment — Mavrommatis Jerusalem (1925-03-26): Jerusalem Concessions . . . . . . .. . ... 6 PERMANENT COURT O F INTERNATION 4L J'JSTICE. '925. March a6th File E. c. V. Docket VI. a. Bejore : MM. HUBER,President, L O D E R , F o r m",
+      "seconds": 1.57
+    },
+    {
+      "id": "LEAD-PIL/HAG/0005/1925",
+      "category": "lead_unscoped",
+      "query": "who led our work on Mavrommatis Jerusalem?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1925-00005",
+        "MTR-1927-00011"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who led our work on Mavrommatis Jerusalem? Retrieved firm records for: who led our work on Mavrommatis Jerusalem?\n\n[DOC-00016] Judgment — Mavrommatis Jerusalem (1925-03-26): reasoiis therein set out, neither the Palestine Electric Corporation Limited nor myself will raise any objection to the carrying out by ILI. Mavrommatis of his tramway and electricity concession for",
+      "seconds": 1.27
+    },
+    {
+      "id": "RESP-PIL/HAG/0005/1925",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1925-00005"
+      ],
+      "top_matters": [
+        "MTR-1925-00005"
+      ],
+      "slow_channels": [],
+      "answer": "The opposing party in matter PIL/HAG/0005/1925 was the Government of the United Kingdom, which appeared as the respondent in proceedings before the Permanent Court of International Justice. The matter referenced by code PIL/HAG/0005/1925 concerns the Mavrommatis Jerusalem Concessions case before the Permanent Court of International Justice. The excerpt identifies the applicant as the Government of",
+      "seconds": 3.52
+    },
+    {
+      "id": "PARA-PIL/HAG/0005/1925",
+      "category": "paraphrase_lowercase",
+      "query": "the case where greece went against united kingdom over mavrommatis jerusalem",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": false,
+        "grounded": true,
+        "no_slow_channel": false
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1927-00011",
+        "MTR-1925-00005"
+      ],
+      "slow_channels": [
+        "bm25",
+        "rerank",
+        "vector"
+      ],
+      "answer": "Greece brought proceedings against the United Kingdom before the Permanent Court of International Justice in two related cases concerning concessions granted to M. Mavrommatis in Jerusalem, with judgments issued in 1925 and 1927. Greece instituted proceedings against the United Kingdom before the Permanent Court of International Justice concerning concessions held by M. Euripide Mavrommatis in Jer",
+      "seconds": 48.54
+    },
+    {
+      "id": "OVR-PIL/HAG/0029/1932",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00029"
+      ],
+      "top_matters": [
+        "MTR-1932-00029"
+      ],
+      "slow_channels": [],
+      "answer": "PIL/HAG/0029/1932 is the firm's file code for the Permanent Court of International Justice's 1932 Advisory Opinion on the Treatment of Polish Nationals in the Danzig Territory, which addressed the legal status of the Free City of Danzig and Poland's treaty-based rights to protect Polish nationals there. The reference PIL/HAG/0029/1932 corresponds to an Advisory Opinion issued by the Permanent Cour",
+      "seconds": 32.44
+    },
+    {
+      "id": "TEAM-PIL/HAG/0029/1932",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00029"
+      ],
+      "top_matters": [
+        "MTR-1932-00029"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: PIL/HAG/0029/1932: who is working on this matter? Retrieved firm records for: PIL/HAG/0029/1932: who is working on this matter?\n\n[DOC-00103] Advisory Opinion — Treatment Polish Nationals (1932-02-04): 1932. February 4th. TWENTY-THIRD SESSION. General list : NO. 42. February 4th, 1932. TREATMENT OF POLISH NATIONALS AND OTHER PERSONS OF POLISH ORIGIN OR SPEECH 1N THE DANZ",
+      "seconds": 28.51
+    },
+    {
+      "id": "LEAD-PIL/HAG/0029/1932",
+      "category": "lead_unscoped",
+      "query": "who led our work on Treatment Polish Nationals?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": false
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1932-00029"
+      ],
+      "slow_channels": [
+        "bm25",
+        "rerank",
+        "vector"
+      ],
+      "answer": "Retrieved firm records for: who led our work on Treatment Polish Nationals? Retrieved firm records for: who led our work on Treatment Polish Nationals?\n\n[DOC-00103] Advisory Opinion — Treatment Polish Nationals (1932-02-04): h, i.nter alia, the question of reciprocal national treatment in regard to the acquisition of immovable property and the exercise of commercial and industrial activities of al",
+      "seconds": 18.88
+    },
+    {
+      "id": "OVR-REG/NYC/0158/2020",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2020-00158"
+      ],
+      "top_matters": [
+        "MTR-2020-00158"
+      ],
+      "slow_channels": [],
+      "answer": "REG/NYC/0158/2020 corresponds to Matter MTR-2020-00158, which encompasses United Nations Security Council work from January 2020, including resolutions on Syria humanitarian aid and Yemen's Hodeidah Agreement. REG/NYC/0158/2020 is the firm's internal reference code for Matter MTR-2020-00158, which relates to legal work performed for the United Nations before the Security Council. This matter encom",
+      "seconds": 6.03
+    },
+    {
+      "id": "TEAM-REG/NYC/0158/2020",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2020-00158"
+      ],
+      "top_matters": [
+        "MTR-2020-00158"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: REG/NYC/0158/2020: who is working on this matter? Retrieved firm records for: REG/NYC/0158/2020: who is working on this matter?\n\n[DOC-02763] Security Council resolution 2504 (2020) [on humanitarian situation in the Syrian Arab Republic and renewal of authorization of relief delivery and monitoring mechanism for a period of 6 months]: 5), 24 April 2015 (S/PRST/2015/10), ",
+      "seconds": 1.53
+    },
+    {
+      "id": "LEAD-REG/NYC/0158/2020",
+      "category": "lead_unscoped",
+      "query": "who led our work on UN Security Council resolutions?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": false,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": false
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2006-00144",
+        "MTR-2013-00151",
+        "MTR-1988-00126",
+        "MTR-1991-00129",
+        "MTR-1994-00132"
+      ],
+      "slow_channels": [
+        "rerank"
+      ],
+      "answer": "Retrieved firm records for: who led our work on UN Security Council resolutions? Retrieved firm records for: who led our work on UN Security Council resolutions?\n\n[DOC-01972] Security Council resolution 1713 (2006) [on extension of the mandate of the UN Panel of Experts Established pursuant to Security Council Resolution 1591 (2005) and extended by resolutions 1651 (2005) and 1665 (2006) to monito",
+      "seconds": 11.53
+    },
+    {
+      "id": "NRES-REG/NYC/0158/2020",
+      "category": "scoped_fact",
+      "query": "how many resolutions were adopted?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2020-00158"
+      ],
+      "top_matters": [
+        "MTR-2020-00158"
+      ],
+      "slow_channels": [],
+      "answer": "Two Security Council resolutions were adopted under matter REG/NYC/0158/2020: Resolution 2504 (2020) concerning the Syrian Arab Republic humanitarian situation, and Resolution 2505 (2020) concerning the extension of the UNMHA mandate in Yemen. Under matter REG/NYC/0158/2020, two Security Council resolutions were adopted. The first is Security Council Resolution 2504 (2020), which addresses the hum",
+      "seconds": 2.98
+    },
+    {
+      "id": "OVR-REG/NYC/0091/1953",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1953-00091"
+      ],
+      "top_matters": [
+        "MTR-1953-00091",
+        "MTR-1948-00086"
+      ],
+      "slow_channels": [],
+      "answer": "REG/NYC/0091/1953 is the firm's internal reference code for a series of five United Nations Security Council resolutions adopted in 1953, covering matters related to the International Court of Justice and the Israel-Palestine conflict. The reference REG/NYC/0091/1953 corresponds to a collection of five United Nations Security Council resolutions adopted in 1953, all indexed under Matter MTR-1953-0",
+      "seconds": 7.21
+    },
+    {
+      "id": "TEAM-REG/NYC/0091/1953",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1953-00091"
+      ],
+      "top_matters": [
+        "MTR-1953-00091",
+        "MTR-1948-00086"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: REG/NYC/0091/1953: who is working on this matter? Retrieved firm records for: REG/NYC/0091/1953: who is working on this matter?\n\n[DOC-00358] Security Council resolution 99 (1953) [on election of members of the International Court of Justice by the Security Council and the General Assembly]: 99 (1953). Resolution of 12 August 1953 The Security Council, Noting that Judge ",
+      "seconds": 11.24
+    },
+    {
+      "id": "LEAD-REG/NYC/0091/1953",
+      "category": "lead_unscoped",
+      "query": "who led our work on UN Security Council resolutions?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": false,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": false
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2006-00144",
+        "MTR-2013-00151",
+        "MTR-1988-00126",
+        "MTR-1991-00129",
+        "MTR-1994-00132"
+      ],
+      "slow_channels": [
+        "rerank"
+      ],
+      "answer": "Retrieved firm records for: who led our work on UN Security Council resolutions? Retrieved firm records for: who led our work on UN Security Council resolutions?\n\n[DOC-01972] Security Council resolution 1713 (2006) [on extension of the mandate of the UN Panel of Experts Established pursuant to Security Council Resolution 1591 (2005) and extended by resolutions 1651 (2005) and 1665 (2006) to monito",
+      "seconds": 1.24
+    },
+    {
+      "id": "NRES-REG/NYC/0091/1953",
+      "category": "scoped_fact",
+      "query": "how many resolutions were adopted?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1953-00091"
+      ],
+      "top_matters": [
+        "MTR-1953-00091",
+        "MTR-1948-00086"
+      ],
+      "slow_channels": [],
+      "answer": "Under matter REG/NYC/0091/1953, the Security Council adopted five resolutions: resolutions 99, 100, 101, 102, and 103, all in 1953. The Security Council adopted five resolutions under matter REG/NYC/0091/1953. These resolutions are: Security Council resolution 99 (1953), adopted on 12 August 1953 at the 613th meeting, concerning the election of members of the International Court of Justice to fill",
+      "seconds": 6.27
+    },
+    {
+      "id": "OVR-REG/NYC/0148/2010",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2010-00148"
+      ],
+      "top_matters": [
+        "MTR-2010-00148"
+      ],
+      "slow_channels": [],
+      "answer": "REG/NYC/0148/2010 is the firm's internal reference code for United Nations Security Council resolutions from 2010, encompassing both Resolution 1930 on Cyprus and Resolution 1908 on Haiti. REG/NYC/0148/2010 is a matter reference code that corresponds to the firm's work for the United Nations Security Council in 2010. This matter encompasses at least two Security Council resolutions. The first, Res",
+      "seconds": 4.22
+    },
+    {
+      "id": "TEAM-REG/NYC/0148/2010",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2010-00148"
+      ],
+      "top_matters": [
+        "MTR-2010-00148"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: REG/NYC/0148/2010: who is working on this matter? Retrieved firm records for: REG/NYC/0148/2010: who is working on this matter?\n\n[DOC-02189] Security Council resolution 1930 (2010) [on extension of the mandate of the UN Peacekeeping Force in Cyprus (UNFICYP)]: 15 June 2010 Resolution 1930 (2010) Adopted by the Security Council at its 6339th meeting, on 15 June 2010 The ",
+      "seconds": 2.67
+    },
+    {
+      "id": "LEAD-REG/NYC/0148/2010",
+      "category": "lead_unscoped",
+      "query": "who led our work on UN Security Council resolutions?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": false,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": false
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2006-00144",
+        "MTR-2013-00151",
+        "MTR-1988-00126",
+        "MTR-1991-00129",
+        "MTR-1994-00132"
+      ],
+      "slow_channels": [
+        "rerank"
+      ],
+      "answer": "Retrieved firm records for: who led our work on UN Security Council resolutions? Retrieved firm records for: who led our work on UN Security Council resolutions?\n\n[DOC-01972] Security Council resolution 1713 (2006) [on extension of the mandate of the UN Panel of Experts Established pursuant to Security Council Resolution 1591 (2005) and extended by resolutions 1651 (2005) and 1665 (2006) to monito",
+      "seconds": 1.26
+    },
+    {
+      "id": "NRES-REG/NYC/0148/2010",
+      "category": "scoped_fact",
+      "query": "how many resolutions were adopted?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2010-00148"
+      ],
+      "top_matters": [
+        "MTR-2010-00148"
+      ],
+      "slow_channels": [],
+      "answer": "Two Security Council resolutions were adopted under matter REG/NYC/0148/2010: Resolution 1908 (2010) and Resolution 1930 (2010). Under matter REG/NYC/0148/2010, two Security Council resolutions were adopted. The first was Resolution 1908 (2010), adopted by the Security Council at its 6261st meeting on 19 January 2010, which addressed increasing the overall force levels of the UN Stabilization Miss",
+      "seconds": 3.52
+    },
+    {
+      "id": "OVR-REG/NYC/0111/1973",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1973-00111"
+      ],
+      "top_matters": [
+        "MTR-1973-00111"
+      ],
+      "slow_channels": [],
+      "answer": "REG/NYC/0111/1973 is the firm's internal reference code for Matter MTR-1973-00111, which encompasses three United Nations Security Council resolutions from January and February 1973 addressing distinct matters: a meeting location change to Panama City, and the Southern Rhodesia-Zambia conflict. The reference code REG/NYC/0111/1973 corresponds to Matter MTR-1973-00111, a United Nations matter in wh",
+      "seconds": 5.34
+    },
+    {
+      "id": "TEAM-REG/NYC/0111/1973",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-1973-00111"
+      ],
+      "top_matters": [
+        "MTR-1973-00111"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: REG/NYC/0111/1973: who is working on this matter? Retrieved firm records for: REG/NYC/0111/1973: who is working on this matter?\n\n[DOC-00584] Security Council resolution 325 (1973) [on request of Panama to hold meetings of the Security Council in Panama City, 15-21 March 1973]: Resolution 325 (1973) of 26 January 1973 The Security Council, Having considered the letter da",
+      "seconds": 2.62
+    },
+    {
+      "id": "LEAD-REG/NYC/0111/1973",
+      "category": "lead_unscoped",
+      "query": "who led our work on UN Security Council resolutions?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": false,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": false
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2006-00144",
+        "MTR-2013-00151",
+        "MTR-1988-00126",
+        "MTR-1991-00129",
+        "MTR-1994-00132"
+      ],
+      "slow_channels": [
+        "rerank"
+      ],
+      "answer": "Retrieved firm records for: who led our work on UN Security Council resolutions? Retrieved firm records for: who led our work on UN Security Council resolutions?\n\n[DOC-01972] Security Council resolution 1713 (2006) [on extension of the mandate of the UN Panel of Experts Established pursuant to Security Council Resolution 1591 (2005) and extended by resolutions 1651 (2005) and 1665 (2006) to monito",
+      "seconds": 1.26
+    },
+    {
+      "id": "NRES-REG/NYC/0111/1973",
+      "category": "scoped_fact",
+      "query": "how many resolutions were adopted?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-1973-00111"
+      ],
+      "top_matters": [
+        "MTR-1973-00111"
+      ],
+      "slow_channels": [],
+      "answer": "Based on the provided excerpts, twelve Security Council resolutions were adopted under matter REG/NYC/0111/1973, numbered 327 through 342. The provided excerpts document the adoption of twelve Security Council resolutions under matter REG/NYC/0111/1973. These resolutions are numbered 327 (1973), adopted on 2 February 1973 (DOC-00586); 328 (1973), adopted on 10 March 1973 (DOC-00587); 329 (1973), a",
+      "seconds": 4.4
+    },
+    {
+      "id": "OVR-REG/DEL/0166/2018",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2018-00166"
+      ],
+      "top_matters": [
+        "MTR-2018-00166",
+        "MTR-2025-00165"
+      ],
+      "slow_channels": [],
+      "answer": "REG/DEL/0166/2018 relates to Appeal No. 163 of 2018 before the Appellate Tribunal for Electricity, where GMR Warora Energy Limited challenged a CERC Order disallowing certain 'Change in Law' compensation claims under its Power Purchase Agreements with MSEDCL and other distribution companies. The matter referenced by code REG/DEL/0166/2018 concerns Appeal No. 163 of 2018 filed before the Hon'ble Ap",
+      "seconds": 5.37
+    },
+    {
+      "id": "TEAM-REG/DEL/0166/2018",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2018-00166"
+      ],
+      "top_matters": [
+        "MTR-2018-00166",
+        "MTR-2025-00165"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: REG/DEL/0166/2018: who is working on this matter? Retrieved firm records for: REG/DEL/0166/2018: who is working on this matter?\n\n[DOC-03076] Brief note of submissions on behalf of MSEDCL in Appeal 163 of 2018: 1 BEFORE THE HON’BLE APPELLATE TRIBUNAL FOR ELECTRICITY NEW DELHI APPEAL NO. 163 OF 2018 IN THE MATTER OF: GMR Warora Energy Limited …..Appellant Versus Central E",
+      "seconds": 1.35
+    },
+    {
+      "id": "LEAD-REG/DEL/0166/2018",
+      "category": "lead_unscoped",
+      "query": "who led our work on GMR Warora Energy v CERC?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2018-00166"
+      ],
+      "top_matters": [
+        "MTR-2018-00166",
+        "MTR-2025-00165"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who led our work on GMR Warora Energy v CERC? Retrieved firm records for: who led our work on GMR Warora Energy v CERC?\n\n[DOC-03076] Brief note of submissions on behalf of MSEDCL in Appeal 163 of 2018: 1 BEFORE THE HON’BLE APPELLATE TRIBUNAL FOR ELECTRICITY NEW DELHI APPEAL NO. 163 OF 2018 IN THE MATTER OF: GMR Warora Energy Limited …..Appellant Versus Central Electrici",
+      "seconds": 1.47
+    },
+    {
+      "id": "OVR-REG/DEL/0165/2025",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00165"
+      ],
+      "top_matters": [
+        "MTR-2025-00165"
+      ],
+      "slow_channels": [],
+      "answer": "REG/DEL/0165/2025 is the internal reference code for a Supreme Court matter involving MSEDCL's appeal against the Maharashtra Electricity Regulatory Commission, currently listed for hearing on 11.08.2026. The reference REG/DEL/0165/2025 corresponds to a legal matter bearing the internal matter number MTR-2025-00165, in which Maharashtra State Electricity Distribution Company Limited (MSEDCL) is th",
+      "seconds": 7.41
+    },
+    {
+      "id": "TEAM-REG/DEL/0165/2025",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00165"
+      ],
+      "top_matters": [
+        "MTR-2025-00165"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: REG/DEL/0165/2025: who is working on this matter? Retrieved firm records for: REG/DEL/0165/2025: who is working on this matter?\n\n[DOC-03075] Additional affidavit on behalf of MSEDCL in C.A. 10046 of 2025: STATE: MATTER LISTED ON 11.08.2026 SECTION: XVII IN THE SUPREME COURT OF INDIA (CIVIL/APPELLATE/JURISDICTION) Diary No. - 35534/2025 IN C.A. No. 010046 - / 2025 IN THE",
+      "seconds": 1.33
+    },
+    {
+      "id": "LEAD-REG/DEL/0165/2025",
+      "category": "lead_unscoped",
+      "query": "who led our work on MSEDCL v MERC?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00165"
+      ],
+      "top_matters": [
+        "MTR-2025-00165"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who led our work on MSEDCL v MERC? Retrieved firm records for: who led our work on MSEDCL v MERC?\n\n[DOC-03075] Additional affidavit on behalf of MSEDCL in C.A. 10046 of 2025: er and Respondent. 2. Advocate of the Petitioner stated that as directed during last hearing, reconciliation of Surface transportation and Sizing/crushing charges is completed, however reconciliati",
+      "seconds": 1.36
+    },
+    {
+      "id": "OVR-REG/DEL/0168/2025",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00168"
+      ],
+      "top_matters": [
+        "MTR-2025-00168"
+      ],
+      "slow_channels": [],
+      "answer": "REG/DEL/0168/2025 is the internal file reference for Damodar Valley Corporation's rejoinder filed before the Appellate Tribunal for Electricity in connection with an impleadment application in Appeal No. 118 of 2025. REG/DEL/0168/2025 corresponds to the internal file reference code assigned to a rejoinder filed on behalf of Damodar Valley Corporation (DVC) before the Hon'ble Appellate Tribunal for",
+      "seconds": 3.92
+    },
+    {
+      "id": "TEAM-REG/DEL/0168/2025",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00168"
+      ],
+      "top_matters": [
+        "MTR-2025-00168"
+      ],
+      "slow_channels": [],
+      "answer": "SKV Law Offices is representing Damodar Valley Corporation in this matter before the Appellate Tribunal for Electricity. The matter REG/DEL/0168/2025, which concerns an impleadment application in Appeal No. 118 of 2025 before the Appellate Tribunal for Electricity, is being handled by SKV Law Offices on behalf of the client Damodar Valley Corporation (DOC-03079). The filing specifically relates to",
+      "seconds": 5.56
+    },
+    {
+      "id": "LEAD-REG/DEL/0168/2025",
+      "category": "lead_unscoped",
+      "query": "who led our work on WBSEDCL v WBERC?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00168"
+      ],
+      "top_matters": [
+        "MTR-2025-00168"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who led our work on WBSEDCL v WBERC? Retrieved firm records for: who led our work on WBSEDCL v WBERC?\n\n[DOC-03079] DVC rejoinder to WBSEDCL reply on impleadment in Appeal 118 of 2025: . In substance, DVC's case before WBERC was that WBSEDCL was charging a lower tariff to certain consumer categories in the DVC command area, that this had caused DVC to lose consumers with",
+      "seconds": 1.57
+    },
+    {
+      "id": "OVR-REG/DEL/0167/2026",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00167"
+      ],
+      "top_matters": [
+        "MTR-2026-00167"
+      ],
+      "slow_channels": [],
+      "answer": "REG/DEL/0167/2026 is the internal filing code assigned to a written submission filed by Central Transmission Utility of India Limited in Petition No. 310/MP/2026 before the Central Electricity Regulatory Commission. The code REG/DEL/0167/2026 corresponds to a written submission filed on behalf of the Central Transmission Utility of India Limited (CTUIL), which is the respondent in Petition No. 310",
+      "seconds": 3.44
+    },
+    {
+      "id": "TEAM-REG/DEL/0167/2026",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00167"
+      ],
+      "top_matters": [
+        "MTR-2026-00167"
+      ],
+      "slow_channels": [],
+      "answer": "Shubham Arya is identified as the counsel representing the respondent Central Transmission Utility of India Limited in this matter before the Central Electricity Regulatory Commission. The matter REG/DEL/0167/2026, which corresponds to Petition No. 310/MP/2026 before the Central Electricity Regulatory Commission, identifies Shubham Arya as the counsel for the respondent Central Transmission Utilit",
+      "seconds": 14.44
+    },
+    {
+      "id": "LEAD-REG/DEL/0167/2026",
+      "category": "lead_unscoped",
+      "query": "who led our work on AMPIN Energy Utility Nine v CTUIL?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00167"
+      ],
+      "top_matters": [
+        "MTR-2026-00167"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who led our work on AMPIN Energy Utility Nine v CTUIL? Retrieved firm records for: who led our work on AMPIN Energy Utility Nine v CTUIL?\n\n[DOC-03078] Reply on behalf of CTUIL in Petition 310/MP/2026: A LIMITED MOST RESPECTFULLY SHOWETH: 1. The present Petition has been filed by AMPIN Energy Utility Nine Pvt. Ltd. (“Petitioner No. 1”) and AMPIN Energy Utility Pvt. Ltd. ",
+      "seconds": 12.95
+    },
+    {
+      "id": "OVR-REG/DEL/0170/2026",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00170"
+      ],
+      "top_matters": [
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "answer": "REG/DEL/0170/2026 is the internal file reference code for Petition No. 22 of 2026 before the Punjab State Electricity Regulatory Commission, involving Vector Green Sunshine Pvt. Ltd. as petitioner against Punjab State Power Corporation Limited as respondent. The code REG/DEL/0170/2026 corresponds to Petition No. 22 of 2026, which is currently pending before the Punjab State Electricity Regulatory ",
+      "seconds": 12.33
+    },
+    {
+      "id": "TEAM-REG/DEL/0170/2026",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00170"
+      ],
+      "top_matters": [
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "answer": "Poorva Saigal appears as counsel for Respondent No. 1 (Punjab State Power Corporation Limited) in matter REG/DEL/0170/2026, which concerns Vector Green Sunshine Pvt. Ltd.'s petition before the Punjab State Electricity Regulatory Commission. The matter REG/DEL/0170/2026, identified internally as MTR-2026-00170, involves Petition No. 22 of 2026 before the Punjab State Electricity Regulatory Commissi",
+      "seconds": 2.69
+    },
+    {
+      "id": "LEAD-REG/DEL/0170/2026",
+      "category": "lead_unscoped",
+      "query": "who led our work on Vector Green Sunshine v PSPCL?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00170"
+      ],
+      "top_matters": [
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "answer": "Poorva Saigal served as counsel for Respondent No. 1 (Punjab State Power Corporation Limited) in Vector Green Sunshine Pvt. Ltd. v. PSPCL before the Punjab State Electricity Regulatory Commission. The firm's work on Vector Green Sunshine Pvt. Ltd. v. Punjab State Power Corporation Limited was led by Poorva Saigal, who appeared as counsel for Respondent No. 1 (PSPCL) in Petition No. 22 of 2026 befo",
+      "seconds": 9.33
+    },
+    {
+      "id": "OVR-CORP/BLR/0901/2026",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "facts_any": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: CORP/BLR/0901/2026: explain this Retrieved firm records for: CORP/BLR/0901/2026: explain this\n\n[DOC-E9058749C1] Share Purchase Agreement.docx: Share Purchase Agreement\n\n[DOC-06D46C4AD1] Board Resolution.docx: Board Resolution",
+      "seconds": 1.27
+    },
+    {
+      "id": "TEAM-CORP/BLR/0901/2026",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: CORP/BLR/0901/2026: who is working on this matter? Retrieved firm records for: CORP/BLR/0901/2026: who is working on this matter?\n\n[DOC-E9058749C1] Share Purchase Agreement.docx: Share Purchase Agreement\n\n[DOC-06D46C4AD1] Board Resolution.docx: Board Resolution",
+      "seconds": 8.44
+    },
+    {
+      "id": "LEAD-CORP/BLR/0901/2026",
+      "category": "lead_unscoped",
+      "query": "who led our work on Acme Technologies?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2026-00901",
+        "MTR-1969-00107",
+        "MTR-1932-00035",
+        "MTR-1974-00112",
+        "MTR-1982-00120"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who led our work on Acme Technologies? Retrieved firm records for: who led our work on Acme Technologies?\n\n[DOC-7405413EC8] Employment Agreement - CTO.docx: This Agreement is made between Acme Technologies Private Limited (the \"Company\") and Mr Arvind Rao (the \"Executive\").\n\n[DOC-00522] Security Council resolution 263 (1969) [on inclusion of Russian and Spanish among th",
+      "seconds": 17.03
+    },
+    {
+      "id": "OVR-CI-OPEN-001",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-CI-OPEN-001"
+      ],
+      "top_matters": [
+        "MTR-CI-OPEN-001"
+      ],
+      "slow_channels": [],
+      "answer": "CI-OPEN-001 is a matter code appearing in two distinct proceedings: a CERC petition involving AMPIN Energy Utility Nine Pvt. Ltd. versus Central Transmission Utility of India Limited, and a Supreme Court civil appeal concerning RattanIndia Power Limited's request for adhoc payment release. The matter code CI-OPEN-001 appears across two separate legal proceedings in the firm's records. The first pr",
+      "seconds": 15.86
+    },
+    {
+      "id": "TEAM-CI-OPEN-001",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-CI-OPEN-001"
+      ],
+      "top_matters": [
+        "MTR-CI-OPEN-001"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: CI-OPEN-001: who is working on this matter? Retrieved firm records for: CI-OPEN-001: who is working on this matter?\n\n[DOC-C666DB26B4] Affidavit - CA 10046 of 2025.pdf: I say that in furtherance of the Impugned Judgment dated 08.05.2025 passed by the Ld. Appellate Tribunal for Electricity (“Appellate Tribunal”) in Appeal No. 345 of 2021, the Respondent No. 2 herein, i.e.",
+      "seconds": 8.53
+    },
+    {
+      "id": "LEAD-CI-OPEN-001",
+      "category": "lead_unscoped",
+      "query": "who led our work on CI Open Tariff Dispute?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-CI-OPEN-001"
+      ],
+      "top_matters": [
+        "MTR-CI-OPEN-001"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who led our work on CI Open Tariff Dispute? Retrieved firm records for: who led our work on CI Open Tariff Dispute?\n\n[DOC-C666DB26B4] Affidavit - CA 10046 of 2025.pdf: I say that in furtherance of the Impugned Judgment dated 08.05.2025 passed by the Ld. Appellate Tribunal for Electricity (“Appellate Tribunal”) in Appeal No. 345 of 2021, the Respondent No. 2 herein, i.e.",
+      "seconds": 1.35
+    },
+    {
+      "id": "ACME-LSD",
+      "category": "scoped_fact",
+      "query": "what is the long stop date?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "facts_all": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: CORP/BLR/0901/2026: what is the long stop date? Retrieved firm records for: CORP/BLR/0901/2026: what is the long stop date?\n\n[DOC-E9058749C1] Share Purchase Agreement.docx: Share Purchase Agreement\n\n[DOC-06D46C4AD1] Board Resolution.docx: Board Resolution",
+      "seconds": 2.33
+    },
+    {
+      "id": "ACME-SHARES",
+      "category": "scoped_fact",
+      "query": "how many shares are being transferred?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "answer": "The transaction involves the transfer of 1,240,000 Series A compulsorily convertible preference shares of Acme Technologies Private Limited from Horizon Seed Partners LLP to Northbridge Growth Fund II. The Share Purchase Agreement provides that 1,240,000 Series A compulsorily convertible preference shares of Acme Technologies Private Limited are being transferred in this transaction (DOC-E9058749C",
+      "seconds": 10.3
+    },
+    {
+      "id": "ACME-BUYER",
+      "category": "scoped_fact",
+      "query": "who is the purchaser?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "facts_all": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: CORP/BLR/0901/2026: who is the purchaser? Retrieved firm records for: CORP/BLR/0901/2026: who is the purchaser?\n\n[DOC-06D46C4AD1] Board Resolution.docx: Board Resolution\n\n[DOC-E9058749C1] Share Purchase Agreement.docx: If this Agreement is terminated by the Purchaser under Clause 12.3 following a material breach by the Seller, the Seller shall pay the Purchaser a break ",
+      "seconds": 10.37
+    },
+    {
+      "id": "ACME-BOARD",
+      "category": "scoped_fact",
+      "query": "when did the board approve the transfer?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": false,
+        "facts_all": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: CORP/BLR/0901/2026: when did the board approve the transfer? Retrieved firm records for: CORP/BLR/0901/2026: when did the board approve the transfer?\n\n[DOC-E9058749C1] Share Purchase Agreement.docx: Share Purchase Agreement",
+      "seconds": 1.25
+    },
+    {
+      "id": "ACME-CLIENT",
+      "category": "client_matters",
+      "query": "what work have we done for Acme Technologies?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "matters_recall": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2008-00146",
+        "MTR-2007-00145",
+        "MTR-1982-00120",
+        "MTR-1974-00112",
+        "MTR-1969-00107"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: what work have we done for Acme Technologies? Retrieved firm records for: what work have we done for Acme Technologies?\n\n[DOC-02062] Security Council resolution 1803 (2008) [on further measures against Iran in connection with its development of sensitive technologies in support of its nuclear and missile programmes]: g to Iran’s nuclear programme in the work plan betwee",
+      "seconds": 5.62
+    },
+    {
+      "id": "ACME-CLIENT-SCOPE",
+      "category": "client_matters",
+      "query": "what deals have we done for them?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2026-00901",
+        "MTR-2007-00145",
+        "MTR-2008-00146"
+      ],
+      "slow_channels": [],
+      "answer": "The firm has handled one documented matter for Acme Technologies Private Limited: an employment agreement for their Chief Technology Officer. The firm's records reflect one engagement for Acme Technologies Private Limited. Specifically, the firm prepared an Employment Agreement for the company in connection with the appointment of Mr. Arvind Rao as Chief Technology Officer (DOC-7405413EC8). This m",
+      "seconds": 4.25
+    },
+    {
+      "id": "ACME-PARA",
+      "category": "paraphrase_lowercase",
+      "query": "the series b deal where a seed investor sold its preference shares to a growth fund",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "answer": "The transaction involved Horizon Seed Partners LLP selling 1,240,000 Series A compulsorily convertible preference shares to Northbridge Growth Fund II, not a Series B deal as the question suggests. The firm advised on a secondary share transaction in which Horizon Seed Partners LLP, a seed investor, sold its entire stake of 1,240,000 Series A compulsorily convertible preference shares in Acme Tech",
+      "seconds": 6.35
+    },
+    {
+      "id": "CLIENT-United Kingdom",
+      "category": "client_matters",
+      "query": "which matters have we handled for United Kingdom?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "matters_recall": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1965-00103",
+        "MTR-1980-00118",
+        "MTR-1973-00111",
+        "MTR-1948-00086"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: which matters have we handled for United Kingdom? Retrieved firm records for: which matters have we handled for United Kingdom?\n\n[DOC-00461] Security Council resolution 202 (1965) [requesting the United Kingdom to take all necessary action to prevent a unilateral declaration of independence for Southern Rhodesia by the minority Government]: tional conference; 3. Request",
+      "seconds": 3.57
+    },
+    {
+      "id": "CLIENT-Greece",
+      "category": "client_matters",
+      "query": "which matters have we handled for Greece?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1947-00085",
+        "MTR-1924-00002",
+        "MTR-1976-00114",
+        "MTR-1993-00131",
+        "MTR-1946-00084"
+      ],
+      "slow_channels": [],
+      "answer": "The firm has handled one matter with Greece as the direct client (Mavrommatis Palestine, 1924) and has been involved in multiple Security Council matters concerning Greece's disputes with neighboring states, where the United Nations was the client. The firm has handled one matter in which Greece was the direct client: the Mavrommatis Palestine case before the Permanent Court of International Justi",
+      "seconds": 7.02
+    },
+    {
+      "id": "CLIENT-Denmark",
+      "category": "client_matters",
+      "query": "which matters have we handled for Denmark?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1933-00038"
+      ],
+      "slow_channels": [],
+      "answer": "The firm has acted for Denmark in the matter of Eastern Greenland (MTR-1933-00038), which was litigated before the Permanent Court of International Justice (DOC-00131). This matter, coded as PIL/HAG/0038/1933, concerned the legal status of Eastern Greenland and involved questions of Danish sovereign The firm has acted for Denmark in the matter of Eastern Greenland (MTR-1933-00038), which was litig",
+      "seconds": 4.91
+    },
+    {
+      "id": "CLIENT-Switzerland",
+      "category": "client_matters",
+      "query": "which matters have we handled for Switzerland?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1946-00084",
+        "MTR-1929-00022",
+        "MTR-1931-00031",
+        "MTR-1999-00137"
+      ],
+      "slow_channels": [],
+      "answer": "The firm has handled three matters involving Switzerland: a 1946 Security Council resolution on Swiss accession to the ICJ Statute, and two related proceedings in 1929 and 1931-1932 concerning the Free Zones of Upper Savoy and Gex before the Permanent Court of International Justice. The firm has handled three matters involving Switzerland. First, in Matter MTR-1946-00084, the firm worked on Securi",
+      "seconds": 5.36
+    },
+    {
+      "id": "CLIENT-Maharashtra State El",
+      "category": "client_matters",
+      "query": "which matters have we handled for Maharashtra State Electricity Distribution Company Limited?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": false,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-CI-OPEN-001",
+        "MTR-2025-00165"
+      ],
+      "slow_channels": [],
+      "answer": "The firm has handled at least two matters for Maharashtra State Electricity Distribution Company Limited (MSEDCL): MTR-CI-OPEN-001 and MTR-2025-00165, both involving regulatory and appellate litigation in the power sector. The firm has handled matters for Maharashtra State Electricity Distribution Company Limited (MSEDCL) across two distinct matter codes. The first is Matter MTR-CI-OPEN-001, which",
+      "seconds": 5.7
+    },
+    {
+      "id": "SPEC-MEM-00001",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in pcij jurisprudence?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1928-00017",
+        "MTR-2002-00140",
+        "MTR-1994-00132",
+        "MTR-2014-00152"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in pcij jurisprudence? Retrieved firm records for: who in the firm is an expert in pcij jurisprudence?\n\n[DOC-00062] Order — Chorzow Factory Indemnities (1928-09-13): ns of paragraph 2 above, the experts and assessors shall make the following solemn declaration, either orally before the President, or by letter addressed to the President : \"1 ",
+      "seconds": 3.57
+    },
+    {
+      "id": "SPEC-MEM-00002",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in un charter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2002-00140",
+        "MTR-2010-00148",
+        "MTR-1999-00137",
+        "MTR-2011-00149",
+        "MTR-2009-00147"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in un charter? Retrieved firm records for: who in the firm is an expert in un charter?\n\n[DOC-01666] Security Council resolution 1407 (2002) [on establishment of a UN team of experts, in preparation for a Panel of Experts, to implement fully and strengthen the enforcement of the arms embargo in Somalia]: (S/PRST/2002/8), Noting with serious c",
+      "seconds": 2.66
+    },
+    {
+      "id": "SPEC-MEM-00003",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in advisory opinions?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1923-00070",
+        "MTR-1923-00073",
+        "MTR-1927-00079",
+        "MTR-1925-00077",
+        "MTR-1924-00074"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in advisory opinions? Retrieved firm records for: who in the firm is an expert in advisory opinions?\n\n[DOC-00230] Advisory Opinion — Eastern Carelia (1923-07-23): s- tion of fact : What did the parties agree to ? The Court does not say that there is an absolute rule that the request for an advisory opinion rnay not involve some enquiry as to",
+      "seconds": 2.22
+    },
+    {
+      "id": "SPEC-MEM-00004",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in sanctions?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2014-00152",
+        "MTR-2025-00163",
+        "MTR-2015-00153",
+        "MTR-2016-00154"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in sanctions? Retrieved firm records for: who in the firm is an expert in sanctions?\n\n[DOC-02418] Security Council resolution 2159 (2014) [on extension of the mandate of the Panel of Experts Established pursuant to Resolution 1929 (2010) concerning the Islamic Republic of Iran until 9 July 2015]: of Experts, under the direction of the Commit",
+      "seconds": 3.5
+    },
+    {
+      "id": "SPEC-MEM-00005",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in historical awards?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2002-00140",
+        "MTR-2017-00155",
+        "MTR-2022-00160",
+        "MTR-1994-00132"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in historical awards? Retrieved firm records for: who in the firm is an expert in historical awards?\n\n[DOC-01666] Security Council resolution 1407 (2002) [on establishment of a UN team of experts, in preparation for a Panel of Experts, to implement fully and strengthen the enforcement of the arms embargo in Somalia]: Requests the Secretary-G",
+      "seconds": 3.02
+    },
+    {
+      "id": "SPEC-MEM-00006",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in mandate renewals?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2017-00155",
+        "MTR-2016-00154",
+        "MTR-2024-00162",
+        "MTR-2018-00156",
+        "MTR-2015-00153"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in mandate renewals? Retrieved firm records for: who in the firm is an expert in mandate renewals?\n\n[DOC-02619] Security Council resolution 2360 (2017) [on renewal of measures on arms embargo against the Democratic Republic of the Congo imposed by Security Council resolution 2293 (2016) and extension of the mandate of the Group of Experts Es",
+      "seconds": 6.71
+    },
+    {
+      "id": "SPEC-MEM-00007",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in documentary annexes?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1936-00053",
+        "MTR-2002-00140",
+        "MTR-2017-00155",
+        "MTR-2013-00151"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in documentary annexes? Retrieved firm records for: who in the firm is an expert in documentary annexes?\n\n[DOC-00169] Annex — Pajzs Csaky Esterhazy (1936-12-16): rt concerning the valuation of agricultural property belonging t o Hungarian nationals and situated in temtory transferred under the Treaty of Trianon from Hungary t o Roumania, Yug",
+      "seconds": 2.84
+    },
+    {
+      "id": "SPEC-MEM-00008",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in compensation?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1928-00017",
+        "MTR-2002-00140",
+        "MTR-1991-00129"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in compensation? Retrieved firm records for: who in the firm is an expert in compensation?\n\n[DOC-00061] Judgment — Chorzow Factory Indemnities (1928-09-13): OBSERVATIONS BY M. NYHOLM. The wish to have recourse to expert opinion for the purpose of estimating the compensation due in respect of the Chorz6w factory is certainly legitimate, but i",
+      "seconds": 10.8
+    },
+    {
+      "id": "SPEC-MEM-00009",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in case chronology?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1928-00019",
+        "MTR-2002-00140",
+        "MTR-1997-00135",
+        "MTR-1999-00137"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in case chronology? Retrieved firm records for: who in the firm is an expert in case chronology?\n\n[DOC-00064] Order — Chorzow Factory Indemnities (1928-12-15): ased to fulfil any further purpose ; and that consequently these pro- ceedings should be brought to an end ; Decides : (1) The expert enquiry ordered to be held in the case concerning",
+      "seconds": 8.58
+    },
+    {
+      "id": "SPEC-MEM-00010",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in resolution citators?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2005-00143",
+        "MTR-2013-00151",
+        "MTR-2017-00155",
+        "MTR-2015-00153"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in resolution citators? Retrieved firm records for: who in the firm is an expert in resolution citators?\n\n[DOC-01875] Security Council resolution 1616 (2005) [on renewing arms embargo imposed by resolution 1493 and expanded by resolution 1596 and re-establishing the Panel of Experts on the Democratic Republic of the Congo]: e have been satis",
+      "seconds": 8.06
+    },
+    {
+      "id": "SPEC-MEM-00011",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in corpus cataloguing?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2002-00140",
+        "MTR-1992-00130",
+        "MTR-2022-00160",
+        "MTR-2006-00144",
+        "MTR-2014-00152"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in corpus cataloguing? Retrieved firm records for: who in the firm is an expert in corpus cataloguing?\n\n[DOC-01666] Security Council resolution 1407 (2002) [on establishment of a UN team of experts, in preparation for a Panel of Experts, to implement fully and strengthen the enforcement of the arms embargo in Somalia]: Requests the Secretary",
+      "seconds": 2.07
+    },
+    {
+      "id": "SPEC-MEM-00012",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in pdf splitting?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2002-00140",
+        "MTR-2022-00160",
+        "MTR-2017-00155",
+        "MTR-2019-00157",
+        "MTR-2006-00144"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in pdf splitting? Retrieved firm records for: who in the firm is an expert in pdf splitting?\n\n[DOC-01666] Security Council resolution 1407 (2002) [on establishment of a UN team of experts, in preparation for a Panel of Experts, to implement fully and strengthen the enforcement of the arms embargo in Somalia]: Requests the Secretary-General t",
+      "seconds": 3.44
+    },
+    {
+      "id": "SPEC-MEM-00013",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in electricity regulation?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-CI-OPEN-001",
+        "MTR-1939-00062",
+        "MTR-2026-00170",
+        "MTR-2002-00140",
+        "MTR-2026-00167"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in electricity regulation? Retrieved firm records for: who in the firm is an expert in electricity regulation?\n\n[DOC-C666DB26B4] Affidavit - CA 10046 of 2025.pdf: STATE: MATTER LISTED ON 11.08.2026 SECTION: XVII IN THE SUPREME COURT OF INDIA (CIVIL/APPELLATE/JURISDICTION) Diary No. - 35534/2025 IN C.A. No. 010046 - / 2025 IN THE MATTER OF: M",
+      "seconds": 9.54
+    },
+    {
+      "id": "SPEC-MEM-00014",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in aptel appeals?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-CI-OPEN-001",
+        "MTR-2025-00165",
+        "MTR-2002-00140"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in aptel appeals? Retrieved firm records for: who in the firm is an expert in aptel appeals?\n\n[DOC-C666DB26B4] Affidavit - CA 10046 of 2025.pdf: Page 2 of 2 4. The Commission noted that there is no stay on execution of the Hon’ble APTEL Judgement dated 08 May, 2025 in Appeal No. 345 of 2021. Therefore, directs MSEDCL to file its reply within",
+      "seconds": 22.17
+    },
+    {
+      "id": "SPEC-MEM-00015",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in ppa disputes?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2026-00170",
+        "MTR-CI-OPEN-001",
+        "MTR-2002-00140",
+        "MTR-1923-00001"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in ppa disputes? Retrieved firm records for: who in the firm is an expert in ppa disputes?\n\n[DOC-03081] PSPCL written submissions in Petition 22 of 2026 (Vector Green): IS MADE OUT FOR EXERCISE OF GENERAL REGULATORY POWER UNDER SECTION 86 OF THE ELECTRICITY ACT, 2003 [Pages 24-25, Reply] 27. The exercise of regulatory powers under Section 86",
+      "seconds": 5.48
+    },
+    {
+      "id": "SPEC-MEM-00016",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in affidavits?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-CI-OPEN-001",
+        "MTR-2002-00140",
+        "MTR-2025-00168"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: who in the firm is an expert in affidavits? Retrieved firm records for: who in the firm is an expert in affidavits?\n\n[DOC-C666DB26B4] Affidavit - CA 10046 of 2025.pdf: STATE: MATTER LISTED ON 11.08.2026 SECTION: XVII IN THE SUPREME COURT OF INDIA (CIVIL/APPELLATE/JURISDICTION) Diary No. - 35534/2025 IN C.A. No. 010046 - / 2025 IN THE MATTER OF: MAHARASHTRA STATE ELECTRI",
+      "seconds": 10.93
+    },
+    {
+      "id": "PARTNER-The Hague",
+      "category": "people_expertise",
+      "query": "which partner sits in our The Hague office?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1999-00137",
+        "MTR-2015-00153",
+        "MTR-2009-00147",
+        "MTR-2013-00151",
+        "MTR-2020-00158"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: which partner sits in our The Hague office? Retrieved firm records for: which partner sits in our The Hague office?\n\n[DOC-01492] Security Council resolution 1233 (1999) [on implementation of the Abuja Agreement and on establishment of a Post-Conflict Peace Building Support Office in Guinea-Bissau (UNOGBIS)]\n[Implementation of the Abuja Agreement and establishment of a P",
+      "seconds": 9.55
+    },
+    {
+      "id": "PARTNER-New York",
+      "category": "people_expertise",
+      "query": "which partner sits in our New York office?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1999-00137",
+        "MTR-2011-00149",
+        "MTR-2001-00139",
+        "MTR-2015-00153"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: which partner sits in our New York office? Retrieved firm records for: which partner sits in our New York office?\n\n[DOC-01492] Security Council resolution 1233 (1999) [on implementation of the Abuja Agreement and on establishment of a Post-Conflict Peace Building Support Office in Guinea-Bissau (UNOGBIS)]\n[Implementation of the Abuja Agreement and establishment of a Pos",
+      "seconds": 2.12
+    },
+    {
+      "id": "PARTNER-Delhi",
+      "category": "people_expertise",
+      "query": "which partner sits in our Delhi office?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1999-00137",
+        "MTR-2015-00153",
+        "MTR-2026-00901",
+        "MTR-2009-00147"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: which partner sits in our Delhi office? Retrieved firm records for: which partner sits in our Delhi office?\n\n[DOC-01492] Security Council resolution 1233 (1999) [on implementation of the Abuja Agreement and on establishment of a Post-Conflict Peace Building Support Office in Guinea-Bissau (UNOGBIS)]\n[Implementation of the Abuja Agreement and establishment of a Post-Conf",
+      "seconds": 2.4
+    },
+    {
+      "id": "NEG-0",
+      "category": "negative",
+      "query": "what was the case where acme challenged the bank?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "clean_negative": false,
+        "no_dump": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2015-00153",
+        "MTR-1997-00135",
+        "MTR-1929-00020",
+        "MTR-1929-00021",
+        "MTR-1937-00055"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: what was the case where acme challenged the bank? Retrieved firm records for: what was the case where acme challenged the bank?\n\n[DOC-02490] Security Council resolution 2231 (2015) [on Joint Comprehensive Plan of Action (JCPOA) on the Islamic Republic of Iran's nuclear programme]: the Office of Foreign Assets Control (OFAC). U.S. persons and foreign entities owned or co",
+      "seconds": 6.55
+    },
+    {
+      "id": "NEG-1",
+      "category": "negative",
+      "query": "what did we advise Zephyrine Robotics on in its dispute with Obelisk Bank?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "clean_negative": false,
+        "no_dump": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2009-00147",
+        "MTR-2015-00153",
+        "MTR-2025-00163",
+        "MTR-2017-00155",
+        "MTR-1976-00114"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: what did we advise Zephyrine Robotics on in its dispute with Obelisk Bank? Retrieved firm records for: what did we advise Zephyrine Robotics on in its dispute with Obelisk Bank?\n\n[DOC-02121] Security Council resolution 1862 (2009) [on the settlement of the border dispute between Djibouti and Eritrea and withdrawal of Eritrean forces from the area of conflict]: Urges Dji",
+      "seconds": 8.46
+    },
+    {
+      "id": "NEG-2",
+      "category": "negative",
+      "query": "the arbitration between Norland Shipping and Kestrel Insurance over a sunk tanker",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "clean_negative": false,
+        "no_dump": false,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2015-00153"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: the arbitration between Norland Shipping and Kestrel Insurance over a sunk tanker Retrieved firm records for: the arbitration between Norland Shipping and Kestrel Insurance over a sunk tanker\n\n[DOC-02490] Security Council resolution 2231 (2015) [on Joint Comprehensive Plan of Action (JCPOA) on the Islamic Republic of Iran's nuclear programme]: HSAZ KASHANE TEHRAN CONSTR",
+      "seconds": 5.34
+    },
+    {
+      "id": "WALL-MTR-1922-00066",
+      "category": "ethical_wall",
+      "query": "summarise Workers Delegate I L O",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "no_leak": true,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1930-00083",
+        "MTR-1926-00078",
+        "MTR-1922-00068",
+        "MTR-1927-00079"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: summarise Workers Delegate I L O Retrieved firm records for: summarise Workers Delegate I L O\n\n[DOC-00259] Advisory Opinion — Danzig I L O (1930-08-26): in law at any rate-thereby expressed. The legal conception of foreign relations is connected with that of the individual or collective will of States in their relations one with another. The Conference would not therefo",
+      "seconds": 1.38
+    },
+    {
+      "id": "WALL-MTR-1922-00067",
+      "category": "ethical_wall",
+      "query": "summarise I L O Competence Persons Agriculture",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "no_leak": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1922-00068"
+      ],
+      "slow_channels": [],
+      "answer": "The Permanent Court of International Justice affirmed in 1922 that international regulation of labour conditions for persons employed in agriculture falls within the competence of the International Labour Organisation, based on Part XIII of the Treaty of Versailles. The matter concerns an advisory opinion request submitted by the League of Nations Council to the Permanent Court of International Ju",
+      "seconds": 4.29
+    },
+    {
+      "id": "WALL-MTR-2026-00169",
+      "category": "ethical_wall",
+      "query": "summarise CI Restricted Matter",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "no_leak": true,
+        "no_slow_channel": true
+      },
+      "provider": "extractive_after_bedrock_abstain",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-CI-OPEN-001",
+        "MTR-1951-00089"
+      ],
+      "slow_channels": [],
+      "answer": "Retrieved firm records for: summarise CI Restricted Matter Retrieved firm records for: summarise CI Restricted Matter\n\n[DOC-C666DB26B4] Affidavit - CA 10046 of 2025.pdf: STATE: MATTER LISTED ON 11.08.2026 SECTION: XVII IN THE SUPREME COURT OF INDIA (CIVIL/APPELLATE/JURISDICTION) Diary No. - 35534/2025 IN C.A. No. 010046 - / 2025 IN THE MATTER OF: MAHARASHTRA STATE ELECTRICITY DISTRIBUTION COMPANY ",
+      "seconds": 2.07
+    },
+    {
+      "id": "WALL-MTR-2026-00170",
+      "category": "ethical_wall",
+      "query": "summarise Vector Green Sunshine v PSPCL",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "no_leak": true,
+        "no_slow_channel": true
+      },
+      "provider": "bedrock",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-CI-OPEN-001"
+      ],
+      "slow_channels": [],
+      "answer": "Vector Green Sunshine Pvt. Ltd. filed Petition No. 22 of 2026 before the Punjab State Electricity Regulatory Commission against PSPCL, seeking compensation for expenditure incurred due to GST levied under the Reverse Charge Mechanism on renting of immovable property by unregistered lessors. Vector Green Sunshine Pvt. Ltd. filed Petition No. 22 of 2026 before the Punjab State Electricity Regulatory",
+      "seconds": 3.59
+    }
+  ]
+}

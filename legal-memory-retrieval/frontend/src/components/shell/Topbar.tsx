@@ -16,7 +16,8 @@ import { useTheme, type Theme } from "@/lib/theme";
 
 const LABELS: Record<string, string> = {
   ask: "Ask the Firm",
-  chat: "Chat",
+  chat: "Assistant",
+  assistant: "Assistant",
   matters: "Matters",
   clients: "Clients",
   documents: "Documents",
@@ -24,6 +25,7 @@ const LABELS: Record<string, string> = {
   calendar: "Calendar",
   arguments: "Arguments",
   settings: "Settings",
+  admin: "Admin",
   history: "Draft evolution",
 };
 
