@@ -4,15 +4,15 @@ from pgvector import Vector
 from pgvector.psycopg import register_vector
 from psycopg.rows import dict_row
 
-from app.embeddings.minilm import MiniLMEmbedder
+from app.embeddings.factory import get_embedder
 
-_embedder: MiniLMEmbedder | None = None
+_embedder = None
 
 
-def _model() -> MiniLMEmbedder:
+def _model():
     global _embedder
     if _embedder is None:
-        _embedder = MiniLMEmbedder()
+        _embedder = get_embedder()
     return _embedder
 
 

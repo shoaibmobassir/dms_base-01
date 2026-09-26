@@ -28,7 +28,7 @@ def clients_list(
                 cur.execute(
                     "SELECT client_id, name, industry, size, headquarters"
                     " FROM clients WHERE name ILIKE %(like)s OR industry ILIKE %(like)s"
-                    " ORDER BY name LIMIT %(limit)s OFFSET %(offset)s",
+                    " ORDER BY name, client_id LIMIT %(limit)s OFFSET %(offset)s",
                     {"like": like, "limit": limit, "offset": offset},
                 )
                 items = list(cur.fetchall())
@@ -40,7 +40,7 @@ def clients_list(
             else:
                 cur.execute(
                     "SELECT client_id, name, industry, size, headquarters"
-                    " FROM clients ORDER BY name"
+                    " FROM clients ORDER BY name, client_id"
                     " LIMIT %(limit)s OFFSET %(offset)s",
                     {"limit": limit, "offset": offset},
                 )
@@ -75,7 +75,7 @@ def client_matters(
 
 
 @router.get("/{client_id}")
-def client_detail(client_id: str) -> dict:
+def client_detail(client_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT * FROM clients WHERE client_id = %(cid)s", {"cid": client_id})
@@ -83,23 +83,39 @@ def client_detail(client_id: str) -> dict:
             if not client:
                 raise HTTPException(status_code=404, detail="Client not found")
 
+            params = {"cid": client_id, "member_id": member_id}
             cur.execute(
-                """
-                SELECT matter_id, matter_code, title, practice_area, status, opened_date
-                FROM matters
-                WHERE client_id = %(cid)s
-                ORDER BY opened_date DESC
+                f"""
+                SELECT m.matter_id, m.matter_code, m.title, m.practice_area, m.status, m.opened_date
+                FROM matters m
+                LEFT JOIN permissions p ON p.matter_id = m.matter_id
+                WHERE m.client_id = %(cid)s AND {ACL_CLAUSE}
+                ORDER BY m.opened_date DESC NULLS LAST
                 LIMIT 10
                 """,
-                {"cid": client_id},
+                params,
             )
             matters = list(cur.fetchall())
 
+            # Notes sourced from a restricted matter are hidden like the matter itself.
+            cur.execute(
+                f"""
+                SELECT n.note_id, n.kind, n.text, n.source_matter_id,
+                       sm.matter_code AS source_matter_code, n.author_member_id,
+                       mb.name AS author_name, n.created_at
+                FROM client_notes n
+                LEFT JOIN matters sm ON sm.matter_id = n.source_matter_id
+                LEFT JOIN permissions p ON p.matter_id = n.source_matter_id
+                LEFT JOIN members mb ON mb.member_id = n.author_member_id
+                WHERE n.client_id = %(cid)s
+                  AND (n.source_matter_id IS NULL OR {ACL_CLAUSE})
+                ORDER BY n.kind, n.created_at DESC
+                """,
+                params,
+            )
+            notes = list(cur.fetchall())
+
     client["matters"] = matters
-    client["client_memory"] = {
-        "preferred": ["Executive summaries", "Risk exposure matrices", "Clear liability tables"],
-        "avoid": ["Verbose case recitals", "Excessive historical footnotes"],
-        "standard_terms": "Insists on 15% maximum liability cap and SIAC seat in cross-border JVs.",
-    }
+    client["notes"] = notes
     client["service"] = SERVICE
     return client

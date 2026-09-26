@@ -4,9 +4,10 @@ Clean-room independent implementation.
 """
 
 from typing import Optional
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
+from app.auth.deps import resolve_member
 from app.auth.handoff import get_auth_handoff_service
 from app.db.connection import connect
 from app.drafting.clause_diff_service import get_clause_diff_service
@@ -47,10 +48,17 @@ async def health():
 
 
 @router.post("/handoff/ticket")
-async def create_handoff_ticket(req: CreateTicketRequest):
-    """Generates a short-lived one-time ticket from the web application."""
+async def create_handoff_ticket(
+    req: CreateTicketRequest,
+    caller_id: Optional[str] = Depends(resolve_member),
+):
+    """Generates a short-lived one-time ticket from the web application.
+
+    The ticket is always for the caller; a body member_id is honoured only in
+    dev mode with no identity header (otherwise anyone could mint tickets for anyone).
+    """
     svc = get_auth_handoff_service()
-    ticket = svc.create_ticket(member_id=req.member_id, email=req.email)
+    ticket = svc.create_ticket(member_id=caller_id or req.member_id, email=req.email)
     return {"ticket": ticket, "expires_in_seconds": svc.ttl}
 
 

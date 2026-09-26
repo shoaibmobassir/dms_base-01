@@ -48,7 +48,7 @@ def matters_list(
         FROM matters m
         LEFT JOIN permissions p ON p.matter_id = m.matter_id
         WHERE {where}
-        ORDER BY m.opened_date DESC NULLS LAST
+        ORDER BY m.opened_date DESC NULLS LAST, m.matter_id DESC
         LIMIT %(limit)s OFFSET %(offset)s
     """
     count_sql = f"""
@@ -64,6 +64,67 @@ def matters_list(
             cur.execute(count_sql, count_params)
             total = cur.fetchone()["n"]
     return {"service": SERVICE, "total": total, "items": items}
+
+
+def _require_member(member_id: str | None) -> str:
+    if member_id is None:
+        raise HTTPException(status_code=401, detail="Pins need a member identity")
+    return member_id
+
+
+def _can_access(cur, matter_id: str, member_id: str | None) -> bool:
+    cur.execute(
+        f"""
+        SELECT 1 FROM matters m LEFT JOIN permissions p ON p.matter_id = m.matter_id
+        WHERE m.matter_id = %(matter_id)s AND {ACL_CLAUSE}
+        """,
+        {"matter_id": matter_id, "member_id": member_id},
+    )
+    return cur.fetchone() is not None
+
+
+@router.get("/pinned")
+def pinned_matters(member_id: str | None = Depends(resolve_member)) -> dict:
+    """The caller's pinned matters, newest pin first. Pins on matters the caller can no
+    longer access are omitted (a pin never grants access)."""
+    me = _require_member(member_id)
+    with connect() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT m.matter_id, m.matter_code, m.title, m.client_name, m.status,
+                       COALESCE(p.restricted, FALSE) AS restricted, mp.pinned_at
+                FROM member_pins mp
+                JOIN matters m ON m.matter_id = mp.matter_id
+                LEFT JOIN permissions p ON p.matter_id = m.matter_id
+                WHERE mp.member_id = %(member_id)s AND {ACL_CLAUSE}
+                ORDER BY mp.pinned_at DESC
+                """,
+                {"member_id": me},
+            )
+            return {"service": SERVICE, "items": list(cur.fetchall())}
+
+
+@router.put("/{matter_id}/pin", status_code=204)
+def pin_matter(matter_id: str, member_id: str | None = Depends(resolve_member)) -> None:
+    me = _require_member(member_id)
+    with connect() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            if not _can_access(cur, matter_id, me):
+                raise HTTPException(status_code=404, detail="Matter not found or access denied")
+            cur.execute(
+                "INSERT INTO member_pins (member_id, matter_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                (me, matter_id),
+            )
+        conn.commit()
+
+
+@router.delete("/{matter_id}/pin", status_code=204)
+def unpin_matter(matter_id: str, member_id: str | None = Depends(resolve_member)) -> None:
+    me = _require_member(member_id)
+    with connect() as conn:
+        conn.execute("DELETE FROM member_pins WHERE member_id = %s AND matter_id = %s", (me, matter_id))
+        conn.commit()
 
 
 @router.get("/{matter_id}")
@@ -145,6 +206,11 @@ def matter_related(
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
     params = {"matter_id": matter_id, "member_id": member_id}
+    access_sql = f"""
+        SELECT 1 FROM matters m
+        LEFT JOIN permissions p ON p.matter_id = m.matter_id
+        WHERE m.matter_id = %(matter_id)s AND {ACL_CLAUSE}
+    """
     sql = f"""
         SELECT DISTINCT m.matter_id, m.matter_code, m.title, m.client_name,
                m.practice_area, m.status, m.outcome,
@@ -162,8 +228,43 @@ def matter_related(
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
+            # The relationship graph of a restricted matter is itself restricted.
+            cur.execute(access_sql, params)
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail="Matter not found or access denied")
             cur.execute(sql, params)
             return {"service": SERVICE, "matter_id": matter_id, "related": list(cur.fetchall())}
+
+
+# What people did on this matter (UI roadmap Q2). Only actions worth showing a
+# colleague; reads/views are in the audit export, not the activity feed.
+ACTIVITY_ACTIONS = ("upload.create", "upload.process", "chat.prompt", "document.download", "export.bundle", "document.version")
+
+
+@router.get("/{matter_id}/activity")
+def matter_activity(
+    matter_id: str,
+    limit: int = Query(default=30, le=100),
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    params = {"matter_id": matter_id, "member_id": member_id, "limit": limit, "actions": list(ACTIVITY_ACTIONS)}
+    with connect() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            if not _can_access(cur, matter_id, member_id):
+                raise HTTPException(status_code=404, detail="Matter not found or access denied")
+            cur.execute(
+                """
+                SELECT a.seq, a.occurred_at, a.action, a.object_type, a.object_id,
+                       a.member_id, m.name AS member_name
+                FROM audit_events a LEFT JOIN members m ON m.member_id = a.member_id
+                WHERE a.matter_id = %(matter_id)s AND a.outcome = 'success' AND a.action = ANY(%(actions)s)
+                ORDER BY a.seq DESC
+                LIMIT %(limit)s
+                """,
+                params,
+            )
+            items = list(cur.fetchall())
+    return {"service": SERVICE, "matter_id": matter_id, "items": items}
 
 
 @router.get("/{matter_id}/timeline")
@@ -196,7 +297,7 @@ def matter_timeline(
     timeline = [
         {
             "date": str(d.get("doc_date") or ""),
-            "author": d.get("author_name", "Apex Chambers"),
+            "author": d.get("author_name"),
             "event": d.get("title", "Matter milestone"),
             "doc_id": d["document_id"],
             "doc_type": d.get("document_type", "Document"),

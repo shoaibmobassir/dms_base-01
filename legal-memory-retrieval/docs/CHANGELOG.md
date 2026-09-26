@@ -2,6 +2,14 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-09-23 — Amazon Bedrock AI layer (Ask / chat)
+
+Added Bedrock as the cloud AI provider for Ask-the-Firm and chat via `AWS_BEARER_TOKEN_BEDROCK` (Mantle Chat Completions + Runtime InvokeModel embeddings). Default answer path prefers Bedrock when the bearer token is set. Production retrieval embeddings stay MiniLM 384-d (`EMBEDDING_PROVIDER=minilm`); Bedrock embedders are opt-in behind `app/embeddings/factory.py` and require a re-embed before use in retrieval. No fusion / eval metric change. Smoke: `python scripts/bedrock_smoke.py`.
+
+## 2026-09-22 — FirmOS frontend rebuild (code_pre baseline)
+
+Replaced the empty/`frontend_2` React tree with a Vite + React 19 + TypeScript SPA under `legal-memory-retrieval/frontend`, visual baseline from independent FirmOS prototype `app/code_pre` (Tailwind wine/paper shell). Build outputs to `static/` for FastAPI `/ui`. Live API wiring for Home, Ask, Chat, Matters, Projects, Documents, Clients, People, Knowledge, Teams, Activity, Deadlines, Data Sources, Settings; remaining IA routes ship as Preview pages. No retrieval fusion / eval changes. Dependency audit + IP origin recorded under `docs/legal/`.
+
 ## 2026-09-19 — Universal source sync Phase 0 (FakeConnector)
 
 Started the universal document sync engine behind `SOURCES_SYNC_ENABLED` (default **off**). No retrieval fusion / matter-scope changes. No new dependencies (reuses `cryptography`, Redis).

@@ -260,6 +260,46 @@ ASK_INPUTS = {
 }
 
 
+PROPOSE_EDITS = {
+    "type": "function",
+    "function": {
+        "name": "propose_edits",
+        "description": (
+            "Suggest specific changes to one document for the lawyer to accept or "
+            "reject. Read the document first. Each edit replaces an exact passage "
+            "copied verbatim from the document with new wording, and gives a short reason."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "doc_id": {"type": "string", "description": "The document to edit (e.g. 'doc-0')."},
+                "edits": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "original": {
+                                "type": "string",
+                                "description": "Exact passage from the document to replace. Copy it verbatim; do not include [Page N] markers.",
+                            },
+                            "proposed": {
+                                "type": "string",
+                                "description": "Replacement wording. Empty string to delete the passage.",
+                            },
+                            "reason": {"type": "string", "description": "One sentence on why."},
+                        },
+                        "required": ["original", "proposed", "reason"],
+                    },
+                },
+            },
+            "required": ["doc_id", "edits"],
+        },
+    },
+}
+
+
 # ---------------------------------------------------------------------------
 # Workflow tools
 # ---------------------------------------------------------------------------
@@ -306,6 +346,7 @@ CORE_TOOLS = [
     GENERATE_DOCX,
     GENERATE_EXCEL,
     ASK_INPUTS,
+    PROPOSE_EDITS,
 ]
 
 WORKFLOW_TOOLS = [LIST_WORKFLOWS, READ_WORKFLOW]

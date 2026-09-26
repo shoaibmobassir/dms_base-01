@@ -307,4 +307,88 @@ Mike source used as coding basis: NO
 New dependencies introduced: None (reuses cryptography, redis already in tree)
 IP notes: Independent architecture from requirements in docs/universal-document-sync-engine-plan.md. Not derived from Mike connector code, schemas, or UI.
 
+### Feature: FirmOS product frontend (Vite + Tailwind shell)
+Date: 2026-09-22
+Mike observation (product level only): Legal firm-memory products need a multi-page workspace shell (matters, documents, ask, knowledge, settings) with permission-aware retrieval and citation-linked answers. Observed only as a product capability category — not from Mike source.
+Requirement (technology-independent): Lawyers navigate Apex Chambers firm memory via a wine/paper institutional UI: sidebar IA, command palette, Ask with grounded citations, chat, projects, and directory pages, all calling our ACL-filtered APIs with a simulated member persona header.
+Our design decisions:
+  - Vite 8 + React 19 + TypeScript SPA under `legal-memory-retrieval/frontend`, served at `/ui`
+  - Visual/IA baseline from independent FirmOS prototype at `app/code_pre` (Tailwind + Radix/shadcn subset); not Mike
+  - Live `apiFetch` + `X-Member-Id` for API-backed routes; Preview-labeled pages where backends do not exist yet
+  - Brand: Apex Chambers / FirmOS; no Emergent/PostHog tooling in production build
+Mike source used as coding basis: NO
+New dependencies introduced: See frontend section in DEPENDENCY_AUDIT.md (React, Vite, Tailwind, Radix, cmdk, sonner, tanstack-query — all MIT/Apache)
+IP notes: code_pre is our own UX scaffold (no Mike references in application source). Ported patterns and independently typed TS components; not AGPL Mike UI.
 
+### Feature: Amazon Bedrock AI layer (Ask / chat / experimental embeddings)
+Date: 2026-09-23
+Mike observation (product level only): Legal memory products need a configurable LLM for grounded answers and chat; firms often prefer cloud models under their cloud account for residency/audit.
+Requirement (technology-independent): Given an AWS Bedrock bearer token, the DMS can generate Ask-the-Firm answers and chat completions via selectable foundation models, and optionally embed text via Bedrock embedding models for experiments — without changing the frozen MiniLM-384 production retrieval corpus by default.
+Our design decisions:
+  - Bearer-token httpx client (`app/llm/bedrock_client.py`) — no boto3/openai SDK added
+  - Mantle Chat Completions for chat models; Runtime InvokeModel for Cohere/Titan embeddings
+  - `ANSWER_PROVIDER=bedrock` / auto-prefer when `AWS_BEARER_TOKEN_BEDROCK` is set
+  - Production `EMBEDDING_PROVIDER=minilm` remains default; Bedrock embedder is opt-in behind factory
+  - Smoke probe: `scripts/bedrock_smoke.py`
+Mike source used as coding basis: NO
+New dependencies introduced: None (reuses httpx)
+IP notes: Independent AWS Bedrock integration from AWS public docs; not derived from Mike.
+
+### Feature: Chat workspace experience (stop, citations, models, suggestions)
+Date: 2026-09-24
+Mike observation (product level only): A legal assistant conversation lets the lawyer stop a
+streaming answer, see intermediate work (searching/reading), open cited documents by title,
+pick a firm-configured model, get an auto-titled thread, browse past chats by day, and start
+from matter-aware suggested questions.
+Requirement (technology-independent): R1–R10 in `docs/production-plan/05_chat_experience.md`.
+Our design decisions:
+  - Independent FastAPI SSE chat (`/api/chat`) with session ownership + ACL on retrieval
+  - React ChatPage: AbortController stop, model select from `GET /models`, day-grouped rail,
+    citation inspector, suggestions from in-scope Open matters
+  - Visual language aligned with our `app/code_pre` scaffold (serif/wine), not Mike UI
+Mike source used as coding basis: NO
+New dependencies introduced: None beyond existing frontend stack
+IP notes: Requirements abstracted from product observation only; no Mike source read for this change.
+
+
+
+### Feature: Chat experience rebuild (production plan 05)
+Date: 2026-09-24
+Mike observation (product level only): A legal assistant chat lets the user stop an answer, see what the assistant is doing, open cited passages, choose a configured model, get auto-titled and renameable conversation history, retry failures, and copy answers. Observed by using the product surface and counting user-facing capabilities; no Mike source was read for implementation, copied, or ported.
+Requirement (technology-independent): R1–R10 in `docs/production-plan/05_chat_experience.md`.
+Our design decisions:
+  - Server: `/api/chat/models` restricted to the active provider; `/api/chat/suggestions` from the caller's in-scope open matters; stream persists partial text on disconnect; citations enriched with real document ids; ownership enforced per session
+  - Client: single optional-segment route, AbortController stop, own minimal Markdown renderer (no HTML injection), citations open our Inspector
+Mike source used as coding basis: NO
+New dependencies introduced: None at runtime (@playwright/test dev-only, Apache-2.0)
+IP notes: Visual language from our own `app/code_pre`; behaviour designed from the written requirements.
+
+### Feature: Document rendering, versioning and tracked-changes review (UI roadmap 06)
+Date: 2026-09-24
+Mike observation (product level only): Mike (a) shows DOCX and PDF documents in-app, (b) highlights cited quotes inside rendered documents, (c) shows a version indicator and lets users upload a new version, (d) delivers AI suggested edits as tracked changes with accept/reject (individually and all), (e) offers redline output. Observed from its README feature list, user-facing vocabulary and third-party dependency names (e.g. pdf.js, a DOCX preview library, LibreOffice conversion). No Mike source files, schemas or prose were read for implementation or copied.
+Requirement (technology-independent): R1–R12 in `docs/ui-roadmap/06_DOCUMENTS_RENDERING_VERSIONING.md`.
+Our design decisions:
+  - Canonical PDF rendition per version; retrieval/citation text extracted from the rendition so highlights never drift
+  - Gotenberg/LibreOffice + OCRmyPDF in network-isolated containers; pdf.js viewer behind our own `DocumentRenderer` adapter
+  - Versioning on our existing `document_versions` lineage; edit proposals as our own tables
+Mike source used as coding basis: NO
+New dependencies introduced: planned only (see 06 §3), each to be license-audited before adoption
+IP notes: Independent pipeline design; same open-source third-party libraries chosen on their own merits.
+
+### Feature: Chat work modes and cited-passage viewer
+Date: 2026-09-24
+Inspiration: Mike product observation — a legal assistant conversation can reason out loud, research authorities, review a document for risk, attach citations, and open the cited passage highlighted beside the answer.
+Requirement: A lawyer chooses Reason, Research, Review, or Cite before sending. The answer follows that job. Clicking a citation opens the source document with the quoted words marked, and the original file can be opened beside that passage.
+Our design: Optional `mode` on our existing chat message request. Mode text is our own addition to `build_system_prompt`. The viewer is `CitationDocumentPanel`, which loads `/api/documents/{id}/text` and marks the verified quote. Original bytes stay in our download endpoint.
+Mike NOT used as: source code basis
+Dependencies: none
+IP notes: Product-level workflow only. No Mike files, styles, or components were copied.
+
+### Feature: Chat workspace completion — step timeline, clarifying form, edit review, paged viewer
+Date: 2026-09-25
+Inspiration: Mike product observation — the assistant shows its working steps, asks clarifying questions in a form, proposes document edits the user can accept or reject, and opens cited sources beside the chat with the passage highlighted.
+Requirement: See `docs/plan/chat-workspace-cleanroom-plan.md` §1 (R1–R9) and §2 (viewer).
+Our design: Our own `DocumentViewer` (pdf.js canvas + text layer, fit-width/fit-page, pages rendered near the viewport, page box, zoom, draggable split) with a quote locator that searches the cited page, its neighbours, then all pages; OCR word boxes (`GET /api/documents/{id}/pages/{n}/words`) for highlights on scanned pages; `GET /api/documents/{id}/render` (PDF as is, office files via optional converter, else text view); `[Page N]`-marked document text so citations carry real pages, corrected from the verified quote position; `tool_started`/`tool_finished` events for a step timeline; `propose_edits` tool with accept/reject endpoints and tracked-changes Word export; attachments kept in scope and named to the model; clarifying-question form.
+Mike NOT used as: source code basis. Mike was reviewed for features and behaviour only; implementation must start in a session that has not opened Mike source.
+Dependencies: pdfjs-dist (Apache-2.0); LibreOffice headless (MPL-2.0, separate process — pending owner approval).
+IP notes: No Mike code, names, prompts, event names, or layouts carried into the plan.

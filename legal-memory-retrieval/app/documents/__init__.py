@@ -184,6 +184,37 @@ def create_version(
     return out
 
 
+def reindex_current_version(document_id: str) -> dict:
+    """Rebuild blocks and search chunks for the document's current version.
+
+    Used after a failed parse and for backfills; embeddings for the new chunks are
+    added by ``app.embeddings.pending.embed_pending_chunks``.
+    """
+    with connect() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                SELECT d.matter_id, d.folder_path, v.version_id, v.body
+                FROM documents d JOIN document_versions v ON v.version_id = d.current_version_id
+                WHERE d.document_id = %(doc_id)s
+                """,
+                {"doc_id": document_id},
+            )
+            row = cur.fetchone()
+    if not row:
+        raise ValueError(f"Document {document_id} has no current version")
+    blocks = parse_canonical_blocks(row["body"], document_id, row["version_id"])
+    block_count = save_canonical_blocks(blocks)
+    chunks = build_hierarchical_chunks(
+        blocks,
+        document_id=document_id,
+        version_id=row["version_id"],
+        matter_id=row["matter_id"],
+        folder_path=row["folder_path"] or "",
+    )
+    return {"version_id": row["version_id"], "block_count": block_count, "chunk_count": save_version_chunks(chunks)}
+
+
 def list_versions(document_id: str) -> list[dict]:
     """List all versions for a document, most recent first."""
     with connect() as conn:
