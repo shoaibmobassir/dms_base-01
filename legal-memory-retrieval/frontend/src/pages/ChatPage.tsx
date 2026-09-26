@@ -13,8 +13,9 @@ import {
   type WorkMode,
 } from "@/api/chat";
 import { apiFetch, authHeaders } from "@/api/client";
-import type { ChatEvent, ChatMessage, ChatSession, Citation, Paged, Matter } from "@/api/types";
-import { CitationDocumentPanel } from "@/components/chat/CitationDocumentPanel";
+import type { AskInputItem, Attachment, ChatEvent, ChatMessage, ChatSession, Citation, DocumentItem, EditProposal, Paged, Matter } from "@/api/types";
+import { CitationDocumentPanel, sourceFromCitation, type PanelSource } from "@/components/chat/CitationDocumentPanel";
+import { AskInputsCard, EditProposalsCard, FileCard, StepTimeline, errorText, type EditGroup } from "@/components/chat/MessageParts";
 import { Markdown } from "@/components/chat/Markdown";
 import { Icon } from "@/components/common/primitives";
 import { useApp } from "@/context/AppContext";
@@ -48,7 +49,12 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
-type UiMessage = ChatMessage & { status?: "streaming" | "stopped" | "error"; error?: string; prompt?: string };
+type UiMessage = ChatMessage & {
+  status?: "streaming" | "stopped" | "error";
+  error?: string;
+  prompt?: string;
+  promptFiles?: Attachment[];
+};
 
 function dayGroup(iso: string) {
   const d = new Date(iso);
@@ -70,24 +76,6 @@ function groupSessions(sessions: ChatSession[]) {
     else groups.push({ label, items: [s] });
   }
   return groups;
-}
-
-function stepLabel(ev: ChatEvent) {
-  const name = String(ev.filename ?? ev.title ?? ev.document_id ?? "");
-  switch (ev.type) {
-    case "doc_read":
-      return `Read ${name || "a document"}`;
-    case "doc_find":
-      return `Searched for “${String(ev.query ?? "")}”`;
-    case "doc_created":
-      return `Created ${name || "a document"}`;
-    case "reasoning":
-      return String(ev.text ?? "Reasoning");
-    case "stopped":
-      return "Stopped by you";
-    default:
-      return ev.type.replace(/_/g, " ");
-  }
 }
 
 // ── page ────────────────────────────────────────────────────────────────────
@@ -160,6 +148,8 @@ export function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
 
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+
   const patchLast = (fn: (m: UiMessage) => UiMessage) =>
     setMessages((prev) => {
       const next = [...prev];
@@ -168,9 +158,11 @@ export function ChatPage() {
       return next;
     });
 
-  const send = async (text: string) => {
+  const send = async (text: string, files: Attachment[] = attachments) => {
     const content = text.trim();
     if (!content || streaming) return;
+    const sentFiles = files;
+    if (files === attachments) setAttachments([]);
 
     let id = sessionId;
     if (!id) {
@@ -187,8 +179,8 @@ export function ChatPage() {
 
     setMessages((prev) => [
       ...prev,
-      { role: "user", content },
-      { role: "assistant", content: "", events: [], citations: [], status: "streaming", prompt: content },
+      { role: "user", content, files: sentFiles },
+      { role: "assistant", content: "", events: [], citations: [], status: "streaming", prompt: content, promptFiles: sentFiles },
     ]);
     setStreaming(true);
     const controller = new AbortController();
@@ -204,9 +196,10 @@ export function ChatPage() {
           onCitation: (c) => patchLast((m) => ({ ...m, citations: [...(m.citations ?? []), c] })),
           onTitle: () => void refreshSessions(),
           onError: (message) => patchLast((m) => ({ ...m, status: "error", error: message })),
+          onStart: (messageId) => patchLast((m) => ({ ...m, id: messageId })),
         },
         controller.signal,
-        { mode: workMode },
+        { mode: workMode, files: sentFiles },
       );
       patchLast((m) => (m.status === "streaming" ? { ...m, status: undefined } : m));
     } catch (err) {
@@ -222,9 +215,9 @@ export function ChatPage() {
     }
   };
 
-  const retry = (prompt: string) => {
+  const retry = (prompt: string, files: Attachment[] = []) => {
     setMessages((prev) => prev.slice(0, -2));
-    void send(prompt);
+    void send(prompt, files);
   };
 
   const sessionList = sessions.data ?? [];
@@ -239,32 +232,77 @@ export function ChatPage() {
 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [workMode, setWorkMode] = useState<WorkMode>("cite");
-  const [viewerCitation, setViewerCitation] = useState<Citation | null>(null);
+  const [source, setSource] = useState<PanelSource | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const nonceRef = useRef(0);
 
-  const openCitation = (c?: Citation) => {
-    if (!c?.document_id) return;
+  const openSource = (next: Omit<PanelSource, "nonce"> | null) => {
+    if (!next) return;
     setShowSourcesDrawer(false);
-    setViewerCitation(c);
+    setSource({ ...next, nonce: ++nonceRef.current });
   };
 
-  const uploadDocument = async (file: File) => {
+  const openCitation = (c?: Citation) => {
+    if (!c) return;
+    openSource(sourceFromCitation(c, 0));
+  };
+
+  const splitRef = useRef<HTMLDivElement>(null);
+  const clampPanel = useCallback((w: number) => {
+    const total = splitRef.current?.clientWidth ?? window.innerWidth;
+    return Math.round(Math.min(Math.max(w, 360), Math.max(360, total - 380)));
+  }, []);
+  const [panelWidth, setPanelWidth] = useState(() => {
+    try {
+      const saved = Number(window.localStorage.getItem("chat.panelWidth"));
+      if (saved > 0) return saved;
+    } catch {
+      // storage unavailable
+    }
+    return Math.round(window.innerWidth * 0.45);
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("chat.panelWidth", String(panelWidth));
+    } catch {
+      // storage unavailable
+    }
+  }, [panelWidth]);
+
+  const startResize = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const handle = e.currentTarget;
+    handle.setPointerCapture(e.pointerId);
+    const right = splitRef.current?.getBoundingClientRect().right ?? window.innerWidth;
+    const move = (ev: PointerEvent) => setPanelWidth(clampPanel(right - ev.clientX));
+    const stop = () => {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", stop);
+      handle.removeEventListener("pointercancel", stop);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", stop);
+    handle.addEventListener("pointercancel", stop);
+  };
+
+  const attach = (att: Attachment) =>
+    setAttachments((list) => (list.some((a) => a.document_id === att.document_id) ? list : [...list, att]));
+
+  /** File an uploaded document in the first open matter, index it, and return it as an attachment. */
+  const uploadDocument = async (file: File): Promise<Attachment | null> => {
     setUploading(true);
     try {
       const matters = await apiFetch<Paged<Matter>>("/api/matters?limit=1");
       const matterId = matters.items[0]?.matter_id;
       if (!matterId) {
         toast.error("No matter is available to file this document.");
-        return;
+        return null;
       }
       const body = new FormData();
       body.append("matter_id", matterId);
       body.append("files", file);
-      const created = await fetch("/api/uploads/batches", {
-        method: "POST",
-        headers: authHeaders(),
-        body,
-      });
+      const created = await fetch("/api/uploads/batches", { method: "POST", headers: authHeaders(), body });
       if (!created.ok) throw new Error(await created.text());
       const batch = (await created.json()) as { batch_id: string };
       const ran = await fetch(`/api/uploads/batches/${encodeURIComponent(batch.batch_id)}/run`, {
@@ -272,9 +310,22 @@ export function ChatPage() {
         headers: authHeaders(),
       });
       if (!ran.ok && ran.status !== 202) throw new Error(await ran.text());
-      toast.success(`${file.name} is filed and being indexed.`);
+
+      type BatchFile = { status: string; document_id: string | null; error?: string | null };
+      let files: BatchFile[] = ran.status === 202 ? [] : (((await ran.json()) as { batch?: { files?: BatchFile[] } }).batch?.files ?? []);
+      // Queue mode: poll until the worker has indexed the file.
+      for (let i = 0; i < 90 && !files.some((f) => f.document_id && f.status !== "pending"); i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const polled = await apiFetch<{ batch: { files: BatchFile[] } }>(`/api/uploads/batches/${encodeURIComponent(batch.batch_id)}`);
+        files = polled.batch.files;
+      }
+      const done = files.find((f) => f.document_id);
+      if (!done?.document_id) throw new Error(files[0]?.error || "The document could not be indexed.");
+      toast.success(`${file.name} is filed and attached.`);
+      return { filename: file.name, document_id: done.document_id, content_type: file.type || undefined };
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+      toast.error(errorText(err, "Upload failed"));
+      return null;
     } finally {
       setUploading(false);
     }
@@ -381,7 +432,8 @@ export function ChatPage() {
         </div>
       </header>
 
-      <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div ref={splitRef} className="relative flex min-h-0 flex-1 overflow-hidden">
+      <section className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 
         {/* Chat Thread Messages Area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-5 lg:px-6" data-testid="chat-thread">
@@ -402,8 +454,26 @@ export function ChatPage() {
 
             {messages.map((m, i) =>
               m.role === "user" ? (
-                <div key={m.id ?? i} className="flex justify-end">
-                  <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-primary text-primary-foreground px-4 py-2.5 text-[14.5px] leading-relaxed shadow-2xs">
+                <div key={m.id ?? i} className="flex flex-col items-end gap-1">
+                  {(m.files ?? []).length > 0 && (
+                    <div className="flex max-w-[85%] flex-wrap justify-end gap-1" data-testid="message-attachments">
+                      {(m.files ?? []).map((f) => (
+                        <button
+                          key={f.document_id ?? f.filename}
+                          type="button"
+                          onClick={() =>
+                            f.document_id &&
+                            openSource({ documentId: f.document_id, title: f.filename, label: "Attached document", quotes: [] })
+                          }
+                          className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-0.5 text-[11px] text-foreground hover:bg-secondary"
+                        >
+                          <FileText className="h-3 w-3 text-amber-500" />
+                          <span className="max-w-[220px] truncate">{f.filename}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tr-xs bg-primary text-primary-foreground px-4 py-2.5 text-[14.5px] leading-relaxed shadow-2xs">
                     {m.content}
                   </div>
                 </div>
@@ -411,8 +481,13 @@ export function ChatPage() {
                 <AssistantMessage
                   key={m.id ?? i}
                   message={m}
+                  sessionId={sessionId}
+                  isLast={i === messages.length - 1}
                   onOpenCitation={openCitation}
-                  onRetry={m.prompt ? () => retry(m.prompt!) : undefined}
+                  onOpenSource={openSource}
+                  onAnswer={(text, files) => void send(text, files)}
+                  onUpload={uploadDocument}
+                  onRetry={m.prompt ? () => retry(m.prompt!, m.promptFiles ?? []) : undefined}
                 />
               ),
             )}
@@ -426,7 +501,11 @@ export function ChatPage() {
           mode={workMode}
           onMode={setWorkMode}
           uploading={uploading}
-          onUpload={(file) => void uploadDocument(file)}
+          attachments={attachments}
+          onRemoveAttachment={(id) => setAttachments((list) => list.filter((a) => a.document_id !== id))}
+          onOpenAttachment={(a) => openSource({ documentId: a.document_id, title: a.filename, label: "Attached document", quotes: [] })}
+          onUpload={(file) => void uploadDocument(file).then((att) => att && attach(att))}
+          onPickDocuments={() => setPickerOpen(true)}
           onSend={(t) => void send(t)}
           onStop={() => abortRef.current?.abort()}
         />
@@ -478,10 +557,41 @@ export function ChatPage() {
           </aside>
         )}
 
-        {viewerCitation && (
-          <CitationDocumentPanel citation={viewerCitation} onClose={() => setViewerCitation(null)} />
-        )}
       </section>
+
+      {source && (
+        <>
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize document panel"
+            tabIndex={0}
+            onPointerDown={startResize}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowLeft") setPanelWidth((w) => clampPanel(w + 32));
+              if (e.key === "ArrowRight") setPanelWidth((w) => clampPanel(w - 32));
+            }}
+            data-testid="split-handle"
+            className="group relative hidden w-1.5 shrink-0 cursor-col-resize bg-border/70 transition-colors hover:bg-wine/40 focus-visible:bg-wine/50 focus-visible:outline-hidden lg:block"
+          >
+            <span className="absolute left-1/2 top-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded bg-muted-foreground/40 group-hover:bg-wine" />
+          </div>
+          <div
+            className="absolute inset-0 z-40 lg:static lg:z-auto lg:w-[var(--panel-w)] lg:shrink-0"
+            style={{ ["--panel-w" as string]: `${panelWidth}px` }}
+          >
+            <CitationDocumentPanel source={source} onClose={() => setSource(null)} />
+          </div>
+        </>
+      )}
+      </div>
+
+      <DocumentPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        selected={attachments.map((a) => a.document_id)}
+        onPick={(doc) => attach({ document_id: doc.document_id, filename: doc.title })}
+      />
     </div>
   );
 }
@@ -736,19 +846,44 @@ function EmptyThread({ suggestions, onPick }: { suggestions: string[]; onPick: (
 
 function AssistantMessage({
   message: m,
+  sessionId,
+  isLast,
   onRetry,
   onOpenCitation,
+  onOpenSource,
+  onAnswer,
+  onUpload,
 }: {
   message: UiMessage;
+  sessionId?: string;
+  isLast: boolean;
   onRetry?: () => void;
   onOpenCitation: (c?: Citation) => void;
+  onOpenSource: (source: Omit<PanelSource, "nonce">) => void;
+  onAnswer: (text: string, files: Attachment[]) => void;
+  onUpload: (file: File) => Promise<Attachment | null>;
 }) {
-  const [showSteps, setShowSteps] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [madeFiles, setMadeFiles] = useState<{ document_id: string; filename: string }[]>([]);
   const citations = (m.citations ?? []) as Citation[];
-  const steps = (m.events ?? []).filter((e) => e.type !== "stopped");
+  const events = (m.events ?? []) as ChatEvent[];
   const byRef = (n: number) => citations.find((c) => Number(c.ref) === n);
+  const askItems = events.filter((e) => e.type === "ask_inputs").flatMap((e) => (e.items ?? []) as AskInputItem[]);
+  const editGroups = events.filter((e) => e.type === "edit_proposals") as unknown as EditGroup[];
+  const files = [
+    ...events
+      .filter((e) => e.type === "doc_created" && typeof e.document_id === "string")
+      .map((e) => ({ document_id: String(e.document_id), filename: String(e.filename ?? "Document") })),
+    ...madeFiles,
+  ];
+  const showEdit = (group: EditGroup, edit: EditProposal) =>
+    onOpenSource({
+      documentId: group.document_id,
+      title: group.filename,
+      label: "Suggested edit",
+      quotes: [{ page: edit.page, quote: edit.original }],
+    });
 
   const openCitation = (c?: Citation) => onOpenCitation(c);
 
@@ -837,26 +972,7 @@ function AssistantMessage({
           </div>
         </div>
 
-        {/* Thought Steps Indicator */}
-        {steps.length > 0 && (
-          <div className="mb-3 text-xs text-muted-foreground">
-            <button
-              type="button"
-              onClick={() => setShowSteps((v) => !v)}
-              className="inline-flex items-center gap-1 hover:text-foreground cursor-pointer"
-            >
-              <Icon name={showSteps || m.status === "streaming" ? "expand_less" : "expand_more"} style={{ fontSize: 16 }} />
-              {m.status === "streaming" ? stepLabel(steps[steps.length - 1]) : `Worked through ${steps.length} analysis step${steps.length === 1 ? "" : "s"}`}
-            </button>
-            {(showSteps || m.status === "streaming") && (
-              <ol className="mt-1.5 space-y-1 border-l-2 border-primary/30 pl-3 text-[11.5px] font-mono">
-                {steps.map((ev, i) => (
-                  <li key={i}>{stepLabel(ev)}</li>
-                ))}
-              </ol>
-            )}
-          </div>
-        )}
+        <StepTimeline events={events} streaming={m.status === "streaming"} />
 
         {/* Formatted Legal Reasoning Content */}
         {m.content ? (
@@ -881,6 +997,36 @@ function AssistantMessage({
             Reviewing relevant matter documents and statutory precedents…
           </p>
         ) : null}
+
+        {askItems.length > 0 && (
+          <AskInputsCard items={askItems} answered={!isLast || m.status === "streaming"} onSubmit={onAnswer} onUpload={onUpload} />
+        )}
+
+        {editGroups.map((group, gi) => (
+          <EditProposalsCard
+            key={`${m.id ?? "live"}-${gi}`}
+            group={group}
+            sessionId={sessionId}
+            messageId={m.status === "streaming" ? undefined : m.id}
+            onView={(edit) => showEdit(group, edit)}
+            onFileReady={(f) => setMadeFiles((list) => [...list, f])}
+          />
+        ))}
+
+        {files.map((f) => (
+          <FileCard
+            key={f.document_id}
+            documentId={f.document_id}
+            filename={f.filename}
+            onOpen={() => onOpenSource({ documentId: f.document_id, title: f.filename, label: "Generated file", quotes: [], generated: true })}
+          />
+        ))}
+
+        {m.status === "stopped" && (
+          <p className="mt-3 text-xs text-muted-foreground" data-testid="chat-stopped">
+            Stopped — the partial answer above has been saved.
+          </p>
+        )}
 
         {/* Error handling */}
         {m.status === "error" && (
@@ -918,9 +1064,18 @@ function AssistantMessage({
                   </div>
                   {typeof c.quote === "string" && c.quote && (
                     <p className="mt-1 line-clamp-2 text-[11px] italic text-muted-foreground">
-                      &ldquo;{c.quote}&rdquo;
+                      &ldquo;{c.quote.replace(/\[\[PAGE_BREAK\]\]/g, " … ")}&rdquo;
                     </p>
                   )}
+                  <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                    {c.page != null && <span className="font-mono">p. {String(c.page)}</span>}
+                    {Array.isArray(c.quotes) && c.quotes.length > 1 && <span>{c.quotes.length} quotes</span>}
+                    {c.verified === false && (
+                      <span className="font-semibold text-amber-700 dark:text-amber-400" data-testid="citation-unverified">
+                        Not confirmed
+                      </span>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
@@ -954,21 +1109,27 @@ function CitationBadge({ num, citation, onOpen }: { num: number; citation?: Cita
         type="button"
         onClick={onOpen}
         data-testid={`chat-citation-${num}`}
-        className="mx-0.5 inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-mono text-[10.5px] font-semibold transition-colors cursor-pointer bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:bg-amber-500/20 border border-amber-500/30"
+        title={citation?.verified === false ? "Quote not confirmed in the document text" : undefined}
+        className={cn(
+          "mx-0.5 inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-mono text-[10.5px] font-semibold transition-colors cursor-pointer bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:bg-amber-500/20 border border-amber-500/30",
+          citation?.verified === false && "border-dashed opacity-80",
+          !citation && "cursor-default opacity-60",
+        )}
       >
         <span>[{num}]</span>
+        {citation?.verified === false && <span aria-hidden>?</span>}
       </button>
 
       {/* Hover preview */}
       {hovered && citation && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 rounded-lg shadow-xl border border-border bg-popover text-popover-foreground text-left text-xs z-50 animate-in fade-in-0 zoom-in-95 pointer-events-auto">
-          <div className="font-semibold text-ink truncate mb-1">
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 rounded-lg shadow-xl border border-border bg-popover text-popover-foreground text-left text-xs z-50 animate-in fade-in-0 zoom-in-95 pointer-events-auto">
+          <span className="mb-1 block truncate font-semibold text-ink">
             {String(citation.title ?? citation.document_id ?? `Source [${num}]`)}
-          </div>
+          </span>
           {typeof citation.quote === "string" && citation.quote && (
-            <p className="text-[11px] italic text-muted-foreground line-clamp-3 bg-secondary/50 p-1.5 rounded mb-2">
+            <span className="mb-2 block rounded bg-secondary/50 p-1.5 text-[11px] italic text-muted-foreground line-clamp-3">
               &ldquo;{citation.quote}&rdquo;
-            </p>
+            </span>
           )}
           <button
             type="button"
@@ -978,7 +1139,7 @@ function CitationBadge({ num, citation, onOpen }: { num: number; citation?: Cita
             <span>View in document</span>
             <ArrowUpRight className="w-3 h-3" />
           </button>
-        </div>
+        </span>
       )}
     </span>
   );
@@ -992,7 +1153,11 @@ function Composer({
   mode,
   onMode,
   uploading,
+  attachments,
+  onRemoveAttachment,
+  onOpenAttachment,
   onUpload,
+  onPickDocuments,
   onSend,
   onStop,
 }: {
@@ -1001,7 +1166,11 @@ function Composer({
   mode: WorkMode;
   onMode: (mode: WorkMode) => void;
   uploading: boolean;
+  attachments: Attachment[];
+  onRemoveAttachment: (documentId: string) => void;
+  onOpenAttachment: (attachment: Attachment) => void;
   onUpload: (file: File) => void;
+  onPickDocuments: () => void;
   onSend: (text: string) => void;
   onStop: () => void;
 }) {
@@ -1092,6 +1261,40 @@ function Composer({
 
         {/* Input Container */}
         <div className="flex flex-col rounded-2xl border border-border bg-card shadow-sm focus-within:border-wine/60 focus-within:ring-2 focus-within:ring-wine/10 transition-all">
+          {(attachments.length > 0 || uploading) && (
+            <div className="flex flex-wrap gap-1.5 px-3 pt-2.5" data-testid="composer-attachments">
+              {attachments.map((a) => (
+                <span
+                  key={a.document_id}
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 py-0.5 pl-1.5 pr-0.5 text-[11px] text-foreground"
+                >
+                  <button
+                    type="button"
+                    onClick={() => onOpenAttachment(a)}
+                    title="Preview"
+                    data-testid="composer-attachment-open"
+                    className="inline-flex items-center gap-1 hover:underline"
+                  >
+                    <FileText className="h-3 w-3 text-amber-500" />
+                    <span className="max-w-[200px] truncate">{a.filename}</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${a.filename}`}
+                    onClick={() => onRemoveAttachment(a.document_id)}
+                    className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {uploading && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Sparkles className="h-3 w-3 animate-spin" /> Filing and indexing…
+                </span>
+              )}
+            </div>
+          )}
           <textarea
             ref={ref}
             rows={1}
@@ -1162,7 +1365,7 @@ function Composer({
                       type="button"
                       onClick={() => {
                         setContextMenuOpen(false);
-                        toast.info("Select matter documents");
+                        onPickDocuments();
                       }}
                       className="w-full text-left p-1.5 rounded-lg hover:bg-secondary flex items-center gap-2 cursor-pointer"
                     >
@@ -1282,5 +1485,80 @@ function Composer({
         </div>
       </div>
     </div>
+  );
+}
+
+// ── attach existing firm documents ────────────────────────────────────────────
+
+function DocumentPicker({
+  open,
+  onOpenChange,
+  selected,
+  onPick,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selected: string[];
+  onPick: (doc: DocumentItem) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
+  const results = useQuery({
+    queryKey: ["chat-doc-picker", debounced],
+    queryFn: () =>
+      apiFetch<Paged<DocumentItem>>(`/api/documents?limit=30${debounced ? `&q=${encodeURIComponent(debounced)}` : ""}`),
+    enabled: open,
+  });
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="flex w-[420px] flex-col gap-0 p-0 sm:max-w-[420px]" data-testid="document-picker">
+        <SheetHeader className="space-y-0 border-b border-border px-4 py-3 text-left">
+          <SheetTitle className="font-display text-base text-ink">Attach firm documents</SheetTitle>
+        </SheetHeader>
+        <div className="relative border-b border-border px-4 py-2">
+          <Search className="pointer-events-none absolute left-6 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by title, number or text…"
+            aria-label="Search documents"
+            data-testid="document-picker-search"
+            className="w-full rounded-md border border-border bg-card py-1.5 pl-8 pr-2 text-sm placeholder:text-muted-foreground focus:outline-hidden"
+          />
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-2">
+          {results.isPending && <p className="px-2 py-1 text-xs text-muted-foreground">Searching…</p>}
+          {results.data?.items.length === 0 && <p className="px-2 py-1 text-xs text-muted-foreground">No documents match.</p>}
+          {results.data?.items.map((d) => {
+            const isOn = selected.includes(d.document_id);
+            return (
+              <button
+                key={d.document_id}
+                type="button"
+                disabled={isOn}
+                onClick={() => onPick(d)}
+                data-testid="document-picker-item"
+                className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left hover:bg-secondary disabled:opacity-60"
+              >
+                <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] text-ink">{d.title}</span>
+                  <span className="block truncate font-mono text-[10.5px] text-muted-foreground">
+                    {d.document_id} · {d.matter_code ?? d.matter_id ?? ""}
+                  </span>
+                </span>
+                {isOn && <Check className="mt-0.5 h-3.5 w-3.5 text-emerald-600" />}
+              </button>
+            );
+          })}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

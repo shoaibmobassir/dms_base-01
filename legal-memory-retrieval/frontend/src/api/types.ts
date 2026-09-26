@@ -268,6 +268,28 @@ export type Citation = {
 
 export type ChatEvent = { type: string; [key: string]: unknown }
 
+/** A document attached to a user message. */
+export type Attachment = { filename: string; document_id: string; content_type?: string }
+
+/** One suggested change to a document, reviewed on a card in the chat. */
+export type EditProposal = {
+  id: string
+  original: string
+  proposed: string
+  reason: string
+  page: number | null
+  located: boolean
+  status: 'pending' | 'accepted' | 'rejected'
+}
+
+/** Question the assistant needs answered before it continues. */
+export type AskInputItem = {
+  id: string
+  kind: 'choice' | 'text' | 'documents'
+  question?: string
+  options?: { value: string }[]
+}
+
 export type ChatMessage = {
   id?: string
   session_id?: string
@@ -275,6 +297,7 @@ export type ChatMessage = {
   content: string
   events?: ChatEvent[] | null
   citations?: Citation[] | null
+  files?: Attachment[] | null
   created_at?: string
 }
 

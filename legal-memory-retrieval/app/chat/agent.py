@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import random
+import re
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -38,10 +39,12 @@ from app.chat.tools.document_tools import (
     build_doc_index_from_hits,
     fetch_documents,
     find_in_document,
+    page_at,
     read_document,
     search_firm_records,
 )
 from app.chat.tools.generation_tools import generate_docx, generate_excel
+from app.chat.tools.review_tools import propose_edits
 from app.chat.tools.schema import ALL_TOOLS
 from app.chat.verify_citations import verify_document_citation
 from app.config import settings
@@ -64,6 +67,7 @@ _DB_TOOLS = frozenset({
     "search_firm_records",
     "fetch_documents",
     "find_in_document",
+    "propose_edits",
 })
 _KNOWN_TOOLS = _DB_TOOLS | frozenset({
     "generate_docx",
@@ -176,14 +180,70 @@ def dispatch_tool_call(
             events.append(result.pop("event"))
         return result, events
 
+    elif name == "propose_edits":
+        result = propose_edits(
+            arguments.get("doc_id", ""),
+            arguments.get("edits", []),
+            doc_index, doc_store, conn,
+            member_id=member_id,
+        )
+        if "event" in result:
+            events.append(result.pop("event"))
+        return result, events
+
     elif name == "ask_inputs":
-        items = arguments.get("items", [])
+        items = _named_items(arguments.get("items", []), doc_index)
         event = {"type": "ask_inputs", "items": items}
         events.append(event)
         return {"status": "waiting_for_user_input", "items": items}, events
 
     else:
         return {"error": f"Unknown tool: {name}"}, events
+
+
+def _named_items(items: Any, doc_index: DocIndex) -> list[dict[str, Any]]:
+    """Clarifying questions are shown to the lawyer: replace internal doc labels with names."""
+    if not isinstance(items, list):
+        return []
+    named: list[dict[str, Any]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        item = dict(item)
+        if isinstance(item.get("question"), str):
+            item["question"] = name_documents(item["question"], doc_index)
+        if isinstance(item.get("options"), list):
+            item["options"] = [
+                {**o, "value": name_documents(str(o.get("value", "")), doc_index)} if isinstance(o, dict) else o
+                for o in item["options"]
+            ]
+        named.append(item)
+    return named
+
+
+def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -> str:
+    """Plain-English description of a tool call for the step timeline. No tool names."""
+    entry = doc_index.get(str(arguments.get("doc_id") or ""))
+    doc_name = entry.filename if entry else "a document"
+    query = str(arguments.get("query") or "").strip()
+    if name == "search_firm_records":
+        return f"Searching firm records for “{query}”" if query else "Searching firm records"
+    if name == "read_document":
+        return f"Reading {doc_name}"
+    if name == "fetch_documents":
+        count = len(arguments.get("doc_ids") or [])
+        return f"Reading {count} document{'s' if count != 1 else ''}"
+    if name == "find_in_document":
+        return f"Looking for “{query}” in {doc_name}"
+    if name == "generate_docx":
+        return f"Drafting {arguments.get('title') or 'a Word document'}"
+    if name == "generate_excel":
+        return f"Building {arguments.get('title') or 'a spreadsheet'}"
+    if name == "propose_edits":
+        return f"Preparing suggested edits to {doc_name}"
+    if name == "ask_inputs":
+        return "Asking you to clarify"
+    return "Working"
 
 
 def tool_deadline_seconds(name: str) -> float:
@@ -308,6 +368,32 @@ def select_history_messages(
     return kept
 
 
+_DOC_LABEL_RE = re.compile(r"\(?\bdoc-(\d+)\b\)?")
+
+
+def name_documents(text: str, doc_index: DocIndex) -> str:
+    """Replace chat-local labels such as "doc-3" in prose with the document's name."""
+    def swap(match: re.Match[str]) -> str:
+        entry = doc_index.get(f"doc-{match.group(1)}")
+        if entry is None:
+            return match.group(0)
+        name = entry.filename
+        return f"({name})" if match.group(0).startswith("(") and match.group(0).endswith(")") else name
+    return _DOC_LABEL_RE.sub(swap, text) if text else text
+
+
+def correct_quote_pages(citation: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Replace the model's page guess with the page where a verified quote was found."""
+    quotes = []
+    for q in citation.get("quotes") or []:
+        start = (q.get("verification") or {}).get("start_char")
+        found = page_at(source_text, start) if isinstance(start, int) else None
+        quotes.append({**q, "page": found} if found else q)
+    if not quotes:
+        return citation
+    return {**citation, "quotes": quotes, "page": quotes[0].get("page", citation.get("page"))}
+
+
 def citation_result_label(citation: dict[str, Any], had_source: bool) -> str:
     if not had_source:
         return "no_source"
@@ -346,13 +432,19 @@ def build_llm_messages(
 ) -> list[dict[str, Any]]:
     """Build the LLM message array: system + windowed history + current user."""
     doc_availability = build_doc_availability(doc_index)
-    doc_list_str = "\n".join(
-        f"- {d['doc_id']}: {d['filename']}" for d in doc_availability
-    )
+    attached = [d for d in doc_availability if d.get("attached")]
+    found = [d for d in doc_availability if not d.get("attached")]
 
     system_content = build_system_prompt(mode)
-    if doc_availability:
-        system_content += f"\n\nAVAILABLE DOCUMENTS:\n{doc_list_str}"
+    if attached:
+        system_content += (
+            "\n\nDOCUMENTS THE USER ATTACHED (when the user says \"this document\", \"this note\", "
+            "or similar, they mean these; work on these, not on similarly named search results):\n"
+            + "\n".join(f"- {d['doc_id']}: {d['filename']}" for d in attached)
+        )
+    if found:
+        heading = "OTHER DOCUMENTS FOUND BY SEARCH" if attached else "AVAILABLE DOCUMENTS"
+        system_content += f"\n\n{heading}:\n" + "\n".join(f"- {d['doc_id']}: {d['filename']}" for d in found)
 
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": system_content},
@@ -626,11 +718,13 @@ def run_chat_agent(
         content = response.get("content", "")
         tool_calls = response.get("tool_calls", [])
 
-        # Stream text content
+        # Stream text content. Separate rounds so narration before a tool call
+        # does not run into the next sentence.
         if content:
+            if full_text and not full_text.endswith("\n"):
+                content = "\n\n" + content.lstrip()
             full_text += content
-            # Check for partial citations during stream
-            clean_text = extract_citations_text(content)
+            clean_text = name_documents(extract_citations_text(content), doc_index)
             if clean_text:
                 yield sse_event("text_delta", {"text": clean_text})
 
@@ -660,6 +754,16 @@ def run_chat_agent(
                 request_id,
             )
 
+            call_id = str(tc.get("id") or uuid.uuid4())
+            started = {
+                "type": "tool_started",
+                "call_id": call_id,
+                "tool": tool_name,
+                "label": tool_step_label(tool_name, args, doc_index),
+            }
+            all_events.append(started)
+            yield sse_event("tool_started", started)
+
             if tools_paused:
                 result, events, timed_out = (
                     {"error": "Tool execution paused after a timeout"},
@@ -678,10 +782,21 @@ def run_chat_agent(
                 if timed_out:
                     tools_paused = True
 
-            # Stream tool events
+            # Stream tool events, then close the step
             for event in events:
+                event.setdefault("call_id", call_id)
                 all_events.append(event)
                 yield sse_event(event.get("type", "tool_event"), event)
+            finished = {
+                "type": "tool_finished",
+                "call_id": call_id,
+                "tool": tool_name,
+                "ok": not result.get("error"),
+            }
+            if result.get("error"):
+                finished["error"] = str(result["error"])[:200]
+            all_events.append(finished)
+            yield sse_event("tool_finished", finished)
 
             # If ask_inputs was called, stop the loop
             if tool_name == "ask_inputs" and not result.get("error"):
@@ -711,7 +826,7 @@ def run_chat_agent(
         source_text = doc_store.get(doc_id, "")
         had_source = bool(source_text)
         if had_source:
-            verified = verify_document_citation(cit_dict, source_text)
+            verified = correct_quote_pages(verify_document_citation(cit_dict, source_text), source_text)
         else:
             verified = cit_dict
         CHAT_CITATION_RESULTS.labels(
@@ -725,8 +840,8 @@ def run_chat_agent(
         # Stream citation data
         yield sse_event("citation_data", verified)
 
-    # Clean response text (strip CITATIONS block)
-    clean_text = extract_citations_text(full_text)
+    # Clean response text (strip CITATIONS block, never show internal doc labels)
+    clean_text = name_documents(extract_citations_text(full_text), doc_index)
 
     CHAT_TURNS.labels(outcome="completed").inc()
     yield sse_done()

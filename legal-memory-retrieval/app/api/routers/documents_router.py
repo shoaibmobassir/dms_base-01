@@ -588,19 +588,15 @@ def list_annotations_endpoint(
 # Document download URL (Phase 4: SourceDocument support)
 # ---------------------------------------------------------------------------
 
-@router.get("/{document_id}/download")
-def document_download(
-    document_id: str,
-    version_id: str | None = Query(default=None, description="defaults to the current version"),
-    member_id: str | None = Depends(resolve_member),
-):
-    """Download the original file of a document version, or an assistant-generated file.
+def _original_file(
+    document_id: str, version_id: str | None, member_id: str | None,
+) -> tuple[bytes, str, str, str, str | None]:
+    """Load the original bytes of a document version or an assistant-generated file.
 
+    Returns (data, mime_type, filename, kind, resolved_version_id); kind is "document" or "generated".
     Access is decided before any bytes are read: the matter ACL for documents, the
     owner for generated files. Unknown ids and denied access are both 404.
     """
-    from fastapi.responses import Response
-
     from app.chat.tools.generation_tools import generated_dir
     from app.storage.object_store import get_object_store
 
@@ -620,12 +616,10 @@ def document_download(
         if art is None or art["owner_member_id"] is None or art["owner_member_id"] != member_id:
             audit.record("document.download", member_id=member_id, outcome="denied", object_type="generated", object_id=document_id)
             raise HTTPException(status_code=404, detail="Document not found")
-        audit.record("document.download", member_id=member_id, object_type="generated", object_id=document_id,
-                     detail={"filename": art["filename"]})
         path = Path(art["storage_path"]).resolve()
         if not path.is_relative_to(generated_dir()) or not path.is_file():
             raise HTTPException(status_code=404, detail="Document file not available for download")
-        return FileResponse(path, filename=art["filename"], media_type=art["mime_type"])
+        return path.read_bytes(), art["mime_type"], art["filename"], "generated", None
 
     _check_doc_access(document_id, member_id)
     vid = version_id or doc["current_version_id"]
@@ -646,15 +640,98 @@ def document_download(
         data = get_object_store().get(uri)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Document file not available for download") from None
-    audit.record("document.download", member_id=member_id, object_type="document", object_id=document_id,
-                 matter_id=audit.matter_of_document(document_id), detail={"version_id": vid})
     ext = Path(uri).suffix or ""
     filename = doc["title"] if Path(doc["title"]).suffix else f"{doc['title']}{ext}"
+    return data, mime or "application/octet-stream", filename, "document", vid
+
+
+@router.get("/{document_id}/download")
+def document_download(
+    document_id: str,
+    version_id: str | None = Query(default=None, description="defaults to the current version"),
+    member_id: str | None = Depends(resolve_member),
+):
+    """Download the original file of a document version, or an assistant-generated file."""
+    from fastapi.responses import Response
+
+    data, mime, filename, kind, vid = _original_file(document_id, version_id, member_id)
+    if kind == "generated":
+        audit.record("document.download", member_id=member_id, object_type="generated", object_id=document_id,
+                     detail={"filename": filename})
+    else:
+        audit.record("document.download", member_id=member_id, object_type="document", object_id=document_id,
+                     matter_id=audit.matter_of_document(document_id), detail={"version_id": vid})
     return Response(
         content=data,
-        media_type=mime or "application/octet-stream",
+        media_type=mime,
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
     )
+
+
+@router.get("/{document_id}/render")
+def document_render(
+    document_id: str,
+    version_id: str | None = Query(default=None, description="defaults to the current version"),
+    member_id: str | None = Depends(resolve_member),
+):
+    """Return the document as a PDF for the in-app viewer.
+
+    PDFs are returned as they are. Word files are converted to PDF when a converter
+    is installed on the server; otherwise 415 tells the viewer to show the text view.
+    """
+    from fastapi.responses import Response
+
+    from app.documents.pdf_render import RenderUnavailable, to_pdf
+
+    data, mime, filename, _kind, _vid = _original_file(document_id, version_id, member_id)
+    try:
+        pdf = to_pdf(data, mime, filename)
+    except RenderUnavailable as exc:
+        raise HTTPException(status_code=415, detail=str(exc)) from None
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename*=UTF-8''{quote(Path(filename).stem)}.pdf",
+            "Cache-Control": "private, max-age=300",
+        },
+    )
+
+
+def _generated_text(document_id: str, member_id: str | None) -> dict:
+    """Text of an assistant-generated file (owner only), for the viewer's text view."""
+    from app.ingest.extractors.dispatch import extract_from_bytes
+
+    data, _mime, filename, _kind, _vid = _original_file(document_id, None, member_id)
+    extracted = extract_from_bytes(filename, data)
+    pages = [(p.page_number, p.text) for p in extracted.pages if p.text.strip()]
+    return {
+        "document_id": document_id,
+        "title": filename,
+        "text": extracted.text,
+        "chunk_count": 0,
+        "pages": [{"page": n, "text": t} for n, t in pages] or [{"page": 1, "text": extracted.text}],
+    }
+
+
+@router.get("/{document_id}/pages/{page_number}/words")
+def document_page_words(
+    document_id: str,
+    page_number: int,
+    version_id: str | None = Query(default=None),
+    member_id: str | None = Depends(resolve_member),
+):
+    """OCR word boxes for one page, so the viewer can highlight quotes on scanned pages."""
+    from app.documents.page_words import WordsUnavailable, page_words
+    from app.documents.pdf_render import RenderUnavailable, to_pdf
+
+    if page_number < 1:
+        raise HTTPException(status_code=422, detail="page_number starts at 1")
+    data, mime, filename, _kind, _vid = _original_file(document_id, version_id, member_id)
+    try:
+        return page_words(to_pdf(data, mime, filename), page_number)
+    except (RenderUnavailable, WordsUnavailable) as exc:
+        raise HTTPException(status_code=415, detail=str(exc)) from None
 
 
 @router.get("/{document_id}/text")
@@ -663,14 +740,15 @@ def document_text(document_id: str, member_id: str | None = Depends(resolve_memb
     Return the full extracted text of a document by joining its leaf chunks.
     Used by the chat agent for read_document tool calls and the source viewer.
     """
-    _check_doc_access(document_id, member_id)
     with connect() as conn:
         row = conn.execute(
             "SELECT document_id, title FROM documents WHERE document_id = %s",
             (document_id.upper(),),
         ).fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="Document not found")
+    if not row:
+        return _generated_text(document_id, member_id)
+    _check_doc_access(document_id, member_id)
+    with connect() as conn:
 
         chunks = conn.execute(
             """
@@ -681,10 +759,15 @@ def document_text(document_id: str, member_id: str | None = Depends(resolve_memb
             (row["document_id"],),
         ).fetchall()
 
+        from app.chat.tools.document_tools import fetch_document_pages
+
+        pages = fetch_document_pages(conn, row["document_id"])
+
     full_text = "\n".join(c["text"] for c in chunks) if chunks else ""
     return {
         "document_id": row["document_id"],
         "title": row["title"],
         "text": full_text,
         "chunk_count": len(chunks),
+        "pages": [{"page": page, "text": text} for page, text in pages],
     }

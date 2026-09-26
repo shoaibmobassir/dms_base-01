@@ -29,6 +29,8 @@ from app.chat.models import (
 )
 from app.chat.store import (
     append_message,
+    get_message,
+    set_message_events,
     create_session,
     delete_session,
     get_messages,
@@ -39,7 +41,15 @@ from app.chat.store import (
 )
 from app.chat.title_generator import generate_chat_title
 from app.api.acl import ACL_CLAUSE
-from app.chat.tools.document_tools import build_doc_index_from_hits
+from app.chat.tools.document_tools import (
+    DocIndex,
+    add_documents_to_index,
+    build_doc_index_from_hits,
+    fetch_document_pages,
+    paged_text,
+)
+from app.chat.tools.review_tools import EDIT_STATUSES, apply_accepted_edits, strip_page_markers
+from pydantic import BaseModel
 from app.config import settings
 from app.db.connection import connect
 from app.llm.bedrock_client import bedrock_configured
@@ -199,6 +209,28 @@ def delete_chat_session(session_id: str, member_id: str | None = Depends(resolve
 # SSE streaming message endpoint
 # ---------------------------------------------------------------------------
 
+def _with_attachments(conn, index: DocIndex, history: list[ChatMessage], member_id: str | None) -> DocIndex:
+    """Documents attached anywhere in this conversation stay in scope, ahead of search hits."""
+    ids: list[str] = []
+    for msg in history:
+        for f in msg.files or []:
+            if f.document_id and f.document_id not in ids:
+                ids.append(f.document_id)
+    if not ids:
+        return index
+    rows = conn.execute(
+        f"""
+        SELECT d.document_id, d.title
+        FROM documents d
+        LEFT JOIN permissions p ON p.matter_id = d.matter_id
+        WHERE d.document_id = ANY(%(ids)s) AND {ACL_CLAUSE}
+        """,
+        {"ids": ids, "member_id": member_id},
+    ).fetchall()
+    titles = {r["document_id"]: r["title"] for r in rows}
+    return add_documents_to_index(index, [(i, titles[i]) for i in ids if i in titles])
+
+
 @router.post("/sessions/{session_id}/messages")
 def send_message(
     session_id: str,
@@ -243,7 +275,7 @@ def send_message(
             hits = []
 
         # Build document index from retrieval hits
-        doc_index = build_doc_index_from_hits(hits)
+        doc_index = _with_attachments(conn, build_doc_index_from_hits(hits), history, session.member_id)
 
         # Reserve assistant message ID
         assistant_msg = append_message(
@@ -382,7 +414,7 @@ def ask_sync(
         except Exception:
             hits = []
 
-        doc_index = build_doc_index_from_hits(hits)
+        doc_index = _with_attachments(conn, build_doc_index_from_hits(hits), history, session.member_id)
 
         # Run agent synchronously
         result = run_chat_agent_sync(
@@ -420,3 +452,89 @@ def ask_sync(
         "events": result.get("events", []),
         "citations": result.get("citations", []),
     }
+
+
+# ---------------------------------------------------------------------------
+# Suggested edits: accept / reject, then export as tracked changes
+# ---------------------------------------------------------------------------
+
+class EditDecision(BaseModel):
+    status: str
+
+
+def _edit_groups(events: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    return [e for e in (events or []) if e.get("type") == "edit_proposals"]
+
+
+@router.patch("/sessions/{session_id}/messages/{message_id}/edits/{edit_id}")
+def decide_edit(
+    session_id: str,
+    message_id: str,
+    edit_id: str,
+    body: EditDecision,
+    member_id: str | None = Depends(resolve_member),
+):
+    """Record the lawyer's decision on one suggested edit."""
+    if body.status not in EDIT_STATUSES:
+        raise HTTPException(status_code=422, detail=f"status must be one of {', '.join(EDIT_STATUSES)}")
+    with connect() as conn:
+        _owned_session(conn, session_id, member_id)
+        msg = get_message(conn, session_id, message_id)
+        if msg is None:
+            raise HTTPException(status_code=404, detail="Message not found")
+        events = list(msg.events or [])
+        found = None
+        for group in _edit_groups(events):
+            for edit in group.get("edits", []):
+                if edit.get("id") == edit_id:
+                    edit["status"] = body.status
+                    found = edit
+        if found is None:
+            raise HTTPException(status_code=404, detail="Edit not found")
+        set_message_events(conn, message_id, events)
+    audit.record("chat.edit_decision", member_id=member_id, object_type="chat_message", object_id=message_id,
+                 detail={"edit_id": edit_id, "status": body.status})
+    return found
+
+
+@router.post("/sessions/{session_id}/messages/{message_id}/edits/export")
+def export_edits(
+    session_id: str,
+    message_id: str,
+    document_id: str = Query(..., description="The edited document"),
+    member_id: str | None = Depends(resolve_member),
+):
+    """Build a Word file showing the accepted edits as tracked changes."""
+    from app.chat.tools.generation_tools import store_generated_bytes
+    from app.drafting.docx_redline_generator import DocxRedlineGenerator
+
+    with connect() as conn:
+        _owned_session(conn, session_id, member_id)
+        msg = get_message(conn, session_id, message_id)
+        if msg is None:
+            raise HTTPException(status_code=404, detail="Message not found")
+        edits = [
+            e for g in _edit_groups(msg.events) if g.get("document_id") == document_id
+            for e in g.get("edits", [])
+        ]
+        if not any(e.get("status") == "accepted" for e in edits):
+            raise HTTPException(status_code=409, detail="Accept at least one edit first")
+        row = conn.execute("SELECT title FROM documents WHERE document_id = %s", (document_id,)).fetchone()
+        pages = fetch_document_pages(conn, document_id)
+    if not pages:
+        raise HTTPException(status_code=404, detail="Document text not available")
+
+    original = strip_page_markers(paged_text(pages))
+    revised, applied = apply_accepted_edits(original, edits)
+    if applied == 0:
+        raise HTTPException(status_code=409, detail="None of the accepted edits could be placed in the document")
+    title = f"{(row or {}).get('title') or document_id} (suggested edits)"
+    data = DocxRedlineGenerator().create_tracked_diff_docx(original, revised, title=title)
+    stored = store_generated_bytes(
+        data, title, "docx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        member_id,
+    )
+    audit.record("chat.edit_export", member_id=member_id, object_type="chat_message", object_id=message_id,
+                 detail={"document_id": document_id, "applied": applied})
+    return {**stored, "applied": applied}

@@ -83,26 +83,26 @@ def _normalise_text(text: str, *, strip_punctuation: bool = False) -> tuple[str,
     - Collapses whitespace
     - Optionally strips punctuation
     """
-    lower = text.lower()
-    if strip_punctuation:
-        # Replace typographic quotes/dashes with ASCII then strip
-        lower = unicodedata.normalize("NFKD", lower)
-        lower = _PUNCT_RE.sub(" ", lower)
-
     result_chars: list[str] = []
     orig_indices: list[int] = []
     prev_ws = False
 
-    for i, ch in enumerate(lower):
-        if ch in " \t\n\r\f\v":
-            if not prev_ws and result_chars:
-                result_chars.append(" ")
+    # Normalise one source character at a time: NFKD and lowercasing can turn one
+    # character into several, and every output character must map back to its source.
+    for i, raw in enumerate(text):
+        piece = raw.lower()
+        if strip_punctuation:
+            piece = _PUNCT_RE.sub(" ", unicodedata.normalize("NFKD", piece))
+        for ch in piece:
+            if ch in " \t\n\r\f\v":
+                if not prev_ws and result_chars:
+                    result_chars.append(" ")
+                    orig_indices.append(i)
+                    prev_ws = True
+            else:
+                result_chars.append(ch)
                 orig_indices.append(i)
-                prev_ws = True
-        else:
-            result_chars.append(ch)
-            orig_indices.append(i)
-            prev_ws = False
+                prev_ws = False
 
     return "".join(result_chars), orig_indices
 
