@@ -3,7 +3,10 @@ import { Action, EmptyState, PageHeader, SectionLabel, StatusLabel } from "@/com
 import { AskComposer } from "@/components/ai/AskComposer";
 import { DataTable } from "@/components/common/DataTable";
 import { QueryState } from "@/components/common/QueryState";
-import { useDeadlines, useHomeStats, useMatters } from "@/api/resources";
+import { useQuery } from "@tanstack/react-query";
+import { listAskHistory } from "@/api/ask";
+import { useDeadlines, useHomeStats, useMatters, useRecentConversations } from "@/api/resources";
+import { formatDate } from "@/lib/format";
 import { useApp } from "@/context/AppContext";
 import { dueLabel } from "@/pages/CalendarPage";
 
@@ -22,11 +25,13 @@ function greeting() {
 }
 
 export function HomePage() {
-  const { me } = useApp();
+  const { me, identityKey } = useApp();
   const navigate = useNavigate();
   const stats = useHomeStats();
   const openMatters = useMatters({ status: "Open", limit: 6 });
-  const deadlines = useDeadlines({ status: "open", limit: 5 });
+  const deadlines = useDeadlines({ status: "open", limit: 6 });
+  const recent = useRecentConversations();
+  const questions = useQuery({ queryKey: [identityKey, "ask-history"], queryFn: () => listAskHistory(), enabled: !!identityKey });
   const first = me?.name.split(" ")[0];
   const counts = stats.data?.counts;
 
@@ -47,11 +52,11 @@ export function HomePage() {
         subtitle="The firm's knowledge, at work."
         actions={
           <>
-            <Action to="/ask" primary icon="forum" testId="home-ask">
-              Ask the Firm
+            <Action to="/chat" icon="edit_note" testId="home-assistant">
+              New Assistant conversation
             </Action>
             <Action to="/matters" icon="gavel" testId="home-browse">
-              Browse Matters
+              Browse matters
             </Action>
           </>
         }
@@ -61,6 +66,51 @@ export function HomePage() {
 
       <section className="grid gap-12 lg:grid-cols-3">
         <div className="space-y-12 lg:col-span-2">
+          <div>
+            <SectionLabel
+              right={
+                <Link to="/calendar" className="text-xs font-semibold text-wine hover:underline">
+                  All deadlines
+                </Link>
+              }
+            >
+              Coming up
+            </SectionLabel>
+            <QueryState
+              query={deadlines}
+              isEmpty={(d) => d.length === 0}
+              empty={<EmptyState icon="event" title="No open deadlines in your scope" />}
+            >
+              {(rows) => (
+                <ul className="space-y-px" data-testid="home-deadlines">
+                  {rows.map((d) => (
+                    <li key={d.id}>
+                      <Link
+                        to={`/matters/${d.matter_id}`}
+                        className="flex items-baseline justify-between gap-4 border-b border-border py-3 transition-colors hover:bg-secondary/60"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-foreground">
+                            {d.title}
+                            {d.owner_member_id && d.owner_member_id === me?.member_id && (
+                              <span className="ml-2 rounded bg-wine-soft px-1.5 py-px align-middle text-[10px] font-semibold uppercase text-wine">Yours</span>
+                            )}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {d.matter_title} · {d.court || d.client_name}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-right">
+                          <span className="block text-xs tabular-nums text-foreground">{formatDate(d.due)}</span>
+                          <span className="block text-xs text-wine">{dueLabel(d.due)}</span>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </QueryState>
+          </div>
           <div>
             <SectionLabel
               right={
@@ -105,45 +155,33 @@ export function HomePage() {
             </QueryState>
           </div>
 
-          <div>
-            <SectionLabel
-              right={
-                <Link to="/calendar" className="text-xs font-semibold text-wine hover:underline">
-                  All deadlines
-                </Link>
-              }
-            >
-              Coming up
-            </SectionLabel>
-            <QueryState
-              query={deadlines}
-              isEmpty={(d) => d.length === 0}
-              empty={<EmptyState icon="event" title="No open deadlines in your scope" />}
-            >
-              {(rows) => (
-                <ul className="space-y-px" data-testid="home-deadlines">
-                  {rows.map((d) => (
-                    <li key={d.id}>
-                      <Link
-                        to={`/matters/${d.matter_id}`}
-                        className="flex items-baseline justify-between gap-4 border-b border-border py-3 transition-colors hover:bg-secondary/60"
-                      >
-                        <span>
-                          <span className="block text-foreground">{d.title}</span>
-                          <span className="block text-xs text-muted-foreground">
-                            {d.matter_code} · {d.court || d.client_name}
-                          </span>
-                        </span>
-                        <span className="shrink-0 font-mono-id text-xs text-wine">{dueLabel(d.due)}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </QueryState>
-          </div>
         </div>
 
+        <div className="space-y-12">
+          <RecentList
+            label="Your recent questions"
+            testId="home-recent-questions"
+            more={{ to: "/ask", text: "Ask the Firm" }}
+            empty="Questions you ask the firm appear here."
+            items={(questions.data?.items ?? []).slice(0, 4).map((h) => ({
+              key: h.id,
+              to: `/ask?${new URLSearchParams({ q: h.query, ...(h.scope ? { scope: h.scope, scopeType: h.scope_type ?? "auto" } : {}) })}`,
+              title: h.query,
+              meta: [formatDate(h.asked_at), h.scope].filter(Boolean).join(" · "),
+            }))}
+          />
+          <RecentList
+            label="Your recent conversations"
+            testId="home-recent-conversations"
+            more={{ to: "/chat?history=open", text: "All conversations" }}
+            empty="Assistant conversations appear here."
+            items={(recent.data ?? []).slice(0, 4).map((c) => ({
+              key: c.id,
+              to: `/chat/${c.id}`,
+              title: c.title || "Untitled conversation",
+              meta: formatDate(c.updated_at),
+            }))}
+          />
         <div>
           <SectionLabel>In your scope</SectionLabel>
           <QueryState query={stats}>
@@ -163,7 +201,50 @@ export function HomePage() {
             )}
           </QueryState>
         </div>
+        </div>
       </section>
+    </div>
+  );
+}
+
+function RecentList({
+  label,
+  items,
+  more,
+  empty,
+  testId,
+}: {
+  label: string;
+  items: { key: string; to: string; title: string; meta: string }[];
+  more: { to: string; text: string };
+  empty: string;
+  testId: string;
+}) {
+  return (
+    <div data-testid={testId}>
+      <SectionLabel
+        right={
+          <Link to={more.to} className="text-xs font-semibold text-wine hover:underline">
+            {more.text}
+          </Link>
+        }
+      >
+        {label}
+      </SectionLabel>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{empty}</p>
+      ) : (
+        <ul className="space-y-px">
+          {items.map((it) => (
+            <li key={it.key}>
+              <Link to={it.to} className="block border-b border-border py-2.5 transition-colors hover:bg-secondary/60">
+                <span className="line-clamp-2 text-sm text-foreground">{it.title}</span>
+                <span className="block text-xs text-muted-foreground">{it.meta}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

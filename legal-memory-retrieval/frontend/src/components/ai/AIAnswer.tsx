@@ -1,7 +1,7 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment, createContext, useContext, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon, SectionLabel } from "@/components/common/primitives";
-import { useInspector } from "@/components/common/Inspector";
+import { useDocumentPanel } from "@/components/ai/DocumentPanelDrawer";
 import type { AskResult, Citation } from "@/api/types";
 
 /** A passage the answer relies on (from `sources` in the /api/answers payload). */
@@ -15,7 +15,6 @@ export type CitedSource = {
   snippet?: string;
 };
 
-type MatchedMatter = { matter_id: string; matter_code: string; title: string; client_name?: string; court?: string };
 type AnswerPerson = { member_id: string; name: string; role?: string; office?: string; role_on_matter?: string };
 type ResolvedScope = { kind?: string; label?: string; method?: string };
 
@@ -26,17 +25,24 @@ function scopeMethodLabel(method?: string): string {
   return "Scope you selected";
 }
 
-/** People the answer is about: ranked people results, else the teams of the matters in scope. */
+/** People the answer is about (ranked people results). Matter teams are shown in the matter brief. */
 function answerPeople(result: AskResult): AnswerPerson[] {
-  const direct = (result.people as AnswerPerson[] | undefined) ?? [];
-  if (direct.length) return direct;
-  const cards = (result.matter_cards as { team?: AnswerPerson[] }[] | undefined) ?? [];
-  if (cards.length !== 1) return [];
-  return cards[0].team ?? [];
+  return (result.people as AnswerPerson[] | undefined) ?? [];
 }
 
 function str(v: unknown): string | undefined {
   return v === null || v === undefined || v === "" ? undefined : String(v);
+}
+
+/** Open a document in the side panel, highlighting its verified quotes when the answer has them. */
+function useOpenCitedDocument(result?: AskResult) {
+  const panel = useDocumentPanel();
+  return (documentId: string) => {
+    const span = (result?.span_citations ?? []).find((c) => String(c.document_id ?? "") === documentId);
+    if (span) return panel?.openCitation(span);
+    const src = result ? citedSources(result).find((s) => s.document_id === documentId) : undefined;
+    panel?.openDocument(documentId, { title: src?.title, snippet: src?.snippet });
+  };
 }
 
 export function citedSources(result: AskResult): CitedSource[] {
@@ -60,33 +66,47 @@ export function citedSources(result: AskResult): CitedSource[] {
 }
 
 // Evidence ids the Ask-the-Firm answer cites: documents (numeric corpus ids or hex
-// ids for uploads), matter records and people.
-const EVIDENCE_ID = String.raw`DOC-(?:\d+|[0-9A-F]{8,})|MTR-\d{4}-\d+|MEM-\d+`;
+// ids for uploads), matter records (MTR-2026-00901 or MTR-CI-OPEN-001) and people.
+const EVIDENCE_ID = String.raw`DOC-(?:\d+|[0-9A-F]{8,})|MTR-(?:\d{4}-\d+|[A-Z]+(?:-[A-Z]+)*-\d+)|MEM-\d+`;
 const CITE_GROUP_RE = new RegExp(String.raw`[(\[]\s*((?:${EVIDENCE_ID})(?:\s*[,;]\s*(?:${EVIDENCE_ID}))*)\s*[)\]]|(${EVIDENCE_ID})`, "gi");
 const EVIDENCE_ID_RE = new RegExp(EVIDENCE_ID, "gi");
 
 const CHIP =
   "mx-0.5 inline-flex items-center rounded-[3px] bg-wine-soft px-1 align-baseline font-mono-id text-[11px] font-semibold text-wine transition-colors hover:bg-wine hover:text-primary-foreground";
 
+/** Names for the ids in the answer, so chips read "Share Purchase Agreement" or "Helena Voss" instead of an id. */
+const DocTitles = createContext<Map<string, string>>(new Map());
+
+function shortTitle(title: string) {
+  return title.replace(/\.(docx?|pdf|txt|xlsx?|pptx?)$/i, "").replace(/[_]+/g, " ").trim();
+}
+
 function CitationChip({ id, onCite }: { id: string; onCite: (documentId: string) => void }) {
+  const titles = useContext(DocTitles);
   const upper = id.toUpperCase();
   if (upper.startsWith("MTR-")) {
     return (
-      <Link to={`/matters/${upper}`} className={CHIP} data-testid={`citation-${upper}`} title="Matter record">
-        {upper}
+      <Link to={`/matters/${upper}`} className={CHIP} data-testid={`citation-${upper}`} title={`Matter record ${upper}`}>
+        {titles.get(upper) ?? upper}
       </Link>
     );
   }
   if (upper.startsWith("MEM-")) {
     return (
-      <Link to={`/people/${upper}`} className={CHIP} data-testid={`citation-${upper}`} title="Firm member">
-        {upper}
+      <Link to={`/people/${upper}`} className={`${CHIP} font-sans`} data-testid={`citation-${upper}`} title={`Firm member ${upper}`}>
+        {titles.get(upper) ?? upper}
       </Link>
     );
   }
   return (
-    <button type="button" onClick={() => onCite(upper)} className={CHIP} data-testid={`citation-${upper}`}>
-      {upper}
+    <button
+      type="button"
+      onClick={() => onCite(upper)}
+      className={`${CHIP} max-w-[240px] truncate font-sans`}
+      data-testid={`citation-${upper}`}
+      title={titles.get(upper) ? `${titles.get(upper)} (${upper})` : upper}
+    >
+      {titles.get(upper) ? shortTitle(titles.get(upper)!) : upper}
     </button>
   );
 }
@@ -128,21 +148,37 @@ function withSpanChips(text: string, spans: SpanCites | undefined, keyBase: numb
   return out;
 }
 
-/** Render DOC / MTR / MEM references (bare or in "(A, B)" groups) and [n] span markers as chips. */
-export function withCitationChips(text: string, onCite: (documentId: string) => void, spans?: SpanCites): ReactNode[] {
+/**
+ * Render DOC / MTR / MEM references (bare or in "(A, B)" groups) and [n] span markers as chips.
+ * With `seenMatters`, a matter record is shown the first time only: answers cite it after every
+ * line ("… (MTR-2026-00901)"), which repeats what the matter brief already says.
+ */
+export function withCitationChips(
+  text: string,
+  onCite: (documentId: string) => void,
+  spans?: SpanCites,
+  seenMatters?: Set<string>,
+): ReactNode[] {
   const out: ReactNode[] = [];
   let last = 0;
   let key = 0;
   for (const m of text.matchAll(CITE_GROUP_RE)) {
     const start = m.index ?? 0;
-    if (start > last) {
-      const parts = withSpanChips(text.slice(last, start), spans, key);
+    const ids = ((m[1] ?? m[2] ?? "").match(EVIDENCE_ID_RE) ?? []).filter((id) => {
+      const upper = id.toUpperCase();
+      if (!seenMatters || !upper.startsWith("MTR-")) return true;
+      if (seenMatters.has(upper)) return false;
+      seenMatters.add(upper);
+      return true;
+    });
+    // A group of hidden repeats disappears with the space in front of it.
+    const before = ids.length ? text.slice(last, start) : text.slice(last, start).replace(/\s+$/, "");
+    if (before) {
+      const parts = withSpanChips(before, spans, key);
       key += parts.length;
       out.push(...parts);
     }
-    for (const id of (m[1] ?? m[2] ?? "").match(EVIDENCE_ID_RE) ?? []) {
-      out.push(<CitationChip key={key++} id={id} onCite={onCite} />);
-    }
+    for (const id of ids) out.push(<CitationChip key={key++} id={id} onCite={onCite} />);
     last = start + m[0].length;
   }
   if (last < text.length) out.push(...withSpanChips(text.slice(last), spans, key));
@@ -152,7 +188,8 @@ export function withCitationChips(text: string, onCite: (documentId: string) => 
 /** Minimal markdown: paragraphs, "- " bullet lists and "#" headings, with citation chips inline. */
 export function AnswerBody({ text, onCite, spans }: { text: string; onCite: (documentId: string) => void; spans?: SpanCites }) {
   const blocks = text.replace(/\r/g, "").split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
-  const inline = (t: string) => withCitationChips(t.replace(/\*\*(.+?)\*\*/g, "$1"), onCite, spans);
+  const seenMatters = new Set<string>();
+  const inline = (t: string) => withCitationChips(t.replace(/\*\*(.+?)\*\*/g, "$1"), onCite, spans, seenMatters);
   return (
     <div className="space-y-4 text-[16px] leading-[1.75] text-foreground">
       {blocks.map((block, i) => {
@@ -189,12 +226,8 @@ export function AIAssembling({ label = "Searching the firm's records within your
 }
 
 export function AIAnswer({ result }: { result: AskResult }) {
-  const inspector = useInspector();
-  const sources = citedSources(result);
-  const openDoc = (documentId: string) => {
-    const src = sources.find((s) => s.document_id === documentId);
-    inspector?.open({ type: "document", id: documentId, chunkId: src?.chunk_id });
-  };
+  const panel = useDocumentPanel();
+  const openDoc = useOpenCitedDocument(result);
 
   const status = String(result.status ?? "");
   const answer = String(result.answer ?? "").trim();
@@ -202,14 +235,7 @@ export function AIAnswer({ result }: { result: AskResult }) {
   const spans: SpanCites | undefined = spanList.length
     ? {
         byRef: new Map(spanList.filter((c) => typeof c.ref === "number").map((c) => [c.ref as number, c])),
-        open: (c) =>
-          c.document_id &&
-          inspector?.open({
-            type: "document",
-            id: String(c.document_id),
-            chunkId: c.chunk_id ? String(c.chunk_id) : undefined,
-            quotes: (c.quotes ?? []).map((q) => String(q.quote ?? "")).filter(Boolean),
-          }),
+        open: (c) => panel?.openCitation(c),
       }
     : undefined;
   const removed = result.grounding?.removed ?? 0;
@@ -237,14 +263,23 @@ export function AIAnswer({ result }: { result: AskResult }) {
 
   const provider = String(result.provider ?? "");
   const caption = provider.startsWith("extractive")
-    ? "Assembled from retrieved passages (the language model did not produce a grounded answer)."
+    ? "Assembled from retrieved passages: no written answer could be checked against the sources."
     : provider === "records"
-      ? "Assembled from the firm's matter records (the language model was unavailable)."
+      ? "Assembled from the firm's matter records: the written answer was unavailable."
       : provider
-        ? `Generated by ${provider} from the firm's records and passages cited above.`
+        ? "Written from the firm's records cited above. Check the sources before relying on it."
         : "";
+  const titles = new Map<string, string>();
+  for (const src of citedSources(result)) titles.set(src.document_id.toUpperCase(), src.title);
+  for (const c of spanList) if (c.document_id && c.title) titles.set(String(c.document_id).toUpperCase(), String(c.title));
+  for (const m of result.matter_cards ?? []) {
+    titles.set(m.matter_id.toUpperCase(), m.matter_code);
+    for (const p of m.team ?? []) titles.set(p.member_id.toUpperCase(), p.name);
+  }
+  for (const p of (result.people as AnswerPerson[] | undefined) ?? []) titles.set(p.member_id.toUpperCase(), p.name);
 
   return (
+    <DocTitles.Provider value={titles}>
     <div className="space-y-8" data-testid="ai-answer">
       {result.key_finding && (
         <div className="rounded-lg border border-wine/30 bg-wine-soft/40 p-5">
@@ -266,13 +301,13 @@ export function AIAnswer({ result }: { result: AskResult }) {
       )}
       {caption && <p className="text-xs text-muted-foreground" data-testid="ai-provider">{caption}</p>}
     </div>
+    </DocTitles.Provider>
   );
 }
 
 /** The answer while the model is still writing (replaced by AIAnswer when final). */
 export function AIStreaming({ keyFinding, text, verifying = false }: { keyFinding: string; text: string; verifying?: boolean }) {
-  const inspector = useInspector();
-  const openDoc = (documentId: string) => inspector?.open({ type: "document", id: documentId });
+  const openDoc = useOpenCitedDocument();
   return (
     <div className="space-y-8" data-testid="ai-streaming" aria-busy="true">
       <div className="flex items-center gap-2 text-xs text-muted-foreground" role="status" data-testid="ai-draft-banner">
@@ -292,12 +327,58 @@ export function AIStreaming({ keyFinding, text, verifying = false }: { keyFindin
   );
 }
 
-/** Right-hand context column: the cited sources and the matters they come from. */
+/** Document ids the answer cites: its citation list, verified spans and ids in the text. */
+function answerDocumentIds(result: AskResult): Set<string> {
+  const ids = new Set<string>();
+  for (const c of (result.citations as unknown[] | undefined) ?? []) if (typeof c === "string") ids.add(c.toUpperCase());
+  for (const c of result.span_citations ?? []) if (c.document_id) ids.add(String(c.document_id).toUpperCase());
+  for (const t of [result.answer, result.key_finding]) {
+    for (const id of String(t ?? "").match(EVIDENCE_ID_RE) ?? []) ids.add(id.toUpperCase());
+  }
+  return ids;
+}
+
+function SourceList({
+  label,
+  items,
+  onOpen,
+  testId,
+  muted,
+}: {
+  label: string;
+  items: CitedSource[];
+  onOpen: (documentId: string) => void;
+  testId: string;
+  muted?: boolean;
+}) {
+  return (
+    <div>
+      <SectionLabel>
+        {label} ({items.length})
+      </SectionLabel>
+      <ul className="space-y-3" data-testid={testId}>
+        {items.map((s) => (
+          <li key={s.document_id}>
+            <button type="button" onClick={() => onOpen(s.document_id)} className="block w-full text-left" title={s.document_id}>
+              <span className={`block text-sm hover:text-wine ${muted ? "text-foreground/75" : "text-foreground"}`}>{s.title}</span>
+              <span className="block text-xs text-muted-foreground">{[s.document_type, s.matter_code].filter(Boolean).join(" · ")}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Right-hand context column: scope, people and the sources, cited first. */
 export function AnswerContext({ result }: { result: AskResult }) {
-  const inspector = useInspector();
+  const openDoc = useOpenCitedDocument(result);
   const sources = citedSources(result);
-  const matters = (result.matchedMatters as MatchedMatter[] | undefined) ?? [];
   const people = answerPeople(result);
+  // Documents the answer actually cites come first; the rest were retrieved but not used.
+  const citedIds = answerDocumentIds(result);
+  const cited = sources.filter((s) => citedIds.has(s.document_id.toUpperCase()));
+  const searched = sources.filter((s) => !citedIds.has(s.document_id.toUpperCase()));
   const scope = result.resolved_scope as ResolvedScope | null | undefined;
 
   return (
@@ -326,43 +407,24 @@ export function AnswerContext({ result }: { result: AskResult }) {
           </ul>
         </div>
       )}
-      <div>
-        <SectionLabel>Sources ({sources.length})</SectionLabel>
-        {sources.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No sources.</p>
-        ) : (
-          <ul className="space-y-3" data-testid="answer-sources">
-            {sources.map((s) => (
-              <li key={s.document_id}>
-                <button
-                  type="button"
-                  onClick={() => inspector?.open({ type: "document", id: s.document_id, chunkId: s.chunk_id })}
-                  className="block w-full text-left"
-                >
-                  <span className="font-mono-id text-[11px] text-wine">{s.document_id}</span>
-                  <span className="block text-sm text-foreground hover:text-wine">{s.title}</span>
-                  <span className="block text-xs text-muted-foreground">{[s.document_type, s.matter_code].filter(Boolean).join(" · ")}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      {matters.length > 0 && (
+      {sources.length === 0 ? (
         <div>
-          <SectionLabel>Matters</SectionLabel>
-          <ul className="space-y-3">
-            {matters.map((m) => (
-              <li key={m.matter_id}>
-                <Link to={`/matters/${m.matter_id}`} className="group block">
-                  <span className="font-mono-id text-[11px] text-muted-foreground">{m.matter_code}</span>
-                  <span className="block text-sm group-hover:text-wine">{m.client_name ?? m.title}</span>
-                  {m.court && <span className="block text-xs text-muted-foreground">{m.court}</span>}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <SectionLabel>Sources (0)</SectionLabel>
+          <p className="text-sm text-muted-foreground">No sources.</p>
         </div>
+      ) : (
+        <>
+          {cited.length > 0 && <SourceList label="Cited in the answer" testId="answer-sources" items={cited} onOpen={openDoc} />}
+          {searched.length > 0 && (
+            <SourceList
+              label="Also searched"
+              testId={cited.length ? "answer-sources-searched" : "answer-sources"}
+              items={searched}
+              onOpen={openDoc}
+              muted={cited.length > 0}
+            />
+          )}
+        </>
       )}
       <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
         <Icon name="visibility_lock" style={{ fontSize: 14 }} /> Only records within your access scope were searched.

@@ -16,16 +16,24 @@ def people_health() -> dict:
 
 
 @router.get("")
-def people_list(_caller: str | None = Depends(resolve_member)) -> dict:
+def people_list(caller: str | None = Depends(resolve_member)) -> dict:
+    """The firm directory, with how many open matters each person is on (that the caller can see)."""
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
-                """
-                SELECT member_id, name, role, practice_areas, specializations,
-                       office, joined_year, is_lawyer
-                FROM members
-                ORDER BY is_lawyer DESC, role, name
-                """
+                f"""
+                SELECT mb.member_id, mb.name, mb.role, mb.practice_areas, mb.specializations,
+                       mb.office, mb.joined_year, mb.is_lawyer,
+                       (SELECT count(*) FROM matter_members mm
+                          JOIN matters m ON m.matter_id = mm.matter_id
+                          LEFT JOIN permissions p ON p.matter_id = m.matter_id
+                         WHERE mm.member_id = mb.member_id
+                           AND lower(coalesce(m.status, 'open')) = 'open'
+                           AND {ACL_CLAUSE}) AS current_matters
+                FROM members mb
+                ORDER BY mb.is_lawyer DESC, mb.role, mb.name
+                """,
+                {"member_id": caller},
             )
             return {"service": SERVICE, "items": list(cur.fetchall())}
 

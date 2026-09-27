@@ -145,6 +145,39 @@ def _owned_session(conn, session_id: str, member_id: str | None) -> ChatSession:
     return session
 
 
+def _require_matter(conn, matter_id: str, member_id: str | None) -> None:
+    """A conversation can only be limited to a matter the caller may see (404 otherwise)."""
+    row = conn.execute(
+        f"""
+        SELECT 1 FROM matters m LEFT JOIN permissions p ON p.matter_id = m.matter_id
+        WHERE m.matter_id = %(matter_id)s AND {ACL_CLAUSE}
+        """,
+        {"matter_id": matter_id, "member_id": member_id},
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Matter not found")
+
+
+def _matter_scope(conn, session: ChatSession) -> dict[str, str] | None:
+    """The conversation's matter as the agent's tools need it, or None for firm-wide search."""
+    if not session.matter_id:
+        return None
+    row = conn.execute(
+        "SELECT matter_id, matter_code, title FROM matters WHERE matter_id = %s", (session.matter_id,)
+    ).fetchone()
+    return {"matter_id": row["matter_id"], "matter_code": row["matter_code"], "title": row["title"]} if row else None
+
+
+def _search(conn, session: ChatSession, query: str) -> list[dict]:
+    """Passages for this turn: inside the conversation's matter when it has one, else firm-wide."""
+    if session.matter_id:
+        from app.km.passages import scoped_passages
+
+        return scoped_passages(conn, query, [session.matter_id], session.member_id, limit=14, per_doc=3)
+    hits, _ = retrieve(conn, query, session.member_id)
+    return hits
+
+
 @router.post("/sessions", response_model=ChatSession)
 def create_chat_session(
     req: ChatSessionCreate,
@@ -153,6 +186,8 @@ def create_chat_session(
     """Create a new chat session owned by the caller."""
     owned = req.model_copy(update={"member_id": member_id, "model": _resolve_model(req.model)})
     with connect() as conn:
+        if owned.matter_id:
+            _require_matter(conn, owned.matter_id, member_id)
         session = create_session(conn, owned)
     return session
 
@@ -189,6 +224,8 @@ def update_chat_session(
     """Update session title, model, or status."""
     with connect() as conn:
         _owned_session(conn, session_id, member_id)
+        if patch.matter_id:
+            _require_matter(conn, patch.matter_id, member_id)
         updated = patch_session(conn, session_id, patch)
         if not updated:
             raise HTTPException(status_code=404, detail="Chat session not found")
@@ -265,7 +302,7 @@ def send_message(
 
         # Retrieve relevant documents for the query
         try:
-            hits, _ = retrieve(conn, req.content, session.member_id)
+            hits = _search(conn, session, req.content)
         except Exception as exc:
             logger.warning(
                 "[chat] retrieval failed: %s, request_id=%s",
@@ -276,6 +313,7 @@ def send_message(
 
         # Build document index from retrieval hits
         doc_index = _with_attachments(conn, build_doc_index_from_hits(hits), history, session.member_id)
+        matter = _matter_scope(conn, session)
 
         # Reserve assistant message ID
         assistant_msg = append_message(
@@ -316,6 +354,7 @@ def send_message(
                     member_id=session.member_id,
                     mode=req.mode.value if req.mode else None,
                     hit_count=len(doc_index),
+                    matter=matter,
                 )
                 try:
                     while True:
@@ -410,7 +449,7 @@ def ask_sync(
 
         # Retrieve documents
         try:
-            hits, _ = retrieve(conn, req.content, session.member_id)
+            hits = _search(conn, session, req.content)
         except Exception:
             hits = []
 
@@ -426,6 +465,7 @@ def ask_sync(
             member_id=session.member_id,
             mode=req.mode.value if req.mode else None,
             hit_count=len(doc_index),
+            matter=_matter_scope(conn, session),
         )
 
         # Save assistant response

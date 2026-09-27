@@ -5,6 +5,7 @@ Seed first:  python scripts/migrate.py && python scripts/seed_demo.py
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -79,3 +80,53 @@ def walls(seeded) -> list[Wall]:
 
 def as_member(member_id: str) -> dict[str, str]:
     return {"X-Member-Id": member_id}
+
+
+@pytest.fixture
+def batch_cleanup():
+    """Upload batches a test creates; their documents are deleted when the test ends."""
+    from app.ingest.purge import purge_upload_batches
+
+    batch_ids: list[str] = []
+    yield batch_ids
+    purge_upload_batches(batch_ids)
+
+
+@pytest.fixture
+def document_cleanup():
+    """Document ids a test creates outside an upload batch; deleted when the test ends."""
+    from app.ingest.purge import purge_documents
+
+    ids: list[str] = []
+    yield ids
+    if ids:
+        with connect() as conn, conn.transaction():
+            purge_documents(conn, ids)
+
+
+_GENERATED_TMP: str | None = None
+
+
+def pytest_configure(config):
+    """Files the Assistant generates during tests go to a temp folder, not data/object_store."""
+    import tempfile
+
+    from app.chat.tools import generation_tools
+
+    global _GENERATED_TMP
+    _GENERATED_TMP = str(Path(tempfile.mkdtemp(prefix="precentis-generated-")).resolve())
+    generation_tools.generated_dir = lambda: Path(_GENERATED_TMP)
+
+
+def pytest_unconfigure(config):
+    if not _GENERATED_TMP:
+        return
+    import shutil
+
+    try:
+        with connect() as conn:
+            conn.execute("DELETE FROM generated_artifacts WHERE storage_path LIKE %s", (f"{_GENERATED_TMP}%",))
+            conn.commit()
+    except Exception:
+        pass  # no database in this run
+    shutil.rmtree(_GENERATED_TMP, ignore_errors=True)

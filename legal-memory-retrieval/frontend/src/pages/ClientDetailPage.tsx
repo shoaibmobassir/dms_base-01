@@ -3,6 +3,7 @@ import { useClient } from "@/api/resources";
 import type { ClientNote } from "@/api/types";
 import { DataTable } from "@/components/common/DataTable";
 import { Action, EmptyState, MonoId, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { formatDate } from "@/lib/format";
 import { QueryState } from "@/components/common/QueryState";
 
 const NOTE_GROUPS: { kind: ClientNote["kind"]; label: string }[] = [
@@ -25,7 +26,7 @@ export function ClientDetailPage() {
             title={c.name}
             subtitle="What the firm has observed working with this client — each note traceable to the matter it came from."
             actions={
-              <Action to={`/ask?scope=${encodeURIComponent(c.name)}&scopeType=client`} primary icon="forum">
+              <Action to={`/ask?scope=${encodeURIComponent(c.name)}&scopeType=client`} primary icon="manage_search">
                 Ask about this client
               </Action>
             }
@@ -86,7 +87,7 @@ export function ClientDetailPage() {
                   ),
                 },
                 { key: "practice", header: "Practice", render: (m) => m.practice_area },
-                { key: "opened", header: "Opened", render: (m) => m.opened_date || "—" },
+                { key: "opened", header: "Opened", render: (m) => <span className="whitespace-nowrap tabular-nums">{formatDate(m.opened_date)}</span> },
                 { key: "status", header: "Status", align: "right", render: (m) => <StatusLabel status={m.status || "Open"} /> },
               ]}
             />

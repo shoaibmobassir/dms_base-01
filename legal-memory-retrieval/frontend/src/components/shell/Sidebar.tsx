@@ -8,7 +8,7 @@ import { can, useMyAccess } from "@/api/access";
 // Admin shows only for people who administer something (plan §5).
 const ADMIN_PERMISSIONS = ["users.manage", "teams.manage", "roles.manage", "walls.manage", "audit.read"];
 
-type NavItemConfig = { to: string; icon: string; label: string; end?: boolean };
+type NavItemConfig = { to: string; icon: string; label: string; end?: boolean; hint?: string };
 
 // Navigation decided in docs/ui-roadmap/00_ROADMAP.md §5 (Q7). Research joins "Work"
 // when its page ships (P7) — the sidebar only lists sections that exist.
@@ -17,8 +17,8 @@ export const NAV_GROUPS: { label: string; items: NavItemConfig[] }[] = [
     label: "Work",
     items: [
       { to: "/", icon: "home", label: "Home", end: true },
-      { to: "/chat", icon: "chat", label: "Assistant" },
-      { to: "/ask", icon: "forum", label: "Ask the Firm" },
+      { to: "/chat", icon: "edit_note", label: "Assistant", hint: "Draft and review documents" },
+      { to: "/ask", icon: "manage_search", label: "Ask the Firm", hint: "Find what the firm already knows" },
       { to: "/matters", icon: "gavel", label: "Matters" },
       { to: "/documents", icon: "description", label: "Documents" },
       { to: "/calendar", icon: "event", label: "Calendar" },
@@ -43,7 +43,7 @@ function NavItem({ item, collapsed }: { item: NavItemConfig; collapsed?: boolean
     <NavLink
       to={item.to}
       end={item.end}
-      title={collapsed ? item.label : undefined}
+      title={collapsed ? item.label : item.hint}
       data-testid={`nav-${item.label.replace(/[^a-z]/gi, "-").toLowerCase()}`}
       className={({ isActive }) =>
         cn(
@@ -61,7 +61,16 @@ function NavItem({ item, collapsed }: { item: NavItemConfig; collapsed?: boolean
             style={{ fontSize: 20 }}
             className={cn(isActive ? "text-wine" : "text-muted-foreground group-hover:text-foreground")}
           />
-          {!collapsed && <span className="truncate">{item.label}</span>}
+          {!collapsed && (
+            <span className="min-w-0">
+              <span className="block truncate">{item.label}</span>
+              {item.hint && (
+                <span aria-hidden className="block truncate text-[11px] font-normal text-muted-foreground">
+                  {item.hint}
+                </span>
+              )}
+            </span>
+          )}
         </>
       )}
     </NavLink>
@@ -72,10 +81,13 @@ function ShortcutList({
   label,
   testId,
   items,
+  shortScreenLimit,
 }: {
   label: string;
   testId: string;
   items: { key: string; to: string; title: string; hint?: string; icon: string }[];
+  /** On screens under 900px tall, hide items past this many. */
+  shortScreenLimit?: number;
 }) {
   const { pathname } = useLocation();
   if (items.length === 0) return null;
@@ -83,13 +95,14 @@ function ShortcutList({
     <div className="mb-5" data-testid={testId}>
       <div className="meta-label px-3 pb-1.5 text-[10px]">{label}</div>
       <div className="space-y-0.5">
-        {items.map((it) => (
+        {items.map((it, i) => (
           <Link
             key={it.key}
             to={it.to}
             title={it.title}
             className={cn(
               "flex items-center gap-2.5 rounded-md py-1.5 pl-3 pr-2 text-[13px] transition-colors",
+              shortScreenLimit != null && i >= shortScreenLimit && "[@media(max-height:900px)]:hidden",
               pathname === it.to ? "bg-secondary text-foreground" : "text-foreground/70 hover:bg-secondary hover:text-foreground",
             )}
           >
@@ -125,10 +138,8 @@ export function Sidebar({ collapsed, onNavigate }: { collapsed?: boolean; onNavi
       </Link>
 
       {!collapsed && firm?.name && (
-        <div className="mx-3 mb-2 rounded-md border border-border bg-card px-3 py-2" data-testid="firm-identity">
-          <span className="meta-label block text-[10px]">Workspace</span>
-          <span className="block text-sm font-semibold text-ink">{firm.name}</span>
-          {firmMeta && <span className="block text-[11px] text-muted-foreground">{firmMeta}</span>}
+        <div className="mx-3 mb-2 truncate px-3 text-[13px] font-semibold text-ink" title={firmMeta ? `${firm.name} · ${firmMeta}` : firm.name} data-testid="firm-identity">
+          {firm.name}
         </div>
       )}
 
@@ -159,6 +170,7 @@ export function Sidebar({ collapsed, onNavigate }: { collapsed?: boolean; onNavi
             <ShortcutList
               label="Recent conversations"
               testId="sidebar-recent"
+              shortScreenLimit={3}
               items={(recent.data ?? []).slice(0, 5).map((s) => ({
                 key: s.id,
                 to: `/chat/${s.id}`,
@@ -166,6 +178,15 @@ export function Sidebar({ collapsed, onNavigate }: { collapsed?: boolean; onNavi
                 icon: "chat_bubble",
               }))}
             />
+            {(recent.data ?? []).length > 3 && (
+              <Link
+                to="/chat?history=open"
+                className="-mt-4 mb-5 block rounded-md py-1.5 pl-3 text-[12px] font-medium text-wine hover:bg-secondary"
+                data-testid="sidebar-all-conversations"
+              >
+                All conversations
+              </Link>
+            )}
           </>
         )}
       </div>

@@ -1,12 +1,15 @@
 import json
 import time
 
-from fastapi import APIRouter, Depends
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
 from app.api.schemas import AskRequest
 from app.api.hits import hit_payload_highlighted
 from app.answers.format import format_dms_response
+from app.km import ask_history
 from app.km.answer import ask_the_firm, ask_the_firm_stream
 from app.audit import events as audit
 from app.auth.deps import resolve_member
@@ -22,6 +25,7 @@ from app.observability.tracing import span
 from app.resilience.rate_limit import check_rate_limit
 
 router = APIRouter(tags=["answers"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("")
@@ -32,6 +36,7 @@ def ask_endpoint(
     _limit(member_id)
     t0 = time.perf_counter()
     scope = body.scope.model_dump() if body.scope else None
+    _remember(body.query, scope, member_id)
     with span("ask", {"query": body.query[:120], "member_id": member_id or ""}):
         with connect() as conn:
             result = ask_the_firm(conn, body.query, member_id, scope)
@@ -49,6 +54,7 @@ def ask_stream_endpoint(
     """
     _limit(member_id)
     scope = body.scope.model_dump() if body.scope else None
+    _remember(body.query, scope, member_id)
 
     def events():
         t0 = time.perf_counter()
@@ -67,6 +73,39 @@ def ask_stream_endpoint(
 
     return StreamingResponse(events(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+def _remember(query: str, scope: dict | None, member_id: str | None) -> None:
+    """Add the question to the member's recent list; never fails the answer."""
+    try:
+        with connect() as conn:
+            ask_history.record(conn, member_id, query, scope)
+    except Exception as exc:
+        logger.warning("[ask] could not save question history: %s", type(exc).__name__)
+
+
+@router.get("/history")
+def ask_history_list(
+    limit: int = Query(30, ge=1, le=100),
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """The caller's recent Ask the Firm questions, newest first."""
+    with connect() as conn:
+        items = ask_history.recent(conn, member_id, limit)
+    return {"items": items}
+
+
+@router.delete("/history/{entry_id}", status_code=204)
+def ask_history_delete(entry_id: str, member_id: str | None = Depends(resolve_member)) -> None:
+    with connect() as conn:
+        if not ask_history.remove(conn, member_id, entry_id):
+            raise HTTPException(status_code=404, detail="Question not found")
+
+
+@router.delete("/history", status_code=204)
+def ask_history_clear(member_id: str | None = Depends(resolve_member)) -> None:
+    with connect() as conn:
+        ask_history.remove(conn, member_id)
 
 
 def _limit(member_id: str | None) -> None:

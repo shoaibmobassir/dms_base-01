@@ -5,6 +5,8 @@ import type { Deadline } from "@/api/types";
 import { DataTable } from "@/components/common/DataTable";
 import { EmptyState, Icon, PageHeader, StatusLabel } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
+import { useApp } from "@/context/AppContext";
+import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const FILTERS: { label: string; value: "open" | "done" | "all" }[] = [
@@ -33,13 +35,21 @@ export function CalendarPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"open" | "done" | "all">("open");
   const [view, setView] = useState<"list" | "month">("list");
-  const query = useDeadlines({ status });
+  const [mine, setMine] = useState(false);
+  const { me } = useApp();
+  const deadlines = useDeadlines({ status });
+  // "Mine only" narrows the loaded list to deadlines the viewer owns.
+  const query = useMemo(
+    () => ({ ...deadlines, data: mine && deadlines.data ? deadlines.data.filter((d) => d.owner_member_id === me?.member_id) : deadlines.data }),
+    [deadlines, mine, me?.member_id],
+  ) as typeof deadlines;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
-        eyebrow="Calendar"
-        title="What's coming up."
+        compact
+        title="Calendar"
+        count={query.data ? `${query.data.length} ${status === "done" ? "done" : status === "all" ? "deadlines" : "open"}` : undefined}
         subtitle="Hearings, filings and compliance dates across the matters you can access."
       />
 
@@ -75,6 +85,16 @@ export function CalendarPage() {
             {f.label}
           </button>
         ))}
+        <label className="ml-3 inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={mine}
+            onChange={(e) => setMine(e.target.checked)}
+            data-testid="calendar-mine"
+            className="h-3.5 w-3.5 accent-[var(--wine)]"
+          />
+          Mine only
+        </label>
       </div>
 
       <QueryState
@@ -98,7 +118,7 @@ export function CalendarPage() {
                 width: 150,
                 render: (d) => (
                   <div>
-                    <div className={cn("font-mono-id text-sm", isOverdue(d) ? "text-destructive" : "text-foreground")}>{d.due}</div>
+                    <div className={cn("text-sm tabular-nums", isOverdue(d) ? "text-destructive" : "text-foreground")}>{formatDate(d.due)}</div>
                     <div className="text-xs text-muted-foreground">{dueLabel(d.due)}</div>
                   </div>
                 ),

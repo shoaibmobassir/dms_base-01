@@ -37,6 +37,16 @@ function useRecordTitle(section: string | undefined, id: string | undefined): st
   const { identityKey } = useApp();
   const key = section ? RECORD_KEYS[section] : undefined;
   const read = useCallback((): string | undefined => {
+    if (section === "chat" && id) {
+      // Conversations: the title from the cached history list (the id is a UUID).
+      for (const [, list] of queryClient.getQueriesData<{ id: string; title: string | null }[]>({
+        queryKey: [identityKey, "chat-sessions"],
+      })) {
+        const hit = Array.isArray(list) ? list.find((x) => x.id === id) : undefined;
+        if (hit) return hit.title?.trim() || "Untitled conversation";
+      }
+      return "Conversation";
+    }
     if (!key || !id) return undefined;
     for (const [, data] of queryClient.getQueriesData<Record<string, unknown>>({ queryKey: [identityKey, key, id] })) {
       if (!data || typeof data !== "object") continue;
@@ -45,7 +55,7 @@ function useRecordTitle(section: string | undefined, id: string | undefined): st
       if (typeof title === "string") return title;
     }
     return undefined;
-  }, [queryClient, identityKey, key, id]);
+  }, [queryClient, identityKey, key, id, section]);
   // Re-render when the page's query resolves.
   return useSyncExternalStore((cb) => queryClient.getQueryCache().subscribe(cb), read, read);
 }
@@ -147,10 +157,11 @@ export function Topbar({
         type="button"
         onClick={onToggleCollapse}
         className="hidden text-muted-foreground hover:text-foreground lg:block"
-        aria-label="Collapse navigation"
+        aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+        title={collapsed ? "Expand navigation" : "Collapse navigation"}
         data-testid="collapse-toggle"
       >
-        <Icon name={collapsed ? "menu_open" : "menu"} />
+        <Icon name={collapsed ? "left_panel_open" : "left_panel_close"} />
       </button>
 
       <div className="hidden min-w-0 flex-1 md:block">

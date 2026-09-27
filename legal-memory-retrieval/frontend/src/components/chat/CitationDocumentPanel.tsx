@@ -53,6 +53,15 @@ export function sourceFromCitation(c: Citation, nonce: number): PanelSource | nu
   };
 }
 
+/** Quote text for display: page-break markers become ellipses, stray wrapping quote marks go. */
+export function displayQuote(text: string): string {
+  return text
+    .replace(/\[\[PAGE_BREAK\]\]/g, " … ")
+    .trim()
+    .replace(/^["“”]+(?=["“])/, "")
+    .replace(/(?<=["”])["“”]+$/, "");
+}
+
 // ── text fallback helpers ─────────────────────────────────────────────────────
 
 type Span = { before: string; match: string; after: string };
@@ -102,13 +111,15 @@ type DocText = {
 
 type Status = { tone: "ok" | "warn" | "muted"; text: string } | null;
 
-export function CitationDocumentPanel({ source, onClose }: { source: PanelSource; onClose: () => void }) {
+/** `onClose` adds a close button; leave it out when the host provides its own. */
+export function CitationDocumentPanel({ source, onClose }: { source: PanelSource; onClose?: () => void }) {
   const { documentId, quotes } = source;
   const [active, setActive] = useState(source.startAt ?? 0);
   const [view, setView] = useState<"pages" | "text">("pages");
   const [unavailable, setUnavailable] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>(null);
   const [jump, setJump] = useState(0);
+  const [quoteOpen, setQuoteOpen] = useState(false);
 
   useEffect(() => {
     setActive(source.startAt ?? 0);
@@ -116,6 +127,7 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
     setView("pages");
     setStatus(null);
     setJump((n) => n + 1);
+    setQuoteOpen(false);
   }, [source.nonce, source.startAt, documentId]);
 
   const quote = quotes[active] ?? null;
@@ -161,23 +173,33 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
             <Link
               to={`/documents/${encodeURIComponent(documentId)}`}
               title="Open in document workspace"
-              aria-label="Open in document workspace"
-              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              className="mr-1 inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-secondary"
             >
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open in workspace
             </Link>
           )}
-          <IconButton label="Close document" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </IconButton>
+          {onClose && (
+            <IconButton label="Close document" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </IconButton>
+          )}
         </div>
       </header>
 
       {quote && (
         <div className="space-y-1.5 border-b border-border px-3 py-2">
           <div className="flex items-center gap-2">
-            <blockquote className="line-clamp-2 flex-1 border-l-2 border-amber-500/70 pl-2 text-[12px] italic text-muted-foreground" data-testid="panel-quote">
-              {quote.quote.replace(/\[\[PAGE_BREAK\]\]/g, " … ")}
+            <blockquote
+              className={cn(
+                "flex-1 cursor-pointer border-l-2 border-amber-500/70 pl-2 text-[12px] italic text-muted-foreground",
+                !quoteOpen && "line-clamp-2",
+              )}
+              title={quoteOpen ? "Show less" : "Show the whole quote"}
+              onClick={() => setQuoteOpen((v) => !v)}
+              data-testid="panel-quote"
+            >
+              {displayQuote(quote.quote)}
             </blockquote>
             {quotes.length > 1 && (
               <div className="flex shrink-0 items-center gap-0.5 text-[11px] text-muted-foreground" data-testid="panel-quote-switcher">
@@ -214,13 +236,17 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
         </div>
       )}
 
+      {unavailable ? (
+        <p className="border-b border-border px-3 py-1.5 text-[11px] text-muted-foreground" data-testid="panel-text-only">
+          Page view isn't available for this file. Showing its text.
+        </p>
+      ) : (
       <div className="flex items-center gap-1 border-b border-border px-3 py-1.5">
         {(["pages", "text"] as const).map((v) => (
           <button
             key={v}
             type="button"
             onClick={() => setView(v)}
-            disabled={v === "pages" && !!unavailable}
             data-testid={`panel-view-${v}`}
             className={cn(
               "rounded-md px-2 py-0.5 text-xs disabled:opacity-40",
@@ -230,8 +256,8 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
             {v === "pages" ? "Pages" : "Text"}
           </button>
         ))}
-        {unavailable && <span className="ml-2 truncate text-[11px] text-muted-foreground">{unavailable} Showing extracted text.</span>}
       </div>
+      )}
 
       <div className="min-h-0 flex-1">
         {view === "pages" && !unavailable ? (
@@ -321,6 +347,13 @@ function TextView({ documentId, quote }: { documentId: string; quote: SourceQuot
 
   if (error) return <p className="p-4 text-sm text-destructive">{error}</p>;
   if (!doc) return <p className="p-4 text-sm text-muted-foreground">Loading the document text…</p>;
+  if (pages.every((p) => !p.text?.trim())) {
+    return (
+      <p className="p-4 text-sm text-muted-foreground" data-testid="panel-no-text">
+        No text has been extracted from this document yet. Download the original to read it.
+      </p>
+    );
+  }
 
   return (
     <div className="h-full overflow-y-auto bg-muted/40 px-4 py-4" data-testid="panel-text-view">

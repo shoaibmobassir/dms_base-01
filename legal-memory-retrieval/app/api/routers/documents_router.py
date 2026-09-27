@@ -59,7 +59,7 @@ def documents_list(
     offset: int = Query(default=0, ge=0),
 ) -> dict:
     params: dict = {"member_id": member_id, "limit": limit, "offset": offset}
-    wheres = [ACL_CLAUSE]
+    wheres = [ACL_CLAUSE, "d.status IS DISTINCT FROM 'Deleted'"]
     if q:
         wheres.append(
             "(d.title ILIKE %(q_like)s"
@@ -75,17 +75,19 @@ def documents_list(
         wheres.append("d.client_id = %(client_id)s")
         params["client_id"] = client_id
     if doc_type:
-        wheres.append("d.document_type ILIKE %(doc_type_like)s")
-        params["doc_type_like"] = f"%{doc_type}%"
+        wheres.append("d.document_type = %(doc_type)s")
+        params["doc_type"] = doc_type
     if author:
         wheres.append("d.author_name ILIKE %(author_like)s")
         params["author_like"] = f"%{author}%"
     where = " AND ".join(wheres)
     sql = f"""
         SELECT d.document_id, d.matter_id, d.matter_code, d.title,
-               d.document_type, d.author_name, d.doc_date, d.status, d.version
+               d.document_type, d.author_name, d.doc_date, d.status, d.version,
+               d.mime_type, m.title AS matter_title
         FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
+        LEFT JOIN matters m ON m.matter_id = d.matter_id
         WHERE {where}
         ORDER BY d.doc_date DESC NULLS LAST, d.document_id DESC
         LIMIT %(limit)s OFFSET %(offset)s
@@ -103,6 +105,24 @@ def documents_list(
             cur.execute(count_sql, count_params)
             total = cur.fetchone()["n"]
     return {"service": SERVICE, "total": total, "items": items}
+
+
+@router.get("/facets")
+def documents_facets(member_id: str | None = Depends(resolve_member)) -> dict:
+    """Document types in the caller's access scope, with counts (for the list filters)."""
+    with connect() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT d.document_type AS value, count(*) AS n
+                FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
+                WHERE {ACL_CLAUSE} AND d.status IS DISTINCT FROM 'Deleted' AND d.document_type IS NOT NULL
+                GROUP BY 1 ORDER BY 2 DESC, 1
+                """,
+                {"member_id": member_id},
+            )
+            types = list(cur.fetchall())
+    return {"service": SERVICE, "document_types": types}
 
 
 @router.post("/ingest")
@@ -742,7 +762,7 @@ def document_text(document_id: str, member_id: str | None = Depends(resolve_memb
     """
     with connect() as conn:
         row = conn.execute(
-            "SELECT document_id, title FROM documents WHERE document_id = %s",
+            "SELECT document_id, title, body FROM documents WHERE document_id = %s",
             (document_id.upper(),),
         ).fetchone()
     if not row:
@@ -764,6 +784,10 @@ def document_text(document_id: str, member_id: str | None = Depends(resolve_memb
         pages = fetch_document_pages(conn, row["document_id"])
 
     full_text = "\n".join(c["text"] for c in chunks) if chunks else ""
+    if not full_text and not pages and (row.get("body") or "").strip():
+        # Not chunked yet (e.g. a record created without a file): the stored body is the text.
+        full_text = row["body"]
+        pages = [(1, row["body"])]
     return {
         "document_id": row["document_id"],
         "title": row["title"],

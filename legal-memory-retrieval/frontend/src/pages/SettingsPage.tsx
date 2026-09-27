@@ -23,7 +23,7 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-10">
-      <PageHeader eyebrow="Settings" title="Settings" subtitle="Your identity, the firm, and how this deployment is configured." />
+      <PageHeader compact title="Settings" subtitle="Your identity, the firm, and how this deployment is configured." />
 
       <section className="max-w-2xl">
         <SectionLabel>Profile</SectionLabel>
@@ -37,9 +37,15 @@ export function SettingsPage() {
           </div>
         )}
         {!authEnabled && personas.length > 0 && (
-          <div className="mt-6">
-            <div className="meta-label mb-2">Viewing as (development mode)</div>
-            <div className="grid gap-1 sm:grid-cols-2">
+          <details className="group mt-6 rounded-md border border-border" data-testid="settings-personas">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-sm">
+              <span>
+                <span className="font-medium">Switch persona</span>
+                <span className="text-muted-foreground"> · development mode, sign-in is off</span>
+              </span>
+              <Icon name="expand_more" className="text-muted-foreground transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="grid gap-1 border-t border-border p-2 sm:grid-cols-2">
               {personas.map((p) => (
                 <button
                   key={p.member_id}
@@ -54,7 +60,7 @@ export function SettingsPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </details>
         )}
       </section>
 

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Icon, MonoId, SectionLabel, StatusLabel, Hairline } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
+import { formatDate } from "@/lib/format";
 import { useClient, useDocument, useMatter, usePerson } from "@/api/resources";
 
 export type InspectorTarget = {
@@ -233,7 +234,7 @@ function DocumentPeek({ id, chunkId, quotes, onClose }: { id: string; chunkId?: 
                 </Row>
               )}
               {d.author_name && <Row label="Author">{d.author_name}</Row>}
-              {d.doc_date && <Row label="Date">{d.doc_date}</Row>}
+              {d.doc_date && <Row label="Date">{formatDate(d.doc_date)}</Row>}
               <Hairline className="my-3" />
               {quotes && quotes.length > 0 ? (
                 <>

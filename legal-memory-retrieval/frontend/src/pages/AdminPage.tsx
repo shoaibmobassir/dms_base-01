@@ -46,7 +46,7 @@ export function AdminPage() {
   }
   return (
     <div className="space-y-8" data-testid="admin-page">
-      <PageHeader eyebrow="Manage" title="Administration" subtitle="People, roles, teams and who can see which matters. Every change is audited." />
+      <PageHeader compact title="Administration" subtitle="People, roles, teams and who can see which matters. Every change is audited." />
       <div className="flex flex-wrap gap-1 border-b border-border">
         {visible.map((s) => (
           <button

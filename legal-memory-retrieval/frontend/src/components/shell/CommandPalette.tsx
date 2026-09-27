@@ -16,8 +16,8 @@ import { useDebounced } from "@/lib/use-debounced";
 
 const QUICK_LINKS = [
   { label: "Home", to: "/", icon: "home" },
-  { label: "Ask the Firm", to: "/ask", icon: "forum" },
-  { label: "Assistant", to: "/chat", icon: "chat" },
+  { label: "Ask the Firm", to: "/ask", icon: "manage_search" },
+  { label: "Assistant", to: "/chat", icon: "edit_note" },
   { label: "Matters", to: "/matters", icon: "gavel" },
   { label: "Clients", to: "/clients", icon: "apartment" },
   { label: "Documents", to: "/documents", icon: "description" },
@@ -87,7 +87,7 @@ export function CommandPalette({
         {input.trim() && (
           <CommandGroup heading="Ask">
             <CommandItem value={`ask ${input}`} onSelect={() => go(`/ask?q=${encodeURIComponent(input.trim())}`)}>
-              <Icon name="forum" className="mr-2 text-wine" style={{ fontSize: 18 }} />
+              <Icon name="manage_search" className="mr-2 text-wine" style={{ fontSize: 18 }} />
               Ask the Firm: “{input.trim()}”
             </CommandItem>
           </CommandGroup>
@@ -107,6 +107,16 @@ export function CommandPalette({
 
         {!input.trim() && (
           <>
+            <CommandGroup heading="Actions">
+              <CommandItem value="new assistant conversation" onSelect={() => go("/chat")} data-testid="command-new-conversation">
+                <Icon name="edit_note" className="mr-2 text-wine" style={{ fontSize: 18 }} />
+                New Assistant conversation
+              </CommandItem>
+              <CommandItem value="recent conversations history" onSelect={() => go("/chat?history=open")}>
+                <Icon name="history" className="mr-2 text-muted-foreground" style={{ fontSize: 18 }} />
+                Open conversation history
+              </CommandItem>
+            </CommandGroup>
             <CommandSeparator />
             <CommandGroup heading="Navigate">
               {QUICK_LINKS.map((link) => (

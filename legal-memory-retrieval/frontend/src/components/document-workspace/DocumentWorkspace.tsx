@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** Chunks (or blocks) shown as one reader "part" when there is no real page count. */
@@ -209,6 +210,9 @@ function WorkspaceFrame({
   }, [goToPart, part, unitTotal]);
 
   const outline = useDocumentOutline(doc.document_id, openVersionId);
+  // Plain files with no headings have no outline: show only the page list.
+  const hasOutline = outline.isPending || (outline.data?.outline?.length ?? 0) > 0;
+  const railTab: LeftTab = hasOutline ? leftTab : "thumbnails";
   const sectionLabel = useMemo(() => {
     const items = outline.data?.outline ?? [];
     if (!items.length) return null;
@@ -257,15 +261,17 @@ function WorkspaceFrame({
             data-testid="document-left-rail"
           >
             <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
-              <RailTab active={leftTab === "outline"} onClick={() => setLeftTab("outline")}>
-                Outline
-              </RailTab>
-              <RailTab active={leftTab === "thumbnails"} onClick={() => setLeftTab("thumbnails")}>
+              {hasOutline && (
+                <RailTab active={railTab === "outline"} onClick={() => setLeftTab("outline")}>
+                  Outline
+                </RailTab>
+              )}
+              <RailTab active={railTab === "thumbnails"} onClick={() => setLeftTab("thumbnails")}>
                 {unitLabel}s
               </RailTab>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">
-              {leftTab === "outline" ? (
+              {railTab === "outline" ? (
                 <OutlineList
                   items={outline.data?.outline ?? []}
                   loading={outline.isPending}
@@ -791,7 +797,7 @@ function VersionsList({
                   {isCurrent && <span className="text-[10px] uppercase tracking-wide">Current</span>}
                 </div>
                 <div className="mt-0.5 text-xs text-muted-foreground">
-                  {[v.author_name, v.version_status, v.created_at?.slice(0, 10)].filter(Boolean).join(" · ")}
+                  {[v.author_name, v.version_status, v.created_at ? formatDate(v.created_at) : null].filter(Boolean).join(" · ")}
                 </div>
                 {v.change_summary && (
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{v.change_summary}</p>
@@ -839,7 +845,7 @@ function InfoPanel({
           )}
           {openVersion.created_at && (
             <p className="text-xs text-muted-foreground">
-              {openVersion.created_at.slice(0, 16).replace("T", " ")}
+              {formatDateTime(openVersion.created_at)}
             </p>
           )}
           {"change_summary" in openVersion && openVersion.change_summary && (

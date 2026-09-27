@@ -17,6 +17,12 @@ export type Matter = {
   closed_date: string | null
   outcome: string | null
   restricted: boolean
+  /** List view only. */
+  lead_name?: string | null
+  lead_member_id?: string | null
+  next_deadline_date?: string | null
+  next_deadline_title?: string | null
+  document_count?: number
 }
 
 export type TeamMember = {
@@ -71,6 +77,9 @@ export type DocumentItem = {
   doc_date: string | null
   status: string | null
   version: string | null
+  /** List view only. */
+  mime_type?: string | null
+  matter_title?: string | null
 }
 
 export type DocumentDetail = DocumentItem & {
@@ -147,6 +156,11 @@ export type ClientItem = {
   industry: string | null
   size: string | null
   headquarters: string | null
+  /** Counted over the matters the caller can see. */
+  open_matters?: number
+  total_matters?: number
+  relationship_lead?: string | null
+  relationship_lead_id?: string | null
 }
 
 export type ClientNote = {
@@ -174,6 +188,8 @@ export type Person = {
   office: string | null
   joined_year: number | null
   is_lawyer: boolean
+  /** Open matters the person is on (that the caller can see). List view only. */
+  current_matters?: number
 }
 
 export type PersonDetail = {
@@ -199,11 +215,22 @@ export type Deadline = {
   owner_name: string | null
 }
 
+/** disputes: argued in a dispute or petition; pcij: PCIJ docket entry; unsc: Security Council record. */
+export type ArgumentKind = 'disputes' | 'pcij' | 'unsc'
+
 export type ArgumentItem = MatterArgument & {
   matter_id: string
   matter_code: string
   matter_title: string
   practice_area: string
+  kind?: ArgumentKind
+  court?: string | null
+  matter_type?: string | null
+  opened_date?: string | null
+  matter_status?: string | null
+  lead_name?: string | null
+  lead_member_id?: string | null
+  supporting_documents?: { document_id: string; title: string; document_type: string | null }[]
 }
 
 export type Team = { name: string; lawyers: number; active_matters: number }
@@ -251,6 +278,10 @@ export type ChatSession = {
   matter_id: string | null
   model: string | null
   member_id: string | null
+  pinned?: boolean
+  /** Listing only. */
+  matter_code?: string | null
+  first_question?: string | null
   status: string
   created_at: string
   updated_at: string
@@ -325,6 +356,34 @@ export type ChatMessage = {
 
 export type ChatModel = { id: string; label: string; provider: string; default: boolean }
 
+/** A matter record returned with an Ask the Firm answer (app/km/answer.py `_card_summary`). */
+export type MatterCard = {
+  matter_id: string
+  matter_code: string
+  title: string
+  client_name?: string | null
+  opposing_party?: string | null
+  practice_area?: string | null
+  matter_type?: string | null
+  status?: string | null
+  court?: string | null
+  jurisdiction?: string | null
+  office?: string | null
+  opened_date?: string | null
+  closed_date?: string | null
+  claim_amount?: string | null
+  outcome?: string | null
+  facts?: string[]
+  legal_issues?: string[]
+  team?: { member_id: string; name: string; role?: string | null; office?: string | null; role_on_matter?: string | null }[]
+  document_count?: number
+  documents?: { document_id: string; title: string; document_type?: string | null; doc_date?: string | null; author_name?: string | null; status?: string | null }[]
+  deadlines?: { title: string; kind?: string | null; due_date: string; court?: string | null; status?: string | null }[]
+}
+
+/** One question from the member's Ask the Firm history. */
+export type AskHistoryItem = { id: string; query: string; scope: string | null; scope_type: string | null; asked_at: string }
+
 export type AskResult = {
   answer?: string
   key_finding?: string
@@ -333,7 +392,7 @@ export type AskResult = {
   /** answered | not_found | insufficient | fallback */
   status?: string
   people?: Array<Record<string, unknown>>
-  matter_cards?: Array<Record<string, unknown>>
+  matter_cards?: MatterCard[]
   resolved_scope?: { kind?: string; label?: string; method?: string; matter_ids?: string[] } | null
   structured_citations?: Array<Record<string, unknown>>
   sources?: Array<Record<string, unknown>>

@@ -71,16 +71,15 @@ function useSidebarWidth() {
 const BOTTOM_NAV = [
   { to: "/", icon: "home", label: "Home", end: true },
   { to: "/matters", icon: "gavel", label: "Matters" },
-  { to: "/chat", icon: "chat", label: "Assistant" },
-  { to: "/ask", icon: "forum", label: "Ask" },
+  { to: "/chat", icon: "edit_note", label: "Assistant" },
+  { to: "/ask", icon: "manage_search", label: "Ask" },
   { to: "/documents", icon: "description", label: "Documents" },
-  { to: "/settings", icon: "person", label: "Profile" },
 ];
 
 function BottomNav() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-border bg-paper pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-paper pb-[env(safe-area-inset-bottom)] md:hidden"
       aria-label="Primary (mobile)"
       data-testid="bottom-nav"
     >
@@ -110,7 +109,9 @@ function Shell({ children }: { children: ReactNode }) {
   // Remount (and fade) per section, not per URL: moving within a section keeps state.
   const section = pathname.split("/")[1] ?? "";
   // Full-bleed workspaces: document viewer and chat (history + thread need the width).
-  const fillFrame = /^\/documents\/[^/]+/.test(pathname) || pathname === "/chat" || pathname.startsWith("/chat/");
+  // Ask the Firm too: its document panel sits beside the answer and needs the full height.
+  const fillFrame =
+    /^\/documents\/[^/]+/.test(pathname) || pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/ask";
 
   return (
     <InspectorProvider>

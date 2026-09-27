@@ -56,9 +56,24 @@ test("answer renders evidence chips, people and not-found states", async ({ page
         abstained: false,
         provider: "bedrock",
         key_finding: "The Long Stop Date is 31 March 2027 (DOC-E9058749C1).",
-        answer: "The team:\n- Helena Voss — Partner, Lead (MEM-00001, MTR-2026-00901)\n\nClosing is conditional (DOC-E9058749C1).",
-        sources: [{ document_id: "DOC-E9058749C1", title: "Share Purchase Agreement.docx", matter_code: "CORP/BLR/0901/2026" }],
-        matter_cards: [{ matter_id: "MTR-2026-00901", team: [{ member_id: "MEM-00001", name: "Helena Voss", role: "Partner", role_on_matter: "Lead" }] }],
+        answer: "The team:\n- Helena Voss — Partner, Lead (MEM-00001, MTR-2026-00901)\n- Priya Menon — Senior Associate (MTR-2026-00901)\n\nClosing is conditional (DOC-E9058749C1).",
+        sources: [
+          { document_id: "DOC-E9058749C1", title: "Share Purchase Agreement.docx", matter_code: "CORP/BLR/0901/2026" },
+          { document_id: "DOC-06D46C4AD1", title: "Board Resolution.docx", matter_code: "CORP/BLR/0901/2026" },
+        ],
+        matter_cards: [{
+          matter_id: "MTR-2026-00901", matter_code: "CORP/BLR/0901/2026", title: "Acme Technologies — Series B Financing",
+          client_name: "Acme Technologies Private Limited", opposing_party: "Northbridge Growth Fund II", status: "open",
+          practice_area: "Corporate", court: null, opened_date: "2026-03-02", document_count: 12,
+          facts: ["Series B round led by Northbridge.", "Closing is conditional on regulatory approval."],
+          legal_issues: ["Long stop date mechanics"],
+          team: [
+            { member_id: "MEM-00001", name: "Helena Voss", role: "Partner", role_on_matter: "Lead" },
+            { member_id: "MEM-00004", name: "Priya Menon", role: "Senior Associate", role_on_matter: "Member" },
+          ],
+          documents: [{ document_id: "DOC-E9058749C1", title: "Share Purchase Agreement.docx", document_type: "Agreement", doc_date: "2026-04-01" }],
+          deadlines: [{ title: "Long stop date", kind: "contract", due_date: "2027-03-31", court: null, status: "open" }],
+        }],
         resolved_scope: { kind: "matter", label: "CORP/BLR/0901/2026", method: "code", matter_ids: ["MTR-2026-00901"] },
     })),
   );
@@ -66,9 +81,43 @@ test("answer renders evidence chips, people and not-found states", async ({ page
   await expect(page.getByTestId("citation-DOC-E9058749C1").first()).toBeVisible();
   await expect(page.getByTestId("citation-MEM-00001")).toHaveAttribute("href", /\/people\/MEM-00001$/);
   await expect(page.getByTestId("citation-MTR-2026-00901")).toHaveAttribute("href", /\/matters\/MTR-2026-00901$/);
-  await expect(page.getByTestId("answer-people")).toContainText("Helena Voss");
+  await expect(page.getByTestId("citation-MEM-00001")).toHaveText("Helena Voss");
+  // The matter is named once; its repeat after the next bullet is hidden.
+  await expect(page.getByTestId("citation-MTR-2026-00901")).toHaveCount(1);
+  // Sources: the cited document first, the retrieved-but-unused one under "Also searched".
+  await expect(page.getByTestId("answer-sources")).toContainText("Share Purchase Agreement.docx");
+  await expect(page.getByTestId("answer-sources")).not.toContainText("Board Resolution.docx");
+  await expect(page.getByTestId("answer-sources-searched")).toContainText("Board Resolution.docx");
+  await expect(page.getByTestId("citation-MTR-2026-00901")).toHaveText("CORP/BLR/0901/2026");
+  // The matter brief: details, who works on it, documents and what is due.
+  const brief = page.getByTestId("matter-brief");
+  await expect(brief).toContainText("Acme Technologies — Series B Financing");
+  await expect(brief).toContainText("Northbridge Growth Fund II");
+  await expect(page.getByTestId("brief-team")).toContainText("Helena Voss");
+  await expect(page.getByTestId("brief-team")).toContainText("Lead");
+  await expect(page.getByTestId("brief-deadlines")).toContainText("Long stop date");
+  await expect(page.getByTestId("brief-documents")).toContainText("Documents (12)");
+  await expect(page.getByTestId("brief-open-matter")).toHaveAttribute("href", /\/matters\/MTR-2026-00901$/);
   await expect(page.getByTestId("answer-scope")).toContainText("CORP/BLR/0901/2026");
   await expect(page.getByTestId("ai-provider")).not.toContainText("Assembled from retrieved passages");
+  // Cited documents open in the same side panel as the Assistant.
+  // Document chips read as titles, and open beside the answer without covering it.
+  await expect(page.getByTestId("citation-DOC-E9058749C1").first()).toHaveText("Share Purchase Agreement");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByTestId("citation-DOC-E9058749C1").first().click();
+  await expect(page.getByTestId("citation-document-panel")).toContainText("Share Purchase Agreement.docx");
+  const answerBox = (await page.getByTestId("ai-answer").boundingBox())!;
+  const panelBox = (await page.getByTestId("document-panel-drawer").boundingBox())!;
+  expect(answerBox.x + answerBox.width).toBeLessThanOrEqual(panelBox.x + 1);
+  await page.getByTestId("citation-document-panel").getByLabel("Close document").click();
+  await expect(page.getByTestId("citation-document-panel")).toBeHidden();
+  await page.getByTestId("brief-documents").getByRole("button", { name: /Share Purchase Agreement/ }).click();
+  await expect(page.getByTestId("citation-document-panel")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByTestId("answer-sources").getByRole("button").first().click();
+  await expect(page.getByTestId("citation-document-panel")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("citation-document-panel")).toBeHidden();
 
   await page.unroute("**/api/answers/stream");
   await page.route("**/api/answers/stream", (route) =>
@@ -79,6 +128,31 @@ test("answer renders evidence chips, people and not-found states", async ({ page
   );
   await page.goto("/ui/ask?q=the%20case%20where%20acme%20challenged%20the%20bank");
   await expect(page.getByTestId("ai-not-found")).toContainText("No matter in the records");
+});
+
+test("recent questions come from the server and can be removed", async ({ page }) => {
+  let items = [
+    { id: "h1", query: "Who is on the Acme deal team?", scope: null, scope_type: null, asked_at: new Date().toISOString() },
+    { id: "h2", query: "What relief was sought?", scope: "CI-OPEN-001", scope_type: "matter", asked_at: new Date().toISOString() },
+  ];
+  await page.route("**/api/answers/history**", (route) => {
+    const req = route.request();
+    if (req.method() === "DELETE") {
+      const id = req.url().split("/").pop();
+      items = items.filter((i) => i.id !== id);
+      return route.fulfill({ status: 204 });
+    }
+    return route.fulfill({ json: { items } });
+  });
+  await page.goto("/ui/ask");
+  const list = page.getByTestId("ask-history");
+  await expect(list.getByTestId("ask-history-item")).toHaveCount(2);
+  await expect(list).toContainText("CI-OPEN-001");
+  await list.getByRole("button", { name: /Remove “Who is on the Acme deal team\?”/ }).click();
+  await expect(list.getByTestId("ask-history-item")).toHaveCount(1);
+  await page.route("**/api/answers/stream", (route) => route.fulfill(sse({ status: "answered", abstained: false, answer: "ok" })));
+  await list.getByText("What relief was sought?").click();
+  await expect(page).toHaveURL(/q=What\+relief\+was\+sought%3F.*scope=CI-OPEN-001/);
 });
 
 test("verified answers cite exact spans and report removed statements", async ({ page }) => {
@@ -103,9 +177,12 @@ test("verified answers cite exact spans and report removed statements", async ({
   await expect(page.getByTestId("span-citation-1").first()).toBeVisible();
   await expect(page.getByTestId("ai-grounding-removed")).toContainText("1 statement was removed");
   await page.getByTestId("span-citation-1").first().click();
-  const quotes = page.getByTestId("inspector-cited-quotes");
-  await expect(quotes).toContainText("held on 12 September 2026");
-  await expect(quotes).toContainText("accorded to the transfer");
+  const panel = page.getByTestId("citation-document-panel");
+  await expect(panel).toBeVisible();
+  await expect(page.getByTestId("panel-quote")).toContainText("held on 12 September 2026");
+  await expect(page.getByTestId("panel-quote-switcher")).toContainText("1/2");
+  await page.getByTestId("panel-quote-switcher").getByLabel("Next quote").click();
+  await expect(page.getByTestId("panel-quote")).toContainText("accorded to the transfer");
 });
 
 test.describe("Ask the Firm with the language model", () => {

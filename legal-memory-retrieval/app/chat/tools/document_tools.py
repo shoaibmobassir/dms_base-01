@@ -236,15 +236,22 @@ def search_firm_records(
     conn: Any,
     member_id: str | None = None,
     k: int = 8,
+    matter_id: str | None = None,
 ) -> dict[str, Any]:
-    """Search the firm corpus and merge new documents into the chat-local index."""
+    """Search the firm corpus (or one matter's records) and merge new documents into the chat-local index."""
     needle = (query or "").strip()
     if not needle:
         return {"error": "Search query is empty.", "results": []}
     if conn is None:
         return {"error": "Search is unavailable.", "results": []}
 
-    hits, _latency = retrieve(conn, needle, member_id, k=max(1, min(int(k or 8), 20)))
+    k = max(1, min(int(k or 8), 20))
+    if matter_id:
+        from app.km.passages import scoped_passages
+
+        hits = scoped_passages(conn, needle, [matter_id], member_id, limit=k, per_doc=2)
+    else:
+        hits, _latency = retrieve(conn, needle, member_id, k=k)
     existing_docs = {entry.document_id for entry in doc_index.values()}
     next_idx = len(doc_index)
     results: list[dict[str, Any]] = []

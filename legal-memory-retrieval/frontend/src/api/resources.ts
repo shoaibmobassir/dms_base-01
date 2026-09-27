@@ -3,6 +3,7 @@ import { useApp } from '@/context/AppContext'
 import { apiFetch, qs } from './client'
 import type {
   ArgumentItem,
+  ArgumentKind,
   ChatSession,
   ClientDetail,
   ClientItem,
@@ -83,13 +84,14 @@ export const useMatterRelated = (id: string) =>
   )
 
 // ── Documents ─────────────────────────────────────────────────────────────
-export function useDocuments(p: { q?: string; matter_id?: string; page?: number; limit?: number }) {
+export function useDocuments(p: { q?: string; matter_id?: string; doc_type?: string; page?: number; limit?: number; enabled?: boolean }) {
   const limit = p.limit ?? PAGE_SIZE
   const offset = (p.page ?? 0) * limit
-  return useScopedQuery(['documents', p.q, p.matter_id, offset, limit], () =>
+  return useScopedQuery(['documents', p.q, p.matter_id, p.doc_type, offset, limit], () =>
     apiFetch<Paged<DocumentItem>>(
-      `/api/documents${qs({ q: p.q, matter_id: p.matter_id, limit, offset })}`,
+      `/api/documents${qs({ q: p.q, matter_id: p.matter_id, doc_type: p.doc_type, limit, offset })}`,
     ),
+    p.enabled ?? true,
   )
 }
 
@@ -188,12 +190,19 @@ export const useDeadlines = (p: { status?: 'open' | 'done' | 'all'; matter_id?: 
     ).then((r) => r.items),
   )
 
-export function useArguments(p: { q?: string; page?: number }) {
+export function useArguments(p: { q?: string; kind?: string; page?: number }) {
   const offset = (p.page ?? 0) * PAGE_SIZE
-  return useScopedQuery(['arguments', p.q, offset], () =>
-    apiFetch<Paged<ArgumentItem>>(`/api/knowledge/arguments${qs({ q: p.q, limit: PAGE_SIZE, offset })}`),
+  return useScopedQuery(['arguments', p.q, p.kind, offset], () =>
+    apiFetch<Paged<ArgumentItem> & { kinds: Partial<Record<ArgumentKind, number>> }>(
+      `/api/knowledge/arguments${qs({ q: p.q, kind: p.kind, limit: PAGE_SIZE, offset })}`,
+    ),
   )
 }
+
+export const useDocumentFacets = () =>
+  useScopedQuery(['documents', 'facets'], () =>
+    apiFetch<{ document_types: { value: string; n: number }[] }>('/api/documents/facets'),
+  )
 
 export const useTeams = () =>
   useScopedQuery(['teams'], () => apiFetch<{ items: Team[] }>('/api/teams').then((r) => r.items))

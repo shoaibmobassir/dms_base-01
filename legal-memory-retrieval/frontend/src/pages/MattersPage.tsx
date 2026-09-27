@@ -4,6 +4,7 @@ import { DataTable } from "@/components/common/DataTable";
 import { EmptyState, PageHeader, SearchField, StatusLabel } from "@/components/common/primitives";
 import { Pager, QueryState } from "@/components/common/QueryState";
 import { PAGE_SIZE, useMatters } from "@/api/resources";
+import { formatDate } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +22,12 @@ export function MattersPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader eyebrow="Matters" title="All institutional knowledge begins with the matter." />
+      <PageHeader
+        compact
+        title="Matters"
+        count={matters.data ? `${matters.data.total} ${matters.data.total === 1 ? "matter" : "matters"}` : undefined}
+        subtitle="Every matter you can access, newest first."
+      />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex-1">
@@ -73,14 +79,38 @@ export function MattersPage() {
                     </div>
                   ),
                 },
-                { key: "client", header: "Client", render: (m) => <span className="text-sm">{m.client_name || "—"}</span> },
-                { key: "practice", secondary: true, header: "Practice", render: (m) => <span className="text-sm text-muted-foreground">{m.practice_area}</span> },
+                {
+                  key: "client",
+                  header: "Client",
+                  render: (m) => (
+                    <div className="text-sm">
+                      <div>{m.client_name || "—"}</div>
+                      <div className="text-xs text-muted-foreground">{m.practice_area}</div>
+                    </div>
+                  ),
+                },
+                { key: "lead", secondary: true, header: "Lead", render: (m) => <span className="text-sm">{m.lead_name || "—"}</span> },
+                {
+                  key: "next",
+                  secondary: true,
+                  header: "Next deadline",
+                  render: (m) =>
+                    m.next_deadline_date ? (
+                      <div className="text-sm" title={m.next_deadline_title ?? undefined}>
+                        <div className="tabular-nums">{formatDate(m.next_deadline_date)}</div>
+                        <div className="max-w-[200px] truncate text-xs text-muted-foreground">{m.next_deadline_title}</div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    ),
+                },
                 {
                   key: "status",
                   header: "Status",
                   render: (m) => <StatusLabel status={m.restricted ? "Restricted" : m.status || "Open"} />,
                 },
-                { key: "opened", secondary: true, header: "Opened", align: "right", render: (m) => <span className="text-sm">{m.opened_date || "—"}</span> },
+                { key: "docs", secondary: true, header: "Documents", align: "right", render: (m) => <span className="text-sm tabular-nums">{m.document_count ?? "—"}</span> },
+                { key: "opened", secondary: true, header: "Opened", align: "right", render: (m) => <span className="whitespace-nowrap text-sm tabular-nums">{formatDate(m.opened_date)}</span> },
               ]}
             />
             <Pager page={page} total={d.total} pageSize={PAGE_SIZE} onPage={setPage} />

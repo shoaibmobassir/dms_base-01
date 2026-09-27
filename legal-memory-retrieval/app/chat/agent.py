@@ -123,12 +123,18 @@ def dispatch_tool_call(
     conn: Any,
     nonce: str,
     member_id: str | None = None,
+    matter: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """
     Execute a single tool call and return (result, events).
     Events are SSE-serializable dicts emitted to the client.
+
+    ``matter`` ({matter_id, matter_code}) is the conversation's matter: search
+    tools then look only inside it, whatever scope the model asks for.
     """
     events: list[dict[str, Any]] = []
+    if matter and name == "ask_firm":
+        arguments = {**arguments, "scope": matter["matter_code"]}
 
     if name == "read_document":
         result = read_document(
@@ -147,6 +153,7 @@ def dispatch_tool_call(
             conn,
             member_id=member_id,
             k=arguments.get("k", 8),
+            matter_id=matter["matter_id"] if matter else None,
         )
         if "event" in result:
             events.append(result.pop("event"))
@@ -441,11 +448,12 @@ def _invoke_tool(
     nonce: str,
     member_id: str | None,
     timeout: float,
+    matter: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Run a tool on a connection this worker created, so the request conn stays put."""
     if name not in _DB_TOOLS:
         return dispatch_tool_call(
-            name, arguments, doc_index, doc_store, None, nonce, member_id=member_id,
+            name, arguments, doc_index, doc_store, None, nonce, member_id=member_id, matter=matter,
         )
     with connect() as tool_conn:
         try:
@@ -456,7 +464,7 @@ def _invoke_tool(
         except Exception:
             logger.debug("statement_timeout not set for tool %s", name)
         return dispatch_tool_call(
-            name, arguments, doc_index, doc_store, tool_conn, nonce, member_id=member_id,
+            name, arguments, doc_index, doc_store, tool_conn, nonce, member_id=member_id, matter=matter,
         )
 
 
@@ -468,6 +476,7 @@ def dispatch_tool_call_bounded(
     nonce: str,
     member_id: str | None = None,
     timeout: float | None = None,
+    matter: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], bool]:
     """Execute a tool with a wall-clock deadline. Does not retry the tool."""
     bound = tool_deadline_seconds(name) if timeout is None else timeout
@@ -483,6 +492,7 @@ def dispatch_tool_call_bounded(
         nonce,
         member_id,
         bound,
+        matter,
     )
     if outcome is DEADLINE_EXCEEDED:
         CHAT_TOOL_TIMEOUTS.labels(tool=label).inc()
@@ -589,6 +599,7 @@ def build_llm_messages(
     nonce: str,
     max_pairs: int | None = None,
     mode: str | None = None,
+    matter: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Build the LLM message array: system + windowed history + current user."""
     doc_availability = build_doc_availability(doc_index)
@@ -596,6 +607,12 @@ def build_llm_messages(
     found = [d for d in doc_availability if not d.get("attached")]
 
     system_content = build_system_prompt(mode)
+    if matter:
+        system_content += (
+            f"\n\nTHIS CONVERSATION IS LIMITED TO ONE MATTER: {matter['matter_code']}"
+            f" ({matter.get('title') or matter['matter_id']}). Searches return only this matter's records."
+            " If the question needs other matters, say so and suggest widening the search to all matters."
+        )
     if attached:
         system_content += (
             "\n\nDOCUMENTS THE USER ATTACHED (when the user says \"this document\", \"this note\", "
@@ -836,6 +853,7 @@ def run_chat_agent(
     member_id: str | None = None,
     mode: str | None = None,
     hit_count: int | None = None,
+    matter: dict[str, str] | None = None,
 ) -> Generator[str, None, dict[str, Any]]:
     """
     Execute the multi-round tool-use agent loop.
@@ -858,7 +876,7 @@ def run_chat_agent(
     }
     all_events.append(opening)
     yield sse_event("reasoning", {"text": opening["text"], "mode": opening["mode"]})
-    messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode)
+    messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode, matter=matter)
     tools = ALL_TOOLS
     request_id = current_request_id() or "-"
     tools_paused = False
@@ -952,6 +970,7 @@ def run_chat_agent(
                     doc_store,
                     nonce,
                     member_id=member_id,
+                    matter=matter,
                 )
                 if timed_out:
                     tools_paused = True
@@ -1063,6 +1082,7 @@ def run_chat_agent_sync(
     member_id: str | None = None,
     mode: str | None = None,
     hit_count: int | None = None,
+    matter: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """
     Run the agent loop synchronously, collecting all SSE events.
@@ -1079,6 +1099,7 @@ def run_chat_agent_sync(
         member_id=member_id,
         mode=mode,
         hit_count=hit_count,
+        matter=matter,
     )
 
     result = {"full_text": "", "events": [], "citations": []}

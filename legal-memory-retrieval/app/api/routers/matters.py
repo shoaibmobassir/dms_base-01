@@ -44,9 +44,23 @@ def matters_list(
         SELECT m.matter_id, m.matter_code, m.title, m.client_id, m.client_name,
                m.practice_area, m.matter_type, m.status, m.jurisdiction,
                m.opened_date, m.closed_date, m.claim_amount, m.outcome,
-               COALESCE(p.restricted, FALSE) AS restricted
+               COALESCE(p.restricted, FALSE) AS restricted,
+               lead.name AS lead_name, lead.member_id AS lead_member_id,
+               nd.due_date AS next_deadline_date, nd.title AS next_deadline_title,
+               (SELECT count(*) FROM documents d WHERE d.matter_id = m.matter_id
+                  AND d.status IS DISTINCT FROM 'Deleted') AS document_count
         FROM matters m
         LEFT JOIN permissions p ON p.matter_id = m.matter_id
+        LEFT JOIN LATERAL (
+            SELECT mb.member_id, mb.name FROM matter_members mm JOIN members mb USING (member_id)
+            WHERE mm.matter_id = m.matter_id AND lower(coalesce(mm.role_on_matter, '')) = 'lead'
+            ORDER BY mb.member_id LIMIT 1
+        ) lead ON TRUE
+        LEFT JOIN LATERAL (
+            SELECT cd.due_date, cd.title FROM court_deadlines cd
+            WHERE cd.matter_id = m.matter_id AND cd.status = 'open'
+            ORDER BY cd.due_date LIMIT 1
+        ) nd ON TRUE
         WHERE {where}
         ORDER BY m.opened_date DESC NULLS LAST, m.matter_id DESC
         LIMIT %(limit)s OFFSET %(offset)s

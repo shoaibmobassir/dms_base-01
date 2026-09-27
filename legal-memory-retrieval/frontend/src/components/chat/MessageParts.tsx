@@ -117,12 +117,15 @@ export function StepTimeline({ events, streaming }: { events: ChatEvent[]; strea
   if (!steps.length) return null;
   const expanded = open || streaming;
   const running = [...steps].reverse().find((st) => st.state === "running");
-  const actions = steps.filter((st) => st.state !== "info").length;
+  // Say what was done ("Searched the firm's records, and 2 more steps"), not how many steps ran.
+  const actions = steps.filter((st) => st.state !== "info");
   const summary = streaming
     ? (running ?? steps[steps.length - 1]).label
-    : actions
-      ? `Worked through ${s(actions, "step")}`
-      : steps[steps.length - 1].label;
+    : actions.length === 1
+      ? actions[0].label
+      : actions.length > 1
+        ? `${actions[0].label}, and ${s(actions.length - 1, "more step")}`
+        : steps[steps.length - 1].label;
 
   return (
     <div className="mb-3 text-xs" data-testid="step-timeline">

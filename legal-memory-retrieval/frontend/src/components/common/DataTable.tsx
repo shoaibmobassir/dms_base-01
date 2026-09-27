@@ -32,12 +32,14 @@ export function DataTable<T extends object = Record<string, unknown>>({
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-border">
-            {columns.map((c) => (
+            {columns.map((c, ci) => (
               <th
                 key={c.key}
                 className={cn(
                   "meta-label whitespace-nowrap py-3 pr-6 text-left font-semibold",
-                  c.align === "right" && "text-right pr-0",
+                  // Only the last column sits flush with the table edge.
+                  c.align === "right" && "text-right",
+                  ci === columns.length - 1 && "pr-0",
                   c.secondary && "hidden md:table-cell",
                 )}
                 style={c.width ? { width: c.width } : undefined}
@@ -60,12 +62,13 @@ export function DataTable<T extends object = Record<string, unknown>>({
                 )}
                 data-testid={`row-${key}`}
               >
-                {columns.map((c) => (
+                {columns.map((c, ci) => (
                   <td
                     key={c.key}
                     className={cn(
                       "py-4 pr-6 align-top",
-                      c.align === "right" && "text-right pr-0 text-muted-foreground",
+                      c.align === "right" && "text-right text-muted-foreground",
+                      ci === columns.length - 1 && "pr-0",
                       c.secondary && "hidden md:table-cell",
                     )}
                   >

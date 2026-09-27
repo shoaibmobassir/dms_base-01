@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
-import { ApiError, authHeaders } from './client'
+import { ApiError, apiFetch, authHeaders } from './client'
 import type { AskScopeType } from './resources'
-import type { AskResult } from './types'
+import type { AskHistoryItem, AskResult } from './types'
 
 /** Evidence the server gathered before the model starts writing. */
 export type AskEvidence = {
   resolved_scope?: AskResult['resolved_scope']
   people?: Array<Record<string, unknown>>
-  matter_cards?: Array<Record<string, unknown>>
+  matter_cards?: AskResult['matter_cards']
   sources?: Array<Record<string, unknown>>
 }
 
@@ -110,4 +110,14 @@ export function useAskStream(query: string | null, scope: { type: AskScopeType; 
   }, [query, scopeType, scopeValue, runKey])
 
   return state
+}
+
+// ── recent questions ─────────────────────────────────────────────────────────
+
+export function listAskHistory(limit = 30) {
+  return apiFetch<{ items: AskHistoryItem[] }>(`/api/answers/history?limit=${limit}`)
+}
+
+export function deleteAskHistory(id?: string) {
+  return apiFetch<void>(id ? `/api/answers/history/${encodeURIComponent(id)}` : '/api/answers/history', { method: 'DELETE' })
 }

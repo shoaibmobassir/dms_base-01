@@ -33,6 +33,8 @@ export function PageHeader({
   actions,
   children,
   className,
+  count,
+  compact,
 }: {
   eyebrow?: ReactNode;
   title: ReactNode;
@@ -40,14 +42,25 @@ export function PageHeader({
   actions?: ReactNode;
   children?: ReactNode;
   className?: string;
+  /** Shown after the title, e.g. "168 matters". */
+  count?: ReactNode;
+  /** Work pages (lists, tools): a plain title instead of the display headline. */
+  compact?: boolean;
 }) {
   return (
     <header className={cn("animate-rise", className)}>
-      {eyebrow && <Eyebrow className="mb-3">{eyebrow}</Eyebrow>}
-      <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+      {eyebrow && <Eyebrow className={compact ? "mb-2" : "mb-3"}>{eyebrow}</Eyebrow>}
+      <div className={cn("flex flex-col md:flex-row md:items-end md:justify-between", compact ? "gap-3" : "gap-5")}>
         <div className="max-w-2xl">
-          <h1 className="font-display text-4xl leading-[1.05] text-ink sm:text-5xl">{title}</h1>
-          {subtitle && <p className="mt-3 text-base text-muted-foreground">{subtitle}</p>}
+          <h1 className={cn("font-display leading-[1.05] text-ink", compact ? "text-3xl" : "text-4xl sm:text-5xl")}>
+            {title}
+            {count != null && (
+              <span className="ml-3 align-middle font-sans text-base font-normal text-muted-foreground" data-testid="page-count">
+                {count}
+              </span>
+            )}
+          </h1>
+          {subtitle && <p className={cn("text-muted-foreground", compact ? "mt-1.5 text-sm" : "mt-3 text-base")}>{subtitle}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>

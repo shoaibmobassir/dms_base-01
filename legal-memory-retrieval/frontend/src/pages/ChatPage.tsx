@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSession,
@@ -10,11 +10,15 @@ import {
   listSuggestions,
   renameSession,
   streamMessage,
+  updateSession,
   type WorkMode,
 } from "@/api/chat";
 import { apiFetch, authHeaders } from "@/api/client";
 import type { AskInputItem, Attachment, ChatEvent, ChatMessage, ChatSession, Citation, DocumentItem, EditProposal, Paged, Matter } from "@/api/types";
-import { CitationDocumentPanel, sourceFromCitation, type PanelSource } from "@/components/chat/CitationDocumentPanel";
+import { CitationDocumentPanel, displayQuote, sourceFromCitation, type PanelSource } from "@/components/chat/CitationDocumentPanel";
+import { HistoryPane } from "@/components/chat/HistoryPane";
+import { MatterScopePicker, type MatterChoice } from "@/components/chat/MatterScopePicker";
+import { useDocuments, useMatter } from "@/api/resources";
 import { AskInputsCard, EditProposalsCard, FileCard, StepTimeline, errorText, type EditGroup } from "@/components/chat/MessageParts";
 import { Markdown } from "@/components/chat/Markdown";
 import { Icon } from "@/components/common/primitives";
@@ -26,13 +30,10 @@ import {
   Scale,
   FileText,
   Search,
-  Mic,
-  MicOff,
   Copy,
   Check,
   RotateCcw,
-  Bookmark,
-  Share2,
+  Link2,
   ShieldCheck,
   ArrowUpRight,
   GitCompare,
@@ -40,12 +41,12 @@ import {
   FileSearch,
   FileSpreadsheet,
   X,
-  Wand2,
   Plus,
-  MessageSquare,
+  History,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -56,26 +57,15 @@ type UiMessage = ChatMessage & {
   promptFiles?: Attachment[];
 };
 
-function dayGroup(iso: string) {
-  const d = new Date(iso);
-  const today = new Date();
-  const start = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  const diff = Math.round((start(today) - start(d)) / 86_400_000);
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
-  if (diff < 7) return "This week";
-  return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-}
-
-function groupSessions(sessions: ChatSession[]) {
-  const groups: { label: string; items: ChatSession[] }[] = [];
-  for (const s of sessions) {
-    const label = dayGroup(s.updated_at);
-    const g = groups.find((x) => x.label === label);
-    if (g) g.items.push(s);
-    else groups.push({ label, items: [s] });
-  }
-  return groups;
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setMatches(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [query]);
+  return matches;
 }
 
 // ── page ────────────────────────────────────────────────────────────────────
@@ -92,10 +82,12 @@ export function ChatPage() {
   const suggestions = useQuery({ queryKey: [identityKey, "chat-suggestions"], queryFn: listSuggestions, enabled: !!identityKey });
 
   const [messages, setMessages] = useState<UiMessage[]>([]);
+  const [loadedSession, setLoadedSession] = useState<ChatSession | null>(null);
+  // Matter chosen before the first message creates the conversation.
+  const [pendingMatter, setPendingMatter] = useState<MatterChoice | null>(null);
   const [loadingThread, setLoadingThread] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [model, setModel] = useState<string | undefined>(undefined);
-  const [showSourcesDrawer, setShowSourcesDrawer] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const skipLoadRef = useRef<string | null>(null);
@@ -122,6 +114,7 @@ export function ChatPage() {
     getSession(sessionId)
       .then((d) => {
         if (cancelled) return;
+        setLoadedSession(d.session);
         setMessages(
           d.messages.map((m) => ({
             ...m,
@@ -167,7 +160,8 @@ export function ChatPage() {
     let id = sessionId;
     if (!id) {
       try {
-        const created = await createSession(model);
+        const created = await createSession(model, pendingMatter?.matter_id);
+        setPendingMatter(null);
         id = created.id;
         skipLoadRef.current = id;
         navigate(`/chat/${id}`, { replace: true });
@@ -223,26 +217,80 @@ export function ChatPage() {
   };
 
   const sessionList = sessions.data ?? [];
-  const active = sessionList.find((s) => s.id === sessionId);
+  // The history list can lag behind a conversation opened elsewhere (e.g. from a matter page).
+  const active = sessionList.find((s) => s.id === sessionId) ?? (loadedSession?.id === sessionId ? loadedSession : undefined);
   const modelOptions = models.data?.models ?? [];
 
-  // Collect all unique cited documents in this thread
-  const allThreadCitations = messages
-    .filter((m) => m.role === "assistant")
-    .flatMap((m) => (m.citations ?? []) as Citation[]);
-  const uniqueDocIds = new Set(allThreadCitations.map((c) => String(c.document_id ?? "")));
+  // Every document cited in this thread, with the citations that point at it.
+  const threadDocs: { documentId: string; title: string; citations: Citation[] }[] = [];
+  for (const m of messages) {
+    if (m.role !== "assistant") continue;
+    for (const c of (m.citations ?? []) as Citation[]) {
+      const documentId = String(c.document_id ?? "");
+      if (!documentId) continue;
+      const doc = threadDocs.find((d) => d.documentId === documentId);
+      if (doc) doc.citations.push(c);
+      else threadDocs.push({ documentId, title: String(c.title ?? documentId), citations: [c] });
+    }
+  }
 
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const isWide = useMediaQuery("(min-width: 1280px)");
+  const roomForBoth = useMediaQuery("(min-width: 1680px)");
+  const [rightTab, setRightTab] = useState<"document" | "sources" | null>(null);
+  // Wide screens dock the history pane and remember it; smaller ones use a sheet that always starts closed.
+  const [dockOpen, setDockOpen] = useState(() => {
+    try {
+      return window.localStorage.getItem("chat.historyOpen") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [sheetOpen, setSheetOpen] = useState(false);
+  // History and the evidence panel share the width: below 1680px the open panel wins, without changing the saved choice.
+  const historyOpen = isWide ? dockOpen && (!rightTab || roomForBoth) : sheetOpen;
+  const setHistoryOpen = (open: boolean) => {
+    if (!isWide) {
+      setSheetOpen(open);
+      return;
+    }
+    if (open && rightTab && !roomForBoth) setRightTab(null);
+    setDockOpen(open);
+    try {
+      window.localStorage.setItem("chat.historyOpen", open ? "1" : "0");
+    } catch {
+      // storage unavailable
+    }
+  };
+
+  // "All conversations" links here with ?history=open; matter pages with ?matter=<id>
+  // (a new conversation limited to that matter, created when the first message is sent).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const matterParam = searchParams.get("matter");
+  const linkedMatter = useMatter(matterParam ?? "");
+  useEffect(() => {
+    if (searchParams.get("history") !== "open") return;
+    setHistoryOpen(true);
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+  useEffect(() => {
+    const m = linkedMatter.data?.matter;
+    if (!matterParam || !m) return;
+    setPendingMatter({ matter_id: m.matter_id, matter_code: m.matter_code, title: m.title });
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matterParam, linkedMatter.data]);
   const [workMode, setWorkMode] = useState<WorkMode>("cite");
   const [source, setSource] = useState<PanelSource | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [draft, setDraft] = useState<{ text: string; nonce: number }>();
   const nonceRef = useRef(0);
 
   const openSource = (next: Omit<PanelSource, "nonce"> | null) => {
     if (!next) return;
-    setShowSourcesDrawer(false);
     setSource({ ...next, nonce: ++nonceRef.current });
+    setRightTab("document");
   };
 
   const openCitation = (c?: Citation) => {
@@ -333,83 +381,113 @@ export function ChatPage() {
     }
   };
 
-  return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
-      {/* History opens as an overlay — no permanent middle column (Legora-style canvas). */}
-      <ConversationDrawer
-        open={historyOpen}
-        onOpenChange={setHistoryOpen}
-        groups={groupSessions(sessionList)}
-        activeId={sessionId}
-        loading={sessions.isPending}
-        onNew={() => {
-          setHistoryOpen(false);
-          navigate("/chat");
-        }}
-        onOpen={(id) => {
-          setHistoryOpen(false);
-          navigate(`/chat/${id}`);
-        }}
-        onRename={async (id, title) => {
-          await renameSession(id, title);
-          void refreshSessions();
-        }}
-        onDelete={async (id) => {
-          await deleteSession(id);
-          void refreshSessions();
-          if (id === sessionId) navigate("/chat");
-        }}
-      />
+  const newConversation = () => {
+    if (!isWide) setHistoryOpen(false);
+    setPendingMatter(null);
+    navigate("/chat");
+  };
 
-      <header className="flex items-center justify-between gap-3 border-b border-border/80 bg-card/50 px-4 py-2 backdrop-blur-xs lg:px-6">
+  const changeScope = async (choice: MatterChoice | null) => {
+    if (!sessionId) {
+      setPendingMatter(choice);
+      return;
+    }
+    try {
+      await updateSession(sessionId, { matter_id: choice?.matter_id ?? "" });
+      void refreshSessions();
+      appToast(choice ? `Searching only ${choice.title || choice.matter_code}` : "Searching every matter you can access");
+    } catch (err) {
+      appToast(err instanceof Error ? err.message : "Could not change the matter");
+    }
+  };
+
+  // Alt+H (Option+H) shows or hides the history, from anywhere on the page.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.altKey || e.metaKey || e.ctrlKey || e.code !== "KeyH") return;
+      e.preventDefault();
+      setHistoryOpen(!historyOpen);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+  const historyPane = (onCollapse?: () => void) => (
+    <HistoryPane
+      sessions={sessionList}
+      activeId={sessionId}
+      loading={sessions.isPending}
+      onNew={newConversation}
+      onOpen={(id) => {
+        if (!isWide) setHistoryOpen(false);
+        navigate(`/chat/${id}`);
+      }}
+      onRename={async (id, title) => {
+        await renameSession(id, title);
+        void refreshSessions();
+      }}
+      onPin={async (id, pinned) => {
+        await updateSession(id, { pinned });
+        void refreshSessions();
+      }}
+      onDelete={async (id) => {
+        await deleteSession(id);
+        void refreshSessions();
+        if (id === sessionId) navigate("/chat");
+      }}
+      onCollapse={onCollapse}
+    />
+  );
+
+  return (
+    <div className="flex h-full min-h-0 bg-background">
+      {/* History: docked beside the thread on wide screens, a sheet on small ones. */}
+      {isWide && historyOpen && (
+        <aside className="w-[272px] shrink-0 border-r border-border" aria-label="Conversation history">
+          {historyPane(() => setHistoryOpen(false))}
+        </aside>
+      )}
+      {!isWide && (
+        <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
+          <SheetContent side="left" className="w-full max-w-full p-0 sm:max-w-[360px]" aria-describedby={undefined}>
+            <SheetTitle className="sr-only">Conversation history</SheetTitle>
+            {historyPane()}
+          </SheetContent>
+        </Sheet>
+      )}
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <header className="flex items-center justify-between gap-3 border-b border-border/80 bg-card/50 px-3 py-2 backdrop-blur-xs lg:px-4">
         <div className="flex min-w-0 items-center gap-1.5">
+          {!(isWide && historyOpen) && (
+            <button
+              type="button"
+              onClick={() => setHistoryOpen(true)}
+              data-testid="chat-history-toggle"
+              title="Show conversation history (Alt+H)"
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border bg-card px-2.5 text-xs font-medium text-foreground hover:bg-secondary"
+            >
+              <History className="h-4 w-4 text-muted-foreground" />
+              <span className="hidden sm:inline">History</span>
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => navigate("/chat")}
+            onClick={newConversation}
             data-testid="chat-new"
             title="New conversation"
             aria-label="New conversation"
-            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
           >
             <Plus className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setHistoryOpen(true)}
-            aria-label="Conversations"
-            title="Conversations"
-            className="relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-          >
-            <MessageSquare className="h-4 w-4" />
-            {sessionList.length > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-wine px-0.5 text-[9px] font-semibold text-white">
-                {sessionList.length > 9 ? "9+" : sessionList.length}
-              </span>
-            )}
+            <span className="hidden md:inline">New</span>
           </button>
           <h1 className="ml-1 truncate font-display text-base font-semibold text-ink" data-testid="chat-title">
-            {active?.title || (sessionId ? "Untitled conversation" : "New conversation")}
+            {active?.title?.trim() || (sessionId ? "Untitled conversation" : "New conversation")}
           </h1>
-          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 sm:inline-flex dark:text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Matter context
-          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowSourcesDrawer(!showSourcesDrawer)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium transition-colors hover:bg-secondary"
-          >
-            <FileText className="h-3.5 w-3.5 text-amber-500" />
-            <span className="hidden sm:inline">Sources</span>
-            <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-800 dark:text-amber-300">
-              {uniqueDocIds.size > 0 ? uniqueDocIds.size : "—"}
-            </span>
-          </button>
-
-          {modelOptions.length > 1 && !sessionId ? (
+        <div className="flex shrink-0 items-center gap-2">
+          {modelOptions.length > 1 && !sessionId && (
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
@@ -422,15 +500,30 @@ export function ChatPage() {
                 </option>
               ))}
             </select>
-          ) : (
-            <span
-              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-secondary px-2 py-0.5 font-mono-id text-[11px] text-muted-foreground"
-              data-testid="chat-model"
-            >
-              <Sparkles className="h-3 w-3 text-amber-500" />
-              {active?.model ?? model ?? (models.data && !models.data.configured ? "no model" : "Legal Reasoning")}
-            </span>
           )}
+          <MatterScopePicker
+            matterId={active?.matter_id}
+            pending={sessionId ? null : pendingMatter}
+            onChange={(choice) => void changeScope(choice)}
+            disabled={streaming}
+          />
+          <button
+            type="button"
+            onClick={() => setRightTab(rightTab === "sources" ? null : "sources")}
+            aria-pressed={rightTab === "sources"}
+            data-testid="chat-sources-toggle"
+            title={`${threadDocs.length} ${threadDocs.length === 1 ? "document" : "documents"} cited in this conversation`}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+              rightTab === "sources" ? "border-wine/40 bg-wine-soft text-wine" : "border-border bg-card hover:bg-secondary",
+            )}
+          >
+            <FileText className="h-3.5 w-3.5 text-amber-500" />
+            <span>Sources</span>
+            <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-800 dark:text-amber-300">
+              {threadDocs.length}
+            </span>
+          </button>
         </div>
       </header>
 
@@ -450,7 +543,12 @@ export function ChatPage() {
             {!loadingThread && messages.length === 0 && (
               <EmptyThread
                 suggestions={suggestions.data ?? []}
+                matterId={active?.matter_id ?? pendingMatter?.matter_id}
                 onPick={(s) => void send(s)}
+                onInsert={(text, file) => {
+                  if (file) attach(file);
+                  setDraft({ text, nonce: Date.now() });
+                }}
               />
             )}
 
@@ -504,6 +602,7 @@ export function ChatPage() {
           onMode={setWorkMode}
           uploading={uploading}
           attachments={attachments}
+          draft={draft}
           onRemoveAttachment={(id) => setAttachments((list) => list.filter((a) => a.document_id !== id))}
           onOpenAttachment={(a) => openSource({ documentId: a.document_id, title: a.filename, label: "Attached document", quotes: [] })}
           onUpload={(file) => void uploadDocument(file).then((att) => att && attach(att))}
@@ -512,56 +611,9 @@ export function ChatPage() {
           onStop={() => abortRef.current?.abort()}
         />
 
-        {/* Sources Drawer Overlay (When Matter Sources is clicked) */}
-        {showSourcesDrawer && (
-          <aside className="absolute right-0 top-0 bottom-0 w-80 bg-card border-l border-border shadow-xl z-30 flex flex-col animate-in slide-in-from-right duration-200">
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <div className="flex items-center gap-1.5 font-semibold text-xs uppercase tracking-wider text-ink">
-                <FileText className="w-4 h-4 text-amber-500" />
-                <span>Active Matter Sources</span>
-              </div>
-              <button
-                onClick={() => setShowSourcesDrawer(false)}
-                className="p-1 rounded text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-4 flex-1 overflow-y-auto space-y-2.5 text-xs">
-              <p className="text-[11px] text-muted-foreground mb-3">
-                All factual assertions are anchored against the firm's indexed files and verified precedent repositories.
-              </p>
-              {allThreadCitations.length === 0 ? (
-                <p className="text-muted-foreground text-xs italic">
-                  No citations generated yet in this thread. Ask questions to pull relevant clauses.
-                </p>
-              ) : (
-                allThreadCitations.map((c, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => openCitation(c)}
-                    className="w-full text-left p-2.5 rounded-lg border border-border hover:bg-secondary transition-colors group cursor-pointer"
-                  >
-                    <div className="font-semibold text-ink group-hover:text-primary transition-colors flex items-center justify-between">
-                      <span className="truncate">{String(c.title ?? c.document_id ?? "Document")}</span>
-                      <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
-                    </div>
-                    {Boolean(c.quote || c.snippet) && (
-                      <p className="mt-1 line-clamp-2 text-[11px] italic text-muted-foreground">
-                        &ldquo;{String(c.quote || c.snippet)}&rdquo;
-                      </p>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          </aside>
-        )}
-
       </section>
 
-      {source && (
+      {rightTab && (
         <>
           <div
             role="separator"
@@ -579,13 +631,53 @@ export function ChatPage() {
             <span className="absolute left-1/2 top-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded bg-muted-foreground/40 group-hover:bg-wine" />
           </div>
           <div
-            className="absolute inset-0 z-40 lg:static lg:z-auto lg:w-[var(--panel-w)] lg:shrink-0"
+            className="absolute inset-0 z-40 flex min-h-0 flex-col bg-card lg:static lg:z-auto lg:w-[var(--panel-w)] lg:shrink-0"
             style={{ ["--panel-w" as string]: `${panelWidth}px` }}
+            data-testid="chat-right-panel"
           >
-            <CitationDocumentPanel source={source} onClose={() => setSource(null)} />
+            <div className="flex items-center gap-1 border-b border-border px-2 py-1.5" role="tablist" aria-label="Evidence">
+              {([
+                ["document", "Document"],
+                ["sources", `All sources · ${threadDocs.length}`],
+              ] as const).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={rightTab === id}
+                  disabled={id === "document" && !source}
+                  onClick={() => setRightTab(id)}
+                  data-testid={`chat-panel-tab-${id}`}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs disabled:opacity-40",
+                    rightTab === id ? "bg-secondary font-semibold text-ink" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setRightTab(null)}
+                aria-label="Close panel"
+                title="Close panel"
+                data-testid="chat-panel-close"
+                className="ml-auto rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">
+              {rightTab === "document" && source ? (
+                <CitationDocumentPanel source={source} />
+              ) : (
+                <ThreadSources docs={threadDocs} onOpen={(c) => openCitation(c)} />
+              )}
+            </div>
           </div>
         </>
       )}
+      </div>
       </div>
 
       <DocumentPicker
@@ -598,166 +690,95 @@ export function ChatPage() {
   );
 }
 
-// ── conversation drawer (overlay — no permanent history column) ─────────────
+// ── every document cited in the conversation ──────────────────────────────────
 
-function ConversationDrawer({
-  open,
-  onOpenChange,
-  groups,
-  activeId,
-  loading,
-  onNew,
-  onOpen,
-  onRename,
-  onDelete,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  groups: { label: string; items: ChatSession[] }[];
-  activeId?: string;
-  loading: boolean;
-  onNew: () => void;
-  onOpen: (id: string) => void;
-  onRename: (id: string, title: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-}) {
-  const [editing, setEditing] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
-  const [confirming, setConfirming] = useState<string | null>(null);
-  const [filterQuery, setFilterQuery] = useState("");
+type ThreadDoc = { documentId: string; title: string; citations: Citation[] };
 
-  const filteredGroups = groups
-    .map((g) => ({
-      ...g,
-      items: g.items.filter((it) => (it.title ?? "").toLowerCase().includes(filterQuery.toLowerCase())),
-    }))
-    .filter((g) => g.items.length > 0);
-
+function ThreadSources({ docs, onOpen }: { docs: ThreadDoc[]; onOpen: (c: Citation) => void }) {
+  if (docs.length === 0) {
+    return (
+      <p className="p-4 text-sm text-muted-foreground" data-testid="thread-sources">
+        No sources yet. Cited documents from this conversation appear here.
+      </p>
+    );
+  }
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="flex w-[280px] flex-col gap-0 p-0 sm:max-w-[280px]">
-        <SheetHeader className="space-y-0 border-b border-border px-3 py-3 text-left">
-          <div className="flex items-center justify-between gap-2 pr-6">
-            <SheetTitle className="font-display text-base text-ink">Conversations</SheetTitle>
-            <button
-              type="button"
-              onClick={onNew}
-              data-testid="chat-new-drawer"
-              className="flex cursor-pointer items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New
-            </button>
+    <div className="h-full space-y-3 overflow-y-auto p-3" data-testid="thread-sources">
+      {docs.map((d) => (
+        <div key={d.documentId} className="rounded-lg border border-border">
+          <button
+            type="button"
+            onClick={() => onOpen(d.citations[0])}
+            className="flex w-full items-center gap-2 border-b border-border px-3 py-2 text-left hover:bg-secondary/50"
+          >
+            <FileText className="h-4 w-4 shrink-0 text-amber-500" />
+            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{d.title}</span>
+            <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+              {d.citations.length} {d.citations.length === 1 ? "citation" : "citations"}
+            </span>
+          </button>
+          <div className="divide-y divide-border">
+            {d.citations.map((c, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onOpen(c)}
+                className="block w-full px-3 py-2 text-left hover:bg-secondary/50"
+              >
+                <span className="line-clamp-2 text-[12px] italic text-muted-foreground">
+                  {citationQuotes(c)[0] ? displayQuote(citationQuotes(c)[0]) : "Open the cited passage"}
+                </span>
+                {c.page != null && <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">p. {String(c.page)}</span>}
+              </button>
+            ))}
           </div>
-        </SheetHeader>
-
-        <div className="relative border-b border-border px-3 py-2">
-          <Search className="pointer-events-none absolute left-5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={filterQuery}
-            onChange={(e) => setFilterQuery(e.target.value)}
-            placeholder="Search…"
-            aria-label="Filter conversations"
-            className="w-full rounded-md border border-border bg-card py-1 pl-7 pr-2 text-[11px] placeholder:text-muted-foreground focus:outline-hidden"
-          />
         </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2" data-testid="chat-sessions">
-          {loading && <p className="px-2 py-1 text-[11px] text-muted-foreground">Loading…</p>}
-          {!loading && filteredGroups.length === 0 && (
-            <p className="px-2 py-1 text-[11px] text-muted-foreground">No conversations yet.</p>
-          )}
-          {filteredGroups.map((g) => (
-            <div key={g.label} className="mb-2">
-              <div className="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {g.label}
-              </div>
-              <div className="space-y-px">
-                {g.items.map((s) => (
-                  <div
-                    key={s.id}
-                    className={cn(
-                      "group flex items-center gap-0.5 rounded-md px-2 py-1.5 text-[12px] transition-colors",
-                      s.id === activeId
-                        ? "bg-wine-soft/80 font-medium text-wine"
-                        : "text-foreground/80 hover:bg-secondary hover:text-foreground",
-                    )}
-                  >
-                    {editing === s.id ? (
-                      <input
-                        autoFocus
-                        value={draft}
-                        onChange={(e) => setDraft(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && draft.trim()) void onRename(s.id, draft.trim()).then(() => setEditing(null));
-                          if (e.key === "Escape") setEditing(null);
-                        }}
-                        onBlur={() => setEditing(null)}
-                        aria-label="Conversation title"
-                        className="min-w-0 flex-1 rounded border border-border bg-card px-1 py-0.5 text-[11px] text-foreground"
-                      />
-                    ) : confirming === s.id ? (
-                      <span className="flex flex-1 items-center justify-between gap-1 text-[11px]">
-                        Delete?
-                        <span className="flex gap-1.5">
-                          <button
-                            type="button"
-                            className="cursor-pointer font-semibold text-destructive hover:underline"
-                            onClick={() => void onDelete(s.id).then(() => setConfirming(null))}
-                          >
-                            Delete
-                          </button>
-                          <button type="button" onClick={() => setConfirming(null)} className="cursor-pointer">
-                            Cancel
-                          </button>
-                        </span>
-                      </span>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => onOpen(s.id)}
-                          className="min-w-0 flex-1 cursor-pointer truncate text-left"
-                        >
-                          {s.title || "Untitled conversation"}
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Rename"
-                          onClick={() => {
-                            setDraft(s.title ?? "");
-                            setEditing(s.id);
-                          }}
-                          className="cursor-pointer text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
-                        >
-                          <Icon name="edit" style={{ fontSize: 13 }} />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Delete"
-                          onClick={() => setConfirming(s.id)}
-                          className="cursor-pointer text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                        >
-                          <Icon name="delete" style={{ fontSize: 13 }} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </SheetContent>
-    </Sheet>
+      ))}
+    </div>
   );
 }
 
 // ── empty state ─────────────────────────────────────────────────────────────
 
-function EmptyThread({ suggestions, onPick }: { suggestions: string[]; onPick: (s: string) => void }) {
-  const cards = [
+/** Open-matter suggestions are whole questions and send at once; task cards drop a starting prompt into the box. */
+/** Starter cards for a conversation limited to one matter: its own documents and next steps. */
+function matterCards(matter: { title: string }, docs: DocumentItem[]) {
+  const shortTitle = (t: string) => t.replace(/\.(docx?|pdf|txt)$/i, "");
+  return [
+    {
+      title: "Where the matter stands",
+      query: `Summarise where ${matter.title} stands: the parties, the issues, and what is due next.`,
+      icon: <Scale className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+    },
+    {
+      title: "Draft a status note",
+      query: `Draft a short status note to the client on ${matter.title}, citing the documents.`,
+      icon: <FileEdit className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+    },
+    ...docs.slice(0, 4).map((d) => ({
+      title: `Review ${shortTitle(d.title)}`,
+      query: `Review ${shortTitle(d.title)} and list the key risks and obligations.`,
+      icon: <FileSearch className="w-4 h-4 text-amber-600 dark:text-amber-400" />,
+      file: { document_id: d.document_id, filename: d.title } as Attachment,
+    })),
+  ];
+}
+
+function EmptyThread({
+  suggestions,
+  matterId,
+  onPick,
+  onInsert,
+}: {
+  suggestions: string[];
+  matterId?: string | null;
+  onPick: (s: string) => void;
+  onInsert: (text: string, file?: Attachment) => void;
+}) {
+  const matter = useMatter(matterId ?? "");
+  const matterDocs = useDocuments({ matter_id: matterId ?? undefined, limit: 4, enabled: !!matterId });
+  const scoped = matterId && matter.data ? matterCards(matter.data.matter, matterDocs.data?.items ?? []) : null;
+  const generic: { title: string; query: string; icon: React.ReactNode; file?: Attachment }[] = [
     {
       title: "Analyze a document",
       query: "Review this agreement and identify key risks.",
@@ -801,27 +822,9 @@ function EmptyThread({ suggestions, onPick }: { suggestions: string[]; onPick: (
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
-        {cards.map((card, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => onPick(card.query)}
-            data-testid="chat-starter"
-            className="group flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-wine/30 hover:bg-secondary/50"
-          >
-            <div className="mb-1.5 flex items-center gap-2">
-              <span className="rounded-md bg-secondary p-1">{card.icon}</span>
-              <h3 className="text-xs font-semibold text-ink group-hover:text-primary">{card.title}</h3>
-            </div>
-            <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">&ldquo;{card.query}&rdquo;</p>
-          </button>
-        ))}
-      </div>
-
-      {suggestions.length > 0 && (
-        <div className="mt-6 border-t border-border pt-4">
-          <div className="meta-label mb-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+      {!scoped && suggestions.length > 0 && (
+        <div className="mb-6">
+          <div className="meta-label mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
             From your open matters
           </div>
           <div className="space-y-0.5">
@@ -831,7 +834,7 @@ function EmptyThread({ suggestions, onPick }: { suggestions: string[]; onPick: (
                 type="button"
                 onClick={() => onPick(s)}
                 data-testid="chat-suggestion"
-                className="group flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-secondary"
+                className="group flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-secondary"
               >
                 <Icon name="chevron_right" className="text-muted-foreground group-hover:text-wine" style={{ fontSize: 14 }} />
                 <span className="text-ink group-hover:text-wine">{s}</span>
@@ -840,6 +843,28 @@ function EmptyThread({ suggestions, onPick }: { suggestions: string[]; onPick: (
           </div>
         </div>
       )}
+      <div className="meta-label mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground" data-testid="chat-starters-label">
+        {scoped && matter.data ? `Start on ${matter.data.matter.matter_code}` : "Start from a task"}
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+        {(scoped ?? generic).map((card, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => onInsert(card.query, "file" in card ? card.file : undefined)}
+            title="Put this prompt in the message box"
+            data-testid="chat-starter"
+            className="group flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-wine/30 hover:bg-secondary/50"
+          >
+            <div className="mb-1.5 flex items-center gap-2">
+              <span className="rounded-md bg-secondary p-1">{card.icon}</span>
+              <h3 className="text-[13px] font-semibold text-ink group-hover:text-primary">{card.title}</h3>
+            </div>
+            <p className="line-clamp-2 text-[12px] leading-snug text-muted-foreground">&ldquo;{card.query}&rdquo;</p>
+          </button>
+        ))}
+      </div>
+
     </div>
   );
 }
@@ -866,7 +891,6 @@ function AssistantMessage({
   onUpload: (file: File) => Promise<Attachment | null>;
 }) {
   const [copied, setCopied] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [madeFiles, setMadeFiles] = useState<{ document_id: string; filename: string }[]>([]);
   const citations = (m.citations ?? []) as Citation[];
   const events = (m.events ?? []) as ChatEvent[];
@@ -893,83 +917,60 @@ function AssistantMessage({
     try {
       await navigator.clipboard.writeText(m.content);
       setCopied(true);
-      toast.success("Response copied to clipboard");
+      toast.success("Answer copied");
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // clipboard blocked
     }
   };
 
-  const handleSave = () => {
-    setSaved(!saved);
-    toast.success(saved ? "Removed from saved clauses" : "Saved analysis to matter knowledge");
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Link to this conversation copied");
+    } catch {
+      // clipboard blocked
+    }
   };
+  const citedDocs = new Set(citations.map((c) => String(c.document_id ?? "")).filter(Boolean)).size;
 
   return (
-    <div className="flex items-start gap-3 w-full" data-testid="assistant-message">
-      {/* Brand Avatar */}
-      <div className="w-8 h-8 rounded-lg bg-wine text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-        <Sparkles className="w-4 h-4 text-amber-300" />
-      </div>
-
-      <div className="flex-1 min-w-0 bg-card border border-border rounded-xl p-5 shadow-2xs">
-        {/* Header Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-border/70">
-          <div className="flex items-center gap-2">
-            <span className="font-serif font-bold text-sm text-ink tracking-tight">Precentis AI</span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-foreground border border-border">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Legal Reasoning
-            </span>
-
-            {citations.length > 0 && (
-              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-muted-foreground font-mono">
-                <FileText className="w-3 h-3 text-amber-500" />
-                <span>{citations.length} cited sources</span>
-              </span>
-            )}
-          </div>
-
-          {/* Action Icons */}
-          <div className="flex items-center gap-1">
+    <div className="w-full" data-testid="assistant-message">
+      <div className="min-w-0 rounded-xl border border-border bg-card p-5 shadow-2xs">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="font-mono text-[11px] text-muted-foreground" data-testid="message-citation-count">
+            {citations.length > 0 &&
+              `${citations.length} ${citations.length === 1 ? "citation" : "citations"} · ${citedDocs} ${citedDocs === 1 ? "document" : "documents"}`}
+          </span>
+          <div className="flex shrink-0 items-center gap-0.5">
             <button
               type="button"
               onClick={() => void copy()}
-              title="Copy response"
-              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+              title="Copy answer"
+              aria-label="Copy answer"
+              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
             </button>
             {onRetry && (
               <button
                 type="button"
                 onClick={onRetry}
                 title="Regenerate answer"
-                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                aria-label="Regenerate answer"
+                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="h-3.5 w-3.5" />
               </button>
             )}
             <button
               type="button"
-              onClick={handleSave}
-              title={saved ? "Saved" : "Save clause"}
-              className={`p-1 rounded transition-colors cursor-pointer ${
-                saved ? "text-amber-600 bg-amber-500/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
+              onClick={() => void copyLink()}
+              title="Copy link to this conversation"
+              aria-label="Copy link to this conversation"
+              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
-              <Bookmark className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                toast.success("Direct link copied to clipboard");
-              }}
-              title="Share"
-              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
-            >
-              <Share2 className="w-3.5 h-3.5" />
+              <Link2 className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -1047,7 +1048,7 @@ function AssistantMessage({
           <div className="mt-4 pt-3 border-t border-border" data-testid="chat-sources">
             <div className="text-[10px] font-mono uppercase tracking-wider font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
               <FileText className="w-3 h-3 text-amber-500" />
-              <span>Cited Legal Sources ({citations.length})</span>
+              <span>Sources ({citations.length})</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {citations.map((c, i) => (
@@ -1066,7 +1067,7 @@ function AssistantMessage({
                   </div>
                   {citationQuotes(c).map((q, qi) => (
                     <p key={qi} className="mt-1 line-clamp-3 text-[11px] italic text-muted-foreground">
-                      &ldquo;{q.replace(/\[\[PAGE_BREAK\]\]/g, " … ")}&rdquo;
+                      {quoted(q)}
                     </p>
                   ))}
                   <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -1089,16 +1090,15 @@ function AssistantMessage({
           </div>
         )}
 
-        {/* Trust & Safety Disclaimer */}
-        <div className="mt-4 pt-2.5 border-t border-border/60 flex items-center justify-between text-[10.5px] text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3 h-3 text-muted-foreground" />
-            <span>AI-generated content should be reviewed by a qualified legal professional.</span>
-          </div>
-        </div>
       </div>
     </div>
   );
+}
+
+/** A quote in curly quotation marks, unless the text already opens with one. */
+function quoted(text: string): string {
+  const t = displayQuote(text);
+  return /^["“]/.test(t) ? t : `“${t}”`;
 }
 
 /** Every verified quote behind a citation (a compound claim can rest on two or three). */
@@ -1150,7 +1150,7 @@ function CitationBadge({ num, citation, onOpen }: { num: number; citation?: Cita
           </span>
           {typeof citation.quote === "string" && citation.quote && (
             <span className="mb-2 block rounded bg-secondary/50 p-1.5 text-[11px] italic text-muted-foreground line-clamp-3">
-              &ldquo;{citation.quote}&rdquo;
+              {quoted(citation.quote)}
             </span>
           )}
           <button
@@ -1167,7 +1167,15 @@ function CitationBadge({ num, citation, onOpen }: { num: number; citation?: Cita
   );
 }
 
-// ── advanced composer ──────────────────────────────────────────────────────
+// ── composer ─────────────────────────────────────────────────────────────────
+
+// What each work mode changes about the answer (see app/chat/system_prompt.py).
+const MODES: { id: WorkMode; label: string; description: string }[] = [
+  { id: "cite", label: "Cite", description: "Every statement quotes the passage it relies on." },
+  { id: "reason", label: "Reason", description: "Explains which records it will use before answering." },
+  { id: "research", label: "Research memo", description: "Legal position, authorities and analysis under headings." },
+  { id: "review", label: "Risk review", description: "Table of issues in the documents, with suggested changes." },
+];
 
 function Composer({
   streaming,
@@ -1176,6 +1184,7 @@ function Composer({
   onMode,
   uploading,
   attachments,
+  draft,
   onRemoveAttachment,
   onOpenAttachment,
   onUpload,
@@ -1189,6 +1198,8 @@ function Composer({
   onMode: (mode: WorkMode) => void;
   uploading: boolean;
   attachments: Attachment[];
+  /** Text placed in the box by a starter card; `nonce` changes on every pick. */
+  draft?: { text: string; nonce: number };
   onRemoveAttachment: (documentId: string) => void;
   onOpenAttachment: (attachment: Attachment) => void;
   onUpload: (file: File) => void;
@@ -1197,17 +1208,9 @@ function Composer({
   onStop: () => void;
 }) {
   const [text, setText] = useState("");
-  const [isListening, setIsListening] = useState(false);
-  const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const modes: { id: WorkMode; label: string }[] = [
-    { id: "reason", label: "Reason" },
-    { id: "research", label: "Research" },
-    { id: "review", label: "Review" },
-    { id: "cite", label: "Cite" },
-  ];
+  const current = MODES.find((m) => m.id === mode) ?? MODES[0];
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -1216,73 +1219,26 @@ function Composer({
     el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
   }, [text]);
 
+  useEffect(() => {
+    if (!draft) return;
+    setText(draft.text);
+    const el = ref.current;
+    if (el) {
+      el.focus();
+      el.setSelectionRange(draft.text.length, draft.text.length);
+    }
+  }, [draft]);
+
   const submit = () => {
     if (!text.trim() || streaming || disabled) return;
     onSend(text);
     setText("");
   };
 
-  const toggleVoiceInput = () => {
-    if (isListening) {
-      setIsListening(false);
-      toast.info("Voice dictation paused");
-    } else {
-      setIsListening(true);
-      toast.success("Listening for legal prompt...");
-      setTimeout(() => {
-        setText((prev) =>
-          prev ? `${prev} Identify the key indemnification covenants.` : "Identify the key indemnification covenants."
-        );
-        setIsListening(false);
-      }, 2500);
-    }
-  };
-
   return (
-    <div className="border-t border-border/80 bg-background/90 py-3 px-4 lg:px-8 select-none">
+    <div className="border-t border-border/80 bg-background/90 px-4 pb-2 pt-3 lg:px-8">
       <div className="mx-auto max-w-3xl">
-        {/* Contextual Chips Above Input */}
-        <div className="flex flex-wrap items-center gap-1.5 mb-2 text-xs">
-          {modes.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onMode(item.id)}
-              data-testid={`chat-mode-${item.id}`}
-              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] ${
-                mode === item.id
-                  ? "border-wine/40 bg-wine-soft font-semibold text-wine"
-                  : "border-border bg-secondary text-muted-foreground"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => toast.info("Matter sources scope active across firm library")}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary text-foreground text-[11px] font-mono border border-border"
-          >
-            <FileText className="w-3 h-3 text-amber-500" />
-            <span>Matter Sources Active</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onMode(mode === "research" ? "cite" : "research")}
-            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] border transition-colors cursor-pointer ${
-              mode === "research"
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300 font-medium"
-                : "bg-secondary border-border text-muted-foreground"
-            }`}
-          >
-            <Scale className="w-3 h-3" />
-            <span>Research: {mode === "research" ? "On" : "Off"}</span>
-          </button>
-        </div>
-
-        {/* Input Container */}
-        <div className="flex flex-col rounded-2xl border border-border bg-card shadow-sm focus-within:border-wine/60 focus-within:ring-2 focus-within:ring-wine/10 transition-all">
+        <div className="flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all focus-within:border-wine/60 focus-within:ring-2 focus-within:ring-wine/10">
           {(attachments.length > 0 || uploading) && (
             <div className="flex flex-wrap gap-1.5 px-3 pt-2.5" data-testid="composer-attachments">
               {attachments.map((a) => (
@@ -1328,183 +1284,112 @@ function Composer({
                 submit();
               }
             }}
-            placeholder={
-              disabled
-                ? "No language model is configured on the server."
-                : "Ask Precentis anything about your matter...  (Shift+Enter for a new line)"
-            }
+            placeholder={disabled ? "The assistant is not available: no language model is set up." : "Ask about your matters or attached documents…"}
             disabled={disabled}
             aria-label="Message"
             data-testid="chat-input"
             className="max-h-[180px] w-full resize-none bg-transparent p-3.5 text-[14.5px] leading-relaxed text-ink placeholder:text-muted-foreground focus:outline-hidden"
           />
 
-          {/* Bottom Toolbar inside composer */}
-          <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-border/60 bg-muted/30 rounded-b-2xl text-xs">
-            {/* Left Action Buttons */}
-            <div className="flex items-center gap-1">
-              {/* Attach / Add Context */}
-              <div className="relative">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".pdf,.docx,.txt"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    e.target.value = "";
-                    if (file) onUpload(file);
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setContextMenuOpen(!contextMenuOpen)}
-                  title="Add Context"
-                  className="flex items-center gap-1 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
-                >
-                  <Paperclip className="w-4 h-4" />
-                  <span className="text-[11px] font-medium hidden sm:inline">Add Context</span>
-                </button>
+          <div className="flex items-center justify-between gap-2 rounded-b-2xl border-t border-border/60 bg-muted/30 px-2 py-1.5 text-xs">
+            <div className="flex min-w-0 items-center gap-1">
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".pdf,.docx,.txt"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) onUpload(file);
+                }}
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    title="Attach"
+                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                    <span className="text-xs font-medium">Attach</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" side="top" className="w-56">
+                  <DropdownMenuItem disabled={uploading} onSelect={() => fileRef.current?.click()}>
+                    <FileText className="mr-2 h-3.5 w-3.5 text-amber-500" />
+                    {uploading ? "Filing document…" : "Upload a file"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={onPickDocuments}>
+                    <Search className="mr-2 h-3.5 w-3.5" />
+                    Choose firm documents
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-                {contextMenuOpen && (
-                  <div className="absolute left-0 bottom-full mb-2 w-56 p-1 bg-popover border border-border rounded-xl shadow-xl z-50 text-xs animate-in fade-in-0 zoom-in-95">
-                    <div className="px-2 py-1 text-[10px] uppercase font-mono font-semibold text-muted-foreground">
-                      Add Context
-                    </div>
-                    <button
-                      type="button"
-                      disabled={uploading}
-                      onClick={() => {
-                        setContextMenuOpen(false);
-                        fileRef.current?.click();
-                      }}
-                      className="w-full text-left p-1.5 rounded-lg hover:bg-secondary flex items-center gap-2 cursor-pointer"
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    data-testid="chat-mode"
+                    title="How the answer is written"
+                    className="flex min-w-0 items-center gap-1 rounded-lg px-2 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  >
+                    <span className="text-xs">Mode:</span>
+                    <span className="truncate text-xs font-semibold text-foreground">{current.label}</span>
+                    <Icon name="expand_more" style={{ fontSize: 16 }} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" side="top" className="w-72">
+                  {MODES.map((m) => (
+                    <DropdownMenuItem
+                      key={m.id}
+                      onSelect={() => onMode(m.id)}
+                      data-testid={`chat-mode-${m.id}`}
+                      className="flex items-start gap-2 py-2"
                     >
-                      <FileText className="w-3.5 h-3.5 text-amber-500" />
-                      <span>{uploading ? "Filing document…" : "Upload document"}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setContextMenuOpen(false);
-                        onPickDocuments();
-                      }}
-                      className="w-full text-left p-1.5 rounded-lg hover:bg-secondary flex items-center gap-2 cursor-pointer"
-                    >
-                      <Search className="w-3.5 h-3.5 text-blue-500" />
-                      <span>Select matter documents</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setContextMenuOpen(false);
-                        toast.info("Add legal precedent");
-                      }}
-                      className="w-full text-left p-1.5 rounded-lg hover:bg-secondary flex items-center gap-2 cursor-pointer"
-                    >
-                      <Scale className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>Add legal authority</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+                      <Check className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", m.id === mode ? "text-wine" : "invisible")} />
+                      <span>
+                        <span className="block text-[13px] font-semibold text-foreground">{m.label}</span>
+                        <span className="block text-[12px] text-muted-foreground">{m.description}</span>
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-              {/* Legal AI Tools Menu */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
-                  title="Legal AI Tools"
-                  className="flex items-center gap-1 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
-                >
-                  <Wand2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  <span className="text-[11px] font-medium hidden sm:inline">Legal AI Tools</span>
-                </button>
-
-                {toolsMenuOpen && (
-                  <div className="absolute left-0 bottom-full mb-2 w-64 p-1.5 bg-popover border border-border rounded-xl shadow-xl z-50 text-xs animate-in fade-in-0 zoom-in-95">
-                    <div className="px-2 py-1 text-[10px] uppercase font-mono font-semibold text-muted-foreground">
-                      Quick Workflows
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setToolsMenuOpen(false);
-                        onSend("Review this agreement and identify critical contractual exposure.");
-                      }}
-                      className="w-full text-left p-1.5 rounded-lg hover:bg-secondary flex items-center gap-2 cursor-pointer"
-                    >
-                      <FileSearch className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Contract Risk Review</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setToolsMenuOpen(false);
-                        onSend("Extract all termination rights, cure periods, and break fee obligations.");
-                      }}
-                      className="w-full text-left p-1.5 rounded-lg hover:bg-secondary flex items-center gap-2 cursor-pointer"
-                    >
-                      <Search className="w-3.5 h-3.5 text-blue-500" />
-                      <span>Extract Termination Rights</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setToolsMenuOpen(false);
-                        onSend("Draft a reciprocal indemnification clause with a 20% aggregate cap.");
-                      }}
-                      className="w-full text-left p-1.5 rounded-lg hover:bg-secondary flex items-center gap-2 cursor-pointer"
-                    >
-                      <FileEdit className="w-3.5 h-3.5 text-purple-500" />
-                      <span>Draft Protective Clause</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Voice Dictation */}
+            {streaming ? (
               <button
                 type="button"
-                onClick={toggleVoiceInput}
-                title={isListening ? "Stop listening" : "Dictate prompt"}
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  isListening
-                    ? "text-rose-600 bg-rose-500/10 animate-pulse"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
+                onClick={onStop}
+                data-testid="chat-stop"
+                className="inline-flex items-center gap-1 rounded-xl bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground shadow-2xs hover:opacity-90"
               >
-                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                <Icon name="stop" style={{ fontSize: 16 }} />
+                <span>Stop</span>
               </button>
-            </div>
-
-            {/* Right Action: Send / Stop */}
-            <div className="flex items-center gap-2">
-              {streaming ? (
-                <button
-                  type="button"
-                  onClick={onStop}
-                  data-testid="chat-stop"
-                  className="inline-flex items-center gap-1 rounded-xl bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground hover:opacity-90 shadow-2xs cursor-pointer"
-                >
-                  <Icon name="stop" style={{ fontSize: 16 }} />
-                  <span>Stop</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={submit}
-                  disabled={!text.trim() || disabled}
-                  data-testid="chat-send"
-                  className="inline-flex items-center gap-1 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40 shadow-2xs transition-colors cursor-pointer"
-                >
-                  <span>Send</span>
-                  <Icon name="arrow_upward" style={{ fontSize: 16 }} />
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                type="button"
+                onClick={submit}
+                disabled={!text.trim() || disabled}
+                data-testid="chat-send"
+                className="inline-flex items-center gap-1 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-2xs transition-colors hover:bg-primary/90 disabled:bg-secondary disabled:text-muted-foreground disabled:shadow-none"
+              >
+                <span>Send</span>
+                <Icon name="arrow_upward" style={{ fontSize: 16 }} />
+              </button>
+            )}
           </div>
         </div>
+        <p className="mt-1.5 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground" data-testid="chat-review-note">
+          <ShieldCheck className="h-3 w-3 shrink-0" />
+          <span>
+            Answers are AI-generated; check the cited sources before relying on them.
+            <span className="hidden sm:inline"> Shift+Enter adds a new line.</span>
+          </span>
+        </p>
       </div>
     </div>
   );

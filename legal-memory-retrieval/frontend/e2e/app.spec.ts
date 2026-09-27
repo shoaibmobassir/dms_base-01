@@ -148,6 +148,85 @@ test("chat opens with suggestions from the member's open matters", async ({ page
   await expect(page.getByTestId("chat-input")).toBeVisible();
 });
 
+test("history docks beside the thread, is searchable, pins, renames and deletes", async ({ page, request }) => {
+  const { insider, matter } = await wall(request);
+  await viewAs(page, insider);
+  const headers = { "X-Member-Id": insider };
+  const created = await request.post("/api/chat/sessions", { headers, data: {} });
+  expect(created.ok()).toBeTruthy();
+  const { id } = (await created.json()) as { id: string };
+  const title = `History check ${Date.now()}`;
+  await request.patch(`/api/chat/sessions/${id}`, { headers, data: { title } });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/ui/chat/${id}`);
+  await expect(page.getByTestId("chat-title")).toHaveText(title);
+  await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText(title); // not the UUID
+
+  await page.getByTestId("chat-history-toggle").click();
+  const pane = page.getByTestId("chat-history");
+  await expect(pane).toBeVisible();
+  const row = pane.locator('[data-testid="chat-session-row"]:has([aria-current="page"])');
+  await expect(row).toContainText(title);
+
+  // The docked pane stays open across a reload.
+  await page.reload();
+  await expect(page.getByTestId("chat-history")).toBeVisible();
+
+  await page.getByTestId("chat-history-search").fill("no conversation is called this");
+  await expect(pane).toContainText("No conversations match.");
+  await page.getByTestId("chat-history-search").fill(title);
+  await expect(row).toBeVisible();
+
+  // Pin: the row moves to a Pinned group and the Pinned filter appears.
+  await row.getByTestId("chat-session-menu").click();
+  await page.getByRole("menuitem", { name: "Pin to top" }).click();
+  await expect(pane).toContainText("Pinned");
+  await page.getByTestId("chat-history-search").fill("");
+  await page.getByTestId("chat-history-filter-pinned").click();
+  await expect(pane.getByTestId("chat-session-row")).toHaveCount(1);
+  await page.getByTestId("chat-history-filter-all").click();
+
+  // Limit the conversation to one matter; the choice is saved with it.
+  await page.getByTestId("chat-scope").click();
+  await page.getByTestId("chat-scope-search").fill(matter.matter_code);
+  await page.getByTestId("chat-scope-option").filter({ hasText: matter.title }).first().click();
+  await expect(page.getByTestId("chat-scope")).toContainText(matter.matter_code);
+  await page.reload();
+  await expect(page.getByTestId("chat-scope")).toContainText(matter.matter_code);
+  await expect(pane.locator('[data-testid="chat-session-row"]:has([aria-current="page"])')).toContainText(matter.matter_code);
+
+  const renamed = `${title} (renamed)`;
+  await row.getByTestId("chat-session-menu").click();
+  await page.getByRole("menuitem", { name: "Rename" }).click();
+  await pane.getByLabel("Conversation title").fill(renamed);
+  await pane.getByLabel("Conversation title").press("Enter");
+  await expect(page.getByTestId("chat-title")).toHaveText(renamed);
+
+  await row.getByTestId("chat-session-menu").click();
+  await page.getByRole("menuitem", { name: "Delete" }).click();
+  await pane.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page).toHaveURL(/\/ui\/chat$/);
+
+  await page.getByRole("button", { name: "Hide history" }).click();
+  await expect(page.getByTestId("chat-history")).toBeHidden();
+});
+
+test("starter cards fill the message box and the mode menu explains each mode", async ({ page }) => {
+  await page.goto("/ui/chat");
+  const card = page.getByTestId("chat-starter").first();
+  const prompt = (await card.locator("p").innerText()).replace(/^“|”$/g, "");
+  await card.click();
+  await expect(page.getByTestId("chat-input")).toHaveValue(prompt);
+  await expect(page).toHaveURL(/\/ui\/chat$/); // nothing was sent
+
+  await page.getByTestId("chat-mode").click();
+  await expect(page.getByTestId("chat-mode-review")).toContainText("Table of issues");
+  await page.getByTestId("chat-mode-review").click();
+  await expect(page.getByTestId("chat-mode")).toContainText("Risk review");
+  await expect(page.getByTestId("chat-review-note")).toBeVisible();
+});
+
 // ── document viewer beside the chat ───────────────────────────────────────────
 
 test("attached PDF opens beside the chat with page and zoom controls", async ({ page, request }) => {
@@ -163,8 +242,8 @@ test("attached PDF opens beside the chat with page and zoom controls", async ({ 
   test.skip(!pdf, "no PDF original in the seeded corpus");
 
   await page.goto("/ui/chat");
-  await page.getByTitle("Add Context").click();
-  await page.getByText("Select matter documents").click();
+  await page.getByTitle("Attach").click();
+  await page.getByRole("menuitem", { name: "Choose firm documents" }).click();
   await page.getByTestId("document-picker-search").fill(pdf!.document_id);
   await page.getByTestId("document-picker-item").filter({ hasText: pdf!.document_id }).click();
   await page.keyboard.press("Escape");
@@ -217,13 +296,40 @@ test.describe("chat with the language model", () => {
       page.locator(".viewer-highlight, [data-testid=viewer-ocr-highlight], [data-testid=citation-highlight]").first(),
     ).toBeVisible({ timeout: 30_000 });
 
-    // Delete through the conversation drawer (confirm step), then the URL resets to a new chat.
-    await page.getByRole("button", { name: "Conversations" }).click();
-    const row = page.getByTestId("chat-sessions").locator("div.group").first();
-    await row.hover();
-    await row.getByRole("button", { name: "Delete" }).click();
-    await row.getByRole("button", { name: "Delete", exact: true }).click();
+    // Delete from the history pane (row menu, then confirm), then the URL resets to a new chat.
+    await page.getByTestId("chat-history-toggle").click();
+    const row = page.locator('[data-testid="chat-session-row"]:has([aria-current="page"])');
+    await row.getByTestId("chat-session-menu").click();
+    await page.getByRole("menuitem", { name: "Delete" }).click();
+    await page.getByTestId("chat-sessions").getByRole("button", { name: "Delete", exact: true }).click();
     await expect(page).toHaveURL(/\/ui\/chat$/);
+  });
+
+  test("a conversation limited to a matter cites only that matter's documents", async ({ request }) => {
+    test.setTimeout(180_000);
+    const member = "MEM-00001";
+    const headers = { "X-Member-Id": member };
+    const matters = await api<{ items: (Matter & { document_count: number })[] }>(request, "/api/matters?limit=200", member);
+    const matter = matters.items.find((m) => !m.restricted && m.document_count >= 3)!;
+    const created = await request.post("/api/chat/sessions", { headers, data: { matter_id: matter.matter_id } });
+    const { id } = (await created.json()) as { id: string };
+    try {
+      const res = await request.post(`/api/chat/sessions/${id}/ask`, {
+        headers,
+        data: { content: "Summarise the key documents and what each one says.", mode: "cite" },
+        timeout: 170_000,
+      });
+      expect(res.ok()).toBeTruthy();
+      const { citations } = (await res.json()) as { citations: { document_id?: string }[] };
+      const ids = [...new Set(citations.map((c) => c.document_id).filter(Boolean))] as string[];
+      expect(ids.length).toBeGreaterThan(0);
+      for (const docId of ids) {
+        const doc = await api<{ matter_id: string }>(request, `/api/documents/${docId}`, member);
+        expect(doc.matter_id, `${docId} is outside ${matter.matter_code}`).toBe(matter.matter_id);
+      }
+    } finally {
+      await request.delete(`/api/chat/sessions/${id}`, { headers });
+    }
   });
 
   test("stop keeps the conversation and marks the answer stopped", async ({ page, request }) => {

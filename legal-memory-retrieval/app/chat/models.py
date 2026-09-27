@@ -44,6 +44,10 @@ class ChatSession(BaseModel):
     matter_id: Optional[str] = None
     model: Optional[str] = None
     member_id: Optional[str] = None
+    pinned: bool = False
+    # Listing only: the matter's code and the opening question (for history rows and search).
+    matter_code: Optional[str] = None
+    first_question: Optional[str] = None
     status: SessionStatus = SessionStatus.active
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -53,6 +57,9 @@ class ChatSessionPatch(BaseModel):
     title: Optional[str] = None
     model: Optional[str] = None
     status: Optional[SessionStatus] = None
+    pinned: Optional[bool] = None
+    # A matter id limits the conversation's search to that matter; "" clears it.
+    matter_id: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

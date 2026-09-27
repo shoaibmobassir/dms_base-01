@@ -324,12 +324,8 @@ def _delete_documents(batch: dict) -> None:
     """Remove documents the worker created (the module fixture removes the batches)."""
     from app.db.connection import connect
 
+    from app.ingest.purge import purge_documents
+
     ids = [f["document_id"] for f in batch["files"] if f.get("document_id")]
     with connect() as conn, conn.transaction():
-        conn.execute("DELETE FROM chunks WHERE document_id = ANY(%s)", (ids,))
-        conn.execute("DELETE FROM document_blocks WHERE document_id = ANY(%s)", (ids,))
-        conn.execute("UPDATE documents SET current_version_id = NULL WHERE document_id = ANY(%s)", (ids,))
-        conn.execute("DELETE FROM document_versions WHERE document_id = ANY(%s)", (ids,))
-        conn.execute("UPDATE upload_batch_files SET document_id = NULL, version_id = NULL WHERE document_id = ANY(%s)", (ids,))
-        conn.execute("DELETE FROM ingest_items WHERE document_id = ANY(%s)", (ids,))
-        conn.execute("DELETE FROM documents WHERE document_id = ANY(%s)", (ids,))
+        purge_documents(conn, ids)

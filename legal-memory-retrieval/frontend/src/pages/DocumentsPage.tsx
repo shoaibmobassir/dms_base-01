@@ -1,38 +1,83 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ingestDocument, PAGE_SIZE, useDocuments, useMatters } from "@/api/resources";
+import { ingestDocument, PAGE_SIZE, useDocumentFacets, useDocuments, useMatters } from "@/api/resources";
 import { DataTable } from "@/components/common/DataTable";
 import { Action, EmptyState, Icon, MonoId, PageHeader, SearchField } from "@/components/common/primitives";
 import { Pager, QueryState } from "@/components/common/QueryState";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
+import { formatDate } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
+
+/** "Uploaded" says where a file came from, not what it is: show the file kind instead. */
+function documentKind(doc: { document_type: string; mime_type?: string | null; title: string }): string {
+  if (doc.document_type && doc.document_type !== "Uploaded" && doc.document_type !== "Synced") return doc.document_type;
+  const mime = doc.mime_type ?? "";
+  const ext = doc.title.split(".").pop()?.toLowerCase() ?? "";
+  if (mime.includes("pdf") || ext === "pdf") return "PDF";
+  if (mime.includes("word") || ext === "docx" || ext === "doc") return "Word document";
+  if (mime.includes("sheet") || ext === "xlsx") return "Spreadsheet";
+  if (mime.startsWith("text/") || ext === "txt" || ext === "md") return "Text";
+  return "File";
+}
 
 export function DocumentsPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
+  const [docType, setDocType] = useState("");
+  const [matterId, setMatterId] = useState("");
   const [showUpload, setShowUpload] = useState(false);
   const q = useDebounced(query.trim());
-  const documents = useDocuments({ q, page });
+  const documents = useDocuments({ q, page, doc_type: docType || undefined, matter_id: matterId || undefined });
+  const facets = useDocumentFacets();
+  const matters = useMatters({ limit: 200 });
 
-  useEffect(() => setPage(0), [q]);
+  useEffect(() => setPage(0), [q, docType, matterId]);
+
+  const selectClass = "rounded-md border border-border bg-card px-2.5 py-2 text-sm text-foreground focus:border-wine/50 focus:outline-hidden";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
-        eyebrow="Documents"
-        title="Documents are the firm's evidence."
-        subtitle="Every document is connected to its matter, author and versions."
+        compact
+        title="Documents"
+        count={documents.data ? `${documents.data.total} ${documents.data.total === 1 ? "document" : "documents"}` : undefined}
+        subtitle="Every document is filed to its matter, with its author and versions."
         actions={
           <Action onClick={() => setShowUpload(true)} icon="upload" testId="add-documents">
             Add document
           </Action>
         }
       />
-      <SearchField value={query} onChange={setQuery} placeholder="Search title, author, id or full text…" testId="documents-search" />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex-1">
+          <SearchField value={query} onChange={setQuery} placeholder="Search title, author, id or full text…" testId="documents-search" />
+        </div>
+        <select value={docType} onChange={(e) => setDocType(e.target.value)} aria-label="Document type" data-testid="documents-type" className={selectClass}>
+          <option value="">All types</option>
+          {(facets.data?.document_types ?? []).map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.value} ({t.n})
+            </option>
+          ))}
+        </select>
+        <select value={matterId} onChange={(e) => setMatterId(e.target.value)} aria-label="Matter" data-testid="documents-matter" className={`${selectClass} max-w-[260px]`}>
+          <option value="">All matters</option>
+          {(matters.data?.items ?? []).map((m) => (
+            <option key={m.matter_id} value={m.matter_id}>
+              {m.matter_code} · {m.title}
+            </option>
+          ))}
+        </select>
+        {(docType || matterId) && (
+          <button type="button" onClick={() => { setDocType(""); setMatterId(""); }} className="text-xs font-medium text-wine hover:underline">
+            Clear filters
+          </button>
+        )}
+      </div>
       <QueryState
         query={documents}
         isEmpty={(d) => d.items.length === 0}
@@ -56,10 +101,20 @@ export function DocumentsPage() {
                     </span>
                   ),
                 },
-                { key: "type", secondary: true, header: "Type", render: (doc) => <span className="text-sm text-muted-foreground">{doc.document_type}</span> },
+                { key: "type", secondary: true, header: "Type", render: (doc) => <span className="text-sm text-muted-foreground">{documentKind(doc)}</span> },
                 { key: "author", secondary: true, header: "Author", render: (doc) => <span className="text-sm text-muted-foreground">{doc.author_name || "—"}</span> },
-                { key: "matter", secondary: true, header: "Matter", render: (doc) => <MonoId>{doc.matter_code || doc.matter_id || "—"}</MonoId> },
-                { key: "date", header: "Date", align: "right", render: (doc) => doc.doc_date || "—" },
+                {
+                  key: "matter",
+                  secondary: true,
+                  header: "Matter",
+                  render: (doc) => (
+                    <div className="max-w-[280px]">
+                      <div className="truncate text-sm">{doc.matter_title || "—"}</div>
+                      <MonoId>{doc.matter_code || doc.matter_id || ""}</MonoId>
+                    </div>
+                  ),
+                },
+                { key: "date", header: "Date", align: "right", render: (doc) => <span className="whitespace-nowrap tabular-nums">{formatDate(doc.doc_date)}</span> },
               ]}
             />
             <Pager page={page} total={d.total} pageSize={PAGE_SIZE} onPage={setPage} />

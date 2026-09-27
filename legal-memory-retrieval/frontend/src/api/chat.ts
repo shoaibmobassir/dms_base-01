@@ -8,10 +8,18 @@ export function listSessions() {
 }
 
 /** No title: the server titles the conversation from its first question. */
-export function createSession(model?: string) {
+export function createSession(model?: string, matterId?: string) {
   return apiFetch<ChatSession>('/api/chat/sessions', {
     method: 'POST',
-    body: JSON.stringify({ model }),
+    body: JSON.stringify({ model, matter_id: matterId || undefined }),
+  })
+}
+
+/** Pin or unpin a conversation, or limit it to a matter ("" clears the matter). */
+export function updateSession(sessionId: string, patch: { pinned?: boolean; matter_id?: string }) {
+  return apiFetch<ChatSession>(`/api/chat/sessions/${enc(sessionId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
   })
 }
 

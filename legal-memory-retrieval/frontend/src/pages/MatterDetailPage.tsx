@@ -17,6 +17,8 @@ import {
 } from "@/api/resources";
 import type { MatterDetail } from "@/api/types";
 import { DataTable } from "@/components/common/DataTable";
+import { useStartConversation } from "@/components/chat/useStartConversation";
+import { formatDate } from "@/lib/format";
 import { ClientLink, PersonAvatar } from "@/components/common/EntityLink";
 import { Action, EmptyState, Icon, MonoId, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
@@ -65,6 +67,15 @@ function PinAction({ matterId }: { matterId: string }) {
   );
 }
 
+function AssistantAction({ matterId }: { matterId: string }) {
+  const { start } = useStartConversation();
+  return (
+    <Action onClick={() => start(matterId)} icon="edit_note" testId="matter-assistant">
+      Work on it in Assistant
+    </Action>
+  );
+}
+
 function MatterView({ detail }: { detail: MatterDetail }) {
   const { matter: m, team } = detail;
   const [tab, setTab] = useState<Tab>("Overview");
@@ -79,9 +90,10 @@ function MatterView({ detail }: { detail: MatterDetail }) {
         subtitle={m.client_name ? <ClientLink id={m.client_id} name={m.client_name} /> : undefined}
         actions={
           <>
-            <Action to={`/ask?scope=${encodeURIComponent(m.matter_code)}&scopeType=matter`} primary icon="forum" testId="matter-ask">
+            <Action to={`/ask?scope=${encodeURIComponent(m.matter_code)}&scopeType=matter`} primary icon="manage_search" testId="matter-ask">
               Ask about this matter
             </Action>
+            <AssistantAction matterId={m.matter_id} />
             <PinAction matterId={m.matter_id} />
           </>
         }
@@ -191,8 +203,8 @@ function Overview({ detail }: { detail: MatterDetail }) {
             <Field label="Opposing party">{m.opposing_party}</Field>
             <Field label="Forum">{m.court}</Field>
             <Field label="Jurisdiction">{m.jurisdiction}</Field>
-            <Field label="Opened">{m.opened_date}</Field>
-            {m.closed_date && <Field label="Closed">{m.closed_date}</Field>}
+            <Field label="Opened">{formatDate(m.opened_date, "")}</Field>
+            {m.closed_date && <Field label="Closed">{formatDate(m.closed_date)}</Field>}
             {m.outcome && <Field label="Outcome">{m.outcome}</Field>}
           </dl>
         </div>
@@ -200,14 +212,19 @@ function Overview({ detail }: { detail: MatterDetail }) {
           <SectionLabel>Team</SectionLabel>
           <div className="space-y-2.5">
             {team.length === 0 && <p className="text-sm text-muted-foreground">No team recorded.</p>}
-            {team.map((tm) => (
-              <div key={tm.member_id} className="flex items-center justify-between text-sm">
-                <Link to={`/people/${tm.member_id}`} className="hover:text-wine">
-                  {tm.name}
-                </Link>
-                <span className="text-xs text-muted-foreground">{tm.role_on_matter}</span>
-              </div>
-            ))}
+            {[...team]
+              .sort((a, b) => Number(b.role_on_matter?.toLowerCase() === "lead") - Number(a.role_on_matter?.toLowerCase() === "lead"))
+              .map((tm) => (
+                <div key={tm.member_id} className="text-sm" data-testid="matter-team-member">
+                  <Link to={`/people/${tm.member_id}`} className="font-medium hover:text-wine">
+                    {tm.name}
+                  </Link>
+                  {tm.role_on_matter?.toLowerCase() === "lead" && (
+                    <span className="ml-1.5 rounded bg-wine px-1 py-px align-middle text-[10px] font-semibold uppercase text-primary-foreground">Lead</span>
+                  )}
+                  <div className="text-xs text-muted-foreground">{[tm.role, tm.office].filter(Boolean).join(" · ")}</div>
+                </div>
+              ))}
           </div>
         </div>
       </div>
@@ -248,7 +265,7 @@ function DocumentsTab({ matterId }: { matterId: string }) {
             },
             { key: "type", header: "Type", render: (doc) => <span className="text-sm text-muted-foreground">{doc.document_type}</span> },
             { key: "author", header: "Author", render: (doc) => <span className="text-sm text-muted-foreground">{doc.author_name || "—"}</span> },
-            { key: "date", header: "Date", align: "right", render: (doc) => doc.doc_date || "—" },
+            { key: "date", header: "Date", align: "right", render: (doc) => <span className="whitespace-nowrap tabular-nums">{formatDate(doc.doc_date)}</span> },
           ]}
         />
       )}

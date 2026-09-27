@@ -18,9 +18,10 @@ export function ClientsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Clients"
-        title="Every client, and what the firm remembers about them."
-        subtitle="Open a client to see their matters and the preferences observed while working with them."
+        compact
+        title="Clients"
+        count={clients.data ? `${clients.data.total} ${clients.data.total === 1 ? "client" : "clients"}` : undefined}
+        subtitle="Open a client to see their matters and what the firm has learned working with them."
       />
       <SearchField value={query} onChange={setQuery} placeholder="Search by name or industry…" testId="clients-search" />
       <QueryState query={clients} isEmpty={(d) => d.items.length === 0} empty={<EmptyState title="No clients found" />}>
@@ -43,6 +44,27 @@ export function ClientsPage() {
                   ),
                 },
                 { key: "industry", header: "Industry", render: (c) => <span className="text-sm text-muted-foreground">{c.industry || "—"}</span> },
+                {
+                  key: "matters",
+                  header: "Open matters",
+                  align: "right",
+                  render: (c) => (
+                    <span className="text-sm tabular-nums" title={`${c.total_matters ?? 0} matters in total that you can access`}>
+                      {c.open_matters ?? 0}
+                      <span className="text-muted-foreground"> / {c.total_matters ?? 0}</span>
+                    </span>
+                  ),
+                },
+                {
+                  key: "lead",
+                  secondary: true,
+                  header: "Relationship lead",
+                  render: (c) => (
+                    <span className="text-sm" title="Leads the most of this client's matters">
+                      {c.relationship_lead || "—"}
+                    </span>
+                  ),
+                },
                 { key: "hq", secondary: true, header: "Headquarters", align: "right", render: (c) => c.headquarters || "—" },
               ]}
             />

@@ -20,32 +20,50 @@ def clients_list(
     q: str | None = Query(default=None),
     limit: int = Query(default=100, le=500),
     offset: int = Query(default=0, ge=0),
+    member_id: str | None = Depends(resolve_member),
 ) -> dict:
+    """Clients, with the caller's view of their matters: open count and who leads most of them.
+
+    Counts and the lead come only from matters the caller may see.
+    """
+    params: dict = {"member_id": member_id, "limit": limit, "offset": offset}
+    where = "TRUE"
+    if q:
+        where = "(c.name ILIKE %(like)s OR c.industry ILIKE %(like)s)"
+        params["like"] = f"%{q}%"
+    visible = f"""
+        SELECT m.matter_id, m.client_id, m.status FROM matters m
+        LEFT JOIN permissions p ON p.matter_id = m.matter_id
+        WHERE {ACL_CLAUSE}
+    """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            if q:
-                like = f"%{q}%"
-                cur.execute(
-                    "SELECT client_id, name, industry, size, headquarters"
-                    " FROM clients WHERE name ILIKE %(like)s OR industry ILIKE %(like)s"
-                    " ORDER BY name, client_id LIMIT %(limit)s OFFSET %(offset)s",
-                    {"like": like, "limit": limit, "offset": offset},
-                )
-                items = list(cur.fetchall())
-                cur.execute(
-                    "SELECT COUNT(*) AS n FROM clients"
-                    " WHERE name ILIKE %(like)s OR industry ILIKE %(like)s",
-                    {"like": like},
-                )
-            else:
-                cur.execute(
-                    "SELECT client_id, name, industry, size, headquarters"
-                    " FROM clients ORDER BY name, client_id"
-                    " LIMIT %(limit)s OFFSET %(offset)s",
-                    {"limit": limit, "offset": offset},
-                )
-                items = list(cur.fetchall())
-                cur.execute("SELECT COUNT(*) AS n FROM clients")
+            cur.execute(
+                f"""
+                WITH vis AS ({visible})
+                SELECT c.client_id, c.name, c.industry, c.size, c.headquarters,
+                       (SELECT count(*) FROM vis WHERE vis.client_id = c.client_id
+                          AND lower(coalesce(vis.status, 'open')) = 'open') AS open_matters,
+                       (SELECT count(*) FROM vis WHERE vis.client_id = c.client_id) AS total_matters,
+                       rp.name AS relationship_lead, rp.member_id AS relationship_lead_id
+                FROM clients c
+                LEFT JOIN LATERAL (
+                    SELECT mb.member_id, mb.name FROM vis
+                    JOIN matter_members mm ON mm.matter_id = vis.matter_id
+                    JOIN members mb ON mb.member_id = mm.member_id
+                    WHERE vis.client_id = c.client_id AND lower(coalesce(mm.role_on_matter, '')) = 'lead'
+                    GROUP BY mb.member_id, mb.name
+                    ORDER BY count(*) DESC, bool_or(mb.role = 'Partner') DESC, mb.member_id
+                    LIMIT 1
+                ) rp ON TRUE
+                WHERE {where}
+                ORDER BY c.name, c.client_id
+                LIMIT %(limit)s OFFSET %(offset)s
+                """,
+                params,
+            )
+            items = list(cur.fetchall())
+            cur.execute(f"SELECT COUNT(*) AS n FROM clients c WHERE {where}", params)
             total = cur.fetchone()["n"]
             return {"service": SERVICE, "total": total, "items": items}
 

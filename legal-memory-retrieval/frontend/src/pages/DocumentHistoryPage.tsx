@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { compareVersions, useDocument, useDocumentVersions } from "@/api/resources";
 import { Action, EmptyState, MonoId, PageHeader, SectionLabel } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
+import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function DocumentHistoryPage() {
@@ -71,7 +72,7 @@ export function DocumentHistoryPage() {
                     >
                       <div className="font-medium">{v.version_label || `Version ${v.version_number ?? ""}`}</div>
                       <div className="text-xs text-muted-foreground">
-                        {[v.author_name, v.version_status, v.created_at?.slice(0, 10)].filter(Boolean).join(" · ")}
+                        {[v.author_name, v.version_status, v.created_at ? formatDate(v.created_at) : null].filter(Boolean).join(" · ")}
                       </div>
                     </button>
                   </li>
