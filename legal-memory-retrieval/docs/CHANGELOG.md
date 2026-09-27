@@ -2,6 +2,33 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-09-27 — Claim-level grounding for Ask the Firm and the Assistant
+
+Problem (live answers): quotes existed in the document but did not state the cited fact ("Board approved the
+transfer on 12 September" cited to "the meeting was held on 12 September"); Ask the Firm chips opened the first
+chunk of a document, not the passage behind the sentence; the Assistant answered statutory questions from model
+memory (CERC transmission charges described with the repealed 2010 PoC regime).
+
+- `app/grounding/`: every displayed sentence is verified before the lawyer sees it — candidate spans from the
+  cited sources (and, for auto-citation, the rest of the evidence) → element-by-element support map from a
+  verifier model other than the generator (`GROUNDING_VERIFIER_MODEL`, default Kimi K2.5) → figures/dates guard →
+  heading guard → label guards → "not in the records" re-checked against whole documents. Unsupported and
+  contradicted sentences are removed and reported; partly supported ones are shown flagged. Fails closed.
+  Optional multi-model consensus (`GROUNDING_CONSENSUS_MODELS`), off by default.
+- Assistant: final answer held until verified (`text_final` SSE), `ask_firm` passages load their full documents
+  so every citation is checked, "answer from legal knowledge" rule removed, `ask_inputs` only for real ambiguity,
+  one retry on the generator's malformed tool-call 400.
+- Ask the Firm: `span_citations` (`[n]` → exact verified quotes, offsets, chunk), `grounding` report,
+  `verifying` stream event; UI shows span chips, the Inspector shows the verified quotes, removed-statement notice.
+- Ingest: `canonical.py` heading parser read "SECTION Meeting" as section "M" / title "eeting" (IGNORECASE on
+  the Roman-numeral class); unnumbered DOCX headings now parse as headings. 75 documents reindexed.
+- Eval: `evals/grounding_eval.py` + `evals/grounding/gold.jsonl` (41 questions), independent judge
+  (DeepSeek V3.2), 23/24 agreement with hand labels. Shown-as-supported precision: Assistant 0.975–0.980,
+  Ask the Firm 0.92–0.96 (baseline strict precision 0.81 / 0.63); memory-sourced legal statements 15 → 0.
+  Details: `docs/experiments/grounding_2026-09-27.md`; next steps: `docs/plan/GROUNDING_ROADMAP.md`.
+- Tests: `tests/test_grounding.py` (17); `frontend/e2e/ask.spec.ts` span-citation test. `pytest tests/`:
+  704 passed; Playwright: 26 passed, 3 LLM-gated skipped.
+
 ## 2026-09-27 — Phase 1: access model, admin portal, access requests (plan §5)
 
 - New source of truth for access: `firm_roles`/`role_permissions`/`member_roles`, `teams`/`team_members` (seeded from practice areas and offices), `matter_access` (open / team / restricted + hide existence), `matter_grants` (member or team, read/edit/manage, reason, expiry), `matter_screens` (deny, always wins), `access_requests` (`20260927a`). `permissions` is now compiled from them by `acl_compile_matter()` triggers; the migration proves the backfill changed no matter's permissions. `matter_members` gains `started_at`/`ended_at`.

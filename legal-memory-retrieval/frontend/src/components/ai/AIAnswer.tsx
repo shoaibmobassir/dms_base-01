@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon, SectionLabel } from "@/components/common/primitives";
 import { useInspector } from "@/components/common/Inspector";
-import type { AskResult } from "@/api/types";
+import type { AskResult, Citation } from "@/api/types";
 
 /** A passage the answer relies on (from `sources` in the /api/answers payload). */
 export type CitedSource = {
@@ -91,27 +91,68 @@ function CitationChip({ id, onCite }: { id: string; onCite: (documentId: string)
   );
 }
 
-/** Render DOC / MTR / MEM references (bare or in "(A, B)" groups) as citation chips. */
-export function withCitationChips(text: string, onCite: (documentId: string) => void): ReactNode[] {
+/** Verified span citations behind the answer's [n] markers, and how to open one. */
+export type SpanCites = { byRef: Map<number, Citation>; open: (c: Citation) => void };
+
+const SPAN_REF_RE = /\[(\d{1,3})\]/g;
+
+function SpanChip({ num, citation, onOpen }: { num: number; citation: Citation; onOpen: () => void }) {
+  const partial = citation.support === "partial";
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`${CHIP} ${partial ? "border border-dashed border-wine/60" : ""}`}
+      data-testid={`span-citation-${num}`}
+      title={`${citation.title ?? citation.document_id ?? "Source"}${partial ? " — supports only part of this statement" : ""}`}
+    >
+      [{num}]
+    </button>
+  );
+}
+
+function withSpanChips(text: string, spans: SpanCites | undefined, keyBase: number): ReactNode[] {
+  if (!spans) return [<Fragment key={keyBase}>{text}</Fragment>];
   const out: ReactNode[] = [];
   let last = 0;
-  let key = 0;
-  for (const m of text.matchAll(CITE_GROUP_RE)) {
+  let key = keyBase;
+  for (const m of text.matchAll(SPAN_REF_RE)) {
+    const citation = spans.byRef.get(Number(m[1]));
+    if (!citation) continue;
     const start = m.index ?? 0;
     if (start > last) out.push(<Fragment key={key++}>{text.slice(last, start)}</Fragment>);
-    for (const id of (m[1] ?? m[2] ?? "").match(EVIDENCE_ID_RE) ?? []) {
-      out.push(<CitationChip key={key++} id={id} onCite={onCite} />);
-    }
+    out.push(<SpanChip key={key++} num={Number(m[1])} citation={citation} onOpen={() => spans.open(citation)} />);
     last = start + m[0].length;
   }
   if (last < text.length) out.push(<Fragment key={key++}>{text.slice(last)}</Fragment>);
   return out;
 }
 
+/** Render DOC / MTR / MEM references (bare or in "(A, B)" groups) and [n] span markers as chips. */
+export function withCitationChips(text: string, onCite: (documentId: string) => void, spans?: SpanCites): ReactNode[] {
+  const out: ReactNode[] = [];
+  let last = 0;
+  let key = 0;
+  for (const m of text.matchAll(CITE_GROUP_RE)) {
+    const start = m.index ?? 0;
+    if (start > last) {
+      const parts = withSpanChips(text.slice(last, start), spans, key);
+      key += parts.length;
+      out.push(...parts);
+    }
+    for (const id of (m[1] ?? m[2] ?? "").match(EVIDENCE_ID_RE) ?? []) {
+      out.push(<CitationChip key={key++} id={id} onCite={onCite} />);
+    }
+    last = start + m[0].length;
+  }
+  if (last < text.length) out.push(...withSpanChips(text.slice(last), spans, key));
+  return out;
+}
+
 /** Minimal markdown: paragraphs, "- " bullet lists and "#" headings, with citation chips inline. */
-export function AnswerBody({ text, onCite }: { text: string; onCite: (documentId: string) => void }) {
+export function AnswerBody({ text, onCite, spans }: { text: string; onCite: (documentId: string) => void; spans?: SpanCites }) {
   const blocks = text.replace(/\r/g, "").split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
-  const inline = (t: string) => withCitationChips(t.replace(/\*\*(.+?)\*\*/g, "$1"), onCite);
+  const inline = (t: string) => withCitationChips(t.replace(/\*\*(.+?)\*\*/g, "$1"), onCite, spans);
   return (
     <div className="space-y-4 text-[16px] leading-[1.75] text-foreground">
       {blocks.map((block, i) => {
@@ -157,6 +198,21 @@ export function AIAnswer({ result }: { result: AskResult }) {
 
   const status = String(result.status ?? "");
   const answer = String(result.answer ?? "").trim();
+  const spanList = result.span_citations ?? [];
+  const spans: SpanCites | undefined = spanList.length
+    ? {
+        byRef: new Map(spanList.filter((c) => typeof c.ref === "number").map((c) => [c.ref as number, c])),
+        open: (c) =>
+          c.document_id &&
+          inspector?.open({
+            type: "document",
+            id: String(c.document_id),
+            chunkId: c.chunk_id ? String(c.chunk_id) : undefined,
+            quotes: (c.quotes ?? []).map((q) => String(q.quote ?? "")).filter(Boolean),
+          }),
+      }
+    : undefined;
+  const removed = result.grounding?.removed ?? 0;
 
   if (result.abstained && (status === "not_found" || result.reason === "scope_not_found") && answer) {
     return (
@@ -193,7 +249,7 @@ export function AIAnswer({ result }: { result: AskResult }) {
       {result.key_finding && (
         <div className="rounded-lg border border-wine/30 bg-wine-soft/40 p-5">
           <div className="meta-label mb-1 text-wine">Key finding</div>
-          <p className="font-display text-xl leading-snug text-ink">{withCitationChips(String(result.key_finding), openDoc)}</p>
+          <p className="font-display text-xl leading-snug text-ink">{withCitationChips(String(result.key_finding), openDoc, spans)}</p>
         </div>
       )}
       {status === "insufficient" && (
@@ -201,18 +257,30 @@ export function AIAnswer({ result }: { result: AskResult }) {
           The records found concern this matter but do not fully answer the question.
         </p>
       )}
-      <AnswerBody text={answer} onCite={openDoc} />
+      <AnswerBody text={answer} onCite={openDoc} spans={spans} />
+      {removed > 0 && (
+        <p className="rounded-md border border-border bg-secondary/50 px-3 py-2 text-sm text-muted-foreground" data-testid="ai-grounding-removed">
+          {removed === 1 ? "1 statement was" : `${removed} statements were`} removed because the cited sources did not
+          support {removed === 1 ? "it" : "them"}.
+        </p>
+      )}
       {caption && <p className="text-xs text-muted-foreground" data-testid="ai-provider">{caption}</p>}
     </div>
   );
 }
 
 /** The answer while the model is still writing (replaced by AIAnswer when final). */
-export function AIStreaming({ keyFinding, text }: { keyFinding: string; text: string }) {
+export function AIStreaming({ keyFinding, text, verifying = false }: { keyFinding: string; text: string; verifying?: boolean }) {
   const inspector = useInspector();
   const openDoc = (documentId: string) => inspector?.open({ type: "document", id: documentId });
   return (
     <div className="space-y-8" data-testid="ai-streaming" aria-busy="true">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground" role="status" data-testid="ai-draft-banner">
+        <span className="h-2 w-2 animate-pulse rounded-full bg-wine" />
+        {verifying
+          ? "Draft — checking each statement against its source before it is shown…"
+          : "Draft — statements are checked against their sources when the answer is complete."}
+      </div>
       {keyFinding && (
         <div className="rounded-lg border border-wine/30 bg-wine-soft/40 p-5">
           <div className="meta-label mb-1 text-wine">Key finding</div>

@@ -256,6 +256,13 @@ export type ChatSession = {
   updated_at: string
 }
 
+/** One verified quote: exact text and its character offsets in the source document. */
+export type CitationQuote = {
+  quote?: string
+  page?: number | string | null
+  verification?: { verified?: boolean; start_char?: number; end_char?: number }
+}
+
 export type Citation = {
   ref?: number
   document_id?: string
@@ -263,7 +270,22 @@ export type Citation = {
   title?: string
   snippet?: string
   matter_id?: string
+  quote?: string
+  quotes?: CitationQuote[]
+  /** Whether the cited text supports the whole statement (supported) or only part of it. */
+  support?: 'supported' | 'partial'
+  verified?: boolean
   [key: string]: unknown
+}
+
+/** What the grounding check did to an answer before it was shown. */
+export type GroundingReport = {
+  checked: number
+  supported: number
+  partial: number
+  contradicted?: number
+  removed: number
+  removed_statements?: { text: string; verdict: string; reason?: string }[]
 }
 
 export type ChatEvent = { type: string; [key: string]: unknown }
@@ -315,6 +337,9 @@ export type AskResult = {
   resolved_scope?: { kind?: string; label?: string; method?: string; matter_ids?: string[] } | null
   structured_citations?: Array<Record<string, unknown>>
   sources?: Array<Record<string, unknown>>
+  /** [n] markers in the answer point at these verified spans. */
+  span_citations?: Citation[]
+  grounding?: GroundingReport
   provider?: string
   [key: string]: unknown
 }

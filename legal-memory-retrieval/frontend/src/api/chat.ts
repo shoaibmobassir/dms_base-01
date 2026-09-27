@@ -56,6 +56,8 @@ export function exportEdits(sessionId: string, messageId: string, documentId: st
 
 export type StreamHandlers = {
   onDelta: (text: string) => void
+  /** Verified answer text that replaces everything streamed so far. */
+  onFinalText?: (text: string) => void
   onEvent: (event: ChatEvent) => void
   onCitation: (citation: Citation) => void
   onTitle: (title: string) => void
@@ -111,6 +113,9 @@ export async function streamMessage(
       switch (event.type) {
         case 'text_delta':
           handlers.onDelta(String(event.text ?? ''))
+          break
+        case 'text_final':
+          handlers.onFinalText?.(String(event.text ?? ''))
           break
         case 'citation_data':
           handlers.onCitation(event as Citation)

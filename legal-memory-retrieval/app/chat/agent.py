@@ -41,6 +41,7 @@ from app.chat.tools.document_tools import (
     find_in_document,
     page_at,
     read_document,
+    resolve_document_text,
     search_firm_records,
 )
 from app.chat.tools.firm_tools import (
@@ -54,6 +55,7 @@ from app.chat.tools.review_tools import propose_edits
 from app.chat.tools.schema import ALL_TOOLS
 from app.chat.verify_citations import verify_document_citation
 from app.config import settings
+from app.grounding import Source, ground_answer, verifier_llms
 from app.db.connection import connect
 from app.llm.bedrock_client import bedrock_configured, chat_complete
 from app.observability.metrics import (
@@ -207,6 +209,8 @@ def dispatch_tool_call(
         result = _FIRM_TOOLS[name](arguments, doc_index, conn, member_id)
         if "event" in result:
             events.append(result.pop("event"))
+        if name == "ask_firm":
+            _load_passage_documents(result, doc_index, doc_store, conn, member_id)
         return result, events
 
     elif name == "list_workflows":
@@ -239,6 +243,93 @@ def dispatch_tool_call(
 
     else:
         return {"error": f"Unknown tool: {name}"}, events
+
+
+def _load_passage_documents(
+    result: dict[str, Any],
+    doc_index: DocIndex,
+    doc_store: DocStore,
+    conn: Any,
+    member_id: str | None,
+) -> None:
+    """Put the full text of every document ask_firm quoted into the turn's store.
+
+    Without this, a citation to an ask_firm passage had no source text and was shown
+    without any check at all.
+    """
+    for slug in dict.fromkeys(p.get("doc_id") for p in result.get("passages") or []):
+        entry = doc_index.get(slug) if slug else None
+        if entry is None or slug in doc_store:
+            continue
+        try:
+            resolve_document_text(entry, doc_store, conn, member_id)
+        except Exception as exc:  # the answer can still be checked against the passage text
+            logger.warning("[chat/agent] could not load %s for verification: %s", entry.document_id, exc)
+            text = "\n\n".join(p.get("text") or "" for p in result.get("passages") or [] if p.get("doc_id") == slug)
+            if text:
+                doc_store[slug] = text
+
+
+_RECORD_TOOLS = frozenset({"ask_firm", "resolve_matter", "get_matter_profile", "find_people"})
+
+
+def _record_text(value: Any, indent: str = "") -> str:
+    """Flatten a firm-record tool result into readable "key: value" lines."""
+    if isinstance(value, dict):
+        lines = []
+        for k, v in value.items():
+            if k in {"passages", "draft_answer", "key_finding", "note", "event"} or v in (None, "", [], {}):
+                continue
+            if isinstance(v, (dict, list)):
+                lines.append(f"{indent}{k}:\n{_record_text(v, indent + '  ')}")
+            else:
+                lines.append(f"{indent}{k}: {v}")
+        return "\n".join(lines)
+    if isinstance(value, list):
+        return "\n".join(_record_text(v, indent) for v in value)
+    return f"{indent}{value}"
+
+
+def grounding_sources(doc_index: DocIndex, doc_store: DocStore, records: list[str]) -> list[Source]:
+    sources = []
+    for slug, text in doc_store.items():
+        entry = doc_index.get(slug)
+        if entry is None or not text or text == "Document could not be read.":
+            continue
+        sources.append(Source(key=slug, document_id=entry.document_id, title=entry.filename, text=text))
+    for i, text in enumerate(records):
+        sources.append(Source(key=f"record:{i}", document_id=None, title="Firm records", text=text))
+    return sources
+
+
+def ground_chat_text(
+    full_text: str,
+    doc_index: DocIndex,
+    doc_store: DocStore,
+    records: list[str],
+) -> tuple[str, list[dict[str, Any]], dict[str, Any]]:
+    """Verify every statement of the final answer; return (text, citations, report)."""
+    prose = extract_citations_text(full_text)
+    by_ref = {c.ref: c for c in parse_citations(full_text)}
+
+    def refs(unit) -> list[Any]:
+        return [by_ref[int(r)] for r in unit.refs if int(r) in by_ref]
+
+    grounded = ground_answer(
+        prose,
+        ref_style="markers",
+        cited_keys=lambda u: [c.doc_id for c in refs(u)],
+        offered_quotes=lambda u: [q.quote for c in refs(u) for q in (getattr(c, "quotes", None) or [])],
+        sources=grounding_sources(doc_index, doc_store, records),
+        llm=verifier_llms(),
+    )
+    citations = []
+    for c in grounded.citations:
+        entry = doc_index.get(c["doc_id"])
+        if entry is not None:
+            c = {**c, "document_id": entry.document_id, "title": entry.filename}
+        citations.append(c)
+    return name_documents(grounded.text, doc_index), citations, grounded.report()
 
 
 _FIRM_TOOLS = {
@@ -595,14 +686,25 @@ def _call_bedrock(
                 clean["name"] = msg["name"]
         clean_messages.append(clean)
 
-    result = chat_complete(
-        clean_messages,
-        model=model_id,
-        temperature=0.3,
-        max_tokens=8192,
-        tools=tools or None,
-        timeout=120.0,
-    )
+    def call() -> dict[str, Any]:
+        return chat_complete(
+            clean_messages,
+            model=model_id,
+            temperature=0.3,
+            max_tokens=8192,
+            tools=tools or None,
+            timeout=120.0,
+        )
+
+    try:
+        result = call()
+    except httpx.HTTPStatusError as exc:
+        # The model occasionally emits a malformed tool call ("Unterminated string"), which
+        # the endpoint rejects as a 400. Sampling again usually produces a valid one.
+        if exc.response is None or exc.response.status_code != 400 or "Unterminated" not in exc.response.text:
+            raise
+        logger.warning("[chat/agent] malformed tool call from %s; retrying once", model_id)
+        result = call()
     return {
         "content": result.get("content") or "",
         "tool_calls": result.get("tool_calls") or [],
@@ -762,6 +864,8 @@ def run_chat_agent(
     tools_paused = False
 
     full_text = ""
+    records: list[str] = []
+    grounding = settings.grounding_enabled
 
     for round_num in range(MAX_TOOL_ROUNDS):
         logger.info(
@@ -794,7 +898,8 @@ def run_chat_agent(
                 content = "\n\n" + content.lstrip()
             full_text += content
             clean_text = name_documents(extract_citations_text(content), doc_index)
-            if clean_text:
+            # With grounding on, the final answer is shown only after it is verified.
+            if clean_text and not (grounding and not tool_calls):
                 yield sse_event("text_delta", {"text": clean_text})
 
         # If no tool calls, we're done
@@ -878,6 +983,9 @@ def run_chat_agent(
                     "waiting_for_input": True,
                 }
 
+            if tool_name in _RECORD_TOOLS and not result.get("error"):
+                records.append(_record_text(result))
+
             # Add tool result to messages
             messages.append({
                 "role": "tool",
@@ -885,6 +993,27 @@ def run_chat_agent(
                 "name": tool_name,
                 "content": json.dumps(result, default=str),
             })
+
+    if grounding and full_text.strip():
+        step = {"type": "reasoning", "text": "Checking each statement against its source", "mode": mode or "answer"}
+        all_events.append(step)
+        yield sse_event("reasoning", {"text": step["text"], "mode": step["mode"]})
+        try:
+            clean_text, verified_citations, report = ground_chat_text(full_text, doc_index, doc_store, records)
+        except Exception as exc:  # never show an unchecked answer as if it were checked
+            logger.error("[chat/agent] grounding failed: %s, request_id=%s", exc, request_id)
+            clean_text = ("The answer could not be checked against its sources, so it is not shown. "
+                          "Please try again.")
+            verified_citations, report = [], {"error": "grounding_failed"}
+        all_events.append({"type": "grounding", **report})
+        yield sse_event("grounding", report)
+        yield sse_event("text_final", {"text": clean_text})
+        for cit in verified_citations:
+            CHAT_CITATION_RESULTS.labels(result="verified").inc()
+            yield sse_event("citation_data", cit)
+        CHAT_TURNS.labels(outcome="completed").inc()
+        yield sse_done()
+        return {"full_text": clean_text, "events": all_events, "citations": verified_citations}
 
     # Parse and verify citations
     citations = parse_citations(full_text)

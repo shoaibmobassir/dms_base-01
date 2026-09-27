@@ -416,3 +416,12 @@ Our design decisions: source-of-truth tables compiled into the existing `permiss
 Mike source used as coding basis: NO
 New dependencies introduced: none
 IP notes: Independent design.
+
+### Feature: Claim-level grounding for Ask the Firm and the Assistant (app/grounding)
+Date: 2026-09-27
+Mike observation (product level only): None. The requirement comes from our own answer-quality review (live answers cited quotes that existed in the document but did not state the fact; statements of law were produced from model memory). Public product descriptions of other legal AI tools (character-level citations, grounded outputs) were read as market context only.
+Requirement (technology-independent): Every sentence shown to a lawyer must either be entailed by the exact source text shown for it, or not be shown. Unsupported statements are removed and reported; contradicted ones are removed; partly supported ones are marked. Citations point at exact character spans.
+Our design decisions: Sentence-level units; candidate spans from the cited sources ranked lexically (with auto-citation from other evidence); one batched judge call on a model other than the generator; deterministic figures/dates guard; answer rewritten with fresh [n] markers and verified offsets; fail closed when the judge is unavailable. Eval harness `evals/grounding_eval.py` with an independent judge model and hand calibration.
+Mike source used as coding basis: NO
+New dependencies introduced: none
+IP notes: none

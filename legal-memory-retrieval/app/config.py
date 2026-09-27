@@ -80,6 +80,12 @@ class Settings(BaseSettings):
     # Embeddings often need a different Runtime region (Mantle chat stays on bedrock_region).
     bedrock_embedding_region: str = "us-east-2"
     bedrock_model: str = "zai.glm-5"
+    # Claim-level grounding: every displayed sentence is checked against its cited text
+    # by a model other than the answer generator (see app/grounding).
+    grounding_enabled: bool = True
+    grounding_verifier_model: str = "moonshotai.kimi-k2.5"
+    # Comma-separated extra verifiers; a sentence counts as supported only if all agree.
+    grounding_consensus_models: str = ""
     bedrock_embedding_model: str = "amazon.titan-embed-text-v2:0"
     # Titan v2 accepts 256/512/1024. Do NOT point production retrieval at Bedrock
     # embeddings without a schema + full re-embed (corpus is MiniLM 384-d).

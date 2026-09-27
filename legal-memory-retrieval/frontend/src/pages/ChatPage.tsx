@@ -192,6 +192,8 @@ export function ChatPage() {
         content,
         {
           onDelta: (t) => patchLast((m) => ({ ...m, content: m.content + t })),
+          // The server re-sends the answer after checking every statement against its source.
+          onFinalText: (t) => patchLast((m) => ({ ...m, content: t, citations: [] })),
           onEvent: (ev) => patchLast((m) => ({ ...m, events: [...(m.events ?? []), ev] })),
           onCitation: (c) => patchLast((m) => ({ ...m, citations: [...(m.citations ?? []), c] })),
           onTitle: () => void refreshSessions(),
@@ -1062,14 +1064,19 @@ function AssistantMessage({
                     </span>
                     <ArrowUpRight className="w-3 h-3 text-muted-foreground group-hover:text-primary shrink-0" />
                   </div>
-                  {typeof c.quote === "string" && c.quote && (
-                    <p className="mt-1 line-clamp-2 text-[11px] italic text-muted-foreground">
-                      &ldquo;{c.quote.replace(/\[\[PAGE_BREAK\]\]/g, " … ")}&rdquo;
+                  {citationQuotes(c).map((q, qi) => (
+                    <p key={qi} className="mt-1 line-clamp-3 text-[11px] italic text-muted-foreground">
+                      &ldquo;{q.replace(/\[\[PAGE_BREAK\]\]/g, " … ")}&rdquo;
                     </p>
-                  )}
+                  ))}
                   <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
                     {c.page != null && <span className="font-mono">p. {String(c.page)}</span>}
                     {Array.isArray(c.quotes) && c.quotes.length > 1 && <span>{c.quotes.length} quotes</span>}
+                    {c.support === "partial" && (
+                      <span className="font-semibold text-amber-700 dark:text-amber-400" data-testid="citation-partial">
+                        Partly supported
+                      </span>
+                    )}
                     {c.verified === false && (
                       <span className="font-semibold text-amber-700 dark:text-amber-400" data-testid="citation-unverified">
                         Not confirmed
@@ -1094,6 +1101,15 @@ function AssistantMessage({
   );
 }
 
+/** Every verified quote behind a citation (a compound claim can rest on two or three). */
+function citationQuotes(c: Citation): string[] {
+  const quotes = Array.isArray(c.quotes)
+    ? (c.quotes as { quote?: unknown }[]).map((q) => (typeof q?.quote === "string" ? q.quote : "")).filter(Boolean)
+    : [];
+  if (quotes.length) return quotes.slice(0, 3);
+  return typeof c.quote === "string" && c.quote ? [c.quote] : [];
+}
+
 // ── citation badge with hover preview ──────────────────────────────────────
 
 function CitationBadge({ num, citation, onOpen }: { num: number; citation?: Citation; onOpen: () => void }) {
@@ -1109,10 +1125,16 @@ function CitationBadge({ num, citation, onOpen }: { num: number; citation?: Cita
         type="button"
         onClick={onOpen}
         data-testid={`chat-citation-${num}`}
-        title={citation?.verified === false ? "Quote not confirmed in the document text" : undefined}
+        title={
+          citation?.verified === false
+            ? "Quote not confirmed in the document text"
+            : citation?.support === "partial"
+              ? "The cited text supports only part of this statement"
+              : undefined
+        }
         className={cn(
           "mx-0.5 inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-mono text-[10.5px] font-semibold transition-colors cursor-pointer bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:bg-amber-500/20 border border-amber-500/30",
-          citation?.verified === false && "border-dashed opacity-80",
+          (citation?.verified === false || citation?.support === "partial") && "border-dashed opacity-80",
           !citation && "cursor-default opacity-60",
         )}
       >

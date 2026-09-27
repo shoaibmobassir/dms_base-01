@@ -1,0 +1,241 @@
+Bedrock chat error model=deepseek.v3.2 status=502 body=<html>
+<head><title>502 Bad Gateway</title></head>
+<body>
+<center><h1>502 Bad Gateway</h1></center>
+</body>
+</html>
+
+{
+ "ask": {
+  "overall": {
+   "n": 41,
+   "claims": 126,
+   "cited_claims": 105,
+   "citation_precision": 0.629,
+   "citation_precision_lenient": 0.743,
+   "claim_coverage": 0.833,
+   "unverified_shown": 0.476,
+   "parametric_legal_claims": 2,
+   "fact_recall": 0.809,
+   "expect_ok": "7/7",
+   "latency_p50_s": 4.6,
+   "errors": 0
+  },
+  "by_category": {
+   "compound": {
+    "n": 1,
+    "claims": 5,
+    "cited_claims": 3,
+    "citation_precision": 0.0,
+    "citation_precision_lenient": 0.667,
+    "claim_coverage": 0.6,
+    "unverified_shown": 1.0,
+    "parametric_legal_claims": 0,
+    "fact_recall": 1.0,
+    "expect_ok": null,
+    "latency_p50_s": 12.8,
+    "errors": 0
+   },
+   "cross_doc": {
+    "n": 2,
+    "claims": 6,
+    "cited_claims": 5,
+    "citation_precision": 0.8,
+    "citation_precision_lenient": 0.8,
+    "claim_coverage": 0.833,
+    "unverified_shown": 0.333,
+    "parametric_legal_claims": 0,
+    "fact_recall": 1.0,
+    "expect_ok": null,
+    "latency_p50_s": 13.2,
+    "errors": 0
+   },
+   "fact": {
+    "n": 28,
+    "claims": 74,
+    "cited_claims": 67,
+    "citation_precision": 0.716,
+    "citation_precision_lenient": 0.791,
+    "claim_coverage": 0.905,
+    "unverified_shown": 0.351,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.821,
+    "expect_ok": null,
+    "latency_p50_s": 3.9,
+    "errors": 0
+   },
+   "false_premise": {
+    "n": 2,
+    "claims": 6,
+    "cited_claims": 4,
+    "citation_precision": 0.75,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.667,
+    "unverified_shown": 0.5,
+    "parametric_legal_claims": 0,
+    "fact_recall": null,
+    "expect_ok": "2/2",
+    "latency_p50_s": 4.7,
+    "errors": 0
+   },
+   "negative": {
+    "n": 2,
+    "claims": 8,
+    "cited_claims": 3,
+    "citation_precision": 0.667,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.375,
+    "unverified_shown": 0.75,
+    "parametric_legal_claims": 0,
+    "fact_recall": null,
+    "expect_ok": "2/2",
+    "latency_p50_s": 5.3,
+    "errors": 0
+   },
+   "public_law_absent": {
+    "n": 4,
+    "claims": 14,
+    "cited_claims": 11,
+    "citation_precision": 0.727,
+    "citation_precision_lenient": 0.818,
+    "claim_coverage": 0.786,
+    "unverified_shown": 0.429,
+    "parametric_legal_claims": 2,
+    "fact_recall": 0.5,
+    "expect_ok": "3/3",
+    "latency_p50_s": 6.5,
+    "errors": 0
+   },
+   "summary": {
+    "n": 2,
+    "claims": 13,
+    "cited_claims": 12,
+    "citation_precision": 0.083,
+    "citation_precision_lenient": 0.25,
+    "claim_coverage": 0.923,
+    "unverified_shown": 0.923,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.5,
+    "expect_ok": null,
+    "latency_p50_s": 7.6,
+    "errors": 0
+   }
+  }
+ },
+ "chat": {
+  "overall": {
+   "n": 41,
+   "claims": 233,
+   "cited_claims": 129,
+   "citation_precision": 0.806,
+   "citation_precision_lenient": 0.977,
+   "claim_coverage": 0.554,
+   "unverified_shown": 0.554,
+   "parametric_legal_claims": 15,
+   "fact_recall": 0.931,
+   "expect_ok": "6/7",
+   "latency_p50_s": 17.0,
+   "errors": 0
+  },
+  "by_category": {
+   "compound": {
+    "n": 1,
+    "claims": 5,
+    "cited_claims": 3,
+    "citation_precision": 0.667,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.6,
+    "unverified_shown": 0.6,
+    "parametric_legal_claims": 0,
+    "fact_recall": 1.0,
+    "expect_ok": null,
+    "latency_p50_s": 16.1,
+    "errors": 0
+   },
+   "cross_doc": {
+    "n": 2,
+    "claims": 20,
+    "cited_claims": 6,
+    "citation_precision": 0.833,
+    "citation_precision_lenient": 0.833,
+    "claim_coverage": 0.3,
+    "unverified_shown": 0.75,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.75,
+    "expect_ok": null,
+    "latency_p50_s": 30.9,
+    "errors": 0
+   },
+   "fact": {
+    "n": 28,
+    "claims": 106,
+    "cited_claims": 78,
+    "citation_precision": 0.808,
+    "citation_precision_lenient": 0.974,
+    "claim_coverage": 0.736,
+    "unverified_shown": 0.406,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.946,
+    "expect_ok": null,
+    "latency_p50_s": 15.1,
+    "errors": 0
+   },
+   "false_premise": {
+    "n": 2,
+    "claims": 19,
+    "cited_claims": 5,
+    "citation_precision": 0.2,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.263,
+    "unverified_shown": 0.947,
+    "parametric_legal_claims": 0,
+    "fact_recall": null,
+    "expect_ok": "2/2",
+    "latency_p50_s": 25.8,
+    "errors": 0
+   },
+   "negative": {
+    "n": 2,
+    "claims": 8,
+    "cited_claims": 3,
+    "citation_precision": 0.667,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.375,
+    "unverified_shown": 0.75,
+    "parametric_legal_claims": 0,
+    "fact_recall": null,
+    "expect_ok": "2/2",
+    "latency_p50_s": 21.6,
+    "errors": 0
+   },
+   "public_law_absent": {
+    "n": 4,
+    "claims": 48,
+    "cited_claims": 11,
+    "citation_precision": 0.818,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.229,
+    "unverified_shown": 0.812,
+    "parametric_legal_claims": 15,
+    "fact_recall": 1.0,
+    "expect_ok": "2/3",
+    "latency_p50_s": 23.9,
+    "errors": 0
+   },
+   "summary": {
+    "n": 2,
+    "claims": 27,
+    "cited_claims": 23,
+    "citation_precision": 0.957,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.852,
+    "unverified_shown": 0.185,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.833,
+    "expect_ok": null,
+    "latency_p50_s": 37.5,
+    "errors": 0
+   }
+  }
+ }
+}

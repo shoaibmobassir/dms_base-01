@@ -81,7 +81,9 @@ export function AskPage() {
         )}
         <PageHeader eyebrow="Ask the Firm" title={q} className="mb-8" />
         {ask.phase === "gathering" && <AIAssembling />}
-        {ask.phase === "writing" && <AIStreaming keyFinding={ask.keyFinding} text={ask.text} />}
+        {(ask.phase === "writing" || ask.phase === "verifying") && (
+          <AIStreaming keyFinding={ask.keyFinding} text={ask.text} verifying={ask.phase === "verifying"} />
+        )}
         {ask.phase === "error" && (
           <ErrorState
             title="The answer could not be produced"

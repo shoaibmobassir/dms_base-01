@@ -10,6 +10,8 @@ export type InspectorTarget = {
   id: string;
   /** Optional highlight for document peeks (chunk from a citation). */
   chunkId?: string;
+  /** Verified quotes to show and highlight (span-level citations). */
+  quotes?: string[];
 };
 
 type InspectorContextValue = {
@@ -100,7 +102,7 @@ function InspectorBody({ target, onClose }: { target: InspectorTarget; onClose: 
     case "client":
       return <ClientPeek id={target.id} onClose={onClose} />;
     case "document":
-      return <DocumentPeek id={target.id} chunkId={target.chunkId} onClose={onClose} />;
+      return <DocumentPeek id={target.id} chunkId={target.chunkId} quotes={target.quotes} onClose={onClose} />;
   }
 }
 
@@ -210,7 +212,7 @@ function ClientPeek({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-function DocumentPeek({ id, chunkId, onClose }: { id: string; chunkId?: string; onClose: () => void }) {
+function DocumentPeek({ id, chunkId, quotes, onClose }: { id: string; chunkId?: string; quotes?: string[]; onClose: () => void }) {
   const q = useDocument(id, { chunk_id: chunkId });
   return (
     <QueryState query={q} loading={<Padded>Loading…</Padded>}>
@@ -233,8 +235,23 @@ function DocumentPeek({ id, chunkId, onClose }: { id: string; chunkId?: string; 
               {d.author_name && <Row label="Author">{d.author_name}</Row>}
               {d.doc_date && <Row label="Date">{d.doc_date}</Row>}
               <Hairline className="my-3" />
-              <SectionLabel>{chunkId ? "Cited passage" : "Opening passage"}</SectionLabel>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{passage}</p>
+              {quotes && quotes.length > 0 ? (
+                <>
+                  <SectionLabel>Cited text</SectionLabel>
+                  <div className="space-y-2" data-testid="inspector-cited-quotes">
+                    {quotes.map((q, i) => (
+                      <blockquote key={i} className="border-l-2 border-wine bg-wine-soft/40 px-3 py-2 text-sm leading-relaxed text-ink">
+                        {q}
+                      </blockquote>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <SectionLabel>{chunkId ? "Cited passage" : "Opening passage"}</SectionLabel>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{passage}</p>
+                </>
+              )}
               <div className="mt-4 flex flex-col gap-2">
                 <Link to={`/documents/${d.document_id}`} onClick={onClose} className="text-sm font-semibold text-wine hover:underline">
                   Open document

@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.km import directory, passages as passage_mod
-from app.km.evidence import evidence_ids, pack
+from app.km.evidence import evidence_ids, matter_block, pack, person_block
 from app.km.intent import classify
 from app.km.resolver import resolve_matter
 from app.km.scope import MatterRef, ScopeResolution, client_named_in, resolve_scope
@@ -282,7 +282,91 @@ def gather_evidence(
 
 
 
-def _finish(g: _Gathered, parsed: dict[str, Any] | None, provider: str, model: str | None) -> dict[str, Any]:
+def _grounding_sources(g: "_Gathered"):
+    from app.grounding import Source
+
+    sources = [
+        Source(key=str(h["document_id"]).upper(), document_id=str(h["document_id"]).upper(),
+               title=str(h.get("title") or h["document_id"]), text=str(h.get("text") or ""),
+               chunk_id=h.get("chunk_id"))
+        for h in g.passages if h.get("text")
+    ]
+    sources += [Source(key=c["matter_id"], document_id=None, title=c["title"], text=matter_block(c))
+                for c in g.cards]
+    sources += [Source(key=p["member_id"], document_id=None, title=p["name"], text=person_block(p))
+                for p in g.people]
+    return sources
+
+
+_FULL_TEXT_BUDGET = 400_000
+
+
+def _full_documents(g: "_Gathered", conn: Any) -> list:
+    """Whole documents of the matters in scope, for checking "the records do not contain X"."""
+    from app.chat.tools.document_tools import fetch_document_pages, paged_text
+    from app.grounding import Source
+
+    if conn is None:
+        return []
+    wanted: dict[str, str] = {}
+    for c in g.cards:
+        for d in c.get("documents") or []:
+            wanted.setdefault(str(d["document_id"]).upper(), str(d.get("title") or d["document_id"]))
+    for h in g.passages:
+        wanted.setdefault(str(h["document_id"]).upper(), str(h.get("title") or h["document_id"]))
+    out, used = [], 0
+    for doc_id, title in list(wanted.items())[:25]:
+        try:
+            text = paged_text(fetch_document_pages(conn, doc_id))
+        except Exception as exc:  # a document that cannot be read is simply not searched
+            logger.debug("full text unavailable for %s: %s", doc_id, exc)
+            continue
+        if used + len(text) > _FULL_TEXT_BUDGET:
+            break
+        used += len(text)
+        out.append(Source(key=doc_id, document_id=doc_id, title=title, text=text))
+    return out
+
+
+def _ground(g: "_Gathered", base: dict[str, Any], conn: Any = None) -> None:
+    """Check every sentence of the answer against the evidence and rewrite it.
+
+    Sentences whose cited text does not support them are removed; document citations
+    become [n] markers pointing at verified spans (``span_citations``).
+    """
+    from app.grounding import ground_answer, verifier_llms
+
+    t = time.perf_counter()
+    sources = _grounding_sources(g)
+    full = _full_documents(g, conn) or sources
+    llm = verifier_llms()
+    key = ground_answer(base.get("key_finding") or "", ref_style="ids", cited_keys=lambda u: u.refs,
+                        offered_quotes=lambda u: [], sources=sources, llm=llm, removed_note=False,
+                        empty_message=None, full_sources=full)
+    body = ground_answer(base.get("answer") or "", ref_style="ids", cited_keys=lambda u: u.refs,
+                         offered_quotes=lambda u: [], sources=sources, llm=llm, removed_note=False,
+                         full_sources=full)
+    # One numbering for the page: the key finding's citations come first.
+    offset = len(key.citations)
+    renum = {c["ref"]: c["ref"] + offset for c in body.citations}
+    answer = re.sub(r"\[(\d{1,3})\]", lambda m: f"[{renum.get(int(m.group(1)), int(m.group(1)))}]", body.text)
+    spans = key.citations + [{**c, "ref": renum[c["ref"]]} for c in body.citations]
+    report = body.report()
+    for k in ("checked", "supported", "partial", "contradicted", "removed"):
+        report[k] = report.get(k, 0) + key.report().get(k, 0)
+    report["removed_statements"] = key.removed + body.removed
+    report["claims"] = key.report()["claims"] + report["claims"]
+    kept = report["supported"] + report["partial"]
+    base.update(answer=answer, key_finding=key.text, span_citations=spans, grounding=report)
+    if report["checked"] and not kept:
+        base.update(abstained=True, reason="not_supported_by_sources", status="insufficient",
+                    answer="The records you can access do not contain a supported answer to this question.")
+    g.timings["grounding_ms"] = round((time.perf_counter() - t) * 1000, 1)
+
+
+def _finish(
+    g: _Gathered, parsed: dict[str, Any] | None, provider: str, model: str | None, conn: Any = None,
+) -> dict[str, Any]:
     """Accept a validated LLM answer, or fall back to a deterministic records answer."""
     base = g.base
     if model:
@@ -298,6 +382,16 @@ def _finish(g: _Gathered, parsed: dict[str, Any] | None, provider: str, model: s
             base.update(abstained=False, reason="partial_evidence")
         else:
             base.update(abstained=False, reason=None)
+        from app.config import settings
+
+        if settings.grounding_enabled:
+            try:
+                _ground(g, base, conn)
+            except Exception as exc:  # an unchecked answer is not shown as checked
+                logger.error("Ask the Firm grounding failed: %s", exc)
+                base.update(abstained=True, reason="grounding_failed", status="insufficient",
+                            answer="The answer could not be checked against its sources, so it is not shown.",
+                            key_finding="")
     else:
         key, body, cited = _fallback(g.intent, g.cards, g.people, g.passages)
         base.update(
@@ -337,7 +431,7 @@ def ask_the_firm(
             logger.warning("Ask the Firm LLM failed: %s", exc)
             provider = "error"
     g.timings["llm_ms"] = round((time.perf_counter() - t) * 1000, 1)
-    return _finish(g, parsed, provider, model)
+    return _finish(g, parsed, provider, model, conn)
 
 
 STREAM_FORMAT = """
@@ -422,7 +516,8 @@ def ask_the_firm_stream(
         parsed = _validate(payload, allowed)
     elif text.strip() and provider == "bedrock":
         parsed = _validate({"status": "answered", "key_finding": "", "answer": text.strip()}, allowed)
-    result = _finish(g, parsed, provider, model)
+    yield {"type": "verifying"}
+    result = _finish(g, parsed, provider, model, conn)
     yield {"type": "final", "result": result, "replaced": result.get("status") == "fallback"}
 
 

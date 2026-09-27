@@ -81,6 +81,33 @@ test("answer renders evidence chips, people and not-found states", async ({ page
   await expect(page.getByTestId("ai-not-found")).toContainText("No matter in the records");
 });
 
+test("verified answers cite exact spans and report removed statements", async ({ page }) => {
+  await page.route("**/api/answers/stream", (route) =>
+    route.fulfill(sse({
+        status: "answered",
+        abstained: false,
+        provider: "bedrock",
+        key_finding: "The Board approved the transfer on 12 September 2026 [1].",
+        answer: "The Board approved the transfer on 12 September 2026 [1]. The matter is open (MTR-2026-00901).",
+        span_citations: [{
+          ref: 1, document_id: "DOC-06D46C4AD1", title: "Board Resolution.docx", support: "supported",
+          quotes: [
+            { quote: "Passed at the meeting of the Board of Directors held on 12 September 2026", page: 1 },
+            { quote: "consent of the Board be and is hereby accorded to the transfer", page: 1 },
+          ],
+        }],
+        grounding: { checked: 3, supported: 2, partial: 0, removed: 1 },
+    })),
+  );
+  await page.goto("/ui/ask?q=when%20was%20the%20transfer%20approved");
+  await expect(page.getByTestId("span-citation-1").first()).toBeVisible();
+  await expect(page.getByTestId("ai-grounding-removed")).toContainText("1 statement was removed");
+  await page.getByTestId("span-citation-1").first().click();
+  const quotes = page.getByTestId("inspector-cited-quotes");
+  await expect(quotes).toContainText("held on 12 September 2026");
+  await expect(quotes).toContainText("accorded to the transfer");
+});
+
 test.describe("Ask the Firm with the language model", () => {
   test.skip(!process.env.E2E_LLM, "set E2E_LLM=1 to exercise the language model");
 

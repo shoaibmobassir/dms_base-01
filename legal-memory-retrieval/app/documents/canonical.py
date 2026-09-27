@@ -45,10 +45,16 @@ def compute_block_hash(text: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+# The section number must be real numbering followed by a delimiter: digits ("12.3"),
+# upper-case Roman numerals ("IV") or a single letter ("A"). Matching the number
+# case-insensitively read "SECTION Meeting" as section "M", title "eeting".
 _RE_HEADING = re.compile(
-    r"^(?:ARTICLE|SECTION|CLAUSE|SCHEDULE|EXHIBIT|ANNEX|PART)\s+([0-9IVXLCDM\.]+)\.?\s*[:\-—]?\s*(.*)$",
-    re.IGNORECASE,
+    r"^(?i:ARTICLE|SECTION|CLAUSE|SCHEDULE|EXHIBIT|ANNEX|PART)\s+"
+    r"(\d+(?:\.\d+)*|[IVXLCDM]+|[A-Z])(?=$|[\s.:\-—])\.?\s*[:\-—]?\s*(.*)$"
 )
+# Unnumbered headings: the DOCX extractor writes Heading-style paragraphs as "SECTION <text>".
+_RE_UNNUMBERED_HEADING = re.compile(r"^SECTION\s+(\S.{0,158})$")
+_HEADING_MAX_CHARS = 200
 _RE_NUMBERED_CLAUSE = re.compile(
     r"^([0-9]+\.[0-9]+(?:\.[0-9]+)*)\.?\s+(.+)$"
 )
@@ -66,6 +72,12 @@ _RE_MD_SECTION = re.compile(
     r"^##\s+Section\s+([\d.]+)\.\s+(.+)$",
     re.IGNORECASE,
 )
+
+
+def _heading_slug(title: str) -> str:
+    """Stable section id for an unnumbered heading ("Specific disclosure" → "specific-disclosure")."""
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    return slug[:60] or "section"
 
 
 def _page_for_offset(
@@ -128,14 +140,23 @@ def parse_canonical_blocks(
         block_id = f"BLK-{uuid.uuid4().hex[:10].upper()}"
         text_hash = compute_block_hash(cleaned_text)
 
-        heading_match = _RE_HEADING.match(cleaned_text)
+        heading_match = _RE_HEADING.match(cleaned_text) if len(cleaned_text) <= _HEADING_MAX_CHARS else None
+        plain_heading = (
+            _RE_UNNUMBERED_HEADING.match(cleaned_text)
+            if heading_match is None and "\n" not in cleaned_text else None
+        )
         md_match = _RE_MD_SECTION.match(cleaned_text)
         clause_match = _RE_NUMBERED_CLAUSE.match(cleaned_text)
         letter_match = _RE_LETTERED_CLAUSE.match(cleaned_text)
         sig_match = _RE_SIGNATURE.match(cleaned_text)
         footnote_match = _RE_FOOTNOTE.match(cleaned_text)
 
-        if heading_match or md_match:
+        if plain_heading and not md_match:
+            current_section_title = plain_heading.group(1).strip()
+            current_section_id = _heading_slug(current_section_title)
+            block_type = "heading"
+            meta = {"is_header": True, "level": 1, "numbered": False}
+        elif heading_match or md_match:
             m = heading_match or md_match
             assert m is not None
             current_section_id = m.group(1).strip()

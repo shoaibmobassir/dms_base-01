@@ -12,7 +12,7 @@ export type AskEvidence = {
 }
 
 export type AskStreamState = {
-  phase: 'idle' | 'gathering' | 'writing' | 'done' | 'error'
+  phase: 'idle' | 'gathering' | 'writing' | 'verifying' | 'done' | 'error'
   evidence: AskEvidence | null
   keyFinding: string
   text: string
@@ -26,6 +26,7 @@ type AskEvent =
   | ({ type: 'evidence' } & AskEvidence)
   | { type: 'key_finding'; status: string; text: string }
   | { type: 'delta'; text: string }
+  | { type: 'verifying' }
   | { type: 'final'; result: AskResult; replaced: boolean }
   | { type: 'error'; message: string }
 
@@ -89,6 +90,8 @@ export function useAskStream(query: string | null, scope: { type: AskScopeType; 
               return { ...prev, phase: 'writing', keyFinding: event.text }
             case 'delta':
               return { ...prev, phase: 'writing', text: prev.text + event.text }
+            case 'verifying':
+              return { ...prev, phase: 'verifying' }
             case 'final':
               return { ...prev, phase: 'done', result: event.result }
             case 'error':
