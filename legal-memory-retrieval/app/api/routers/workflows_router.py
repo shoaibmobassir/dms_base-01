@@ -4,7 +4,9 @@ Clean-room independent implementation.
 """
 
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.auth.deps import resolve_member
 from pydantic import BaseModel, Field
 
 from app.workflows.catalog_loader import get_catalog_loader
@@ -74,9 +76,9 @@ async def get_workflow_details(workflow_id: str):
 @router.post("/run")
 async def run_workflow(
     req: RunWorkflowRequest,
-    x_member_id: Optional[str] = Header(None),
+    member_id: Optional[str] = Depends(resolve_member),
 ):
-    """Executes a multi-step declarative legal playbook."""
+    """Executes a multi-step declarative legal playbook, as the signed-in member."""
     loader = get_catalog_loader()
     wf = loader.get_workflow(req.workflow_id)
     if not wf:
@@ -86,7 +88,7 @@ async def run_workflow(
     res = await engine.run_workflow(
         workflow=wf,
         inputs=req.inputs,
-        member_id=x_member_id,
+        member_id=member_id,
         provider=req.provider,
         model=req.model,
     )
@@ -100,15 +102,16 @@ async def run_workflow(
         "step_outputs": res.step_outputs,
         "final_output": res.final_output,
         "created_at": res.created_at,
-        "member_id": x_member_id,
+        "member_id": member_id,
     }
     _RUNS_DB[res.run_id] = run_dict
     return run_dict
 
 
 @router.get("/runs/{run_id}")
-async def get_workflow_run(run_id: str):
-    """Retrieves execution results and step outputs for a run."""
-    if run_id not in _RUNS_DB:
+async def get_workflow_run(run_id: str, member_id: Optional[str] = Depends(resolve_member)):
+    """Retrieves execution results and step outputs for a run (the member's own runs only)."""
+    run = _RUNS_DB.get(run_id)
+    if run is None or (member_id is not None and run.get("member_id") != member_id):
         raise HTTPException(status_code=404, detail="Run not found")
-    return _RUNS_DB[run_id]
+    return run

@@ -103,14 +103,12 @@ _hierarchical_store = PgHierarchicalStore()
 
 # ── Embedder (lazy init) ────────────────────────────────────────────────────
 
-_embedder: MiniLMEmbedder | None = None
-
 
 def _get_embedder() -> MiniLMEmbedder:
-    global _embedder
-    if _embedder is None:
-        _embedder = MiniLMEmbedder()
-    return _embedder
+    # Shared with the rest of the process (see app.embeddings.factory.get_minilm).
+    from app.embeddings.factory import get_minilm
+
+    return get_minilm()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

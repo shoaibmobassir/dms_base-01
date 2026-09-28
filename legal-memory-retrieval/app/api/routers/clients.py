@@ -41,7 +41,7 @@ def clients_list(
             cur.execute(
                 f"""
                 WITH vis AS ({visible})
-                SELECT c.client_id, c.name, c.industry, c.size, c.headquarters,
+                SELECT c.client_id, c.name, c.industry, c.size, c.headquarters, c.status,
                        (SELECT count(*) FROM vis WHERE vis.client_id = c.client_id
                           AND lower(coalesce(vis.status, 'open')) = 'open') AS open_matters,
                        (SELECT count(*) FROM vis WHERE vis.client_id = c.client_id) AS total_matters,

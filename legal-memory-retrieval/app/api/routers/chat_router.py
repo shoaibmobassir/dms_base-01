@@ -8,6 +8,8 @@ Clean-room independent implementation for FirmOS legal assistant chatbot.
 
 from __future__ import annotations
 
+import uuid
+
 import json
 import logging
 from typing import Any
@@ -40,7 +42,7 @@ from app.chat.store import (
     update_assistant_message,
 )
 from app.chat.title_generator import generate_chat_title
-from app.api.acl import ACL_CLAUSE
+from app.api.acl import ACL_CLAUSE, doc_acl
 from app.chat.tools.document_tools import (
     DocIndex,
     add_documents_to_index,
@@ -247,12 +249,17 @@ def delete_chat_session(session_id: str, member_id: str | None = Depends(resolve
 # ---------------------------------------------------------------------------
 
 def _with_attachments(conn, index: DocIndex, history: list[ChatMessage], member_id: str | None) -> DocIndex:
-    """Documents attached anywhere in this conversation stay in scope, ahead of search hits."""
+    """Documents attached anywhere in this conversation, and documents the Assistant worked on in
+    recent turns, stay in scope ahead of search hits (a follow-up need not find them again)."""
+    from app.chat.context import carried_documents
+
     ids: list[str] = []
     for msg in history:
         for f in msg.files or []:
             if f.document_id and f.document_id not in ids:
                 ids.append(f.document_id)
+    carried = [d["document_id"] for d in carried_documents(history) if d["document_id"] not in ids]
+    ids += carried
     if not ids:
         return index
     rows = conn.execute(
@@ -260,12 +267,13 @@ def _with_attachments(conn, index: DocIndex, history: list[ChatMessage], member_
         SELECT d.document_id, d.title
         FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = ANY(%(ids)s) AND {ACL_CLAUSE}
+        WHERE d.document_id = ANY(%(ids)s) AND {ACL_CLAUSE} AND {doc_acl('d')}
         """,
         {"ids": ids, "member_id": member_id},
     ).fetchall()
     titles = {r["document_id"]: r["title"] for r in rows}
-    return add_documents_to_index(index, [(i, titles[i]) for i in ids if i in titles])
+    index = add_documents_to_index(index, [(i, titles[i]) for i in carried if i in titles], attached=False)
+    return add_documents_to_index(index, [(i, titles[i]) for i in ids if i in titles and i not in carried])
 
 
 @router.post("/sessions/{session_id}/messages")
@@ -491,6 +499,7 @@ def ask_sync(
         "message": assistant_msg.model_dump(),
         "events": result.get("events", []),
         "citations": result.get("citations", []),
+        "timings": result.get("timings"),
     }
 
 
@@ -537,6 +546,89 @@ def decide_edit(
     return found
 
 
+class BulkEditDecision(BaseModel):
+    status: str
+    document_id: str
+
+
+@router.patch("/sessions/{session_id}/messages/{message_id}/edits")
+def decide_edits_bulk(
+    session_id: str,
+    message_id: str,
+    body: BulkEditDecision,
+    member_id: str | None = Depends(resolve_member),
+):
+    """Accept, reject or reset every edit to one document in this message (document-wide edits
+    can number in the thousands)."""
+    if body.status not in EDIT_STATUSES:
+        raise HTTPException(status_code=422, detail=f"status must be one of {', '.join(EDIT_STATUSES)}")
+    with connect() as conn:
+        _owned_session(conn, session_id, member_id)
+        msg = get_message(conn, session_id, message_id)
+        if msg is None:
+            raise HTTPException(status_code=404, detail="Message not found")
+        events = list(msg.events or [])
+        n = 0
+        for group in _edit_groups(events):
+            if group.get("document_id") != body.document_id:
+                continue
+            for edit in group.get("edits", []):
+                edit["status"] = body.status
+                n += 1
+        if n == 0:
+            raise HTTPException(status_code=404, detail="No edits for that document")
+        set_message_events(conn, message_id, events)
+    audit.record("chat.edit_decision_bulk", member_id=member_id, object_type="chat_message", object_id=message_id,
+                 detail={"document_id": body.document_id, "status": body.status, "count": n})
+    return {"updated": n, "status": body.status}
+
+
+def _export_paragraph_edits(conn, document_id: str, groups: list[dict], member_id: str | None) -> dict:
+    """Accepted paragraph-anchored edits → tracked changes in the ORIGINAL Word file + a new version."""
+    from app.chat.tools.generation_tools import store_generated_bytes
+    from app.documents import create_version
+    from app.drafting.docx_redline_generator import DocxRedlineGenerator
+    from app.drafting.docx_tracked import apply_tracked_changes
+    from app.editing.document import DOCX_MIME, load_editable
+    from app.editing.engine import apply_plan
+
+    doc = load_editable(conn, document_id, member_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    stale = [g for g in groups if g.get("version_id") and doc.version_id and g["version_id"] != doc.version_id]
+    if stale:
+        raise HTTPException(status_code=409, detail="The document has changed since these edits were proposed; ask again")
+    ops = [{"op": e.get("op", "replace"), "pid": int(e["pid"]), "text": e.get("proposed") or ""}
+           for g in groups for e in g.get("edits", []) if e.get("status") == "accepted" and isinstance(e.get("pid"), int)]
+    if not ops:
+        raise HTTPException(status_code=409, detail="Accept at least one edit first")
+    title = f"{doc.title} (suggested edits)"
+    if doc.source == "docx" and doc.docx:
+        data, stats = apply_tracked_changes(doc.docx, ops, author="Precentis Assistant")
+        applied = stats["replaced"] + stats["replaced_whole"] + stats["deleted"] + stats["inserted"]
+    else:
+        data = DocxRedlineGenerator().create_tracked_diff_docx(
+            "\n\n".join(doc.paragraphs), "\n\n".join(apply_plan(doc.paragraphs, ops)), title=title)
+        applied = len(ops)
+    stored = store_generated_bytes(data, title, "docx", DOCX_MIME, member_id)
+    storage_uri = None
+    if doc.source == "docx":
+        # The new version keeps a clean Word file of its own (changes accepted, formatting kept), so the
+        # next edit reads paragraphs that match this version.
+        from app.drafting.docx_tracked import accept_all
+        from app.storage.object_store import get_object_store
+
+        storage_uri = get_object_store().put(f"assistant_edits/{document_id}/{uuid.uuid4().hex}.docx",
+                                             accept_all(data), content_type=DOCX_MIME)
+    version = create_version(
+        document_id, "\n\n".join(apply_plan(doc.paragraphs, ops)), source="assistant_edit",
+        version_status="developing", storage_uri=storage_uri,
+        change_summary=f"{applied} Assistant edits accepted: {groups[0].get('instruction', '')[:120]}",
+    )
+    return {**stored, "applied": applied, "tracked_in_original": doc.source == "docx",
+            "version_id": version.get("version_id"), "version_label": version.get("version_label")}
+
+
 @router.post("/sessions/{session_id}/messages/{message_id}/edits/export")
 def export_edits(
     session_id: str,
@@ -553,10 +645,13 @@ def export_edits(
         msg = get_message(conn, session_id, message_id)
         if msg is None:
             raise HTTPException(status_code=404, detail="Message not found")
-        edits = [
-            e for g in _edit_groups(msg.events) if g.get("document_id") == document_id
-            for e in g.get("edits", [])
-        ]
+        groups = [g for g in _edit_groups(msg.events) if g.get("document_id") == document_id]
+        if groups and all(g.get("anchoring") == "paragraph" for g in groups):
+            out = _export_paragraph_edits(conn, document_id, groups, member_id)
+            audit.record("chat.edit_export", member_id=member_id, object_type="chat_message", object_id=message_id,
+                         detail={"document_id": document_id, "applied": out["applied"], "version_id": out["version_id"]})
+            return out
+        edits = [e for g in groups for e in g.get("edits", [])]
         if not any(e.get("status") == "accepted" for e in edits):
             raise HTTPException(status_code=409, detail="Accept at least one edit first")
         row = conn.execute("SELECT title FROM documents WHERE document_id = %s", (document_id,)).fetchone()

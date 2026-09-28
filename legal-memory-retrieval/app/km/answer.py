@@ -19,10 +19,12 @@ import logging
 import re
 import time
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any
 
 from app.km import directory, passages as passage_mod
+from app.km.panel import build_panel, mark_cited
 from app.km.evidence import evidence_ids, matter_block, pack, person_block
 from app.km.intent import classify
 from app.km.resolver import resolve_matter
@@ -160,10 +162,22 @@ class _Gathered:
     candidates: list[dict] = field(default_factory=list)
     compact: bool = False
     done: bool = False  # the base is already the final result (no evidence / unknown scope)
+    panel: dict[str, Any] | None = None
+
+    def panel_people(self) -> list[dict]:
+        """Panel people not already in the context as a person record or a matter team."""
+        known = {p["member_id"] for p in self.people} | {t["member_id"] for c in self.cards for t in c.get("team") or []}
+        return [p for p in (self.panel or {}).get("people") or [] if p["member_id"] not in known]
 
     def context(self) -> tuple[str, set[str], str]:
         context, allowed = pack(self.cards, self.people, self.passages, self.candidates,
                                 compact_cards=self.compact, budget_chars=16000)
+        extra = self.panel_people()
+        if extra:
+            # Lets the answer name who worked on the matters behind the evidence, with a record citation.
+            context += "\n\nPEOPLE CONNECTED TO THESE MATTERS AND DOCUMENTS:\n" + "\n".join(
+                f"[{p['member_id']}] {p['name']}, {p['role']} — {p['why']}" for p in extra)
+            allowed |= {p["member_id"].upper() for p in extra}
         note = ""
         if self.sc.matters:
             note = f"The user scoped this question to: {self.sc.label} ({', '.join(self.sc.matter_ids[:12])}).\n"
@@ -175,6 +189,7 @@ def _new_base(raw_question: str, timings: dict[str, Any]) -> dict[str, Any]:
         "query": raw_question, "answer": "", "key_finding": "", "citations": [], "abstained": True,
         "reason": "no_evidence", "provider": "none", "hits": [], "people": [], "matter_cards": [],
         "resolved_scope": None, "resolution": None, "km_intent": None, "latency_ms": timings,
+        "panel": None,
     }
 
 
@@ -265,6 +280,15 @@ def gather_evidence(
     if intent.people and sc.kind != "matter":
         people = directory.people_search(conn, q, member_id)
     timings["evidence_ms"] = round((time.perf_counter() - t) * 1000, 1)
+    experts = people if intent.people else [
+        p for p in directory.people_search(conn, q, member_id, limit=3) if p["score"] >= 1.0
+    ]
+    panel = build_panel(
+        conn, member_id=member_id, scope_ids=[c["matter_id"] for c in cards] or sc.matter_ids[:12],
+        cards=cards, passages=passages, candidates=(resolution.candidates if resolution else []),
+        experts=experts, people_first=intent.people and sc.kind != "matter",
+    )
+    timings["panel_ms"] = panel.pop("ms")
     timings["engine"] = {k: engine_latency.get(k) for k in ("intent", "matter_scope_ms", "parallel_wall_ms", "scoped", "cache", "channel_timeouts") if k in engine_latency}
 
     base["resolved_scope"] = sc.to_dict() if sc.matters else None
@@ -272,9 +296,10 @@ def gather_evidence(
     base["people"] = people
     base["matter_cards"] = [_card_summary(c) for c in cards]
     base["hits"] = passages
+    base["panel"] = panel
 
-    g = _Gathered(base, timings, t0, q, sc, intent, cards, people, passages, candidates, compact)
-    if not (cards or people or passages or candidates):
+    g = _Gathered(base, timings, t0, q, sc, intent, cards, people, passages, candidates, compact, panel=panel)
+    if not (cards or people or passages or candidates or panel["matters"] or panel["people"]):
         base.update(reason="no_evidence", abstained=True)
         timings["total_ms"] = round((time.perf_counter() - t0) * 1000, 1)
         g.done = True
@@ -295,6 +320,9 @@ def _grounding_sources(g: "_Gathered"):
                 for c in g.cards]
     sources += [Source(key=p["member_id"], document_id=None, title=p["name"], text=person_block(p))
                 for p in g.people]
+    sources += [Source(key=p["member_id"], document_id=None, title=p["name"],
+                       text=f"[{p['member_id']}] PERSON — {p['name']}, {p['role']}. {p['why']}.")
+                for p in g.panel_people()]
     return sources
 
 
@@ -340,12 +368,15 @@ def _ground(g: "_Gathered", base: dict[str, Any], conn: Any = None) -> None:
     sources = _grounding_sources(g)
     full = _full_documents(g, conn) or sources
     llm = verifier_llms()
-    key = ground_answer(base.get("key_finding") or "", ref_style="ids", cited_keys=lambda u: u.refs,
-                        offered_quotes=lambda u: [], sources=sources, llm=llm, removed_note=False,
-                        empty_message=None, full_sources=full)
-    body = ground_answer(base.get("answer") or "", ref_style="ids", cited_keys=lambda u: u.refs,
-                         offered_quotes=lambda u: [], sources=sources, llm=llm, removed_note=False,
-                         full_sources=full)
+    # The key finding and the body are independent checks; run them side by side.
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        key_job = pool.submit(ground_answer, base.get("key_finding") or "", ref_style="ids",
+                              cited_keys=lambda u: u.refs, offered_quotes=lambda u: [], sources=sources,
+                              llm=llm, removed_note=False, empty_message=None, full_sources=full)
+        body_job = pool.submit(ground_answer, base.get("answer") or "", ref_style="ids",
+                               cited_keys=lambda u: u.refs, offered_quotes=lambda u: [], sources=sources,
+                               llm=llm, removed_note=False, full_sources=full)
+        key, body = key_job.result(), body_job.result()
     # One numbering for the page: the key finding's citations come first.
     offset = len(key.citations)
     renum = {c["ref"]: c["ref"] + offset for c in body.citations}
@@ -362,6 +393,7 @@ def _ground(g: "_Gathered", base: dict[str, Any], conn: Any = None) -> None:
         base.update(abstained=True, reason="not_supported_by_sources", status="insufficient",
                     answer="The records you can access do not contain a supported answer to this question.")
     g.timings["grounding_ms"] = round((time.perf_counter() - t) * 1000, 1)
+    g.timings["grounding"] = {"key": key.timings, "body": body.timings}
 
 
 def _finish(
@@ -400,6 +432,9 @@ def _finish(
             provider="records" if (g.cards or g.people) else f"extractive_after_{provider}",
             status="fallback",
         )
+    cited = {str(c).upper() for c in base.get("citations") or [] if isinstance(c, str)}
+    cited |= {str(c.get("document_id") or c.get("doc_id") or "").upper() for c in base.get("span_citations") or []}
+    mark_cited(base.get("panel"), cited)
     g.timings["total_ms"] = round((time.perf_counter() - g.t0) * 1000, 1)
     return base
 
@@ -479,6 +514,7 @@ def ask_the_firm_stream(
         "resolution": g.base.get("resolution"),
         "people": g.base.get("people"),
         "matter_cards": g.base.get("matter_cards"),
+        "panel": g.base.get("panel"),
         "hits": g.base.get("hits"),
         "evidence_ms": g.timings.get("evidence_ms"),
     }

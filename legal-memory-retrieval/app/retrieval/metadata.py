@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.api.acl import doc_acl
+
 import re
 
 from psycopg.rows import dict_row
@@ -81,7 +83,7 @@ def _scoped_matter_search(
         JOIN documents d ON d.document_id = c.document_id
         JOIN permissions p ON p.matter_id = c.matter_id
         JOIN matters m ON m.matter_id = d.matter_id
-        WHERE {ACL}
+        WHERE {ACL} AND {doc_acl('c')}
         AND (
             m.matter_id = ANY(%(matter_ids)s)
             OR m.matter_code = ANY(%(codes)s)
@@ -127,7 +129,7 @@ def _catalog_search(
         JOIN permissions p ON p.matter_id = d.matter_id
         JOIN matters m ON m.matter_id = d.matter_id
         JOIN clients cl ON cl.client_id = m.client_id
-        WHERE {ACL}
+        WHERE {ACL} AND {doc_acl('d')}
         AND (
             m.matter_id = ANY(%(matter_ids)s)
             OR m.matter_code ILIKE ANY(%(codes)s)

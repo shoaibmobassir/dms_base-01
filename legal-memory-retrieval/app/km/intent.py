@@ -10,7 +10,9 @@ from dataclasses import asdict, dataclass
 
 _PEOPLE_RE = re.compile(
     r"\bwho\b[^?]{0,40}\b(work|working|worked|staff|staffed|lead|leads|led|leading|handl|responsible|"
-    r"in the firm|at the firm|in our firm|on the team|on this|expert|specialis|specializ|sits|based)"
+    r"in the firm|at the firm|in our firm|on the team|on this|expert|specialis|specializ|sits|based|"
+    r"acted for|act for|advised|contact|ran|involved|assigned)"
+    r"|\b(lawyers?|partners?|associates?|counsel|people|colleagues?)\b[^?]{0,15}\b(on|for|who|involved|assigned)\b"
     r"|\bwhich (partner|associate|counsel|lawyer|member|attorney|colleague|paralegal|junior|person|people)s?\b"
     r"|\b(our|the|matter|deal) team\b|\bteam members?\b|\bstaffed\b|\bexperts? (in|on)\b"
     r"|\bspeciali[sz](e|es|ed|ing|ation|ist)\b|\bknowledge manager\b|\bpoint of contact\b",

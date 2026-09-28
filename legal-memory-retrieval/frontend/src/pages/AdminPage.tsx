@@ -18,6 +18,7 @@ import {
   type FirmRole,
 } from "@/api/access";
 import { usePeople } from "@/api/resources";
+import { createPerson, firmError } from "@/api/firm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState, MonoId, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
@@ -61,6 +62,7 @@ export function AdminPage() {
           </button>
         ))}
       </div>
+      {active === "users" && can(me.data, "users.manage") && <OnboardPerson />}
       {active === "users" && <UsersSection canEdit={can(me.data, "roles.manage")} />}
       {active === "teams" && <TeamsSection />}
       {active === "walls" && <WallsSection />}
@@ -86,6 +88,66 @@ function useRun() {
     }
   };
   return { busy, run };
+}
+
+/** Onboard someone: profile and firm roles (their sign-in key is issued separately). */
+function OnboardPerson() {
+  const { identityKey } = useApp();
+  const queryClient = useQueryClient();
+  const roles = useFirmRoles();
+  const { busy, run } = useRun();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("Associate");
+  const [office, setOffice] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("fee_earner");
+  const [error, setError] = useState<string | null>(null);
+  if (!open) {
+    return (
+      <Button size="sm" onClick={() => setOpen(true)} data-testid="admin-onboard">
+        Add a person
+      </Button>
+    );
+  }
+  const submit = async () => {
+    setError(null);
+    const ok = await run(async () => {
+      try {
+        await createPerson({ name, role: title, office: office || undefined, email: email || undefined, roles: [role] });
+      } catch (err) {
+        setError(firmError(err));
+        throw err;
+      }
+      await queryClient.invalidateQueries({ queryKey: [identityKey, "admin-users"] });
+      await queryClient.invalidateQueries({ queryKey: [identityKey, "people"] });
+    }, `${name} added`);
+    if (ok) {
+      setOpen(false);
+      setName("");
+      setEmail("");
+    }
+  };
+  return (
+    <section className="space-y-2 rounded-lg border border-border bg-card p-4" data-testid="admin-onboard-form">
+      <SectionLabel>Add a person</SectionLabel>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} data-testid="onboard-name" />
+        <Input placeholder="Title (e.g. Associate)" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Input placeholder="Office" value={office} onChange={(e) => setOffice(e.target.value)} />
+        <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <select className="rounded-md border border-border bg-background px-2 py-2 text-sm" value={role} onChange={(e) => setRole(e.target.value)}
+          aria-label="Firm role">
+          {(roles.data ?? []).map((r) => <option key={r.role_key} value={r.role_key}>{r.name}</option>)}
+        </select>
+      </div>
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <div className="flex gap-2">
+        <Button size="sm" disabled={busy || !name.trim()} onClick={() => void submit()} data-testid="onboard-save">Add</Button>
+        <Button size="sm" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+      </div>
+    </section>
+  );
 }
 
 function UsersSection({ canEdit }: { canEdit: boolean }) {

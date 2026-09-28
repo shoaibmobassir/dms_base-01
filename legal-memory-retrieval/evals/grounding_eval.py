@@ -279,6 +279,42 @@ def _date_forms(value: str) -> list[str]:
     return [value]
 
 
+def _ms(v) -> float | None:
+    return float(v) if isinstance(v, (int, float)) else None
+
+
+def stage_timings(surface: str, resp: dict) -> dict[str, float]:
+    """Flatten the server's per-stage timings into named stages (ms) for p50/p95 reporting."""
+    out: dict[str, float | None] = {}
+    if surface == "ask":
+        t = resp.get("latency_ms") or {}
+        for k in ("scope_ms", "resolver_ms", "evidence_ms", "llm_ms", "first_token_ms", "grounding_ms", "total_ms"):
+            out[k] = _ms(t.get(k))
+        g = t.get("grounding") or {}
+        parts = [g.get("key") or {}, g.get("body") or {}]
+        # key finding and body run in parallel: the slower one is the wall time of each step
+        out["verify_ms"] = max((_ms(p.get("verify_ms")) or 0 for p in parts), default=None) if g else None
+        out["absence_ms"] = max((_ms(p.get("absence_ms")) or 0 for p in parts), default=None) if g else None
+        out["units"] = sum(p.get("units") or 0 for p in parts) if g else None
+    else:
+        t = resp.get("timings") or {}
+        out["agent_llm_ms"] = sum(t.get("llm_ms") or []) or None
+        out["agent_tools_ms"] = sum(x.get("ms", 0) for x in t.get("tool_ms") or []) or None
+        out["rounds"] = _ms(t.get("rounds"))
+        per_round = t.get("tool_calls_per_round") or []
+        out["multi_tool_rounds"] = float(sum(1 for n in per_round if n > 1)) if t else None
+        out["grounding_ms"] = _ms(t.get("grounding_ms"))
+        g = t.get("grounding") or {}
+        out["verify_ms"], out["absence_ms"], out["units"] = _ms(g.get("verify_ms")), _ms(g.get("absence_ms")), _ms(g.get("units"))
+        out["total_ms"] = _ms(t.get("total_ms"))
+    return {k: v for k, v in out.items() if v is not None}
+
+
+def _pct(values: list[float], q: float) -> float:
+    ordered = sorted(values)
+    return ordered[min(len(ordered) - 1, round(q * (len(ordered) - 1)))]
+
+
 def run_one(api: Api, surface: str, row: dict, mode: str) -> dict:
     t0 = time.time()
     try:
@@ -298,12 +334,13 @@ def run_one(api: Api, surface: str, row: dict, mode: str) -> dict:
         "query": row["query"], "answer": text, "units": units, "answer_level": verdict.get("answer_level") or {},
         "judge_error": verdict.get("error"), "fact_recall": (sum(found) / len(found)) if found else None,
         "latency_s": round(latency, 1),
+        "stages": stage_timings(surface, resp),
         "status": resp.get("status"), "invented_citations": resp.get("invented_citations"),
     }
 
 
 def summarise(results: list[dict]) -> dict:
-    def block(rs: list[dict]) -> dict:
+    def block(rs: list[dict], stages: bool = False) -> dict:
         claims = [u for r in rs for u in r.get("units", []) if u.get("kind") == "claim"]
         cited = [u for u in claims if u.get("cited")]
         sup = [u for u in cited if u.get("support") == "supported"]
@@ -324,13 +361,19 @@ def summarise(results: list[dict]) -> dict:
             "fact_recall": round(statistics.mean(fr), 3) if fr else None,
             "expect_ok": f"{len(exp_ok)}/{len(exp)}" if exp else None,
             "latency_p50_s": round(statistics.median([r["latency_s"] for r in rs if "latency_s" in r]), 1) if rs else None,
+            "latency_p95_s": round(_pct([r["latency_s"] for r in rs if "latency_s" in r], 0.95), 1) if rs else None,
+            "stages": None if not stages else {
+                name: {"p50": round(statistics.median(vals), 1), "p95": round(_pct(vals, 0.95), 1), "n": len(vals)}
+                for name in sorted({k for r in rs for k in r.get("stages", {})})
+                for vals in [[r["stages"][name] for r in rs if name in r.get("stages", {})]]
+            },
             "errors": sum(1 for r in rs if r.get("error") or r.get("judge_error")),
         }
 
     out: dict = {}
     for surface in sorted({r["surface"] for r in results}):
         rs = [r for r in results if r["surface"] == surface]
-        out[surface] = {"overall": block(rs)}
+        out[surface] = {"overall": block(rs, stages=True)}
         cats = defaultdict(list)
         for r in rs:
             cats[r.get("category", "?")].append(r)

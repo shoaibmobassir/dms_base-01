@@ -14,10 +14,10 @@ READ_DOCUMENT = {
     "function": {
         "name": "read_document",
         "description": (
-            "Read the full text content of an available document. Always call "
-            "this before answering questions about, summarising, citing from, "
-            "or editing a document, but call it at most once per document in a "
-            "single response."
+            "Read an available document before answering about, summarising, citing from or editing it. "
+            "A short document comes back whole (complete=true). A long one comes back as its outline plus "
+            "the opening part (complete=false): then read only the parts you need with section_id (from the "
+            "outline) or pages, and continue a long part with next_cursor. Do not re-read a part you already have."
         ),
         "parameters": {
             "type": "object",
@@ -26,8 +26,74 @@ READ_DOCUMENT = {
                     "type": "string",
                     "description": "The document ID to read (e.g. 'doc-0', 'doc-1').",
                 },
+                "section_id": {"type": "string", "description": "A section id from the outline (e.g. 's7')."},
+                "pages": {"type": "string", "description": "A page or page range, e.g. '12' or '12-18'."},
+                "cursor": {"type": "integer", "description": "next_cursor from the previous read of this part."},
             },
             "required": ["doc_id"],
+        },
+    },
+}
+
+GET_OUTLINE = {
+    "type": "function",
+    "function": {
+        "name": "get_outline",
+        "description": (
+            "Get a document's table of contents: section ids, titles, page ranges and sizes, without the text. "
+            "Use it to plan which parts of a long document to read or edit."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {"doc_id": {"type": "string", "description": "The document ID (e.g. 'doc-0')."}},
+            "required": ["doc_id"],
+        },
+    },
+}
+
+REVIEW_DOCUMENTS = {
+    "type": "function",
+    "function": {
+        "name": "review_documents",
+        "description": (
+            "Answer the same questions for many documents at once (up to 500): one row per document with a short "
+            "answer and the verified quote it rests on. Use it instead of reading documents one by one whenever "
+            "more than about five documents need the same check (e.g. 'governing law of every contract', "
+            "'which filings mention X'). Give doc_ids, or a matter, or neither to use every document in this "
+            "conversation. mode='screen' ranks documents by relevance without reading them (fast)."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "questions": {"type": "array", "items": {"type": "string"}, "description": "1–10 questions asked of every document."},
+                "doc_ids": {"type": "array", "items": {"type": "string"}, "description": "Document IDs (e.g. ['doc-0','doc-3'])."},
+                "matter": {"type": "string", "description": "A matter code or id: review all of its documents."},
+                "mode": {"type": "string", "enum": ["full", "screen"]},
+            },
+            "required": ["questions"],
+        },
+    },
+}
+
+EDIT_DOCUMENT = {
+    "type": "function",
+    "function": {
+        "name": "edit_document",
+        "description": (
+            "Make a change throughout one document of any length, from a plain instruction (e.g. 'rename Supplier "
+            "to Vendor everywhere', 'change every payment period to 45 days', 'delete Schedule 3', 'after clause "
+            "12.4 insert: ...'). It finds every paragraph concerned without you reading the whole document, and "
+            "returns the edits as cards the lawyer accepts or rejects. Prefer it over propose_edits for any change "
+            "that may touch more than a few places, inserts or deletes paragraphs, or concerns a long document. "
+            "Quote exact wording to insert; say what must NOT change."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "doc_id": {"type": "string", "description": "The document ID (e.g. 'doc-0')."},
+                "instruction": {"type": "string", "description": "The change, stated fully and precisely."},
+            },
+            "required": ["doc_id", "instruction"],
         },
     },
 }
@@ -427,6 +493,9 @@ CORE_TOOLS = [
     FIND_PEOPLE,
     SEARCH_FIRM_RECORDS,
     READ_DOCUMENT,
+    GET_OUTLINE,
+    REVIEW_DOCUMENTS,
+    EDIT_DOCUMENT,
     FETCH_DOCUMENTS,
     FIND_IN_DOCUMENT,
     GENERATE_DOCX,

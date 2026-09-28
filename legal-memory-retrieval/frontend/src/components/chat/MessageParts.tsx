@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError, authHeaders } from "@/api/client";
-import { decideEdit, exportEdits } from "@/api/chat";
+import { decideAllEdits, decideEdit, exportEdits } from "@/api/chat";
 import type { AskInputItem, Attachment, ChatEvent, EditProposal } from "@/api/types";
 import { cn } from "@/lib/utils";
 
@@ -306,7 +306,12 @@ export type EditGroup = {
   document_id: string;
   filename: string;
   edits: EditProposal[];
+  /** "paragraph": document-wide edits from edit_document (tracked in the original file on export). */
+  anchoring?: string;
+  instruction?: string;
 };
+
+const EDITS_PAGE = 20;
 
 export function EditProposalsCard({
   group,
@@ -324,8 +329,27 @@ export function EditProposalsCard({
   const [edits, setEdits] = useState(group.edits);
   const [busy, setBusy] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [shown, setShown] = useState(EDITS_PAGE);
   const canSave = Boolean(sessionId && messageId);
   const accepted = edits.filter((e) => e.status === "accepted").length;
+
+  const decideAll = async (status: EditProposal["status"]) => {
+    if (!canSave) {
+      toast.info("Wait for the answer to finish before reviewing edits.");
+      return;
+    }
+    const previous = edits;
+    setEdits((list) => list.map((e) => ({ ...e, status })));
+    setBusy("all");
+    try {
+      await decideAllEdits(sessionId!, messageId!, group.document_id, status);
+    } catch (err) {
+      setEdits(previous);
+      toast.error(errorText(err, "Could not save your decision."));
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const decide = async (edit: EditProposal, status: EditProposal["status"]) => {
     if (!canSave) {
@@ -349,7 +373,12 @@ export function EditProposalsCard({
     setExporting(true);
     try {
       const out = await exportEdits(sessionId!, messageId!, group.document_id);
-      toast.success(`${out.applied} edit${out.applied === 1 ? "" : "s"} saved as tracked changes.`);
+      toast.success(
+        out.tracked_in_original
+          ? `${out.applied} edit${out.applied === 1 ? "" : "s"} written into the original Word file as tracked changes` +
+              (out.version_label ? `; saved as version ${out.version_label} (developing).` : ".")
+          : `${out.applied} edit${out.applied === 1 ? "" : "s"} saved as tracked changes.`,
+      );
       onFileReady({ document_id: out.document_id, filename: out.filename });
     } catch (err) {
       toast.error(errorText(err, "Could not build the Word file."));
@@ -364,7 +393,20 @@ export function EditProposalsCard({
         <div className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-ink">
           <PencilLine className="h-3.5 w-3.5 shrink-0 text-wine" />
           <span className="truncate">Suggested edits · {group.filename}</span>
+          <span className="shrink-0 font-normal text-muted-foreground">({edits.length})</span>
         </div>
+        {edits.length > 1 && (
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <button type="button" disabled={busy === "all"} onClick={() => void decideAll("accepted")}
+              className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-secondary" data-testid="edits-accept-all">
+              Accept all
+            </button>
+            <button type="button" disabled={busy === "all"} onClick={() => void decideAll("rejected")}
+              className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-secondary" data-testid="edits-reject-all">
+              Reject all
+            </button>
+          </div>
+        )}
         <button
           type="button"
           disabled={!canSave || accepted === 0 || exporting}
@@ -377,7 +419,7 @@ export function EditProposalsCard({
         </button>
       </div>
       <ul className="divide-y divide-border">
-        {edits.map((edit, i) => (
+        {edits.slice(0, shown).map((edit, i) => (
           <li key={edit.id} className="space-y-1.5 px-3 py-2.5" data-testid="edit-card" data-status={edit.status}>
             <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
               <span>
@@ -443,6 +485,12 @@ export function EditProposalsCard({
           </li>
         ))}
       </ul>
+      {edits.length > shown && (
+        <button type="button" onClick={() => setShown((n) => n + EDITS_PAGE)} data-testid="edits-more"
+          className="w-full border-t border-border py-2 text-xs text-muted-foreground hover:text-foreground">
+          Show {Math.min(EDITS_PAGE, edits.length - shown)} more of {edits.length - shown}
+        </button>
+      )}
     </div>
   );
 }

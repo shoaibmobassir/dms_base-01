@@ -157,7 +157,7 @@ export function compareVersions(documentId: string, versionId: string, compareWi
   )
 }
 
-export function ingestDocument(body: { title: string; matter_id: string; body: string; document_type: string }) {
+export function ingestDocument(body: { title: string; matter_id: string; body: string; document_type: string; visibility?: 'matter' | 'private' }) {
   return apiFetch<{ document_id?: string; chunks_indexed?: number }>('/api/documents/ingest', {
     method: 'POST',
     body: JSON.stringify(body),

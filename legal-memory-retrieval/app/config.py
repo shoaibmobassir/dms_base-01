@@ -86,6 +86,8 @@ class Settings(BaseSettings):
     grounding_verifier_model: str = "moonshotai.kimi-k2.5"
     # Comma-separated extra verifiers; a sentence counts as supported only if all agree.
     grounding_consensus_models: str = ""
+    # Units per verifier call; larger answers are split into parallel calls (0 = one call).
+    grounding_verify_batch: int = 6
     bedrock_embedding_model: str = "amazon.titan-embed-text-v2:0"
     # Titan v2 accepts 256/512/1024. Do NOT point production retrieval at Bedrock
     # embeddings without a schema + full re-embed (corpus is MiniLM 384-d).
@@ -98,6 +100,8 @@ class Settings(BaseSettings):
     tenant_id: str = "harbour"
     object_store_backend: str = "local"  # local | s3
     object_store_root: str = "./data/object_store"
+    # Office → PDF renditions (Gotenberg). Empty = try a local LibreOffice binary instead.
+    gotenberg_url: str = ""
     object_store_bucket: str = "firmos"
     object_store_endpoint: str = "http://localhost:9000"
     object_store_access_key: str = "minioadmin"
@@ -122,6 +126,22 @@ class Settings(BaseSettings):
     chat_history_max_pairs: int = 10
     chat_tool_timeout_seconds: float = 30.0
     chat_find_timeout_seconds: float = 10.0
+    # Largest slice of one document a single read returns; longer documents are read by
+    # section, page range or cursor (app/chat/doc_nav.py).
+    chat_read_max_chars: int = 40000
+    # Total size of the agent's working messages; older tool outputs are replaced by stubs beyond it.
+    chat_context_max_chars: int = 200000
+    # Wall-clock budget for one Assistant turn (all LLM rounds and tools), then a short tool-free wrap-up.
+    chat_turn_deadline_seconds: float = 180.0
+    chat_wrap_up_seconds: float = 60.0
+    # Batch review (app/review/batch.py): one model call per document, many in parallel.
+    review_map_model: str = "moonshotai.kimi-k2.5"
+    review_concurrency: int = 24
+    review_max_documents: int = 500
+    review_tool_timeout_seconds: float = 170.0
+    review_include_last_chunk: bool = True
+    # Long-document editing (app/editing/engine.py); empty = the chat generator model.
+    edit_model: str = ""
     # In-process rate limits for LLM endpoints (per member / anonymous key).
     rate_limit_ask_per_minute: int = 30
     rate_limit_chat_per_minute: int = 20

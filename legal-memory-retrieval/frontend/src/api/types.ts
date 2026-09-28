@@ -31,6 +31,10 @@ export type TeamMember = {
   role: string
   role_on_matter: string
   office: string | null
+  started_at?: string | null
+  ended_at?: string | null
+  /** False once the assignment has ended (no longer counts as the team). */
+  active?: boolean
 }
 
 export type MatterDetail = {
@@ -41,17 +45,26 @@ export type MatterDetail = {
     legal_issues: string[]
     facts: string[]
     classification: string
+    claim_amount?: number | null
+    row_version?: number
   }
   team: TeamMember[]
   documents: DocumentItem[]
+  /** What the viewer may do on this matter. */
+  my_level?: 'none' | 'read' | 'edit' | 'manage'
 }
 
 export type TimelineEvent = {
   date: string | null
   author: string | null
   event: string
-  doc_id: string
+  doc_id: string | null
   doc_type: string
+  /** "document" (a document's date) or "entry" (entered by someone; editable). */
+  source?: 'document' | 'entry'
+  detail?: string
+  event_id?: string
+  row_version?: number
 }
 
 export type MatterArgument = {
@@ -60,12 +73,13 @@ export type MatterArgument = {
   position: string | null
   argument: string
   outcome: string | null
+  row_version?: number
 }
 
 export type RelatedMatter = Pick<
   Matter,
   'matter_id' | 'matter_code' | 'title' | 'client_name' | 'practice_area' | 'status' | 'outcome' | 'restricted'
->
+> & { relation?: string; note?: string; manual?: boolean }
 
 export type DocumentItem = {
   document_id: string
@@ -79,6 +93,8 @@ export type DocumentItem = {
   version: string | null
   /** List view only. */
   mime_type?: string | null
+  /** Document privacy; null/absent = follows the matter. */
+  privacy?: 'private' | 'restricted' | null
   matter_title?: string | null
 }
 
@@ -156,6 +172,8 @@ export type ClientItem = {
   industry: string | null
   size: string | null
   headquarters: string | null
+  /** Intake: prospective until the conflict check is cleared. */
+  status?: 'prospective' | 'active' | 'declined'
   /** Counted over the matters the caller can see. */
   open_matters?: number
   total_matters?: number
@@ -381,6 +399,44 @@ export type MatterCard = {
   deadlines?: { title: string; kind?: string | null; due_date: string; court?: string | null; status?: string | null }[]
 }
 
+/** Matters, documents and people behind an Ask the Firm answer (app/km/panel.py). Every row says why. */
+export type KmPanel = {
+  matters: {
+    matter_id: string
+    matter_code: string
+    title: string
+    client_name?: string | null
+    practice_area?: string | null
+    status?: string | null
+    lead?: string | null
+    document_count?: number
+    /** asked | evidence | similar | related */
+    relation: string
+    why: string
+  }[]
+  documents: {
+    document_id: string
+    title?: string | null
+    document_type?: string | null
+    doc_date?: string | null
+    author_name?: string | null
+    matter_id?: string | null
+    matter_code?: string | null
+    page_number?: number | null
+    snippet?: string
+    why: string
+    cited: boolean
+  }[]
+  people: {
+    member_id: string
+    name: string
+    role?: string | null
+    office?: string | null
+    on_matters: { matter_id: string; matter_code: string; role_on_matter?: string | null }[]
+    why: string
+  }[]
+}
+
 /** One question from the member's Ask the Firm history. */
 export type AskHistoryItem = { id: string; query: string; scope: string | null; scope_type: string | null; asked_at: string }
 
@@ -393,6 +449,7 @@ export type AskResult = {
   status?: string
   people?: Array<Record<string, unknown>>
   matter_cards?: MatterCard[]
+  panel?: KmPanel | null
   resolved_scope?: { kind?: string; label?: string; method?: string; matter_ids?: string[] } | null
   structured_citations?: Array<Record<string, unknown>>
   sources?: Array<Record<string, unknown>>

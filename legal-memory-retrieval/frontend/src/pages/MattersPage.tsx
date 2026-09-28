@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/common/DataTable";
-import { EmptyState, PageHeader, SearchField, StatusLabel } from "@/components/common/primitives";
+import { Action, EmptyState, PageHeader, SearchField, StatusLabel } from "@/components/common/primitives";
+import { can, useMyAccess } from "@/api/access";
+import { NewMatterDialog } from "@/components/matter/MatterEditors";
 import { Pager, QueryState } from "@/components/common/QueryState";
 import { PAGE_SIZE, useMatters } from "@/api/resources";
 import { formatDate } from "@/lib/format";
@@ -17,6 +19,8 @@ export function MattersPage() {
   const [page, setPage] = useState(0);
   const q = useDebounced(query.trim());
   const matters = useMatters({ q, status: status === "All" ? undefined : status, page });
+  const myAccess = useMyAccess();
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => setPage(0), [q, status]);
 
@@ -27,7 +31,17 @@ export function MattersPage() {
         title="Matters"
         count={matters.data ? `${matters.data.total} ${matters.data.total === 1 ? "matter" : "matters"}` : undefined}
         subtitle="Every matter you can access, newest first."
+        actions={
+          can(myAccess.data, "matters.create") ? (
+            <Action primary icon="add" onClick={() => setCreating(true)} testId="matters-new">
+              New matter
+            </Action>
+          ) : undefined
+        }
       />
+      {creating && (
+        <NewMatterDialog open onClose={() => setCreating(false)} onCreated={(id) => { setCreating(false); navigate(`/matters/${id}`); }} />
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex-1">

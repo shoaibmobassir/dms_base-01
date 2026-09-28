@@ -5,9 +5,10 @@ Clean-room independent implementation.
 
 from typing import Any, Dict, List, Optional
 import uuid
-from fastapi import APIRouter, Header, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
+from app.auth.deps import resolve_member
 from app.review.spreadsheet_exporter import SpreadsheetExporter
 from app.review.tabular_service import ReviewColumn, get_tabular_service
 
@@ -44,13 +45,40 @@ async def health():
     return {"status": "ok", "service": "tabular_reviews"}
 
 
+def _readable_documents(document_ids: List[str], member_id: Optional[str]) -> List[str]:
+    """The requested documents the member may read (matter ACL + document privacy), in order."""
+    from app.api.acl import ACL_CLAUSE, doc_acl
+    from app.db.connection import connect
+
+    with connect() as conn:
+        rows = conn.execute(
+            f"""SELECT d.document_id FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
+                WHERE d.document_id = ANY(%(ids)s) AND {ACL_CLAUSE} AND {doc_acl('d')}""",
+            {"ids": [i.upper() for i in document_ids], "member_id": member_id},
+        ).fetchall()
+    ok = {r["document_id"] for r in rows}
+    return [i for i in document_ids if i.upper() in ok]
+
+
+def _owned(review_id: str, member_id: Optional[str]) -> Dict[str, Any]:
+    """A tabular review belongs to the member who ran it (unknown and others' are both 404)."""
+    rev = _REVIEWS_DB.get(review_id)
+    if rev is None or (member_id is not None and rev.get("member_id") != member_id):
+        raise HTTPException(status_code=404, detail="Review not found")
+    return rev
+
+
 @router.post("/reviews")
 async def create_and_run_tabular_review(
     req: CreateTabularReviewRequest,
-    x_member_id: Optional[str] = Header(None),
+    member_id: Optional[str] = Depends(resolve_member),
 ):
-    """Creates a new tabular review and triggers concurrent cell extraction."""
+    """Creates a new tabular review and triggers concurrent cell extraction.
+
+    Runs as the signed-in member; documents they may not read are left out, never extracted.
+    """
     review_id = f"REV-{uuid.uuid4().hex[:8].upper()}"
+    document_ids = _readable_documents(req.document_ids, member_id)
     tabular_svc = get_tabular_service()
 
     col_objs = [
@@ -68,9 +96,9 @@ async def create_and_run_tabular_review(
     cells_data = await tabular_svc.run_matrix_extraction(
         review_id=review_id,
         title=req.title,
-        document_ids=req.document_ids,
+        document_ids=document_ids,
         columns=col_objs,
-        member_id=x_member_id,
+        member_id=member_id,
         model=req.model,
         provider=req.provider,
     )
@@ -79,11 +107,11 @@ async def create_and_run_tabular_review(
         "review_id": review_id,
         "title": req.title,
         "matter_id": req.matter_id,
-        "document_ids": req.document_ids,
+        "document_ids": document_ids,
         "columns": [c.dict() for c in req.columns],
         "cells": cells_data,
         "status": "completed",
-        "member_id": x_member_id,
+        "member_id": member_id,
     }
     _REVIEWS_DB[review_id] = review_record
 
@@ -91,17 +119,15 @@ async def create_and_run_tabular_review(
 
 
 @router.get("/reviews")
-async def list_tabular_reviews():
-    """Lists all active and completed tabular reviews."""
-    return list(_REVIEWS_DB.values())
+async def list_tabular_reviews(member_id: Optional[str] = Depends(resolve_member)):
+    """The member's tabular reviews."""
+    return [r for r in _REVIEWS_DB.values() if member_id is None or r.get("member_id") == member_id]
 
 
 @router.get("/reviews/{review_id}")
-async def get_tabular_review(review_id: str):
+async def get_tabular_review(review_id: str, member_id: Optional[str] = Depends(resolve_member)):
     """Retrieves detailed matrix review results."""
-    if review_id not in _REVIEWS_DB:
-        raise HTTPException(status_code=404, detail="Review not found")
-    return _REVIEWS_DB[review_id]
+    return _owned(review_id, member_id)
 
 
 @router.patch("/reviews/{review_id}/cells/{doc_id}/{col_id}")
@@ -110,12 +136,12 @@ async def patch_cell_value(
     doc_id: str,
     col_id: str,
     req: PatchCellRequest,
+    member_id: Optional[str] = Depends(resolve_member),
 ):
     """Allows lawyers to override or verify an extracted cell value."""
-    if review_id not in _REVIEWS_DB:
-        raise HTTPException(status_code=404, detail="Review not found")
-    
-    rev = _REVIEWS_DB[review_id]
+    rev = _owned(review_id, member_id)
+    if doc_id not in rev["document_ids"]:
+        raise HTTPException(status_code=404, detail="Document is not part of this review")
     if doc_id not in rev["cells"]:
         rev["cells"][doc_id] = {}
     
@@ -131,12 +157,9 @@ async def patch_cell_value(
 
 
 @router.get("/reviews/{review_id}/export/xlsx")
-async def export_review_xlsx(review_id: str):
+async def export_review_xlsx(review_id: str, member_id: Optional[str] = Depends(resolve_member)):
     """Exports the tabular review into a styled Excel workbook with citations."""
-    if review_id not in _REVIEWS_DB:
-        raise HTTPException(status_code=404, detail="Review not found")
-
-    rev = _REVIEWS_DB[review_id]
+    rev = _owned(review_id, member_id)
     rows = [{"document_id": d_id, "title": d_id} for d_id in rev["document_ids"]]
     
     xlsx_bytes = SpreadsheetExporter.export_xlsx(

@@ -57,6 +57,7 @@ Update the Approved column when a human owner reviews an uncertain license.
 |-------|---------|------|
 | pgvector/pgvector:pg16 | MIT (pgvector) + PostgreSQL License | ✅ Both permissive |
 | redis:7-alpine | BSD-3-Clause | ✅ |
+| gotenberg/gotenberg:8 | Apache-2.0 (Gotenberg); bundles LibreOffice (MPL-2.0) and Chromium (BSD-3) | ✅ Approved by owner 2026-09-28 (plan 16 E0). Separate container reached over HTTP by `app/documents/pdf_render.py`; nothing linked. Bound to 127.0.0.1 — no auth, never public |
 
 ---
 
@@ -112,4 +113,27 @@ Added 2026-09-22 for FirmOS Vite SPA. No AGPL/GPL/SSPL packages.
 | pdf.js runtime assets (`wasm/`, `standard_fonts/`, `cmaps/`, `iccs/` from pdfjs-dist) | Apache-2.0 (pdf.js), BSD-2 (OpenJPEG), BSD-3 (PDFium JBIG2), MIT (qcms); fonts under their bundled licences | No | Frontend runtime; copied to `public/pdfjs/` by `scripts/copy-pdfjs-assets.mjs` (decodes scanned-page images) | ✅ |
 | Tesseract OCR (system binary) | Apache-2.0 | No | Separate process: ingest OCR (existing) and `app/documents/page_words.py` word boxes for highlights on scanned pages | ✅ |
 | Poppler `pdftoppm` (system binary) | GPL-2.0/3.0 | Yes (strong) | Not bundled or linked; invoked as a separate process by ingest OCR (existing) and `page_words.py`. Was already in use but unrecorded | ⏳ Pending owner approval (GPL tool, process boundary only) |
-| LibreOffice (system binary, optional) | MPL-2.0 | Weak (file-level) | Not bundled or linked; invoked as a separate process by `app/documents/pdf_render.py` only if installed on the server | ⏳ Pending owner approval — code works without it (Word files fall back to the text view) |
+| LibreOffice (system binary, optional) | MPL-2.0 | Weak (file-level) | Not bundled or linked; invoked as a separate process by `app/documents/pdf_render.py` only if installed on the server (fallback when Gotenberg is unreachable) | ✅ Approved by owner 2026-09-28 together with Gotenberg (plan 16) |
+
+### Added 2026-09-28 (plan 16 — document editor)
+
+| Package | License | Copyleft? | Scope | Approved |
+|---------|---------|-----------|-------|----------|
+| @tiptap/react, @tiptap/pm, @tiptap/starter-kit (bundles the MIT extension-* packages, incl. underline) | MIT | No | Frontend runtime (in-browser document editor). Only the MIT open-source packages; no TipTap Pro / cloud extensions | ✅ |
+| prosemirror-* (transitive via @tiptap/pm) | MIT | No | Editor engine | ✅ |
+
+### Evaluation datasets (plan 14 — not shipped, not ingested into any firm database)
+
+Benchmark data is downloaded to `data/benchmarks/` (git-ignored) and loaded only into the separate
+`legalbench_rag` database by `evals/legalbench_rag_prepare.py`. Nothing here ships in the image or the SPA.
+Licences marked "verify" were not confirmed from the dataset's own licence file on 2026-09-27; confirm each
+at source before approving.
+
+| Dataset | Used by | Licence | Copyleft? | Approved |
+|---------|---------|---------|-----------|----------|
+| LegalBench-RAG (zeroentropy-ai/legalbenchrag) — queries + span annotations | `evals/legalbench_rag_eval.py` | No licence stated in the repo README; defers to the four source datasets — **verify** | ? | ⏳ Pending owner approval |
+| CUAD (Atticus Project) — via LegalBench-RAG corpus | same | CC BY 4.0 — verify | No | ⏳ Pending |
+| MAUD (Atticus Project) — via LegalBench-RAG corpus | same | verify | ? | ⏳ Pending |
+| ContractNLI (Koreeda & Manning 2021) — via LegalBench-RAG corpus | same | verify | ? | ⏳ Pending |
+| PrivacyQA (Ravichander et al. 2019) — via LegalBench-RAG corpus | same | verify | ? | ⏳ Pending |
+| Harvey LAB (harveyai/harvey-labs) — tasks + harness | planned (A4) | MIT (repo page, 2026-09-27) | No | ⏳ Pending |

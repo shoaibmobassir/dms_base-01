@@ -8,6 +8,7 @@ export type AskEvidence = {
   resolved_scope?: AskResult['resolved_scope']
   people?: Array<Record<string, unknown>>
   matter_cards?: AskResult['matter_cards']
+  panel?: AskResult['panel']
   sources?: Array<Record<string, unknown>>
 }
 

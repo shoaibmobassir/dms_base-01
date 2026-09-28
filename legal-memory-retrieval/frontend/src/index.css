@@ -190,3 +190,12 @@
         * { transition-duration: 0.001ms !important; }
     }
 }
+
+
+/* Document editor page (plan 16): Word-like typography on a page canvas. */
+.doc-page-body { font-family: "Times New Roman", Georgia, serif; font-size: 15px; line-height: 1.6; color: hsl(var(--foreground)); }
+.doc-page-body p { margin: 0 0 0.75em; min-height: 1em; }
+.doc-page-body .doc-title { font-size: 1.75em; font-weight: 600; text-align: center; margin: 0 0 1em; }
+.doc-page-body .doc-h1 { font-size: 1.25em; font-weight: 700; margin: 1.4em 0 0.6em; }
+.doc-page-body .doc-h2 { font-size: 1.08em; font-weight: 700; margin: 1.1em 0 0.5em; }
+.doc-page-body u { text-decoration: underline; }

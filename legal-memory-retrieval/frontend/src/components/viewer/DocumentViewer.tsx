@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { GlobalWorkerOptions, TextLayer, getDocument, type PDFDocumentProxy } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { ChevronDown, ChevronUp, Maximize, MoveHorizontal, ZoomIn, ZoomOut } from "lucide-react";
@@ -26,6 +26,24 @@ const OCR_PAGE_LIMIT = 3;
 /** Where to take the reader: a page, and optionally words to highlight on it. */
 export type ViewerTarget = { page: number | null; quote: string; nonce: number };
 export type LocateResult = { found: boolean; page: number | null; exact: boolean };
+/**
+ * A marked area on a page (e.g. a comment) with a numbered badge: either known boxes (page
+ * fractions) on ``page``, or a ``quote`` the viewer finds, searching from ``page`` outwards.
+ */
+export type ViewerMark = {
+  id: string;
+  page: number;
+  boxes: { x0: number; y0: number; x1: number; y1: number }[];
+  quote?: string;
+  label: string;
+  active?: boolean;
+  muted?: boolean;
+};
+/** Where quote marks were found: page number, or null when the text is no longer there. */
+export type MarksLocated = Record<string, number | null>;
+type PageMark = ViewerMark & { runs?: number[] };
+/** Text the reader selected on one page, with its area in page fractions. */
+export type ViewerSelection = { page: number; quote: string; boxes: { x0: number; y0: number; x1: number; y1: number }[] };
 
 type Zoom = { mode: "fit-width" } | { mode: "fit-page" } | { mode: "custom"; scale: number };
 type PageSize = { w: number; h: number };
@@ -56,6 +74,35 @@ const GAP = 12;
 const PAD = 16;
 const ZOOM_STEPS = [0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
+/** Selection rectangles on one page → one box per line, in page fractions. */
+function selectionBoxes(rects: DOMRect[], page: DOMRect): Box[] {
+  const lines: Box[] = [];
+  const sorted = rects
+    .filter((r) => r.width > 1 && r.height > 1 && r.bottom > page.top && r.top < page.bottom)
+    .sort((a, b) => a.top - b.top || a.left - b.left);
+  for (const r of sorted) {
+    const b = {
+      x0: clamp01((r.left - page.left) / page.width),
+      y0: clamp01((r.top - page.top) / page.height),
+      x1: clamp01((r.right - page.left) / page.width),
+      y1: clamp01((r.bottom - page.top) / page.height),
+    };
+    const last = lines[lines.length - 1];
+    const mid = (b.y0 + b.y1) / 2;
+    if (last && mid > last.y0 && mid < last.y1) {
+      last.x0 = Math.min(last.x0, b.x0);
+      last.x1 = Math.max(last.x1, b.x1);
+      last.y0 = Math.min(last.y0, b.y0);
+      last.y1 = Math.max(last.y1, b.y1);
+    } else {
+      lines.push(b);
+    }
+  }
+  return lines.filter((b) => b.x1 > b.x0 && b.y1 > b.y0);
+}
+
 function runsOf(content: TextContent): string[] {
   return content.items.filter((item): item is { str: string } & typeof item => "str" in item).map((item) => item.str);
 }
@@ -66,6 +113,10 @@ export function DocumentViewer({
   target,
   onUnavailable,
   onLocate,
+  marks,
+  onMarkClick,
+  onSelectText,
+  onMarksLocated,
 }: {
   src: string;
   /** OCR word boxes for one page; used when a page is a scanned image. */
@@ -73,13 +124,20 @@ export function DocumentViewer({
   target?: ViewerTarget | null;
   onUnavailable?: (reason: string) => void;
   onLocate?: (result: LocateResult) => void;
+  /** Areas to mark on the pages (comments); badges call ``onMarkClick``. */
+  marks?: ViewerMark[];
+  onMarkClick?: (id: string) => void;
+  /** Called with the reader's text selection on a page (null when it is cleared). */
+  onSelectText?: (selection: ViewerSelection | null) => void;
+  /** Reports where marks given by ``quote`` were found. */
+  onMarksLocated?: (located: MarksLocated) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const textCache = useRef(new Map<number, Promise<TextContent>>());
   const anchor = useRef({ page: 1, fraction: 0 });
-  const callbacks = useRef({ onUnavailable, onLocate, wordsUrl });
-  callbacks.current = { onUnavailable, onLocate, wordsUrl };
+  const callbacks = useRef({ onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated });
+  callbacks.current = { onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated };
 
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [sizes, setSizes] = useState<PageSize[]>([]);
@@ -269,6 +327,69 @@ export function DocumentViewer({
     scroller.scrollTo({ top: scroller.scrollTop + a.top - b.top - scroller.clientHeight / 2 + a.height / 2 });
   }, []);
 
+  // Report text selected on a page (for commenting).
+  const onPointerUp = () => {
+    const report = callbacks.current.onSelectText;
+    if (!report) return;
+    // Let the browser finish updating the selection first.
+    window.setTimeout(() => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) return report(null);
+      const range = sel.getRangeAt(0);
+      const start = range.startContainer instanceof Element ? range.startContainer : range.startContainer.parentElement;
+      const pageEl = start?.closest<HTMLElement>("[data-page]");
+      if (!pageEl || !scrollRef.current?.contains(pageEl)) return report(null);
+      const quote = sel.toString().replace(/\s+/g, " ").trim();
+      const boxes = selectionBoxes([...range.getClientRects()], pageEl.getBoundingClientRect());
+      if (!quote || !boxes.length) return report(null);
+      report({ page: Number(pageEl.dataset.page), quote, boxes });
+    }, 0);
+  };
+  const markClick = useCallback((id: string) => callbacks.current.onMarkClick?.(id), []);
+
+  // Find marks given by quote (e.g. comments made on an earlier version) in these pages.
+  const [found, setFound] = useState<Record<string, { page: number; runs: number[] } | null>>({});
+  const quoteKey = (marks ?? [])
+    .filter((m) => !m.boxes.length && m.quote)
+    .map((m) => `${m.id}\u0000${m.page}\u0000${m.quote}`)
+    .join("\u0001");
+  useEffect(() => {
+    if (!doc) return;
+    const wanted = (marks ?? []).filter((m) => !m.boxes.length && m.quote);
+    let cancelled = false;
+    (async () => {
+      const out: Record<string, { page: number; runs: number[] } | null> = {};
+      for (const m of wanted) {
+        out[m.id] = null;
+        for (const number of pageSearchOrder(m.page, doc.numPages)) {
+          const hit = findQuoteInRuns(runsOf(await getText(number)), m.quote ?? "");
+          if (cancelled) return;
+          if (hit) {
+            out[m.id] = { page: number, runs: hit.runs };
+            break;
+          }
+        }
+      }
+      if (cancelled) return;
+      setFound(out);
+      callbacks.current.onMarksLocated?.(Object.fromEntries(Object.entries(out).map(([id, f]) => [id, f ? f.page : null])));
+    })().catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+    // quoteKey captures every input of the search (marks itself changes identity each render).
+  }, [doc, quoteKey, getText]);
+
+  const pageMarks = useMemo(() => {
+    const byPage = new Map<number, PageMark[]>();
+    for (const m of marks ?? []) {
+      const at = m.boxes.length ? { page: m.page, runs: undefined } : found[m.id];
+      if (!at) continue;
+      byPage.set(at.page, [...(byPage.get(at.page) ?? []), { ...m, runs: at.runs }]);
+    }
+    return byPage;
+  }, [marks, found]);
+
   const pageCount = doc?.numPages ?? 0;
   const step = (dir: 1 | -1) => {
     const next = [...ZOOM_STEPS].sort((x, y) => (dir === 1 ? x - y : y - x)).find((s) => (dir === 1 ? s > scale + 0.01 : s < scale - 0.01));
@@ -338,7 +459,7 @@ export function DocumentViewer({
         </ToolButton>
       </div>
 
-      <div ref={scrollRef} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-auto bg-muted/60" data-testid="viewer-scroll">
+      <div ref={scrollRef} onScroll={onScroll} onPointerUp={onPointerUp} className="relative min-h-0 flex-1 overflow-auto bg-muted/60" data-testid="viewer-scroll">
         {status === "loading" && <p className="p-6 text-sm text-muted-foreground">Loading the document…</p>}
         {status === "error" && <p className="p-6 text-sm text-destructive">{error}</p>}
         {doc && (
@@ -357,6 +478,8 @@ export function DocumentViewer({
                 getText={getText}
                 highlight={highlight?.page === i + 1 ? highlight : null}
                 onHighlightShown={centreOn}
+                marks={pageMarks.get(i + 1)}
+                onMarkClick={markClick}
               />
             ))}
           </div>
@@ -410,10 +533,12 @@ type PdfPageProps = {
   getText: (n: number) => Promise<TextContent>;
   highlight: Highlight | null;
   onHighlightShown: (el: HTMLElement) => void;
+  marks?: PageMark[];
+  onMarkClick: (id: string) => void;
   ref?: React.Ref<HTMLDivElement>;
 };
 
-function PdfPage({ doc, number, size, scale, root, getText, highlight, onHighlightShown, ref }: PdfPageProps) {
+function PdfPage({ doc, number, size, scale, root, getText, highlight, onHighlightShown, marks, onMarkClick, ref }: PdfPageProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -485,6 +610,24 @@ function PdfPage({ doc, number, size, scale, root, getText, highlight, onHighlig
     }
   }, [highlight, textDivs, onHighlightShown]);
 
+  // Boxes for marks found by quote: from the matched text runs, once they are laid out.
+  const [runBoxes, setRunBoxes] = useState<Record<string, Box[]>>({});
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current;
+    const withRuns = (marks ?? []).filter((m) => m.runs?.length);
+    if (!wrap || !textDivs.length || !withRuns.length) {
+      setRunBoxes({});
+      return;
+    }
+    const page = wrap.getBoundingClientRect();
+    const out: Record<string, Box[]> = {};
+    for (const m of withRuns) {
+      const rects = (m.runs ?? []).map((i) => textDivs[i]?.getBoundingClientRect()).filter((r): r is DOMRect => Boolean(r));
+      out[m.id] = selectionBoxes(rects, page);
+    }
+    setRunBoxes(out);
+  }, [marks, textDivs, scale]);
+
   const width = Math.floor(size.w * scale);
   const height = Math.floor(size.h * scale);
   return (
@@ -515,6 +658,32 @@ function PdfPage({ doc, number, size, scale, root, getText, highlight, onHighlig
           }}
         />
       ))}
+      {marks?.map((m) => {
+        const boxes = m.boxes.length ? m.boxes : (runBoxes[m.id] ?? []);
+        if (!boxes.length) return null;
+        return (
+        <div key={m.id}>
+          {boxes.map((b, i) => (
+            <div
+              key={i}
+              className={cn("viewer-mark-box", m.active && "is-active", m.muted && "is-muted")}
+              data-testid="viewer-mark"
+              style={{ left: `${b.x0 * 100}%`, top: `${b.y0 * 100}%`, width: `${(b.x1 - b.x0) * 100}%`, height: `${(b.y1 - b.y0) * 100}%` }}
+            />
+          ))}
+          <button
+            type="button"
+            className={cn("viewer-mark-badge", m.active && "is-active", m.muted && "is-muted")}
+            style={{ top: `${(boxes[0]?.y0 ?? 0) * 100}%` }}
+            onClick={() => onMarkClick(m.id)}
+            aria-label={`Comment ${m.label}`}
+            data-testid="viewer-mark-badge"
+          >
+            {m.label}
+          </button>
+        </div>
+        );
+      })}
     </div>
   );
 }

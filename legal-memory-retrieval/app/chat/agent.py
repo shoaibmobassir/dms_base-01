@@ -39,11 +39,15 @@ from app.chat.tools.document_tools import (
     build_doc_index_from_hits,
     fetch_documents,
     find_in_document,
+    get_outline,
     page_at,
     read_document,
     resolve_document_text,
     search_firm_records,
 )
+from app.chat.tools.batch_tools import review_documents_tool
+from app.chat.tools.edit_tools import edit_document_tool
+from app.chat.context import carried_documents, fit_context, working_set, working_set_note
 from app.chat.tools.firm_tools import (
     ask_firm_tool,
     find_people_tool,
@@ -71,11 +75,16 @@ logger = logging.getLogger(__name__)
 MAX_TOOL_ROUNDS = 10
 _RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 _DB_TOOLS = frozenset({
+    "review_documents",
+    "edit_document",
     "ask_firm",
     "resolve_matter",
     "get_matter_profile",
     "find_people",
     "read_document",
+    "get_outline",
+    "review_documents",
+    "edit_document",
     "search_firm_records",
     "fetch_documents",
     "find_in_document",
@@ -137,14 +146,21 @@ def dispatch_tool_call(
         arguments = {**arguments, "scope": matter["matter_code"]}
 
     if name == "read_document":
+        cursor = arguments.get("cursor")
         result = read_document(
             arguments.get("doc_id", ""),
             doc_index, doc_store, conn, nonce,
             member_id=member_id,
+            section_id=arguments.get("section_id") or None,
+            pages=str(arguments["pages"]) if arguments.get("pages") else None,
+            cursor=int(cursor) if isinstance(cursor, (int, float, str)) and str(cursor).isdigit() else None,
         )
         if "event" in result:
             events.append(result.pop("event"))
         return result, events
+
+    elif name == "get_outline":
+        return get_outline(arguments.get("doc_id", ""), doc_index, doc_store, conn, member_id=member_id), events
 
     elif name == "search_firm_records":
         result = search_firm_records(
@@ -199,6 +215,16 @@ def dispatch_tool_call(
         )
         if "event" in result:
             events.append(result.pop("event"))
+        return result, events
+
+    elif name == "edit_document":
+        result, edit_events = edit_document_tool(arguments, doc_index, conn, member_id)
+        events.extend(edit_events)
+        return result, events
+
+    elif name == "review_documents":
+        result, review_events = review_documents_tool(arguments, doc_index, conn, member_id, matter)
+        events.extend(review_events)
         return result, events
 
     elif name == "propose_edits":
@@ -277,7 +303,7 @@ def _load_passage_documents(
                 doc_store[slug] = text
 
 
-_RECORD_TOOLS = frozenset({"ask_firm", "resolve_matter", "get_matter_profile", "find_people"})
+_RECORD_TOOLS = frozenset({"ask_firm", "resolve_matter", "get_matter_profile", "find_people", "review_documents"})
 
 
 def _record_text(value: Any, indent: str = "") -> str:
@@ -336,7 +362,7 @@ def ground_chat_text(
         if entry is not None:
             c = {**c, "document_id": entry.document_id, "title": entry.filename}
         citations.append(c)
-    return name_documents(grounded.text, doc_index), citations, grounded.report()
+    return name_documents(grounded.text, doc_index), citations, {**grounded.report(), "timings": grounded.timings}
 
 
 _FIRM_TOOLS = {
@@ -381,7 +407,16 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
     if name == "search_firm_records":
         return f"Searching firm records for “{query}”" if query else "Searching firm records"
     if name == "read_document":
-        return f"Reading {doc_name}"
+        part = arguments.get("section_id") or (f"pages {arguments['pages']}" if arguments.get("pages") else "")
+        return f"Reading {doc_name}" + (f" ({part})" if part else "")
+    if name == "get_outline":
+        return f"Opening the contents of {doc_name}"
+    if name == "edit_document":
+        return f"Planning edits to {doc_name}"
+    if name == "review_documents":
+        n = len(arguments.get("doc_ids") or [])
+        what = f"{n} documents" if n else (f"the documents of {arguments['matter']}" if arguments.get("matter") else "the documents")
+        return f"Reviewing {what} ({len(arguments.get('questions') or [])} questions each)"
     if name == "fetch_documents":
         count = len(arguments.get("doc_ids") or [])
         return f"Reading {count} document{'s' if count != 1 else ''}"
@@ -415,6 +450,8 @@ def tool_deadline_seconds(name: str) -> float:
     """Wall-clock bound for one tool. Find-in-document is shorter than retrieve."""
     if name == "find_in_document":
         return settings.chat_find_timeout_seconds
+    if name in ("review_documents", "edit_document"):  # many model calls in parallel
+        return settings.review_tool_timeout_seconds
     if name == "ask_firm":  # retrieval plus its own grounded LLM answer
         return max(settings.chat_tool_timeout_seconds, 75.0)
     return settings.chat_tool_timeout_seconds
@@ -622,6 +659,10 @@ def build_llm_messages(
     if found:
         heading = "OTHER DOCUMENTS FOUND BY SEARCH" if attached else "AVAILABLE DOCUMENTS"
         system_content += f"\n\n{heading}:\n" + "\n".join(f"- {d['doc_id']}: {d['filename']}" for d in found)
+
+    carried = carried_documents(history)
+    if carried:
+        system_content += working_set_note(carried, {e.document_id: slug for slug, e in doc_index.items()})
 
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": system_content},
@@ -844,6 +885,24 @@ def _call_groq(
 # Main agent loop (streaming generator)
 # ---------------------------------------------------------------------------
 
+# Read-only tools that may run side by side within one round (no index or session writes).
+PARALLEL_SAFE_TOOLS = frozenset({
+    "read_document", "get_outline", "find_in_document", "fetch_documents",
+    "resolve_matter", "get_matter_profile", "find_people",
+})
+WRAP_UP_PROMPT = (
+    "Stop using tools now. Answer the request from the information already gathered above, with citations "
+    "for what you rely on, and say plainly which parts you could not check."
+)
+
+
+def _record_working_set(all_events: list[dict[str, Any]]) -> None:
+    """Persist (with the message, not streamed) which documents this turn read or searched."""
+    docs = working_set(all_events)
+    if docs:
+        all_events.append({"type": "working_set", "documents": docs})
+
+
 def run_chat_agent(
     conn,
     user_message: str,
@@ -879,12 +938,22 @@ def run_chat_agent(
     messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode, matter=matter)
     tools = ALL_TOOLS
     request_id = current_request_id() or "-"
-    tools_paused = False
 
     full_text = ""
     records: list[str] = []
     grounding = settings.grounding_enabled
+    started_at = time.perf_counter()
+    # Per-stage wall time for this turn (returned to callers; read by evals/grounding_eval.py).
+    timings: dict[str, Any] = {"llm_ms": [], "tool_ms": [], "tool_calls_per_round": []}
 
+    def finish_timings() -> dict[str, Any]:
+        timings["rounds"] = len(timings["llm_ms"])
+        timings["total_ms"] = round((time.perf_counter() - started_at) * 1000, 1)
+        return timings
+
+    turn_deadline = started_at + settings.chat_turn_deadline_seconds
+    paused_tools: set[str] = set()
+    answered = False
     for round_num in range(MAX_TOOL_ROUNDS):
         logger.info(
             "[chat/agent] round %d, messages=%d, request_id=%s",
@@ -893,8 +962,22 @@ def run_chat_agent(
             request_id,
         )
 
+        evicted = fit_context(messages, settings.chat_context_max_chars)
+        if evicted:
+            timings["evicted_tool_outputs"] = timings.get("evicted_tool_outputs", 0) + evicted
+            logger.info("[chat/agent] stubbed %d old tool outputs to fit context, request_id=%s", evicted, request_id)
+        remaining = turn_deadline - time.perf_counter()
+        if remaining < 5:
+            timings["deadline_hit"] = True
+            break
         try:
-            response = _call_llm(messages, tools, model)
+            t = time.perf_counter()
+            response = run_with_deadline(_call_llm, remaining, messages, tools, model)
+            timings["llm_ms"].append(round((time.perf_counter() - t) * 1000, 1))
+            if response is DEADLINE_EXCEEDED:
+                timings["deadline_hit"] = True
+                logger.warning("[chat/agent] turn deadline reached in an LLM call, request_id=%s", request_id)
+                break
         except Exception as exc:
             logger.error(
                 "[chat/agent] LLM call failed: %s, request_id=%s",
@@ -904,7 +987,7 @@ def run_chat_agent(
             CHAT_TURNS.labels(outcome="llm_error").inc()
             yield sse_event("error", {"message": "Failed to generate response. Please try again."})
             yield sse_done()
-            return {"full_text": "", "events": all_events, "citations": []}
+            return {"full_text": "", "events": all_events, "citations": [], "timings": finish_timings()}
 
         content = response.get("content", "")
         tool_calls = response.get("tool_calls", [])
@@ -922,7 +1005,9 @@ def run_chat_agent(
 
         # If no tool calls, we're done
         if not tool_calls:
+            answered = True
             break
+        timings["tool_calls_per_round"].append(len(tool_calls))
 
         # Process tool calls
         messages.append({
@@ -931,49 +1016,53 @@ def run_chat_agent(
             "tool_calls": tool_calls,
         })
 
+        calls = []
         for tc in tool_calls:
             func = tc.get("function", {})
-            tool_name = func.get("name", "")
             try:
                 args = json.loads(func.get("arguments", "{}"))
             except json.JSONDecodeError:
                 args = {}
+            calls.append((tc, func.get("name", ""), args, str(tc.get("id") or uuid.uuid4())))
+            logger.info("[chat/agent] tool call: %s(%s), request_id=%s", calls[-1][1], list(args.keys()), request_id)
 
-            logger.info(
-                "[chat/agent] tool call: %s(%s), request_id=%s",
-                tool_name,
-                list(args.keys()),
-                request_id,
-            )
+        def run_call(call) -> tuple[dict[str, Any], list[dict[str, Any]], bool]:
+            _tc, name, args, _cid = call
+            if name in paused_tools:
+                return {"error": f"{name} is paused for this turn after a timeout"}, [], False
+            bound = min(tool_deadline_seconds(name), max(1.0, turn_deadline - time.perf_counter()))
+            return dispatch_tool_call_bounded(name, args, doc_index, doc_store, nonce, member_id=member_id,
+                                              timeout=bound, matter=matter)
 
-            call_id = str(tc.get("id") or uuid.uuid4())
-            started = {
-                "type": "tool_started",
-                "call_id": call_id,
-                "tool": tool_name,
-                "label": tool_step_label(tool_name, args, doc_index),
-            }
-            all_events.append(started)
-            yield sse_event("tool_started", started)
+        # Independent read-only calls in one round run side by side; their steps are still
+        # reported in the order the model asked for them.
+        parallel = len(calls) > 1 and all(c[1] in PARALLEL_SAFE_TOOLS for c in calls)
+        outcomes: dict[int, tuple[dict[str, Any], list[dict[str, Any]], bool]] = {}
+        if parallel:
+            for _tc, name, args, cid in calls:
+                started = {"type": "tool_started", "call_id": cid, "tool": name, "label": tool_step_label(name, args, doc_index)}
+                all_events.append(started)
+                yield sse_event("tool_started", started)
+            t = time.perf_counter()
+            with ThreadPoolExecutor(max_workers=min(len(calls), 8), thread_name_prefix="chat-round") as pool:
+                for i, out in enumerate(pool.map(run_call, calls)):
+                    outcomes[i] = out
+            wall = round((time.perf_counter() - t) * 1000, 1)
+            timings["tool_ms"].append({"tool": "+".join(c[1] for c in calls), "ms": wall, "parallel": len(calls)})
 
-            if tools_paused:
-                result, events, timed_out = (
-                    {"error": "Tool execution paused after a timeout"},
-                    [],
-                    False,
-                )
-            else:
-                result, events, timed_out = dispatch_tool_call_bounded(
-                    tool_name,
-                    args,
-                    doc_index,
-                    doc_store,
-                    nonce,
-                    member_id=member_id,
-                    matter=matter,
-                )
-                if timed_out:
-                    tools_paused = True
+        for i, call in enumerate(calls):
+            tc, tool_name, args, call_id = call
+            if not parallel:
+                started = {"type": "tool_started", "call_id": call_id, "tool": tool_name,
+                           "label": tool_step_label(tool_name, args, doc_index)}
+                all_events.append(started)
+                yield sse_event("tool_started", started)
+                t = time.perf_counter()
+                outcomes[i] = run_call(call)
+                timings["tool_ms"].append({"tool": tool_name, "ms": round((time.perf_counter() - t) * 1000, 1)})
+            result, events, timed_out = outcomes[i]
+            if timed_out:
+                paused_tools.add(tool_name)
 
             # Stream tool events, then close the step
             for event in events:
@@ -1000,6 +1089,7 @@ def run_chat_agent(
                     "events": all_events,
                     "citations": [],
                     "waiting_for_input": True,
+                    "timings": finish_timings(),
                 }
 
             if tool_name in _RECORD_TOOLS and not result.get("error"):
@@ -1013,10 +1103,30 @@ def run_chat_agent(
                 "content": json.dumps(result, default=str),
             })
 
+    if not answered:
+        # Out of time or rounds while still gathering: one tool-free call answers from what is in hand.
+        timings["wrap_up"] = True
+        messages.append({"role": "user", "content": WRAP_UP_PROMPT})
+        t = time.perf_counter()
+        try:
+            response = run_with_deadline(_call_llm, settings.chat_wrap_up_seconds, messages, [], model)
+        except Exception as exc:
+            logger.error("[chat/agent] wrap-up call failed: %s, request_id=%s", exc, request_id)
+            response = DEADLINE_EXCEEDED
+        timings["llm_ms"].append(round((time.perf_counter() - t) * 1000, 1))
+        content = "" if response is DEADLINE_EXCEEDED else str(response.get("content") or "")
+        if not content:
+            content = ("I ran out of time before finishing this task. The steps above show what was checked; "
+                       "please narrow the request or ask me to continue.")
+        full_text = (full_text + "\n\n" if full_text and not full_text.endswith("\n") else full_text) + content
+        if not grounding:
+            yield sse_event("text_delta", {"text": name_documents(extract_citations_text(content), doc_index)})
+
     if grounding and full_text.strip():
         step = {"type": "reasoning", "text": "Checking each statement against its source", "mode": mode or "answer"}
         all_events.append(step)
         yield sse_event("reasoning", {"text": step["text"], "mode": step["mode"]})
+        t = time.perf_counter()
         try:
             clean_text, verified_citations, report = ground_chat_text(full_text, doc_index, doc_store, records)
         except Exception as exc:  # never show an unchecked answer as if it were checked
@@ -1024,6 +1134,8 @@ def run_chat_agent(
             clean_text = ("The answer could not be checked against its sources, so it is not shown. "
                           "Please try again.")
             verified_citations, report = [], {"error": "grounding_failed"}
+        timings["grounding_ms"] = round((time.perf_counter() - t) * 1000, 1)
+        timings["grounding"] = report.pop("timings", {})
         all_events.append({"type": "grounding", **report})
         yield sse_event("grounding", report)
         yield sse_event("text_final", {"text": clean_text})
@@ -1031,8 +1143,10 @@ def run_chat_agent(
             CHAT_CITATION_RESULTS.labels(result="verified").inc()
             yield sse_event("citation_data", cit)
         CHAT_TURNS.labels(outcome="completed").inc()
+        _record_working_set(all_events)
         yield sse_done()
-        return {"full_text": clean_text, "events": all_events, "citations": verified_citations}
+        return {"full_text": clean_text, "events": all_events, "citations": verified_citations,
+                "timings": finish_timings()}
 
     # Parse and verify citations
     citations = parse_citations(full_text)
@@ -1061,11 +1175,13 @@ def run_chat_agent(
     clean_text = name_documents(extract_citations_text(full_text), doc_index)
 
     CHAT_TURNS.labels(outcome="completed").inc()
+    _record_working_set(all_events)
     yield sse_done()
     return {
         "full_text": clean_text,
         "events": all_events,
         "citations": verified_citations,
+        "timings": finish_timings(),
     }
 
 

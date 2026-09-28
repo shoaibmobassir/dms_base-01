@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AdminPage } from "@/pages/AdminPage";
+import { DocumentEditorPage } from "@/pages/DocumentEditorPage";
 import { AppShell } from "@/components/shell/AppShell";
 import { HomePage } from "@/pages/HomePage";
 import { AskPage } from "@/pages/AskPage";
@@ -30,6 +31,7 @@ function App() {
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/documents/:id" element={<DocumentDetailPage />} />
         <Route path="/documents/:id/history" element={<DocumentHistoryRedirect />} />
+        <Route path="/documents/:id/edit" element={<DocumentEditorPage />} />
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/clients/:id" element={<ClientDetailPage />} />
         <Route path="/people" element={<PeoplePage />} />

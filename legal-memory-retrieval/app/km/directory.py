@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from app.km.scope import ACL_SQL, _fetch
+from app.km.scope import ACL_SQL, DOC_SQL, _fetch
 
 _STOP = frozenset(
     """a an and are as at be by did do does for from had has have in is it its of on or our
@@ -64,7 +64,7 @@ def matter_cards(conn, matter_ids: list[str], member_id: str | None, *, max_docs
     if not matters:
         return []
     allowed = [m["matter_id"] for m in matters]
-    params = {"ids": allowed, "max_docs": max_docs}
+    params = {"ids": allowed, "max_docs": max_docs, "member_id": member_id}
     team = _fetch(
         conn,
         """
@@ -79,11 +79,11 @@ def matter_cards(conn, matter_ids: list[str], member_id: str | None, *, max_docs
     )
     docs = _fetch(
         conn,
-        """
+        f"""
         SELECT matter_id, document_id, title, document_type, doc_date, author_name, status
         FROM (
           SELECT d.*, row_number() OVER (PARTITION BY d.matter_id ORDER BY d.doc_date NULLS LAST, d.document_id) rn
-          FROM documents d WHERE d.matter_id = ANY(%(ids)s)
+          FROM documents d WHERE d.matter_id = ANY(%(ids)s) AND {DOC_SQL}
         ) x WHERE rn <= %(max_docs)s
         ORDER BY matter_id, rn
         """,
@@ -91,7 +91,7 @@ def matter_cards(conn, matter_ids: list[str], member_id: str | None, *, max_docs
     )
     counts = {
         r["matter_id"]: int(r["n"])
-        for r in _fetch(conn, "SELECT matter_id, count(*) n FROM documents WHERE matter_id = ANY(%(ids)s) GROUP BY 1", params)
+        for r in _fetch(conn, f"SELECT matter_id, count(*) n FROM documents d WHERE d.matter_id = ANY(%(ids)s) AND {DOC_SQL} GROUP BY 1", params)
     }
     deadlines = _fetch(
         conn,

@@ -93,7 +93,7 @@ def _build_index(conn) -> _Index:
                array_to_string(m.facts, ' ') AS facts,
                array_to_string(m.legal_issues, ' ') AS issues,
                m.practice_area, m.status,
-               coalesce((SELECT string_agg(d.title, ' ') FROM documents d WHERE d.matter_id = m.matter_id), '') AS doc_titles
+               coalesce((SELECT string_agg(d.title, ' ') FROM documents d WHERE d.matter_id = m.matter_id AND d.visible_to IS NULL), '') AS doc_titles
         FROM matters m JOIN clients cl ON cl.client_id = m.client_id
         """,
         {},

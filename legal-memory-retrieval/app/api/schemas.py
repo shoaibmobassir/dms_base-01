@@ -49,6 +49,8 @@ class IngestDocumentRequest(BaseModel):
     body: str
     version: str = "v1.0"
     status: str = "Draft"
+    # "private": only the uploader (and people they later share with) can see it.
+    visibility: str = Field(default="matter", pattern="^(matter|private)$")
 
 
 class IngestJobRequest(BaseModel):

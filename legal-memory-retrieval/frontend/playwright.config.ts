@@ -20,6 +20,7 @@ const python = `"${path.join(backendDir, ".venv/bin/python")}"`;
  */
 export default defineConfig({
   testDir: "./e2e",
+  globalTeardown: "./e2e/global-teardown.ts",
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
@@ -41,7 +42,8 @@ export default defineConfig({
       url: `http://127.0.0.1:${PORT}/api/system/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
-      env: { AUTH_ENABLED: "false" },
+      // Models are cached locally; offline mode stops a flaky network from stalling their load.
+      env: { AUTH_ENABLED: "false", HF_HUB_OFFLINE: "1", TRANSFORMERS_OFFLINE: "1" },
     },
     {
       command: `${python} scripts/fake_idp.py --port ${IDP_PORT}`,

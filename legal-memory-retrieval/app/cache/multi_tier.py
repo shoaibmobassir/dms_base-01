@@ -77,10 +77,12 @@ class CacheTier(str, Enum):
     RETRIEVAL = "ret"
     ANSWER = "ans"
     GRAPH_COMMUNITY = "gc"
+    REVIEW = "rev"          # batch review cells, keyed on passage text + questions
 
 
 _TTL_MAP = {
     CacheTier.EMBEDDING: 86400,      # 24 hours — deterministic
+    CacheTier.REVIEW: 7 * 86400,     # 7 days — key includes the passage text, so edits invalidate
     CacheTier.CHANNEL: 300,          # 5 minutes
     # L3 follows settings.cache_ttl_seconds (see _tier_ttl). Kept here as fallback.
     CacheTier.RETRIEVAL: 300,

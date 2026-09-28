@@ -384,6 +384,45 @@ def _generator_spans(claim: Claim, scoped: list[Source]) -> list[tuple[Source, i
     return found
 
 
+Pool = list[tuple[Source, int, int, float]]
+CandidateIds = dict[str, tuple[Source, int, int]]
+
+
+def _judge(claims: list[Claim], pools: list[Pool], llm: LLMCall) -> tuple[dict[int, dict[str, Any]], CandidateIds]:
+    """One judge call over a batch of units; an empty verdict map means the call failed."""
+    body, ids = _build_prompt(claims, pools)
+    try:
+        raw = llm([{"role": "system", "content": JUDGE_PROMPT}, {"role": "user", "content": body}])
+        return _parse(raw), ids
+    except Exception as exc:  # fail closed: nothing is marked supported without a verdict
+        logger.warning("[grounding] judge failed: %s", exc)
+        return {}, ids
+
+
+def _judge_sharded(
+    claims: list[Claim], pools: list[Pool], llm: LLMCall, batch_size: int,
+) -> list[tuple[dict[str, Any] | None, CandidateIds]]:
+    """Per claim: its verdict (or None) and the candidate ids it may use.
+
+    The judge decides each unit only from the candidates listed under it, so units can be
+    split across parallel calls. Output tokens dominate the call's time, so several short
+    calls finish well before one long one. A failed shard fails closed for its units only.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    size = batch_size if batch_size > 0 else len(claims)
+    shards = [(claims[i:i + size], pools[i:i + size]) for i in range(0, len(claims), size)]
+    if len(shards) == 1:
+        results = [_judge(*shards[0], llm)]
+    else:
+        with ThreadPoolExecutor(max_workers=min(len(shards), 8)) as pool:
+            results = list(pool.map(lambda sh: _judge(sh[0], sh[1], llm), shards))
+    out: list[tuple[dict[str, Any] | None, CandidateIds]] = []
+    for (shard_claims, _), (verdicts, ids) in zip(shards, results):
+        out += [(verdicts.get(i), ids) for i in range(1, len(shard_claims) + 1)]
+    return out
+
+
 def verify_claims(
     claims: list[Claim],
     sources: list[Source],
@@ -391,10 +430,19 @@ def verify_claims(
     *,
     per_claim: int = 6,
     auto_cite: bool = True,
+    batch_size: int | None = None,
 ) -> list[Claim]:
-    """Label each claim supported / partial / unsupported and attach verified spans."""
+    """Label each claim supported / partial / unsupported and attach verified spans.
+
+    ``batch_size`` units go to each judge call (0 = one call for all); default from
+    ``settings.grounding_verify_batch``.
+    """
     if not claims:
         return claims
+    if batch_size is None:
+        from app.config import settings
+
+        batch_size = settings.grounding_verify_batch
     pools: list[list[tuple[Source, int, int, float]]] = []
     for c in claims:
         cited = set(c.cited)
@@ -414,16 +462,7 @@ def verify_claims(
                 uniq.append(item)
         pools.append(uniq[: per_claim + 4])
 
-    body, ids = _build_prompt(claims, pools)
-    try:
-        raw = llm([{"role": "system", "content": JUDGE_PROMPT}, {"role": "user", "content": body}])
-        verdicts = _parse(raw)
-    except Exception as exc:  # fail closed: nothing is marked supported without a verdict
-        logger.warning("[grounding] judge failed: %s", exc)
-        verdicts = {}
-
-    for i, c in enumerate(claims, 1):
-        v = verdicts.get(i)
+    for c, (v, ids) in zip(claims, _judge_sharded(claims, pools, llm, batch_size)):
         if v is None:
             c.support, c.reason = UNSUPPORTED, "not verified"
             c.kind = "claim"
@@ -436,10 +475,16 @@ def verify_claims(
             continue
         elements = [e for e in v.get("elements") or [] if isinstance(e, dict)]
 
+        def states_fact(x: str) -> bool:
+            src, s, e = ids[x]
+            # Firm records (matter, person: no document_id) are short "Field: value" lines that
+            # look like headings but are data; the heading rule is for document text only.
+            return src.document_id is None or not is_heading(src.text[s:e])
+
         def usable(e: dict) -> list[str]:
             got = [x for x in e.get("use") or [] if x in ids]
             # An element resting only on headings has no source that states it.
-            return got if any(not is_heading(ids[x][0].text[ids[x][1]:ids[x][2]]) for x in got) else []
+            return got if any(states_fact(x) for x in got) else []
 
         picked: list[str] = []
         for e in elements:

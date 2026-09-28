@@ -19,7 +19,7 @@ def profile_rows(conn, matter_ids: list[str] | None = None) -> list[dict]:
                  nullif(array_to_string(m.facts, ' '), ''),
                  nullif('Issues: ' || array_to_string(m.legal_issues, '; '), 'Issues: '),
                  (SELECT 'Documents: ' || string_agg(d.title, '; ' ORDER BY d.doc_date NULLS LAST)
-                    FROM documents d WHERE d.matter_id = m.matter_id),
+                    FROM documents d WHERE d.matter_id = m.matter_id AND d.visible_to IS NULL),
                  (SELECT 'Arguments: ' || string_agg(DISTINCT a.issue, '; ')
                     FROM arguments a WHERE a.matter_id = m.matter_id)
                ) AS profile_text

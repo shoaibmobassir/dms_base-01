@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from psycopg.rows import dict_row
 
-from app.api.acl import ACL_CLAUSE
+from app.api.acl import ACL_CLAUSE, doc_acl
 from app.auth.deps import resolve_member
 from app.db.connection import connect
 
@@ -27,7 +27,7 @@ def activity_feed(
         FROM documents d
         JOIN permissions p ON p.matter_id = d.matter_id
         JOIN matters m ON m.matter_id = d.matter_id
-        WHERE {ACL_CLAUSE}
+        WHERE {ACL_CLAUSE} AND {doc_acl('d')}
         ORDER BY d.doc_date DESC NULLS LAST, d.document_id DESC
         LIMIT %(limit)s
     """

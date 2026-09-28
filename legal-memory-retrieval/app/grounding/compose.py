@@ -14,6 +14,7 @@ citation; the sentence keeps any MTR/MEM reference it already had.
 from __future__ import annotations
 
 import re
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -48,6 +49,7 @@ class Grounded:
     citations: list[dict[str, Any]]
     claims: list[Claim]
     removed: list[dict[str, str]] = field(default_factory=list)
+    timings: dict[str, float] = field(default_factory=dict)
 
     def report(self) -> dict[str, Any]:
         claims = [c for c in self.claims if c.kind == "claim"]
@@ -198,9 +200,14 @@ def ground_answer(
     ]
     _mark_suggestion_lists(text, units, claims)
     llms = llm if isinstance(llm, list) else [llm]
+    t = time.perf_counter()
     verify_consensus(claims, sources, llms)
+    verify_ms = (time.perf_counter() - t) * 1000
     # "X is not in the documents" is checked against whole documents, not only retrieved passages.
+    t = time.perf_counter()
     check_absences(claims, full_sources if full_sources is not None else sources, llms[0])
+    timings = {"units": len(claims), "verify_ms": round(verify_ms, 1),
+               "absence_ms": round((time.perf_counter() - t) * 1000, 1)}
 
     lines = text.split("\n")
     edits: dict[int, list[tuple[int, int, str]]] = {}
@@ -274,4 +281,4 @@ def ground_answer(
     if removed and removed_note:
         noun = "statement" if len(removed) == 1 else "statements"
         out += f"\n\n_{len(removed)} {noun} removed because the cited sources did not support {'it' if len(removed) == 1 else 'them'}._"
-    return Grounded(text=out, citations=citations, claims=claims, removed=removed)
+    return Grounded(text=out, citations=citations, claims=claims, removed=removed, timings=timings)

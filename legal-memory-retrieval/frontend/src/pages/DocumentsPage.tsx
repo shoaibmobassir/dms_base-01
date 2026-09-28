@@ -98,6 +98,10 @@ export function DocumentsPage() {
                     <span className="flex items-center gap-2">
                       <Icon name="description" className="text-muted-foreground" style={{ fontSize: 16 }} />
                       {doc.title}
+                      {doc.privacy && (
+                        <Icon name={doc.privacy === "private" ? "lock" : "shield_lock"} className="text-amber-600"
+                          style={{ fontSize: 14 }} aria-label={doc.privacy === "private" ? "Private" : "Restricted"} data-testid="doc-privacy-icon" />
+                      )}
                     </span>
                   ),
                 },
@@ -137,6 +141,7 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
   const [matterId, setMatterId] = useState("");
   const [docType, setDocType] = useState(DOC_TYPES[0]);
   const [body, setBody] = useState("");
+  const [privateDraft, setPrivateDraft] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -147,7 +152,8 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const res = await ingestDocument({ title: title.trim(), matter_id: target, body: body.trim(), document_type: docType });
+      const res = await ingestDocument({ title: title.trim(), matter_id: target, body: body.trim(), document_type: docType,
+        visibility: privateDraft ? "private" : "matter" });
       await queryClient.invalidateQueries();
       toast(`Indexed ${res.document_id ?? "document"}`);
       onClose();
@@ -195,6 +201,10 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
               <option key={t}>{t}</option>
             ))}
           </select>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={privateDraft} onChange={(e) => setPrivateDraft(e.target.checked)} data-testid="ingest-private" />
+            Private draft — only I can see it until I share it
+          </label>
           <textarea
             className="min-h-32 w-full rounded-md border border-border bg-card px-3 py-2"
             placeholder="Document text"

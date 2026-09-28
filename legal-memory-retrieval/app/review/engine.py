@@ -124,7 +124,7 @@ class FastReviewEngine:
         plan = build_review_plan(requested_features, query_text, matter_id)
 
         # 2. Fetch candidate documents
-        doc_records = self._fetch_candidate_documents(matter_id, document_ids)
+        doc_records = self._fetch_candidate_documents(matter_id, document_ids, member_id)
         total_docs = len(doc_records)
 
         if total_docs == 0:
@@ -219,56 +219,36 @@ class FastReviewEngine:
         self,
         matter_id: Optional[str],
         document_ids: Optional[List[str]],
+        member_id: Optional[str] = None,
     ) -> List[dict]:
+        """Documents to review — only those the member may read (matter ACL + document privacy)."""
+        from app.api.acl import ACL_CLAUSE, doc_acl
+
+        if document_ids:
+            scope, params = "d.document_id = ANY(%(doc_ids)s)", {"doc_ids": document_ids}
+        elif matter_id:
+            scope, params = "d.matter_id = %(mid)s", {"mid": matter_id}
+        else:
+            scope, params = "TRUE", {}
         with connect() as conn:
             with conn.cursor(row_factory=dict_row) as cur:
-                if document_ids:
-                    cur.execute(
-                        """
-                        SELECT d.document_id, d.title, d.matter_id, d.document_type,
-                               COALESCE(d.current_version_id, v.version_id) AS version_id,
-                               d.body
-                        FROM documents d
-                        LEFT JOIN LATERAL (
-                            SELECT version_id FROM document_versions
-                            WHERE document_id = d.document_id
-                            ORDER BY version_number DESC LIMIT 1
-                        ) v ON TRUE
-                        WHERE d.document_id = ANY(%(doc_ids)s)
-                        """,
-                        {"doc_ids": document_ids},
-                    )
-                elif matter_id:
-                    cur.execute(
-                        """
-                        SELECT d.document_id, d.title, d.matter_id, d.document_type,
-                               COALESCE(d.current_version_id, v.version_id) AS version_id,
-                               d.body
-                        FROM documents d
-                        LEFT JOIN LATERAL (
-                            SELECT version_id FROM document_versions
-                            WHERE document_id = d.document_id
-                            ORDER BY version_number DESC LIMIT 1
-                        ) v ON TRUE
-                        WHERE d.matter_id = %(mid)s
-                        """,
-                        {"mid": matter_id},
-                    )
-                else:
-                    cur.execute(
-                        """
-                        SELECT d.document_id, d.title, d.matter_id, d.document_type,
-                               COALESCE(d.current_version_id, v.version_id) AS version_id,
-                               d.body
-                        FROM documents d
-                        LEFT JOIN LATERAL (
-                            SELECT version_id FROM document_versions
-                            WHERE document_id = d.document_id
-                            ORDER BY version_number DESC LIMIT 1
-                        ) v ON TRUE
-                        LIMIT 150
-                        """
-                    )
+                cur.execute(
+                    f"""
+                    SELECT d.document_id, d.title, d.matter_id, d.document_type,
+                           COALESCE(d.current_version_id, v.version_id) AS version_id,
+                           d.body
+                    FROM documents d
+                    LEFT JOIN permissions p ON p.matter_id = d.matter_id
+                    LEFT JOIN LATERAL (
+                        SELECT version_id FROM document_versions
+                        WHERE document_id = d.document_id
+                        ORDER BY version_number DESC LIMIT 1
+                    ) v ON TRUE
+                    WHERE {scope} AND {ACL_CLAUSE} AND {doc_acl('d')}
+                    {"" if (document_ids or matter_id) else "LIMIT 150"}
+                    """,
+                    {**params, "member_id": member_id},
+                )
                 return list(cur.fetchall())
 
     async def _hierarchical_prune(

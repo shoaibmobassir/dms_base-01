@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg.rows import dict_row
 
-from app.api.acl import ACL_CLAUSE
+from app.api.acl import ACL_CLAUSE, doc_acl
 from app.auth.deps import resolve_member
 from app.db.connection import connect
 
@@ -48,7 +48,7 @@ def matters_list(
                lead.name AS lead_name, lead.member_id AS lead_member_id,
                nd.due_date AS next_deadline_date, nd.title AS next_deadline_title,
                (SELECT count(*) FROM documents d WHERE d.matter_id = m.matter_id
-                  AND d.status IS DISTINCT FROM 'Deleted') AS document_count
+                  AND d.status IS DISTINCT FROM 'Deleted' AND {doc_acl('d')}) AS document_count
         FROM matters m
         LEFT JOIN permissions p ON p.matter_id = m.matter_id
         LEFT JOIN LATERAL (
@@ -162,28 +162,33 @@ def matter_detail(
                 raise HTTPException(status_code=404, detail="Matter not found or access denied")
             cur.execute(
                 """
-                SELECT mm.member_id, mm.role_on_matter, mem.name, mem.role, mem.office
+                SELECT mm.member_id, mm.role_on_matter, mem.name, mem.role, mem.office,
+                       mm.started_at, mm.ended_at, (mm.ended_at IS NULL OR mm.ended_at >= current_date) AS active
                 FROM matter_members mm
                 JOIN members mem ON mem.member_id = mm.member_id
                 WHERE mm.matter_id = %(matter_id)s
-                ORDER BY mm.role_on_matter
+                ORDER BY (lower(mm.role_on_matter) = 'lead') DESC, active DESC, mm.role_on_matter
                 """,
                 {"matter_id": matter_id},
             )
             team = list(cur.fetchall())
             cur.execute(
-                """
-                SELECT document_id, title, document_type, author_name,
-                       doc_date, status, version
-                FROM documents
-                WHERE matter_id = %(matter_id)s
-                ORDER BY doc_date DESC NULLS LAST
+                f"""
+                SELECT d.document_id, d.title, d.document_type, d.author_name,
+                       d.doc_date, d.status, d.version, da.visibility AS privacy
+                FROM documents d LEFT JOIN document_access da USING (document_id)
+                WHERE d.matter_id = %(matter_id)s AND {doc_acl('d')}
+                ORDER BY d.doc_date DESC NULLS LAST
                 LIMIT 20
                 """,
-                {"matter_id": matter_id},
+                {"matter_id": matter_id, "member_id": member_id},
             )
             docs = list(cur.fetchall())
-    return {"service": SERVICE, "matter": matter, "team": team, "documents": docs}
+            from app import access
+
+            # What the viewer may do here (the page shows edit controls accordingly).
+            my_level = access.matter_level(conn, member_id, matter_id)
+    return {"service": SERVICE, "matter": matter, "team": team, "documents": docs, "my_level": my_level}
 
 
 @router.get("/{matter_id}/arguments")
@@ -225,20 +230,25 @@ def matter_related(
         LEFT JOIN permissions p ON p.matter_id = m.matter_id
         WHERE m.matter_id = %(matter_id)s AND {ACL_CLAUSE}
     """
+    # Links people made (matter_links) come first, then generated relationships.
     sql = f"""
-        SELECT DISTINCT m.matter_id, m.matter_code, m.title, m.client_name,
+        SELECT DISTINCT ON (m.matter_id) m.matter_id, m.matter_code, m.title, m.client_name,
                m.practice_area, m.status, m.outcome,
-               COALESCE(p2.restricted, FALSE) AS restricted
-        FROM relationships r
-        JOIN matters m ON (
-            CASE WHEN r.source_id = %(matter_id)s THEN r.target_id
-                 ELSE r.source_id END = m.matter_id
-        )
+               COALESCE(p2.restricted, FALSE) AS restricted, x.relation, x.note, x.manual
+        FROM (
+            SELECT CASE WHEN l.matter_id = %(matter_id)s THEN l.related_matter_id ELSE l.matter_id END AS other,
+                   l.relation, l.note, TRUE AS manual
+            FROM matter_links l WHERE l.matter_id = %(matter_id)s OR l.related_matter_id = %(matter_id)s
+            UNION ALL
+            SELECT CASE WHEN r.source_id = %(matter_id)s THEN r.target_id ELSE r.source_id END,
+                   r.rel_type, '', FALSE
+            FROM relationships r WHERE r.source_id = %(matter_id)s OR r.target_id = %(matter_id)s
+        ) x
+        JOIN matters m ON m.matter_id = x.other
         LEFT JOIN permissions p2 ON p2.matter_id = m.matter_id
-        WHERE (r.source_id = %(matter_id)s OR r.target_id = %(matter_id)s)
-          AND m.matter_id != %(matter_id)s
+        WHERE m.matter_id != %(matter_id)s
           AND {ACL_CLAUSE.replace('p.', 'p2.')}
-        LIMIT 10
+        ORDER BY m.matter_id, x.manual DESC
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -247,12 +257,16 @@ def matter_related(
             if not cur.fetchone():
                 raise HTTPException(status_code=404, detail="Matter not found or access denied")
             cur.execute(sql, params)
-            return {"service": SERVICE, "matter_id": matter_id, "related": list(cur.fetchall())}
+            related = sorted(cur.fetchall(), key=lambda r: (not r["manual"], r["title"] or ""))[:20]
+            return {"service": SERVICE, "matter_id": matter_id, "related": related}
 
 
 # What people did on this matter (UI roadmap Q2). Only actions worth showing a
 # colleague; reads/views are in the audit export, not the activity feed.
-ACTIVITY_ACTIONS = ("upload.create", "upload.process", "chat.prompt", "document.download", "export.bundle", "document.version")
+ACTIVITY_ACTIONS = ("upload.create", "upload.process", "chat.prompt", "document.download", "export.bundle", "document.version",
+                    "document.edit", "matter.create", "matter.update", "matter.team.set", "matter.team.remove",
+                    "matter.event.add", "matter.event.update", "matter.event.delete", "matter.argument.add",
+                    "matter.argument.update", "matter.argument.delete", "matter.link", "matter.unlink")
 
 
 @router.get("/{matter_id}/activity")
@@ -298,16 +312,27 @@ def matter_timeline(
             if not cur.fetchone():
                 raise HTTPException(status_code=404, detail="Matter not found or access denied")
             cur.execute(
+                f"""
+                SELECT d.document_id, d.title, d.document_type, d.author_name, d.doc_date
+                FROM documents d
+                WHERE d.matter_id = %(mid)s AND {doc_acl('d')}
+                ORDER BY d.doc_date ASC NULLS LAST
+                """,
+                {"mid": matter_id, "member_id": member_id},
+            )
+            docs = cur.fetchall()
+            cur.execute(
                 """
-                SELECT document_id, title, document_type, author_name, doc_date
-                FROM documents
-                WHERE matter_id = %(mid)s
-                ORDER BY doc_date ASC NULLS LAST
+                SELECT e.event_id, e.occurred_on, e.title, e.detail, e.kind, e.source_document_id,
+                       e.row_version, mb.name AS author
+                FROM matter_events e LEFT JOIN members mb ON mb.member_id = e.created_by
+                WHERE e.matter_id = %(mid)s
                 """,
                 {"mid": matter_id},
             )
-            docs = cur.fetchall()
+            entries = cur.fetchall()
 
+    # Document dates, plus the events people entered (hearings, orders, correspondence...).
     timeline = [
         {
             "date": str(d.get("doc_date") or ""),
@@ -315,9 +340,24 @@ def matter_timeline(
             "event": d.get("title", "Matter milestone"),
             "doc_id": d["document_id"],
             "doc_type": d.get("document_type", "Document"),
+            "source": "document",
         }
         for d in docs
+    ] + [
+        {
+            "date": str(e["occurred_on"]),
+            "author": e["author"],
+            "event": e["title"],
+            "detail": e["detail"],
+            "doc_id": e["source_document_id"],
+            "doc_type": e["kind"].capitalize(),
+            "source": "entry",
+            "event_id": e["event_id"],
+            "row_version": e["row_version"],
+        }
+        for e in entries
     ]
+    timeline.sort(key=lambda t: (t["date"] or "9999", t["event"] or ""))
     return {"service": SERVICE, "matter_id": matter_id, "timeline": timeline}
 
 
@@ -341,8 +381,8 @@ def matter_graph(
                 raise HTTPException(status_code=404, detail="Matter not found or access denied")
 
             cur.execute(
-                "SELECT document_id, title FROM documents WHERE matter_id = %(mid)s LIMIT 5",
-                {"mid": matter_id},
+                f"SELECT d.document_id, d.title FROM documents d WHERE d.matter_id = %(mid)s AND {doc_acl('d')} LIMIT 5",
+                {"mid": matter_id, "member_id": member_id},
             )
             docs = cur.fetchall()
 

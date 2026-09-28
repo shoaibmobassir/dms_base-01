@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from psycopg.rows import dict_row
 
-from app.api.acl import ACL_CLAUSE
+from app.api.acl import ACL_CLAUSE, doc_acl
 from app.api.firm import firm_profile
 from app.auth.deps import resolve_member
 from app.db.connection import connect
@@ -32,7 +32,7 @@ def home_stats(member_id: str | None = Depends(resolve_member)) -> dict:
                 WITH scope AS ({in_scope})
                 SELECT
                   (SELECT COUNT(*) FROM scope) AS matters,
-                  (SELECT COUNT(*) FROM documents d JOIN scope s USING (matter_id)) AS documents,
+                  (SELECT COUNT(*) FROM documents d JOIN scope s USING (matter_id) WHERE {doc_acl('d')}) AS documents,
                   (SELECT COUNT(*) FROM arguments a JOIN scope s USING (matter_id)) AS arguments,
                   (SELECT COUNT(DISTINCT m.client_id) FROM matters m JOIN scope s USING (matter_id)) AS clients,
                   (SELECT COUNT(*) FROM court_deadlines c JOIN scope s USING (matter_id)

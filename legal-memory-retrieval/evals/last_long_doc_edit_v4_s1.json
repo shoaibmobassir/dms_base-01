@@ -1,0 +1,370 @@
+{
+ "at": "2026-09-28 03:26",
+ "model": "zai.glm-5",
+ "summary": {
+  "hybrid_v4": {
+   "tasks": 18,
+   "exact": 18,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended_total": 0,
+   "errors": 0,
+   "median_s": 13.1,
+   "max_prompt_chars": 27183,
+   "calls_total": 661
+  }
+ },
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 763,
+   "result_changes": 763,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 80,
+   "peak_prompt_chars": 11430,
+   "seconds": 43.9,
+   "notes": [
+    "substitution changed 763 paragraphs; verifier reverted 0",
+    "2 candidates; editors changed 1; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 4,
+   "peak_prompt_chars": 26966,
+   "seconds": 6.0,
+   "notes": [
+    "42 candidates; editors changed 1; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 15127,
+   "seconds": 4.2,
+   "notes": [
+    "26 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 6451,
+   "seconds": 4.7,
+   "notes": [
+    "11 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 16,
+   "result_changes": 16,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 11,
+   "peak_prompt_chars": 24186,
+   "seconds": 24.7,
+   "notes": [
+    "substitution changed 60 paragraphs; verifier reverted 44",
+    "123 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 36,
+   "result_changes": 36,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 6,
+   "peak_prompt_chars": 4991,
+   "seconds": 16.8,
+   "notes": [
+    "substitution changed 36 paragraphs; verifier reverted 0",
+    "1 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1489,
+   "result_changes": 1489,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 152,
+   "peak_prompt_chars": 11430,
+   "seconds": 62.2,
+   "notes": [
+    "substitution changed 1489 paragraphs; verifier reverted 0",
+    "2 candidates; editors changed 1; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 8644,
+   "seconds": 10.3,
+   "notes": [
+    "13 candidates; editors changed 1; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8720,
+   "seconds": 16.6,
+   "notes": [
+    "9 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8625,
+   "seconds": 10.8,
+   "notes": [
+    "13 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 22,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 19,
+   "peak_prompt_chars": 26286,
+   "seconds": 14.0,
+   "notes": [
+    "substitution changed 117 paragraphs; verifier reverted 95",
+    "240 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 71,
+   "result_changes": 71,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 10,
+   "peak_prompt_chars": 8816,
+   "seconds": 11.5,
+   "notes": [
+    "substitution changed 71 paragraphs; verifier reverted 0",
+    "1 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 2966,
+   "result_changes": 2966,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 300,
+   "peak_prompt_chars": 16680,
+   "seconds": 107.1,
+   "notes": [
+    "substitution changed 2966 paragraphs; verifier reverted 0",
+    "2 candidates; editors changed 1; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 16617,
+   "seconds": 12.2,
+   "notes": [
+    "11 candidates; editors changed 1; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16695,
+   "seconds": 3.7,
+   "notes": [
+    "2 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16598,
+   "seconds": 3.6,
+   "notes": [
+    "16 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 34,
+   "result_changes": 34,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 37,
+   "peak_prompt_chars": 27183,
+   "seconds": 32.0,
+   "notes": [
+    "substitution changed 234 paragraphs; verifier reverted 200",
+    "463 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 130,
+   "result_changes": 130,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 24,
+   "peak_prompt_chars": 22706,
+   "seconds": 25.2,
+   "notes": [
+    "substitution changed 130 paragraphs; verifier reverted 0",
+    "376 candidates; editors changed 0; verifier reverted 0"
+   ]
+  }
+ ]
+}

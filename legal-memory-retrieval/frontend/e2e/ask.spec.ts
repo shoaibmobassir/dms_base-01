@@ -130,6 +130,55 @@ test("answer renders evidence chips, people and not-found states", async ({ page
   await expect(page.getByTestId("ai-not-found")).toContainText("No matter in the records");
 });
 
+test("KM panel lists matters, documents and people and hands off to the Assistant", async ({ page }) => {
+  const panel = {
+    matters: [
+      { matter_id: "MTR-2026-00901", matter_code: "CORP/BLR/0901/2026", title: "Acme Technologies — Series B Financing",
+        client_name: "Acme Technologies Private Limited", status: "open", lead: "Helena Voss", document_count: 12,
+        relation: "asked", why: "asked about; 6 relevant passages" },
+      { matter_id: "MTR-1931-00025", matter_code: "PIL/HAG/0025/1931", title: "German Minority Schools",
+        client_name: "Germany", status: "Closed", lead: "Helena Voss", document_count: 9,
+        relation: "related", why: "precedent of CORP/BLR/0901/2026" },
+    ],
+    documents: [
+      { document_id: "DOC-E9058749C1", title: "Share Purchase Agreement.docx", document_type: "Agreement",
+        matter_id: "MTR-2026-00901", matter_code: "CORP/BLR/0901/2026", page_number: 4, why: "cited in the answer", cited: true },
+      { document_id: "DOC-06D46C4AD1", title: "Board Resolution.docx", document_type: "Resolution",
+        matter_id: "MTR-2026-00901", matter_code: "CORP/BLR/0901/2026", why: "relevant passage", cited: false },
+    ],
+    people: [
+      { member_id: "MEM-00001", name: "Helena Voss", role: "Partner", office: "The Hague",
+        on_matters: [{ matter_id: "MTR-2026-00901", matter_code: "CORP/BLR/0901/2026", role_on_matter: "Lead" }],
+        why: "Lead on CORP/BLR/0901/2026" },
+      { member_id: "MEM-00004", name: "Priya Menon", role: "Senior Associate", office: "Bengaluru",
+        on_matters: [], why: "author of Share Purchase Agreement.docx" },
+    ],
+  };
+  await page.route("**/api/answers/stream", (route) =>
+    route.fulfill(sse(
+      { status: "answered", abstained: false, provider: "bedrock", key_finding: "Closing is conditional.",
+        answer: "Closing is conditional (DOC-E9058749C1).", panel },
+      { panel },
+    )),
+  );
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/ui/ask?q=what%20are%20the%20closing%20conditions%20for%20acme");
+  await expect(page.getByTestId("km-matter")).toHaveCount(2);
+  await expect(page.getByTestId("km-matters")).toContainText("Asked about");
+  await expect(page.getByTestId("km-matters")).toContainText("precedent of CORP/BLR/0901/2026");
+  await expect(page.getByTestId("km-person").first()).toContainText("Lead on CORP/BLR/0901/2026");
+  await expect(page.getByTestId("km-people")).toContainText("author of Share Purchase Agreement.docx");
+  await expect(page.getByTestId("km-document").first()).toContainText("cited in the answer");
+  // No duplicate people/sources lists beside the panel.
+  await expect(page.getByTestId("answer-people")).toHaveCount(0);
+  await expect(page.getByTestId("answer-sources")).toHaveCount(0);
+  await page.getByTestId("km-document").first().getByRole("button").click();
+  await expect(page.getByTestId("citation-document-panel")).toContainText("Share Purchase Agreement");
+  await page.keyboard.press("Escape");
+  const handoff = page.getByTestId("km-open-assistant");
+  await expect(handoff).toHaveAttribute("href", /\/chat\?matter=MTR-2026-00901&q=what\+are\+the\+closing\+conditions/);
+});
+
 test("recent questions come from the server and can be removed", async ({ page }) => {
   let items = [
     { id: "h1", query: "Who is on the Acme deal team?", scope: null, scope_type: null, asked_at: new Date().toISOString() },

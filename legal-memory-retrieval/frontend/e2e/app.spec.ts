@@ -1,5 +1,16 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
+/** The calendar list's own window (today − 60 … today + 330, local dates), open items. */
+async function calendarOpen(request: import("@playwright/test").APIRequestContext, member: string | undefined, scope = "firm") {
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const t = new Date();
+  const from = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() - 60));
+  const to = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() + 330));
+  const res = await request.get(`/api/calendar?from=${from}&to=${to}&scope=${scope}`, { headers: member ? { "X-Member-Id": member } : {} });
+  return ((await res.json()) as { items: { title: string; status: string; start: string }[] }).items.filter((i) => i.status === "open");
+}
+
+
 // Expected values come from the API (i.e. the seeded database) at test time.
 
 type Matter = { matter_id: string; matter_code: string; title: string; client_id: string; restricted: boolean };
@@ -115,7 +126,7 @@ test("document opens with its indexed text", async ({ page, request }) => {
 test("deadlines and client memory come from seeded tables", async ({ page, request }) => {
   const { matter, insider } = await wall(request);
   await viewAs(page, insider);
-  const open = (await api<{ items: { title: string; matter_code: string }[] }>(request, "/api/tasks?status=open", insider)).items;
+  const open = await calendarOpen(request, insider);
   await page.goto("/ui/deadlines"); // redirects to /calendar
   await expect(page).toHaveURL(/\/ui\/calendar$/);
   await expect(page.getByTestId("deadlines-table").locator("tbody tr")).toHaveCount(open.length);
@@ -225,6 +236,62 @@ test("starter cards fill the message box and the mode menu explains each mode", 
   await page.getByTestId("chat-mode-review").click();
   await expect(page.getByTestId("chat-mode")).toContainText("Risk review");
   await expect(page.getByTestId("chat-review-note")).toBeVisible();
+});
+
+test("a multi-document review renders as a table whose cells open the quote", async ({ page }) => {
+  const table = {
+    type: "review_table", mode: "full", questions: ["Governing law?"],
+    stats: { model_calls: 2, cached: 0, answered: 1, verified_quotes: 1, errors: 0 }, timings: { total_ms: 2300 },
+    rows: [
+      { document_id: "DOC-E9058749C1", title: "Share Purchase Agreement.docx", matter_code: "CORP/BLR/0901/2026",
+        cells: [{ question: "Governing law?", answer: "Laws of India", quote: "governed by the laws of India", page: 12, verified: true, not_found: false }] },
+      { document_id: "DOC-06D46C4AD1", title: "Board Resolution.docx", matter_code: "CORP/BLR/0901/2026",
+        cells: [{ question: "Governing law?", answer: "", quote: "", page: null, verified: false, not_found: true }] },
+    ],
+  };
+  await page.route("**/api/chat/sessions/*/messages", (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    const events = [table, { type: "text_final", text: "One of the two documents states a governing law." }];
+    return route.fulfill({
+      contentType: "text/event-stream",
+      body: events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("") + "data: [DONE]\n\n",
+    });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/ui/chat");
+  await page.getByTestId("chat-input").fill("What is the governing law of each agreement?");
+  await page.getByTestId("chat-send").click();
+  await expect(page.getByTestId("review-table")).toContainText("Reviewed 2 documents");
+  await expect(page.getByTestId("review-row")).toHaveCount(2);
+  await expect(page.getByTestId("review-table")).toContainText("Not found");
+  await page.getByLabel("Only documents with an answer").check();
+  await expect(page.getByTestId("review-row")).toHaveCount(1);
+  await page.getByTestId("review-cell").first().click();
+  await expect(page.getByText("governed by the laws of India").first()).toBeVisible();
+});
+
+test("document-wide edits page through and offer accept / reject all", async ({ page }) => {
+  const edits = Array.from({ length: 45 }, (_, i) => ({
+    id: `e${i}`, op: "replace", pid: i, original: `${i + 1}.1 The Supplier shall comply.`,
+    proposed: `${i + 1}.1 The Vendor shall comply.`, reason: "", page: i + 1, located: true, status: "pending",
+  }));
+  const group = { type: "edit_proposals", document_id: "DOC-E9058749C1", filename: "Share Purchase Agreement.docx",
+    anchoring: "paragraph", source: "docx", instruction: "Rename Supplier to Vendor", edits };
+  await page.route("**/api/chat/sessions/*/messages", (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    const events = [group, { type: "text_final", text: "45 edits proposed." }];
+    return route.fulfill({ contentType: "text/event-stream",
+      body: events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("") + "data: [DONE]\n\n" });
+  });
+  await page.goto("/ui/chat");
+  await page.getByTestId("chat-input").fill("Rename Supplier to Vendor everywhere");
+  await page.getByTestId("chat-send").click();
+  await expect(page.getByTestId("edit-proposals")).toContainText("(45)");
+  await expect(page.getByTestId("edit-card")).toHaveCount(20);
+  await page.getByTestId("edits-more").click();
+  await expect(page.getByTestId("edit-card")).toHaveCount(40);
+  await expect(page.getByTestId("edits-accept-all")).toBeVisible();
+  await expect(page.getByTestId("edits-reject-all")).toBeVisible();
 });
 
 // ── document viewer beside the chat ───────────────────────────────────────────
@@ -366,10 +433,13 @@ test("theme: dark mode applies and survives a reload", async ({ page }) => {
 test("calendar month view and /teams redirect", async ({ page, request }) => {
   const { insider } = await wall(request);
   await viewAs(page, insider);
-  const open = (await api<{ items: { title: string }[] }>(request, "/api/tasks?status=open", insider)).items;
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const inMonth = (await calendarOpen(request, insider)).filter((i) => i.start.startsWith(thisMonth));
   await page.goto("/ui/calendar");
   await page.getByTestId("calendar-view-month").click();
-  await expect(page.getByTestId("calendar-month")).toContainText(open[0].title);
+  if (inMonth.length) await expect(page.getByTestId("calendar-month")).toContainText(inMonth[0].title);
+  else await expect(page.getByTestId("calendar-month")).toBeVisible();
 
   await page.goto("/ui/teams");
   await expect(page).toHaveURL(/\/ui\/settings#teams$/);

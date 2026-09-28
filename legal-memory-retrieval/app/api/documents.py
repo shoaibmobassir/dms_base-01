@@ -4,7 +4,8 @@ import json
 from fastapi import HTTPException
 from psycopg.rows import dict_row
 
-from app.api.acl import ACL_CLAUSE
+from app.api.acl import ACL_CLAUSE, doc_acl
+from app.audit import events as audit
 from app.db.chunking import chunk_text
 from app.db.connection import connect
 from app.embeddings.minilm import MiniLMEmbedder
@@ -49,10 +50,10 @@ def ingest_document(req, member_id: str | None) -> dict:
                 """
                 INSERT INTO documents (
                     document_id, matter_id, matter_code, client_id, title,
-                    document_type, author_name, doc_date, status, version, body
+                    document_type, author_id, author_name, doc_date, status, version, body
                 ) VALUES (
                     %(doc_id)s, %(matter_id)s, %(matter_code)s, %(client_id)s, %(title)s,
-                    %(doc_type)s, %(author)s, CURRENT_DATE, %(status)s, %(version)s, %(body)s
+                    %(doc_type)s, %(author_id)s, %(author)s, CURRENT_DATE, %(status)s, %(version)s, %(body)s
                 )
                 """,
                 {
@@ -62,12 +63,24 @@ def ingest_document(req, member_id: str | None) -> dict:
                     "client_id": matter["client_id"],
                     "title": req.title,
                     "doc_type": req.document_type,
+                    "author_id": member_id,
                     "author": author,
                     "status": req.status,
                     "version": req.version,
                     "body": req.body,
                 },
             )
+
+            private = getattr(req, "visibility", "matter") == "private"
+            if private:
+                if member_id is None:
+                    raise HTTPException(status_code=400, detail="Sign in to upload a private document")
+                # Before the chunks: they inherit the document's list as they are inserted.
+                cur.execute(
+                    "INSERT INTO document_access (document_id, visibility, owner_member_id, updated_by)"
+                    " VALUES (%(d)s, 'private', %(m)s, %(m)s)",
+                    {"d": new_doc_id, "m": member_id},
+                )
 
             pieces = chunk_text(req.body)
             embedder = get_embedder()
@@ -94,11 +107,15 @@ def ingest_document(req, member_id: str | None) -> dict:
                     },
                 )
             conn.commit()
+    if private:
+        audit.record("document.privacy.change", member_id=member_id, object_type="document", object_id=new_doc_id,
+                     matter_id=req.matter_id, detail={"after": {"visibility": "private"}, "on": "create"})
 
     return {
         "service": "documents",
         "status": "success",
         "document_id": new_doc_id,
+        "visibility": "private" if private else "matter",
         "title": req.title,
         "matter_id": req.matter_id,
         "chunks_indexed": len(pieces),
@@ -112,7 +129,7 @@ def document_versions(document_id: str, member_id: str | None) -> dict:
     access_sql = f"""
         SELECT 1 FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE}
+        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -142,7 +159,7 @@ def document_diff(
     access_sql = f"""
         SELECT 1 FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE}
+        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -205,7 +222,7 @@ def document_detail_enriched(
                CASE WHEN %(lean)s THEN NULL ELSE d.body END AS body
         FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE}
+        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:

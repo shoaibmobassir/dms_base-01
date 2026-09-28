@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from app.km.scope import ACL_SQL, _fetch
+from app.km.scope import ACL_SQL, DOC_SQL, _fetch
 from app.retrieval.matter_resolver import chunk_or_tsquery
 
 MIN_PASSAGE_CHARS = 60
@@ -101,7 +101,7 @@ def scoped_passages(
                 f"""
                 SELECT {_SELECT}, ts_rank_cd(c.tsv, to_tsquery('english', %(tsq)s)) AS lex
                 {_FROM}
-                WHERE {ACL_SQL} AND c.matter_id = ANY(%(ids)s)
+                WHERE {ACL_SQL} AND {DOC_SQL} AND c.matter_id = ANY(%(ids)s)
                   AND c.tsv @@ to_tsquery('english', %(tsq)s)
                 ORDER BY lex DESC LIMIT 60
                 """,
@@ -118,7 +118,7 @@ def scoped_passages(
                 f"""
                 SELECT {_SELECT}, 1 - (c.embedding <=> %(v)s::vector) AS sim
                 {_FROM}
-                WHERE {ACL_SQL} AND c.matter_id = ANY(%(ids)s) AND c.embedding IS NOT NULL
+                WHERE {ACL_SQL} AND {DOC_SQL} AND c.matter_id = ANY(%(ids)s) AND c.embedding IS NOT NULL
                 ORDER BY (c.embedding <=> %(v)s::vector) + 0 LIMIT 60
                 """,
                 {**base, "v": vec},
@@ -132,7 +132,7 @@ def scoped_passages(
             SELECT * FROM (
               SELECT {_SELECT}, row_number() OVER (PARTITION BY c.document_id ORDER BY c.chunk_index) AS rn
               {_FROM}
-              WHERE {ACL_SQL} AND c.matter_id = ANY(%(ids)s) AND length(c.text) >= {MIN_PASSAGE_CHARS}
+              WHERE {ACL_SQL} AND {DOC_SQL} AND c.matter_id = ANY(%(ids)s) AND length(c.text) >= {MIN_PASSAGE_CHARS}
             ) x WHERE rn <= 4
             """,
             base,

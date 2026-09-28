@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from psycopg.rows import dict_row
 
-from app.api.acl import ACL_CLAUSE
+from app.api.acl import ACL_CLAUSE, doc_acl
 from app.api.documents import (
     document_detail_enriched,
     document_diff,
@@ -59,7 +59,7 @@ def documents_list(
     offset: int = Query(default=0, ge=0),
 ) -> dict:
     params: dict = {"member_id": member_id, "limit": limit, "offset": offset}
-    wheres = [ACL_CLAUSE, "d.status IS DISTINCT FROM 'Deleted'"]
+    wheres = [ACL_CLAUSE, doc_acl("d"), "d.status IS DISTINCT FROM 'Deleted'"]
     if q:
         wheres.append(
             "(d.title ILIKE %(q_like)s"
@@ -84,10 +84,11 @@ def documents_list(
     sql = f"""
         SELECT d.document_id, d.matter_id, d.matter_code, d.title,
                d.document_type, d.author_name, d.doc_date, d.status, d.version,
-               d.mime_type, m.title AS matter_title
+               d.mime_type, m.title AS matter_title, da.visibility AS privacy
         FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
         LEFT JOIN matters m ON m.matter_id = d.matter_id
+        LEFT JOIN document_access da ON da.document_id = d.document_id
         WHERE {where}
         ORDER BY d.doc_date DESC NULLS LAST, d.document_id DESC
         LIMIT %(limit)s OFFSET %(offset)s
@@ -116,7 +117,7 @@ def documents_facets(member_id: str | None = Depends(resolve_member)) -> dict:
                 f"""
                 SELECT d.document_type AS value, count(*) AS n
                 FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
-                WHERE {ACL_CLAUSE} AND d.status IS DISTINCT FROM 'Deleted' AND d.document_type IS NOT NULL
+                WHERE {ACL_CLAUSE} AND {doc_acl('d')} AND d.status IS DISTINCT FROM 'Deleted' AND d.document_type IS NOT NULL
                 GROUP BY 1 ORDER BY 2 DESC, 1
                 """,
                 {"member_id": member_id},
@@ -205,16 +206,24 @@ def _check_doc_access(document_id: str, member_id: str | None) -> None:
     doc_id = document_id.upper()
     params = {"doc_id": doc_id, "member_id": member_id}
     access_sql = f"""
-        SELECT 1 FROM documents d
+        SELECT d.visible_to FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE}
+        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(access_sql, params)
-            if not cur.fetchone():
+            row = cur.fetchone()
+            if not row:
                 audit.record("document.access", member_id=member_id, outcome="denied", object_type="document", object_id=doc_id)
                 raise HTTPException(status_code=404, detail="Document not found or access denied")
+            if row["visible_to"] is not None and member_id is not None:
+                # Private/restricted: someone let in only by walls.manage is audited on every read.
+                from app import access
+
+                info = access.document_access(conn, member_id, doc_id)
+                if info["privileged"]:
+                    access.record_privileged_read(member_id, doc_id, info["matter_id"], "documents_api")
 
 
 @router.post("/{document_id}/versions")
@@ -314,7 +323,7 @@ def document_chunks_endpoint(
     access_sql = f"""
         SELECT 1 FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE}
+        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -378,6 +387,12 @@ def get_chunk_context_envelope(
     """Full context envelope for a chunk (client/matter/folder/doc/section/page)."""
     from app.documents.hierarchical_chunks import build_context_envelope_for_chunk
 
+    # The chunk's document decides access (unknown chunks and denied ones are both 404).
+    with connect() as conn:
+        row = conn.execute("SELECT document_id FROM chunks WHERE chunk_id = %s", (chunk_id,)).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Chunk not found")
+    _check_doc_access(row["document_id"] if isinstance(row, dict) else row[0], member_id)
     envelope = build_context_envelope_for_chunk(chunk_id)
     if envelope is None:
         raise HTTPException(status_code=404, detail="Chunk not found")
@@ -563,9 +578,23 @@ def create_annotation_endpoint(
     req: AnnotationCreateRequest,
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
-    """Create a durable annotation attached to a canonical block."""
+    """Create a durable annotation attached to a canonical block.
+
+    The author is always the signed-in member (``author_name`` in the request is ignored).
+    Page comments go through ``/api/editor/documents/{id}/comments``, which applies the comment rules.
+    """
     _check_doc_access(document_id, member_id)
     from app.documents import create_annotation
+    from app.documents.editing import _member_name
+
+    if req.annotation_type == "comment":
+        raise HTTPException(status_code=422, detail="Add comments through /api/editor/documents/{id}/comments")
+    with connect() as conn:
+        owns = conn.execute("SELECT 1 FROM document_versions WHERE version_id = %s AND document_id = %s",
+                            (version_id, document_id.upper())).fetchone()
+        author_name = _member_name(conn, member_id) if member_id else None
+    if not owns:
+        raise HTTPException(status_code=404, detail="Version not found")
 
     ann = create_annotation(
         document_id=document_id.upper(),
@@ -577,7 +606,7 @@ def create_annotation_endpoint(
         start_offset=req.start_offset,
         end_offset=req.end_offset,
         author_id=member_id,
-        author_name=req.author_name,
+        author_name=author_name,
         finding_id=req.finding_id,
         content=req.content,
     )
@@ -713,7 +742,9 @@ def document_render(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f"inline; filename*=UTF-8''{quote(Path(filename).stem)}.pdf",
-            "Cache-Control": "private, max-age=300",
+            # A named version never changes; "the current version" does with every save, so the
+            # browser must revalidate it (a stale copy would show the previous version's pages).
+            "Cache-Control": "private, max-age=3600" if version_id else "private, no-cache",
         },
     )
 

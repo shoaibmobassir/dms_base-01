@@ -128,9 +128,12 @@ def grade(row: dict, status: int, resp: dict) -> dict:
     answer = " ".join(
         str(resp.get(k) or "") for k in ("key_finding", "answer")
     )
-    people_txt = " ".join(
-        f"{p.get('name', '')} {p.get('role', '')}" for p in (resp.get("people") or [])
-    )
+    panel = resp.get("panel") or {}
+    # People the lawyer is shown: the people list, matter-card teams, and the KM panel.
+    shown_people = list(resp.get("people") or []) + [t for c in resp.get("matter_cards") or [] for t in c.get("team") or []]
+    shown_people += panel.get("people") or []
+    people_txt = " ".join(f"{p.get('name', '')} {p.get('role', '')}" for p in shown_people)
+    panel_matters = [m.get("matter_id") for m in panel.get("matters") or []]
     provider = str(resp.get("provider") or "")
     grounded = status == 200 and not resp.get("abstained") and not provider.startswith("extractive") and provider != "none"
     resolved, seen = response_matters(resp)
@@ -148,6 +151,11 @@ def grade(row: dict, status: int, resp: dict) -> dict:
             and k not in {"llm", "parallel_wall_ms", "total_ms", "llm_ms"} and v > SLOW_CHANNEL_MS
         )
     checks: dict[str, bool] = {"http_200": status == 200}
+    panel_metrics: dict[str, float] = {}
+    if "gold_matter" in row:
+        panel_metrics["panel_matter_hit"] = float(row["gold_matter"] in panel_matters)
+    if row.get("gold_matters_any"):
+        panel_metrics["panel_matters_recall"] = len([m for m in row["gold_matters_any"] if m in panel_matters]) / len(row["gold_matters_any"])
     cat = row["category"]
 
     if "gold_matter" in row:
@@ -163,6 +171,11 @@ def grade(row: dict, status: int, resp: dict) -> dict:
         found = [p for p in row["gold_people"] if person_mentioned(answer + " " + people_txt, p)]
         recall = len(found) / len(row["gold_people"])
         checks["people"] = recall >= (0.75 if len(row["gold_people"]) > 2 else 1.0)
+        in_answer = [p for p in row["gold_people"] if person_mentioned(answer, p)]
+        panel_metrics["people_in_answer"] = len(in_answer) / len(row["gold_people"])
+        panel_metrics["panel_people_recall"] = len(
+            [p for p in row["gold_people"] if person_mentioned(" ".join(x.get("name", "") for x in panel.get("people") or []), p)]
+        ) / len(row["gold_people"])
     if row.get("gold_matters_any"):
         gold = row["gold_matters_any"]
         hit = [m for m in gold if m in seen or m in resolved]
@@ -172,7 +185,8 @@ def grade(row: dict, status: int, resp: dict) -> dict:
         checks["no_dump"] = not provider.startswith("extractive")
     if cat == "ethical_wall":
         forbidden = row["forbidden_matter"]
-        leaked = forbidden in seen or forbidden in resolved or forbidden in json.dumps(resp.get("people") or [])
+        leaked = (forbidden in seen or forbidden in resolved or forbidden in json.dumps(resp.get("people") or [])
+                  or forbidden in json.dumps(panel))
         checks["no_leak"] = not leaked
     checks["no_slow_channel"] = not slow
 
@@ -187,7 +201,8 @@ def grade(row: dict, status: int, resp: dict) -> dict:
         "resolved": resolved,
         "top_matters": seen[:5],
         "slow_channels": slow,
-        "latency": {k: lat.get(k) for k in ("scope_ms", "resolver_ms", "evidence_ms", "llm_ms", "total_ms") if k in lat},
+        "panel": panel_metrics,
+        "latency": {k: lat.get(k) for k in ("scope_ms", "resolver_ms", "evidence_ms", "panel_ms", "llm_ms", "total_ms") if k in lat},
         "answer": answer[:400],
     }
 
@@ -237,6 +252,10 @@ def run(args) -> dict:
             c: {
                 "n": len(rs),
                 "pass_rate": round(sum(r["pass"] for r in rs) / len(rs), 4),
+                "panel": {
+                    k: round(statistics.fmean(r["panel"][k] for r in rs if k in r["panel"]), 3)
+                    for k in sorted({k for r in rs for k in r["panel"]})
+                },
                 "check_fail_counts": {
                     k: sum(1 for r in rs if k in r["checks"] and not r["checks"][k])
                     for k in sorted({k for r in rs for k in r["checks"]})

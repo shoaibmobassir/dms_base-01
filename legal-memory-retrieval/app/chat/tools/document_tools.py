@@ -15,6 +15,7 @@ from typing import Any
 from app.chat.session_doc_cache import get as session_doc_get
 from app.chat.session_doc_cache import put as session_doc_put
 from app.chat.spotlight import spotlight
+from app.config import settings
 from app.retrieval.engine import retrieve
 
 logger = logging.getLogger(__name__)
@@ -83,24 +84,25 @@ def build_doc_index_from_hits(hits: list[dict[str, Any]]) -> DocIndex:
     return index
 
 
-def add_documents_to_index(index: DocIndex, documents: list[tuple[str, str]]) -> DocIndex:
-    """Put documents the lawyer attached first in the index, ahead of retrieval hits.
+def add_documents_to_index(index: DocIndex, documents: list[tuple[str, str]], *, attached: bool = True) -> DocIndex:
+    """Put documents first in the index, ahead of retrieval hits.
 
-    `documents` is [(document_id, filename)]. Existing entries keep their slug.
+    `documents` is [(document_id, filename)]. Existing entries keep their slug. ``attached`` marks
+    them as the lawyer's attachments; documents carried over from earlier turns are not.
     """
     known = {entry.document_id for entry in index.values()}
     added: DocIndex = {}
     for document_id, filename in documents:
         if document_id in known:
             for entry in index.values():
-                if entry.document_id == document_id:
+                if entry.document_id == document_id and attached:
                     entry.attached = True
             continue
         if not document_id:
             continue
         known.add(document_id)
         slug = f"doc-{len(index) + len(added)}"
-        added[slug] = DocEntry(doc_id=slug, document_id=document_id, filename=filename or document_id, attached=True)
+        added[slug] = DocEntry(doc_id=slug, document_id=document_id, filename=filename or document_id, attached=attached)
     return {**added, **index}
 
 
@@ -123,29 +125,96 @@ def read_document(
     conn: Any = None,
     nonce: str | None = None,
     member_id: str | None = None,
+    *,
+    section_id: str | None = None,
+    pages: str | None = None,
+    cursor: int | None = None,
+    max_chars: int | None = None,
 ) -> dict[str, Any]:
     """
-    Read the full text of a document by its chat-local slug.
-    If text is not already cached in the store, try to fetch from DB.
+    Read a document by its chat-local slug: whole when it fits, otherwise one slice.
+
+    A document longer than ``max_chars`` (``settings.chat_read_max_chars``) is never returned
+    whole: the first read gives its outline and opening slice, and later reads ask for a
+    ``section_id``, a ``pages`` range ("12-18") or continue from ``cursor``. The full text
+    still goes into ``doc_store`` so citations are checked against the whole document.
     """
+    from app.chat import doc_nav
+
     entry = doc_index.get(doc_id)
     if not entry:
         return {"error": f"Document '{doc_id}' not found."}
 
     text = resolve_document_text(entry, doc_store, conn, member_id)
+    budget = max_chars or settings.chat_read_max_chars
+    event = {
+        "type": "doc_read",
+        "filename": entry.filename,
+        "document_id": entry.document_id,
+        "version_id": entry.version_id,
+        "version_number": entry.version_number,
+    }
+    whole = not (section_id or pages or cursor)
+    if whole and len(text) <= budget:
+        return {"doc_id": doc_id, "filename": entry.filename, "complete": True,
+                "text": spotlight(text, nonce) if nonce else text, "event": event}
 
-    fenced = spotlight(text, nonce) if nonce else text
+    lo, hi, label = 0, len(text), ""
+    if section_id:
+        sec = doc_nav.section(text, section_id)
+        if sec is None:
+            return {"error": f"No section '{section_id}' in {doc_id}; call get_outline for section ids."}
+        lo, hi, label = sec.start, sec.end, f"{sec.section_id} {sec.title}"
+    elif pages:
+        span = doc_nav.page_range(text, pages)
+        if span is None:
+            return {"error": f"Pages '{pages}' not found in {doc_id} ({doc_nav.page_count(text)} pages)."}
+        lo, hi, label = span[0], span[1], f"pages {pages}"
+    start = cursor if cursor is not None and lo <= cursor < hi else lo
+    win = doc_nav.window(text, start, hi, budget)
+    out: dict[str, Any] = {
+        "doc_id": doc_id,
+        "filename": entry.filename,
+        "complete": False,
+        "total_pages": doc_nav.page_count(text),
+        "total_chars": len(text),
+        "showing": {"part": label or "document", "pages": f"{win.first_page}–{win.last_page}", "chars": [win.start, win.end]},
+        "text": spotlight(win.text, nonce) if nonce else win.text,
+    }
+    if win.next_cursor is not None:
+        out["next_cursor"] = win.next_cursor
+        out["remaining_chars"] = win.remaining_chars
+    if whole:
+        # First look at a long document: give the map so the next read can be targeted.
+        out["outline"] = doc_nav.outline_rows(text)
+        out["note"] = ("This document is too long to read at once. Use the outline: read_document with "
+                       "section_id or pages for the parts you need, or find_in_document for exact terms.")
+    event["part"] = out["showing"]["part"]
+    out["event"] = event
+    return out
+
+
+def get_outline(
+    doc_id: str,
+    doc_index: DocIndex,
+    doc_store: DocStore,
+    conn: Any = None,
+    member_id: str | None = None,
+) -> dict[str, Any]:
+    """Sections of a document with ids, titles, page ranges and sizes (no body text)."""
+    from app.chat import doc_nav
+
+    entry = doc_index.get(doc_id)
+    if not entry:
+        return {"error": f"Document '{doc_id}' not found."}
+    text = resolve_document_text(entry, doc_store, conn, member_id)
     return {
         "doc_id": doc_id,
         "filename": entry.filename,
-        "text": fenced,
-        "event": {
-            "type": "doc_read",
-            "filename": entry.filename,
-            "document_id": entry.document_id,
-            "version_id": entry.version_id,
-            "version_number": entry.version_number,
-        },
+        "total_pages": doc_nav.page_count(text),
+        "total_chars": len(text),
+        "fits_in_one_read": len(text) <= settings.chat_read_max_chars,
+        "sections": doc_nav.outline_rows(text),
     }
 
 
@@ -157,12 +226,17 @@ def fetch_documents(
     nonce: str | None = None,
     member_id: str | None = None,
 ) -> dict[str, Any]:
-    """Batch-read multiple documents. Returns merged results."""
+    """Batch-read multiple documents within one shared size budget.
+
+    The budget (twice a single read) is split across the documents; a document larger
+    than its share comes back as its outline and opening slice, like ``read_document``.
+    """
     results: list[dict[str, Any]] = []
     events: list[dict[str, Any]] = []
+    share = max(6000, (2 * settings.chat_read_max_chars) // max(1, len(doc_ids)))
     for doc_id in doc_ids:
         result = read_document(
-            doc_id, doc_index, doc_store, conn, nonce, member_id=member_id,
+            doc_id, doc_index, doc_store, conn, nonce, member_id=member_id, max_chars=share,
         )
         results.append(result)
         if "event" in result:
@@ -198,16 +272,24 @@ def find_in_document(
     # re.escape turns spaces into '\ ' — replace those with \s+
     flexible = re.sub(r"(?:\\ )+", r"\\s+", escaped)
     pattern = re.compile(flexible, re.IGNORECASE)
+    from app.chat import doc_nav
+
+    sections = doc_nav.outline(text)
     matches: list[dict[str, Any]] = []
+    total = 0
     for m in pattern.finditer(text):
+        total += 1  # every occurrence is counted, even past max_results
         if len(matches) >= max_results:
-            break
+            continue
         start = max(0, m.start() - context_chars)
         end = min(len(text), m.end() + context_chars)
+        sec = next((s for s in sections if s.start <= m.start() < s.end), None)
         matches.append({
             "match": m.group(),
             "context": text[start:end],
             "page": page_at(text, m.start()),
+            "section_id": sec.section_id if sec else None,
+            "section": sec.title if sec else None,
             "start": m.start(),
             "end": m.end(),
         })
@@ -216,7 +298,8 @@ def find_in_document(
         "doc_id": doc_id,
         "filename": entry.filename,
         "query": query,
-        "total_matches": len(matches),
+        "total_matches": total,
+        "returned": len(matches),
         "matches": matches,
         "event": {
             "type": "doc_find",
@@ -225,7 +308,7 @@ def find_in_document(
             "version_id": entry.version_id,
             "version_number": entry.version_number,
             "query": query,
-            "total_matches": len(matches),
+            "total_matches": total,
         },
     }
 
@@ -315,7 +398,14 @@ def resolve_document_text(
     conn: Any = None,
     member_id: str | None = None,
 ) -> str:
-    """Return document text, filling the in-turn store and the member cache."""
+    """Return document text, filling the in-turn store and the member cache.
+
+    Every read re-checks that the member may read the document (matter ACL + document
+    privacy), so text cached earlier in the conversation is not served after access ends.
+    """
+    if conn is not None and entry.document_id and not _readable(conn, member_id, entry.document_id):
+        doc_store.pop(entry.doc_id, None)
+        return "Document could not be read."
     if entry.doc_id in doc_store:
         return doc_store[entry.doc_id]
 
@@ -339,6 +429,23 @@ def resolve_document_text(
         return text
 
     return "Document could not be read."
+
+
+def _readable(conn: Any, member_id: str | None, document_id: str) -> bool:
+    """False when a firm document is outside the member's access. Ids that are not firm
+    documents (e.g. generated files) are left to their own owner check."""
+    from psycopg.rows import dict_row
+
+    from app.api.acl import ACL_CLAUSE, doc_acl
+
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            f"""SELECT ({ACL_CLAUSE} AND {doc_acl('d')}) AS ok FROM documents d
+                LEFT JOIN permissions p ON p.matter_id = d.matter_id WHERE d.document_id = %(id)s""",
+            {"id": str(document_id).upper(), "member_id": member_id},
+        )
+        row = cur.fetchone()
+    return True if row is None else bool(row["ok"])
 
 
 def _remember(

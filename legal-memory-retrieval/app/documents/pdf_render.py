@@ -1,10 +1,11 @@
 """
 PDF rendering for the in-app document viewer.
 
-PDFs pass through unchanged. Word and other office files are converted with a
-LibreOffice binary run as a separate process, if one is installed on the server
-(it is not bundled or linked). Results are cached by content hash so a document
-is converted once.
+PDFs pass through unchanged. Word and other office files are converted by the
+Gotenberg service (``GOTENBERG_URL``, a separate container running LibreOffice) or,
+failing that, a LibreOffice binary run as a separate process if one is installed.
+Nothing is bundled or linked. Results are cached by content hash so a document is
+converted once.
 """
 
 from __future__ import annotations
@@ -49,6 +50,20 @@ def _is_pdf(data: bytes, mime: str | None, filename: str) -> bool:
     return data[:5] == b"%PDF-" or mime == PDF_MIME or filename.lower().endswith(".pdf")
 
 
+def _gotenberg(data: bytes, suffix: str) -> bytes | None:
+    """Convert through Gotenberg; None when the service is unreachable (fall back to local)."""
+    import httpx
+
+    url = settings.gotenberg_url.rstrip("/") + "/forms/libreoffice/convert"
+    try:
+        resp = httpx.post(url, files={"files": (f"document{suffix}", data)}, timeout=CONVERT_TIMEOUT_SECONDS)
+    except httpx.HTTPError:
+        return None
+    if resp.status_code != 200 or resp.content[:5] != b"%PDF-":
+        raise RenderUnavailable("The document could not be converted for viewing.")
+    return resp.content
+
+
 def to_pdf(data: bytes, mime: str | None, filename: str) -> bytes:
     """Return PDF bytes for the viewer, converting office files when possible."""
     if _is_pdf(data, mime, filename):
@@ -63,9 +78,15 @@ def to_pdf(data: bytes, mime: str | None, filename: str) -> bytes:
     if cached.is_file():
         return cached.read_bytes()
 
+    if settings.gotenberg_url:
+        pdf = _gotenberg(data, suffix)
+        if pdf is not None:
+            cached.write_bytes(pdf)
+            return pdf
+
     binary = converter_path()
     if binary is None:
-        raise RenderUnavailable("No document converter is installed on the server.")
+        raise RenderUnavailable("No document converter is available on the server.")
 
     with tempfile.TemporaryDirectory(prefix="render-") as work:
         source = Path(work) / f"source{suffix}"

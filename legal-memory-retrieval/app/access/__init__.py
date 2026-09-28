@@ -151,7 +151,9 @@ def matter_level(conn, member_id: str | None, matter_id: str) -> str:
         """,
         {"m": matter_id, "u": member_id},
     )
-    staff = _one(conn, "SELECT role_on_matter FROM matter_members WHERE matter_id = %s AND member_id = %s", (matter_id, member_id))
+    staff = _one(conn, "SELECT role_on_matter FROM matter_members WHERE matter_id = %s AND member_id = %s"
+                       " AND (ended_at IS NULL OR ended_at >= current_date)"
+                       " AND (started_at IS NULL OR started_at <= current_date)", (matter_id, member_id))
     level = grant["lvl"] if grant and grant["lvl"] else 1
     if staff:
         level = max(level, 3 if (staff["role_on_matter"] or "").lower() == "lead" else 2)
@@ -165,6 +167,76 @@ def require_matter_level(conn, member_id: str | None, matter_id: str, needed: st
     if LEVELS.index(level) < LEVELS.index(needed):
         raise AccessError(403, f"Requires {needed} access to this matter")
     return level
+
+
+# ── Document level (document privacy, plan 17 P1b) ──────────────────────────
+
+def document_access(conn, member_id: str | None, document_id: str) -> dict[str, Any]:
+    """The member's level on one document: the matter level, narrowed by document privacy.
+
+    - no privacy row: the matter level
+    - the owner: the matter level
+    - shared with them (directly or via a team): the matter level, capped at the share level
+    - restricted, and they manage the matter (lead or manage grant): the matter level
+    - otherwise, holders of walls.manage may *read* (``privileged``; audited)
+    - anyone else: none
+    Returns {level, matter_id, privacy, privileged}; level "none" for unknown documents.
+    """
+    doc = _one(conn, """
+        SELECT d.document_id, d.matter_id, d.visible_to, da.visibility, da.owner_member_id
+        FROM documents d LEFT JOIN document_access da USING (document_id)
+        WHERE d.document_id = %s""", (document_id,))
+    if doc is None:
+        return {"level": "none", "matter_id": None, "privacy": None, "privileged": False}
+    out = {"level": "none", "matter_id": doc["matter_id"], "privacy": doc["visibility"], "privileged": False}
+    level = matter_level(conn, member_id, doc["matter_id"])
+    if level == "none" or member_id is None or doc["visibility"] is None:
+        return {**out, "level": level}
+    if member_id == doc["owner_member_id"]:
+        return {**out, "level": level}
+    share = _one(conn, """
+        SELECT max(CASE s.level WHEN 'edit' THEN 2 ELSE 1 END) AS lvl FROM document_shares s
+        LEFT JOIN team_members tm ON s.principal_type = 'team' AND tm.team_id = s.principal_id
+        WHERE s.document_id = %(d)s AND ((s.principal_type = 'member' AND s.principal_id = %(u)s) OR tm.member_id = %(u)s)
+        """, {"d": document_id, "u": member_id})
+    if share and share["lvl"]:
+        return {**out, "level": LEVELS[min(LEVELS.index(level), share["lvl"])]}
+    if doc["visibility"] == "restricted" and _manages_matter(conn, member_id, doc["matter_id"]):
+        return {**out, "level": level}
+    if has_permission(conn, member_id, "walls.manage"):
+        return {**out, "level": "read", "privileged": True}
+    return out
+
+
+def _manages_matter(conn, member_id: str, matter_id: str) -> bool:
+    """Lead on the matter or a manage grant (not a firm-wide walls.manage)."""
+    row = _one(conn, """
+        SELECT 1 AS ok FROM matter_members mm
+        WHERE mm.matter_id = %(m)s AND mm.member_id = %(u)s AND lower(coalesce(mm.role_on_matter, '')) = 'lead'
+          AND (mm.ended_at IS NULL OR mm.ended_at >= current_date)
+        UNION ALL
+        SELECT 1 FROM matter_grants g LEFT JOIN team_members tm ON g.principal_type = 'team' AND tm.team_id = g.principal_id
+        WHERE g.matter_id = %(m)s AND g.level = 'manage' AND (g.expires_at IS NULL OR g.expires_at > now())
+          AND ((g.principal_type = 'member' AND g.principal_id = %(u)s) OR tm.member_id = %(u)s)
+        LIMIT 1""", {"m": matter_id, "u": member_id})
+    return row is not None
+
+
+def record_privileged_read(member_id: str | None, document_id: str, matter_id: str | None, via: str) -> None:
+    """Every read of a private/restricted document by someone only allowed through walls.manage."""
+    audit.record("document.privileged_read", member_id=member_id, object_type="document", object_id=document_id,
+                 matter_id=matter_id, detail={"via": via})
+
+
+def require_document_level(conn, member_id: str | None, document_id: str, needed: str, via: str = "") -> dict[str, Any]:
+    info = document_access(conn, member_id, document_id)
+    if info["level"] == "none":
+        raise AccessError(404, "Document not found or access denied")
+    if LEVELS.index(info["level"]) < LEVELS.index(needed):
+        raise AccessError(403, f"Requires {needed} access to this document")
+    if info["privileged"]:
+        record_privileged_read(member_id, document_id, info["matter_id"], via)
+    return info
 
 
 # ── Matter access: read ──────────────────────────────────────────────────────

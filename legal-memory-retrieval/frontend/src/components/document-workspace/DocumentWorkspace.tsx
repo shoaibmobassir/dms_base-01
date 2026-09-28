@@ -10,6 +10,7 @@ import {
 import type { DocumentDetail, DocumentOutlineItem, DocVersion } from "@/api/types";
 import { Icon, MonoId, SectionLabel } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
+import { PrivacyControl } from "@/components/editor/PrivacyControl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -528,6 +529,13 @@ function Toolbar({
           Go to
         </Button>
       </div>
+
+      <PrivacyControl documentId={doc.document_id} />
+      <Button asChild size="sm" variant="outline" data-testid="document-edit">
+        <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>
+          <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit
+        </Link>
+      </Button>
 
       <button
         type="button"

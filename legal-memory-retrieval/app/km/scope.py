@@ -14,11 +14,15 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from app.api.acl import doc_acl
+
 ACL_SQL = """
     (%(member_id)s::text IS NULL
      OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
          AND NOT (%(member_id)s::text = ANY (p.denied_members))))
 """
+# Document privacy (plan 17 P1b) for the ``d`` (documents) alias: narrows ACL_SQL, never widens it.
+DOC_SQL = doc_acl("d")
 
 _MATTER_COLS = """
     m.matter_id, m.matter_code, m.title, cl.name AS client_name, m.opposing_party,

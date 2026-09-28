@@ -17,3 +17,6 @@ secrets/
 backups/
 frontend/public/pdfjs/
 data/object_store/render_cache/
+
+# External benchmark data (licence-gated, never committed; plan 14)
+data/benchmarks/

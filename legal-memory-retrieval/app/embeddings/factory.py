@@ -14,6 +14,21 @@ from app.embeddings.minilm import MiniLMEmbedder
 EmbedderImpl = Union[MiniLMEmbedder, BedrockEmbedder]
 
 _embedder: EmbedderImpl | None = None
+_minilm: MiniLMEmbedder | None = None
+
+
+def get_minilm() -> MiniLMEmbedder:
+    """The one MiniLM instance in the process.
+
+    ``chunks.embedding`` is MiniLM 384-d, so every query against it (retrieval, Ask the
+    Firm passages, batch-review screening) must use this model. Sharing one instance also
+    means the startup warm-up covers all of them; two copies cost a second ~7 s load on
+    the first batch review.
+    """
+    global _minilm
+    if _minilm is None:
+        _minilm = MiniLMEmbedder()
+    return _minilm
 
 
 def get_embedder() -> EmbedderImpl:
@@ -25,7 +40,7 @@ def get_embedder() -> EmbedderImpl:
     if name == "bedrock":
         _embedder = BedrockEmbedder()
     else:
-        _embedder = MiniLMEmbedder()
+        _embedder = get_minilm()
     return _embedder
 
 

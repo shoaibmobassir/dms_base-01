@@ -1,0 +1,835 @@
+{
+ "at": "2026-09-28 03:31",
+ "model": "zai.glm-5",
+ "summary": {
+  "hybrid_v2": {
+   "tasks": 18,
+   "exact": 11,
+   "recall": 0.944,
+   "precision": 0.883,
+   "unintended_total": 248,
+   "errors": 0,
+   "median_s": 9.6,
+   "max_prompt_chars": 40780,
+   "calls_total": 237
+  },
+  "hybrid_v4": {
+   "tasks": 18,
+   "exact": 18,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended_total": 0,
+   "errors": 0,
+   "median_s": 11.9,
+   "max_prompt_chars": 40636,
+   "calls_total": 729
+  }
+ },
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 5,
+     "before": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading supplier.",
+     "after": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading Vendor."
+    },
+    {
+     "change": "rep",
+     "at": 962,
+     "before": "S4.2 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.2 On expiry the Vendor shall co-operate with any replacement vendor."
+    },
+    {
+     "change": "rep",
+     "at": 963,
+     "before": "S4.3 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.3 On expiry the Vendor shall co-operate with any replacement vendor."
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 962,
+     "before": "S4.2 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.2 On expiry the Vendor shall co-operate with any replacement supplier."
+    },
+    {
+     "change": "rep",
+     "at": 963,
+     "before": "S4.3 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.3 On expiry the Vendor shall co-operate with any replacement supplier."
+    }
+   ],
+   "gold_changes": 761,
+   "result_changes": 762,
+   "recall": 0.9974,
+   "precision": 0.9961,
+   "unintended": 3,
+   "exact": false,
+   "calls": 22,
+   "peak_prompt_chars": 36858,
+   "seconds": 20.5,
+   "notes": [
+    "substitution changed 762 paragraphs; verifier reverted 1",
+    "2 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 761,
+   "result_changes": 761,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 80,
+   "peak_prompt_chars": 10686,
+   "seconds": 34.2,
+   "notes": [
+    "substitution changed 762 paragraphs; verifier reverted 4",
+    "5 candidates; editors changed 4; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 4763,
+   "seconds": 12.3,
+   "notes": [
+    "10 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 4763,
+   "seconds": 7.1,
+   "notes": [
+    "1 candidates; editors changed 1; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 6017,
+   "seconds": 3.3,
+   "notes": [
+    "12 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 10125,
+   "seconds": 3.9,
+   "notes": [
+    "22 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 5438,
+   "seconds": 3.9,
+   "notes": [
+    "11 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 5993,
+   "seconds": 4.5,
+   "notes": [
+    "11 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 69,
+     "before": "7.6 The Supplier shall retain all Customer Data for 30 days after termination before secure deletion.",
+     "after": "7.6 The Supplier shall retain all Customer Data for 45 days after termination before secure deletion."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 16,
+   "result_changes": 17,
+   "recall": 1.0,
+   "precision": 0.9412,
+   "unintended": 1,
+   "exact": false,
+   "calls": 7,
+   "peak_prompt_chars": 25961,
+   "seconds": 12.3,
+   "notes": [
+    "substitution changed 77 paragraphs; verifier reverted 60",
+    "139 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 16,
+   "result_changes": 16,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 13,
+   "peak_prompt_chars": 27236,
+   "seconds": 12.1,
+   "notes": [
+    "substitution changed 77 paragraphs; verifier reverted 61",
+    "140 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 22,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 6229,
+   "seconds": 8.8,
+   "notes": [
+    "substitution changed 22 paragraphs; verifier reverted 0",
+    "1 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 22,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 5,
+   "peak_prompt_chars": 4936,
+   "seconds": 11.7,
+   "notes": [
+    "substitution changed 22 paragraphs; verifier reverted 0",
+    "1 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 1335,
+     "before": "117.2 Where the Supplier becomes aware of any matter which may affect the subcontracting (module 5), it shall notify the Customer promptly and in any event within five Working Days. The Supplier shall",
+     "after": "117.2 Where the Vendor becomes aware of any matter which may affect the subcontracting (module 5), it shall notify the Customer promptly and in any event within five Working Days. The Vendor shall mai"
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 1335,
+     "before": "117.2 Where the Supplier becomes aware of any matter which may affect the subcontracting (module 5), it shall notify the Customer promptly and in any event within five Working Days. The Supplier shall",
+     "after": "117.2 Where the Vendor becomes aware of any matter which may affect the subcontracting (module 5), it shall notify the Customer promptly and in any event within five Working Days. The Vendor shall mai"
+    }
+   ],
+   "gold_changes": 1508,
+   "result_changes": 1508,
+   "recall": 0.9993,
+   "precision": 0.9993,
+   "unintended": 1,
+   "exact": false,
+   "calls": 41,
+   "peak_prompt_chars": 37516,
+   "seconds": 35.7,
+   "notes": [
+    "substitution changed 1508 paragraphs; verifier reverted 40",
+    "42 candidate paragraphs for editors",
+    "5 ops rejected"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1508,
+   "result_changes": 1508,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 154,
+   "peak_prompt_chars": 11440,
+   "seconds": 57.5,
+   "notes": [
+    "substitution changed 1508 paragraphs; verifier reverted 0",
+    "2 candidates; editors changed 1; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 105,
+     "before": "10.6 Where the Supplier becomes aware of any matter which may affect the termination, it shall notify the Customer promptly and in any event within five Working Days. The Supplier shall perform its ob",
+     "after": "10.6 Where the Supplier becomes aware of any matter which may affect the termination, it shall notify the Customer promptly and in any event within five Working Days. The Supplier shall perform its ob"
+    },
+    {
+     "change": "rep",
+     "at": 106,
+     "before": "10.7 Each party shall bear its own costs in connection with the matters described in this clause, save as otherwise expressly provided. The parties shall meet at least quarterly to review performance ",
+     "after": "10.7 Each party shall bear its own costs in connection with the matters described in this clause, save as otherwise expressly provided. The parties shall meet at least quarterly to review performance "
+    },
+    {
+     "change": "rep",
+     "at": 1079,
+     "before": "95.1 Any approval given by the Customer under this clause shall not relieve the Supplier of any of its obligations under this Agreement. The Supplier shall perform its obligations under this clause wi",
+     "after": "95.1 Any approval given by the Customer under this clause shall not relieve the Supplier of any of its obligations under this Agreement. The Supplier shall perform its obligations under this clause wi"
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 241,
+   "recall": 1.0,
+   "precision": 0.0041,
+   "unintended": 240,
+   "exact": false,
+   "calls": 19,
+   "peak_prompt_chars": 40780,
+   "seconds": 108.6,
+   "notes": [
+    "substitution changed 455 paragraphs; verifier reverted 214",
+    "214 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 59,
+   "peak_prompt_chars": 40636,
+   "seconds": 33.2,
+   "notes": [
+    "substitution changed 455 paragraphs; verifier reverted 454",
+    "454 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8801,
+   "seconds": 3.6,
+   "notes": [
+    "2 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8801,
+   "seconds": 3.5,
+   "notes": [
+    "2 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8704,
+   "seconds": 3.7,
+   "notes": [
+    "12 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8704,
+   "seconds": 4.5,
+   "notes": [
+    "12 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 1629,
+     "before": "141.6 The Supplier shall provide the exit plan within thirty (30) days of the Effective Date.",
+     "after": "141.6 The Supplier shall provide the exit plan within forty-five (45) days of the Effective Date."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 23,
+   "recall": 1.0,
+   "precision": 0.9565,
+   "unintended": 1,
+   "exact": false,
+   "calls": 12,
+   "peak_prompt_chars": 26130,
+   "seconds": 18.0,
+   "notes": [
+    "substitution changed 141 paragraphs; verifier reverted 118",
+    "254 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 22,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 23,
+   "peak_prompt_chars": 27236,
+   "seconds": 13.0,
+   "notes": [
+    "substitution changed 141 paragraphs; verifier reverted 119",
+    "255 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 49,
+   "result_changes": 49,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 4,
+   "peak_prompt_chars": 10898,
+   "seconds": 9.1,
+   "notes": [
+    "substitution changed 49 paragraphs; verifier reverted 0",
+    "1 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 49,
+   "result_changes": 49,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 7,
+   "peak_prompt_chars": 8895,
+   "seconds": 14.4,
+   "notes": [
+    "substitution changed 49 paragraphs; verifier reverted 0",
+    "1 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 5,
+     "before": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading supplier.",
+     "after": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading vendor."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 3013,
+   "result_changes": 3014,
+   "recall": 1.0,
+   "precision": 0.9997,
+   "unintended": 1,
+   "exact": false,
+   "calls": 78,
+   "peak_prompt_chars": 38838,
+   "seconds": 29.3,
+   "notes": [
+    "substitution changed 3013 paragraphs; verifier reverted 0",
+    "2 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 3013,
+   "result_changes": 3013,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 305,
+   "peak_prompt_chars": 16742,
+   "seconds": 99.9,
+   "notes": [
+    "substitution changed 3013 paragraphs; verifier reverted 0",
+    "2 candidates; editors changed 1; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "ins",
+     "at": 808,
+     "before": "71.6 Nothing in this clause shall limit any other right or remedy of the Customer under this Agreement or at law. The Supplier shall maintain complete and accurate records relating to the dispute reso",
+     "after": "('This obligation is of the essence.',)"
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 807,
+     "before": "71.5 Any approval given by the Customer under this clause shall not relieve the Supplier of any of its obligations under this Agreement. Where the Supplier becomes aware of any matter which may affect",
+     "after": "71.5 Any approval given by the Customer under this clause shall not relieve the Supplier of any of its obligations under this Agreement. Where the Supplier becomes aware of any matter which may affect"
+    }
+   ],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 1,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 16678,
+   "seconds": 3.3,
+   "notes": [
+    "12 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 16678,
+   "seconds": 6.0,
+   "notes": [
+    "3 candidates; editors changed 1; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16755,
+   "seconds": 4.5,
+   "notes": [
+    "7 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16755,
+   "seconds": 3.1,
+   "notes": [
+    "11 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16660,
+   "seconds": 8.3,
+   "notes": [
+    "12 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16660,
+   "seconds": 5.2,
+   "notes": [
+    "12 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 34,
+   "result_changes": 34,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 21,
+   "peak_prompt_chars": 27424,
+   "seconds": 22.9,
+   "notes": [
+    "substitution changed 273 paragraphs; verifier reverted 239",
+    "496 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 34,
+   "result_changes": 34,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 42,
+   "peak_prompt_chars": 28557,
+   "seconds": 22.1,
+   "notes": [
+    "substitution changed 273 paragraphs; verifier reverted 239",
+    "496 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 118,
+   "result_changes": 118,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 14,
+   "peak_prompt_chars": 22654,
+   "seconds": 10.1,
+   "notes": [
+    "substitution changed 118 paragraphs; verifier reverted 0",
+    "397 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 118,
+   "result_changes": 118,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 23,
+   "peak_prompt_chars": 23625,
+   "seconds": 20.9,
+   "notes": [
+    "substitution changed 118 paragraphs; verifier reverted 0",
+    "397 candidates; editors changed 0; verifier reverted 0"
+   ]
+  }
+ ]
+}

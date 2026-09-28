@@ -320,6 +320,7 @@ async def score_documents_disc(
             OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
                 AND NOT (%(member_id)s::text = ANY (p.denied_members)))
           )
+          AND (%(member_id)s::text IS NULL OR d.visible_to IS NULL OR %(member_id)s::text = ANY (d.visible_to))
     """
     params = {
         "matter_ids": matter_ids,

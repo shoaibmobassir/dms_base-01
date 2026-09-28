@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.api.acl import doc_acl
+
 from psycopg.rows import dict_row
 
 from app.query.understand import ParsedQuery
@@ -67,7 +69,7 @@ def graph_search(
         JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
         JOIN matters m ON m.matter_id = d.matter_id
         JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE {ACL}
+        WHERE {ACL} AND {doc_acl('d')}
           AND d.matter_id IN ({related_sql})
         ORDER BY d.matter_id, c.chunk_index
         LIMIT %(limit)s

@@ -19,12 +19,23 @@ import type { MatterDetail } from "@/api/types";
 import { DataTable } from "@/components/common/DataTable";
 import { useStartConversation } from "@/components/chat/useStartConversation";
 import { formatDate } from "@/lib/format";
-import { ClientLink, PersonAvatar } from "@/components/common/EntityLink";
+import { ClientLink } from "@/components/common/EntityLink";
 import { Action, EmptyState, Icon, MonoId, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
-import { initials, useApp } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
 import { dueLabel } from "@/pages/CalendarPage";
 import { cn } from "@/lib/utils";
+import {
+  ArgumentDialog,
+  EditMatterDialog,
+  LinkMatterDialog,
+  TeamEditor,
+  TimelineEntryDialog,
+  useDeleteArgument,
+  useDeleteTimelineEntry,
+  useUnlinkMatter,
+} from "@/components/matter/MatterEditors";
+import type { MatterArgument, TimelineEvent } from "@/api/types";
 
 const TABS = ["Overview", "Documents", "Timeline", "Deadlines", "People", "Arguments", "Related", "Access"] as const;
 type Tab = (typeof TABS)[number];
@@ -81,6 +92,10 @@ function MatterView({ detail }: { detail: MatterDetail }) {
   const [tab, setTab] = useState<Tab>("Overview");
   const status = useMatterAccessStatus(m.matter_id, true);
   const tabs = TABS.filter((t) => t !== "Access" || status.data?.level === "manage");
+  const level = detail.my_level ?? "read";
+  const canEdit = level === "edit" || level === "manage";
+  const canManage = level === "manage";
+  const [editing, setEditing] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -95,6 +110,11 @@ function MatterView({ detail }: { detail: MatterDetail }) {
             </Action>
             <AssistantAction matterId={m.matter_id} />
             <PinAction matterId={m.matter_id} />
+            {canManage && (
+              <Action onClick={() => setEditing(true)} icon="edit" testId="matter-edit">
+                Edit
+              </Action>
+            )}
           </>
         }
       >
@@ -133,34 +153,14 @@ function MatterView({ detail }: { detail: MatterDetail }) {
       <div className="animate-fade">
         {tab === "Overview" && <Overview detail={detail} />}
         {tab === "Documents" && <DocumentsTab matterId={m.matter_id} />}
-        {tab === "Timeline" && <TimelineTab matterId={m.matter_id} />}
+        {tab === "Timeline" && <TimelineTab matterId={m.matter_id} canEdit={canEdit} />}
         {tab === "Deadlines" && <DeadlinesTab matterId={m.matter_id} />}
-        {tab === "People" &&
-          (team.length === 0 ? (
-            <EmptyState icon="groups" title="No team recorded" />
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {team.map((tm) => (
-                <Link
-                  key={tm.member_id}
-                  to={`/people/${tm.member_id}`}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-wine/40"
-                >
-                  <PersonAvatar person={{ name: tm.name, initials: initials(tm.name) }} size={40} />
-                  <div>
-                    <div className="font-medium text-foreground">{tm.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {tm.role_on_matter} · {tm.role}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ))}
-        {tab === "Arguments" && <ArgumentsTab matterId={m.matter_id} />}
-        {tab === "Related" && <RelatedTab matterId={m.matter_id} />}
+        {tab === "People" && <TeamEditor matterId={m.matter_id} team={team} canManage={canManage} />}
+        {tab === "Arguments" && <ArgumentsTab matterId={m.matter_id} canEdit={canEdit} />}
+        {tab === "Related" && <RelatedTab matterId={m.matter_id} canEdit={canEdit} />}
         {tab === "Access" && <MatterAccessTab matterId={m.matter_id} />}
       </div>
+      {editing && <EditMatterDialog detail={detail} open onClose={() => setEditing(false)} />}
     </div>
   );
 }
@@ -273,25 +273,47 @@ function DocumentsTab({ matterId }: { matterId: string }) {
   );
 }
 
-function TimelineTab({ matterId }: { matterId: string }) {
+function TimelineTab({ matterId, canEdit }: { matterId: string; canEdit: boolean }) {
   const timeline = useMatterTimeline(matterId);
+  const [dialog, setDialog] = useState<{ entry?: TimelineEvent } | null>(null);
+  const remove = useDeleteTimelineEntry(matterId);
   return (
-    <QueryState query={timeline} isEmpty={(t) => t.length === 0} empty={<EmptyState icon="timeline" title="No dated documents on this matter" />}>
-      {(events) => (
-        <ol className="relative space-y-6 border-l border-border pl-6" data-testid="matter-timeline">
-          {events.map((e) => (
-            <li key={e.doc_id} className="relative">
-              <span className="absolute -left-[27px] top-1 h-3 w-3 rounded-full border-2 border-wine bg-background" />
-              <div className="font-mono-id text-xs text-wine">{e.date || "undated"}</div>
-              <Link to={`/documents/${e.doc_id}`} className="mt-0.5 block text-base text-foreground hover:text-wine">
-                {e.event}
-              </Link>
-              <div className="mt-0.5 text-xs text-muted-foreground">{[e.doc_type, e.author].filter(Boolean).join(" · ")}</div>
-            </li>
-          ))}
-        </ol>
+    <div className="space-y-4">
+      {canEdit && (
+        <Action onClick={() => setDialog({})} icon="add" testId="timeline-add">
+          Add to the timeline
+        </Action>
       )}
-    </QueryState>
+      <QueryState query={timeline} isEmpty={(t) => t.length === 0} empty={<EmptyState icon="timeline" title="Nothing on the timeline yet" />}>
+        {(events) => (
+          <ol className="relative space-y-6 border-l border-border pl-6" data-testid="matter-timeline">
+            {events.map((e) => (
+              <li key={e.event_id ?? `${e.doc_id}-${e.date}`} className="group relative" data-testid={e.source === "entry" ? "timeline-entry" : undefined}>
+                <span className={cn("absolute -left-[27px] top-1 h-3 w-3 rounded-full border-2 bg-background",
+                  e.source === "entry" ? "border-amber-500" : "border-wine")} />
+                <div className="font-mono-id text-xs text-wine">{e.date || "undated"}</div>
+                {e.doc_id ? (
+                  <Link to={`/documents/${e.doc_id}`} className="mt-0.5 block text-base text-foreground hover:text-wine">{e.event}</Link>
+                ) : (
+                  <div className="mt-0.5 text-base text-foreground">{e.event}</div>
+                )}
+                {e.detail && <p className="mt-0.5 text-sm text-muted-foreground">{e.detail}</p>}
+                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                  {[e.doc_type, e.author].filter(Boolean).join(" · ")}
+                  {canEdit && e.source === "entry" && e.event_id && (
+                    <span className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                      <button type="button" className="underline" onClick={() => setDialog({ entry: e })}>Edit</button>{" "}
+                      <button type="button" className="underline" onClick={() => void remove(e.event_id!)}>Delete</button>
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </QueryState>
+      {dialog && <TimelineEntryDialog matterId={matterId} entry={dialog.entry} open onClose={() => setDialog(null)} />}
+    </div>
   );
 }
 
@@ -316,52 +338,105 @@ function DeadlinesTab({ matterId }: { matterId: string }) {
   );
 }
 
-function ArgumentsTab({ matterId }: { matterId: string }) {
+function ArgumentsTab({ matterId, canEdit }: { matterId: string; canEdit: boolean }) {
   const args = useMatterArguments(matterId);
+  const [dialog, setDialog] = useState<{ arg?: MatterArgument } | null>(null);
+  const remove = useDeleteArgument(matterId);
   return (
-    <QueryState query={args} isEmpty={(a) => a.length === 0} empty={<EmptyState icon="balance" title="No arguments recorded" />}>
-      {(rows) => (
-        <div className="space-y-px">
-          {rows.map((a) => (
-            <div key={a.argument_id} className="border-b border-border py-4">
-              <div className="text-base text-foreground">{a.issue}</div>
-              {a.position && <div className="mt-0.5 text-xs uppercase tracking-wide text-wine">{a.position}</div>}
-              <p className="mt-1 text-sm text-muted-foreground">{a.argument}</p>
-              {a.outcome && <p className="mt-1 text-xs text-muted-foreground">Outcome: {a.outcome}</p>}
-            </div>
-          ))}
-        </div>
+    <div className="space-y-4">
+      {canEdit && (
+        <Action onClick={() => setDialog({})} icon="add" testId="argument-add">
+          Record an argument
+        </Action>
       )}
-    </QueryState>
+      <QueryState query={args} isEmpty={(a) => a.length === 0} empty={<EmptyState icon="balance" title="No arguments recorded" />}>
+        {(rows) => (
+          <div className="space-y-px" data-testid="matter-arguments">
+            {rows.map((a) => (
+              <div key={a.argument_id} className="group border-b border-border py-4">
+                <div className="text-base text-foreground">{a.issue}</div>
+                {a.position && <div className="mt-0.5 text-xs uppercase tracking-wide text-wine">{a.position}</div>}
+                <p className="mt-1 text-sm text-muted-foreground">{a.argument}</p>
+                {a.outcome && <p className="mt-1 text-xs text-muted-foreground">Outcome: {a.outcome}</p>}
+                {canEdit && (
+                  <div className="mt-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                    <button type="button" className="underline" onClick={() => setDialog({ arg: a })}>Edit</button>{" "}
+                    <button type="button" className="underline" onClick={() => void remove(a.argument_id)}>Delete</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </QueryState>
+      {dialog && <ArgumentDialog matterId={matterId} arg={dialog.arg} open onClose={() => setDialog(null)} />}
+    </div>
   );
 }
 
-function RelatedTab({ matterId }: { matterId: string }) {
+function RelatedTab({ matterId, canEdit }: { matterId: string; canEdit: boolean }) {
   const navigate = useNavigate();
   const related = useMatterRelated(matterId);
+  const [linking, setLinking] = useState(false);
+  const unlink = useUnlinkMatter(matterId);
   return (
-    <QueryState query={related} isEmpty={(r) => r.length === 0} empty={<EmptyState icon="join_inner" title="No related matters in your scope" />}>
-      {(rows) => (
-        <DataTable
-          rows={rows}
-          getRowKey={(r) => r.matter_id}
-          onRowClick={(r) => navigate(`/matters/${r.matter_id}`)}
-          columns={[
-            {
-              key: "matter",
-              header: "Matter",
-              render: (r) => (
-                <div>
-                  <div className="font-mono-id text-xs text-muted-foreground">{r.matter_code}</div>
-                  <div>{r.title}</div>
-                </div>
-              ),
-            },
-            { key: "client", header: "Client", render: (r) => r.client_name || "—" },
-            { key: "status", header: "Status", align: "right", render: (r) => <StatusLabel status={r.status || "Open"} /> },
-          ]}
-        />
+    <div className="space-y-4">
+      {canEdit && (
+        <Action onClick={() => setLinking(true)} icon="add_link" testId="related-add">
+          Link a matter
+        </Action>
       )}
-    </QueryState>
+      <QueryState query={related} isEmpty={(r) => r.length === 0} empty={<EmptyState icon="join_inner" title="No related matters in your scope" />}>
+        {(rows) => (
+          <DataTable
+            testId="matter-related"
+            rows={rows}
+            getRowKey={(r) => r.matter_id}
+            onRowClick={(r) => navigate(`/matters/${r.matter_id}`)}
+            columns={[
+              {
+                key: "matter",
+                header: "Matter",
+                render: (r) => (
+                  <div>
+                    <div className="font-mono-id text-xs text-muted-foreground">{r.matter_code}</div>
+                    <div>{r.title}</div>
+                  </div>
+                ),
+              },
+              {
+                key: "why",
+                header: "Relation",
+                render: (r) => (
+                  <span className="text-sm text-muted-foreground">
+                    {(r.relation ?? "").replace(/_/g, " ")}
+                    {r.manual && <span className="ml-1 rounded bg-secondary px-1 text-[11px]">linked</span>}
+                    {r.note && <span className="block text-xs">{r.note}</span>}
+                  </span>
+                ),
+              },
+              { key: "client", header: "Client", render: (r) => r.client_name || "—" },
+              {
+                key: "status",
+                header: "Status",
+                align: "right",
+                render: (r) => (
+                  <span className="inline-flex items-center gap-2">
+                    <StatusLabel status={r.status || "Open"} />
+                    {canEdit && r.manual && (
+                      <button type="button" aria-label="Remove link" className="rounded p-0.5 hover:bg-secondary"
+                        onClick={(ev) => { ev.stopPropagation(); void unlink(r.matter_id); }}>
+                        <Icon name="link_off" style={{ fontSize: 16 }} />
+                      </button>
+                    )}
+                  </span>
+                ),
+              },
+            ]}
+          />
+        )}
+      </QueryState>
+      {linking && <LinkMatterDialog matterId={matterId} open onClose={() => setLinking(false)} />}
+    </div>
   );
 }

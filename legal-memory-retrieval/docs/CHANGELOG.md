@@ -2,6 +2,49 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-09-28 — Write layer and calendar (plan 17: P2, P3)
+
+- Matters: open (with lead, team and access mode), edit and close with optimistic concurrency; team with start/end
+  dates (ended assignments lose team access); timeline entries beside document dates; arguments; related-matter
+  links that never reveal a walled matter.
+- Clients: intake behind a firm-wide conflict check (clients, aliases, subsidiaries, every matter's other side);
+  hits on matters the requester cannot see are redacted; Risk clears, waives (with reasons) or declares a conflict;
+  the client's status follows. People edit their own expertise; admins onboard people with firm roles.
+- Live updates: a domain-event outbox and an ACL-filtered SSE stream; pages refresh when colleagues change things.
+  Home shows "My work" (my matters, due dates, drafts, comments for me, decisions waiting).
+- Calendar: events beside court deadlines; Mine / My team / Matter / Firm; list, week and month; court dates stay
+  unconfirmed until a second lawyer confirms; private, revocable ICS feeds with restricted titles redacted.
+- Tests: 853 backend, 50 browser (E2E records cleaned up by a global teardown).
+
+## 2026-09-28 — Editor gaps, document privacy and an access sweep (plan 17: G, P1b)
+
+- Editor: bold/italic/underline and paragraph styles saved as Word tracked formatting changes; per-window edit
+  locks with takeover (same person or matter manager); open comments carried to new versions (re-found by quote,
+  "text changed" otherwise); annotation authors from the session. Fixed: stale exact view after a save (render
+  cache), vector-reuse query plan (100-page save 3.3 s → 1.2 s), toolbar acting on a stale selection.
+- Document privacy: Private (owner + shares) and Restricted (+ matter managers), compiled into `visible_to` on
+  documents and chunks and enforced beside the matter ACL on every read path; walls.manage reads audited;
+  "Private draft" uploads; privacy chip/dialog; lock icons in lists.
+- Access sweep: chunk context, review candidates/jobs/findings, tabular reviews and workflow runs (spoofable
+  header, shared results), Assistant document reads, project document copy across matters, lapsed staffing.
+- Tests: 834 backend, 45 browser; editor round-trip eval 100 % incl. formatting; Ask the Firm live eval 109/109.
+
+## 2026-09-28 — Document viewer/editor: exact view, in-browser Word editing, versions, comments (plan 16)
+
+- Exact view: any stored file shown as pages; Word/Office converted by Gotenberg (Apache-2.0 container running
+  LibreOffice), cached by content hash.
+- Editor (`/documents/:id/edit`, TipTap/ProseMirror, MIT): paragraph editing of Word documents; saves write Word
+  tracked changes under the signed-in person into the version's own .docx (untouched formatting kept) or a clean
+  copy; one editor at a time (lock, 5-min TTL, heartbeat), server-side draft autosave, stale saves refused (409).
+- Versions: upload a file as the next version (attributed to the session), paragraph + word compare, tracked-changes
+  .docx compare, document activity history (`document_events`).
+- Comments on the exact view: select text → comment, replies, resolve/reopen; stored per version (`annotations`).
+- Performance: fast Word style lookup in the DOCX extractor (13.6k paragraphs 4.1 s → 0.6 s); after a save, unchanged
+  chunks keep their vectors and the rest are embedded in the background. 400-page save p95 7.7 s → 2.2 s.
+- Eval: `evals/editor_roundtrip_eval.py` (10/100/400 pages): all fidelity checks 100 %.
+- Tests: `tests/test_document_editor.py` (15), `tests/test_document_comments.py` (7), `frontend/e2e/editor.spec.ts` (3).
+  `pytest tests/`: 806 passed, 1 skipped; Playwright: 41 passed, 4 LLM-gated skipped.
+
 ## 2026-09-27 — Claim-level grounding for Ask the Firm and the Assistant
 
 Problem (live answers): quotes existed in the document but did not state the cited fact ("Board approved the

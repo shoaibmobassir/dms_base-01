@@ -425,3 +425,41 @@ Our design decisions: Sentence-level units; candidate spans from the cited sourc
 Mike source used as coding basis: NO
 New dependencies introduced: none
 IP notes: none
+
+### Feature: Document viewer/editor — exact view, in-browser Word editing, file versions, locks, compare (plan 16)
+Date: 2026-09-28
+Mike observation (product level only): None. Requested by the product owner ("something like Google Docs to preview the exact docs/PDFs and edit them"). Mike was not opened during design or implementation.
+Requirement (technology-independent): Lawyers see any firm document exactly as filed, edit Word documents in the browser, and every save becomes a new version by the signed-in person, as Word tracked changes, with untouched text keeping its exact formatting; one editor at a time; drafts never lost; any two versions comparable.
+Our design decisions:
+  - Exact view from a PDF rendition produced by Gotenberg (separate container, LibreOffice inside; nothing linked)
+  - Paragraph edit model (`pid`, style, runs) over the accepted Word body; saves are paragraph ops written as tracked changes into the version's own .docx (`app/documents/editing.py`, reusing our `app/drafting/docx_tracked.py`)
+  - New tables `document_locks`, `document_drafts`, `document_events` and version attribution columns (our schema); stale-base saves refused (409)
+  - Editor UI on TipTap/ProseMirror (MIT) with paragraph ids as node attributes; our own op computation (`frontend/src/lib/editorOps.ts`)
+  - Compare with similarity-paired paragraph diff and word segments; tracked-changes .docx compare
+  - Search index refresh on save: unchanged chunks reuse vectors, the rest embedded in the background under a per-document advisory lock
+  - Fidelity/latency eval `evals/editor_roundtrip_eval.py`
+Mike source used as coding basis: NO
+New dependencies introduced: Gotenberg (Apache-2.0, infra), @tiptap/* and prosemirror-* (MIT) — see DEPENDENCY_AUDIT.md
+IP notes: Independent design from the product owner's requirement and our existing code.
+
+### Feature: Document privacy (Private / Restricted), tracked formatting, lock takeover, comment carry-forward (plan 17)
+Date: 2026-09-28
+Mike observation (product level only): None. Requested by the product owner (plan 17 decisions); Mike was not opened.
+Requirement (technology-independent): A lawyer can keep a draft private, or restrict a sensitive document to named people inside a matter, without ever widening matter access; compliance can always read, and every such read is recorded. Editing keeps Word formatting changes as tracked revisions; one window edits at a time with an explicit takeover; comments follow a document to its new versions.
+Our design decisions:
+  - `document_access` / `document_shares` (our schema) compiled by database triggers into `visible_to` on documents and chunks; one `doc_acl()` predicate added beside every matter ACL clause; a document-level epoch in the retrieval cache key
+  - Lapsed staffing / expired grants recompiled by `acl_refresh_lapsed()` on a timer
+  - `app/documents/docx_format.py`: `w:rPrChange` / `w:pPrChange` applied over the accepted text after the text pass
+  - Per-window lock tokens (`X-Edit-Lock`), 409 reasons and takeover; comment threads re-located by quote in the new rendition
+Mike source used as coding basis: NO
+New dependencies introduced: none
+IP notes: Independent design.
+
+### Feature: Write layer (matters, staffing, timeline, arguments, links, client intake + conflict checks, people), live updates, calendar (plan 17 P2–P3)
+Date: 2026-09-28
+Mike observation (product level only): None. Requirements from the product owner's production plan (plan 17); Mike was not opened.
+Requirement (technology-independent): Lawyers open and maintain matters, staff them with dated assignments, record what happened and what was argued, link related matters, take on clients only after a conflict check reviewed by Risk, keep their own expertise current, see colleagues' changes live, and work from one calendar of court dates (confirmed by a second lawyer) and meetings they can subscribe to.
+Our design decisions: services in `app/firm/` (our schema: `matter_events`, `matter_links`, `conflict_checks`, `domain_events`, `calendar_events`, `calendar_feeds`); every write = access check + transaction + outbox row + audit; optimistic concurrency by `row_version`; conflict hits redacted per requester; SSE filtered per member; ICS tokens hashed at rest.
+Mike source used as coding basis: NO
+New dependencies introduced: none
+IP notes: Independent design.

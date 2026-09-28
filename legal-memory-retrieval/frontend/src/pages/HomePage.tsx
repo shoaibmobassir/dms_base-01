@@ -9,6 +9,7 @@ import { useDeadlines, useHomeStats, useMatters, useRecentConversations } from "
 import { formatDate } from "@/lib/format";
 import { useApp } from "@/context/AppContext";
 import { dueLabel } from "@/pages/CalendarPage";
+import { MyWork } from "@/components/home/MyWork";
 
 const EXAMPLES = [
   "What did we argue on maintainability before the Appellate Tribunal for Electricity?",
@@ -63,6 +64,8 @@ export function HomePage() {
       />
 
       <AskComposer examples={EXAMPLES} placeholder="Ask anything about the firm's work…" />
+
+      <MyWork />
 
       <section className="grid gap-12 lg:grid-cols-3">
         <div className="space-y-12 lg:col-span-2">

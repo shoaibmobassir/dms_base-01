@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 
 from app.api.routers import access as access_router
 from app.api.routers import admin as admin_router
+from app.api.routers import editor as editor_router
 from app.api.routers import (
     activity,
     answers,
@@ -82,6 +83,7 @@ SERVICE_CATALOG = {
     "audit": {"prefix": "/api/audit", "health": "/api/audit/health"},
     "access": {"prefix": "/api/access", "health": "/api/access/health"},
     "admin": {"prefix": "/api/admin", "health": "/api/admin/health"},
+    "editor": {"prefix": "/api/editor", "health": "/api/editor/health"},
     "chat": {"prefix": "/api/chat", "health": "/api/chat/health"},
     "sources": {"prefix": "/api/sources", "health": "/api/sources/health"},
 }
@@ -103,6 +105,10 @@ async def lifespan(_app: FastAPI):
         warmup.start_background()
     else:
         warmup.skip()
+    if settings.env != "test":
+        from app.access import refresher as acl_refresher
+
+        acl_refresher.start()  # staffing that ended / grants that expired lose access on time
     yield
     await close_pool()
     loop_workers.shutdown()
@@ -165,6 +171,7 @@ _AUTHED_ROUTERS = [
     (audit_router, "audit"),
     (access_router, "access"),
     (admin_router, "admin"),
+    (editor_router, "editor"),
     (chat_router, "chat"),
     (sources, "sources"),
 ]
@@ -176,6 +183,22 @@ else:
 
 for _module, _name in _AUTHED_ROUTERS:
     app.include_router(_module.router, prefix=f"/api/{_name}", dependencies=[Depends(resolve_member)])
+
+# Write layer (plan 17, P2), beside the read routers.
+from app.api.routers import firm as firm_routes  # noqa: E402
+
+for _router, _prefix in (
+    (firm_routes.matters_router, "/api/matters"),
+    (firm_routes.clients_router, "/api/clients"),
+    (firm_routes.conflicts_router, "/api/conflicts"),
+    (firm_routes.people_router, "/api/people"),
+    (firm_routes.events_router, "/api/events"),
+    (firm_routes.home_router, "/api/home"),
+    (firm_routes.calendar_router, "/api/calendar"),
+):
+    app.include_router(_router, prefix=_prefix, dependencies=[Depends(resolve_member)])
+# Calendar apps cannot send our headers: the feed's secret token is its only credential.
+app.include_router(firm_routes.calendar_feed_router, prefix="/api/calendar-feed")
 
 
 _static_dir = Path(__file__).resolve().parents[2] / "static"

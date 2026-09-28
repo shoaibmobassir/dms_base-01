@@ -17,6 +17,7 @@ import { apiFetch, authHeaders } from "@/api/client";
 import type { AskInputItem, Attachment, ChatEvent, ChatMessage, ChatSession, Citation, DocumentItem, EditProposal, Paged, Matter } from "@/api/types";
 import { CitationDocumentPanel, displayQuote, sourceFromCitation, type PanelSource } from "@/components/chat/CitationDocumentPanel";
 import { HistoryPane } from "@/components/chat/HistoryPane";
+import { ReviewTableCard, type ReviewTableEvent } from "@/components/chat/ReviewTableCard";
 import { MatterScopePicker, type MatterChoice } from "@/components/chat/MatterScopePicker";
 import { useDocuments, useMatter } from "@/api/resources";
 import { AskInputsCard, EditProposalsCard, FileCard, StepTimeline, errorText, type EditGroup } from "@/components/chat/MessageParts";
@@ -286,6 +287,14 @@ export function ChatPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [draft, setDraft] = useState<{ text: string; nonce: number }>();
   const nonceRef = useRef(0);
+  // Ask the Firm hands a question over with ?q= (and usually ?matter=): pre-fill it, never auto-send.
+  const handedQuestion = searchParams.get("q");
+  useEffect(() => {
+    if (!handedQuestion) return;
+    setDraft({ text: handedQuestion, nonce: Date.now() });
+    if (!matterParam) setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handedQuestion]);
 
   const openSource = (next: Omit<PanelSource, "nonce"> | null) => {
     if (!next) return;
@@ -897,6 +906,7 @@ function AssistantMessage({
   const byRef = (n: number) => citations.find((c) => Number(c.ref) === n);
   const askItems = events.filter((e) => e.type === "ask_inputs").flatMap((e) => (e.items ?? []) as AskInputItem[]);
   const editGroups = events.filter((e) => e.type === "edit_proposals") as unknown as EditGroup[];
+  const reviewTables = events.filter((e) => e.type === "review_table") as unknown as ReviewTableEvent[];
   const files = [
     ...events
       .filter((e) => e.type === "doc_created" && typeof e.document_id === "string")
@@ -1004,6 +1014,10 @@ function AssistantMessage({
         {askItems.length > 0 && (
           <AskInputsCard items={askItems} answered={!isLast || m.status === "streaming"} onSubmit={onAnswer} onUpload={onUpload} />
         )}
+
+        {reviewTables.map((table, ti) => (
+          <ReviewTableCard key={`${m.id ?? "live"}-review-${ti}`} table={table} onOpen={onOpenSource} />
+        ))}
 
         {editGroups.map((group, gi) => (
           <EditProposalsCard

@@ -28,6 +28,7 @@ def keyword_search(conn, query: str, member_id: str | None, limit: int = 50) -> 
             OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
                 AND NOT (%(member_id)s::text = ANY (p.denied_members)))
         )
+        AND (%(member_id)s::text IS NULL OR c.visible_to IS NULL OR %(member_id)s::text = ANY (c.visible_to))
         AND ({match_vec}) @@ to_tsquery('english', %(tsquery)s)
         ORDER BY score DESC
         LIMIT %(limit)s

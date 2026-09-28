@@ -1,5 +1,16 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
+/** The calendar list's own window (today − 60 … today + 330, local dates), open items. */
+async function calendarOpen(request: import("@playwright/test").APIRequestContext, member: string | undefined, scope = "firm") {
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const t = new Date();
+  const from = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() - 60));
+  const to = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() + 330));
+  const res = await request.get(`/api/calendar?from=${from}&to=${to}&scope=${scope}`, { headers: member ? { "X-Member-Id": member } : {} });
+  return ((await res.json()) as { items: { title: string; status: string; start: string }[] }).items.filter((i) => i.status === "open");
+}
+
+
 // Work pages after the second design pass: plain headings with counts, one date
 // format, new columns and filters, and the links between Ask, Assistant and matters.
 // Expected values come from the API at test time.
@@ -87,13 +98,13 @@ test("calendar: readable dates and a 'Mine only' filter", async ({ page, request
   const deadlines = (await api<{ items: { owner_member_id: string | null }[] }>(request, "/api/tasks?status=open&limit=100")).items;
   const owner = deadlines.find((d) => d.owner_member_id)?.owner_member_id;
   test.skip(!owner, "no owned deadlines seeded");
-  const mine = deadlines.filter((d) => d.owner_member_id === owner).length;
   await viewAs(page, owner!);
+  const mine = (await calendarOpen(request, owner!, "mine")).length;
   await page.goto("/ui/calendar");
   const table = page.getByTestId("deadlines-table");
   await expect(table).toBeVisible();
   await expect(table).not.toContainText(ISO_DATE);
-  await page.getByTestId("calendar-mine").check();
+  await page.getByTestId("calendar-scope-mine").click();
   await expect(table.locator("tbody tr")).toHaveCount(mine);
 });
 

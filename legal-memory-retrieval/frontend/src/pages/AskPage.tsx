@@ -7,6 +7,7 @@ import type { AskHistoryItem, AskResult } from "@/api/types";
 import { AIAnswer, AIAssembling, AIStreaming, AnswerContext } from "@/components/ai/AIAnswer";
 import { AskComposer } from "@/components/ai/AskComposer";
 import { DocumentPanelProvider, useDocumentPanel } from "@/components/ai/DocumentPanelDrawer";
+import { KmPanel } from "@/components/ai/KmPanel";
 import { MatterBrief } from "@/components/ai/MatterBrief";
 import { ErrorState, Eyebrow, Icon, SectionLabel } from "@/components/common/primitives";
 import { useApp } from "@/context/AppContext";
@@ -124,6 +125,7 @@ function AskView() {
           resolved_scope: ask.evidence.resolved_scope,
           people: ask.evidence.people,
           matter_cards: ask.evidence.matter_cards,
+          panel: ask.evidence.panel,
         }
       : null);
 
@@ -161,6 +163,8 @@ function AskView() {
   // With a document open the page narrows to the answer, as in the Assistant.
   const split = !!panel?.isOpen;
   const cards = context?.matter_cards ?? [];
+  const km = context?.panel;
+  const abstainedOnRecords = !!ask.result?.abstained && ask.result.status !== "not_found";
 
   return (
     <div className={cn("mx-auto w-full px-6 py-8 lg:px-10 lg:py-10", split ? "max-w-3xl" : "max-w-[1180px]")}>
@@ -195,7 +199,13 @@ function AskView() {
             />
           )}
           {ask.phase === "done" && ask.result && <AIAnswer result={ask.result} />}
-          {cards.length > 0 && !(ask.result?.abstained && ask.result.status !== "not_found") && (
+          {km && (km.matters.length > 0 || km.people.length > 0) && ask.phase !== "error" && (
+            <div className="mt-10">
+              {abstainedOnRecords && <p className="mb-2 text-xs text-muted-foreground">Closest records found:</p>}
+              <KmPanel panel={km} question={q} onOpenDocument={(id, title) => panel?.openDocument(id, { title })} />
+            </div>
+          )}
+          {cards.length === 1 && !abstainedOnRecords && (
             <div className="mt-10">
               <MatterBrief cards={cards} />
             </div>
@@ -206,7 +216,7 @@ function AskView() {
           </div>
         </div>
 
-        {!split && <aside className="order-3 hidden lg:block">{context && <AnswerContext result={context} />}</aside>}
+        {!split && <aside className="order-3 hidden lg:block">{context && <AnswerContext result={context} withPanel={!!km} />}</aside>}
       </div>
     </div>
   );

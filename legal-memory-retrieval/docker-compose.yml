@@ -20,6 +20,15 @@ services:
     ports:
       - "6380:6379"
 
+  # Office → PDF renditions for the exact document view (Gotenberg, Apache-2.0, runs
+  # LibreOffice, MPL-2.0, in this separate container; nothing is linked into the app).
+  # Bound to localhost: it has no authentication and must never be public.
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    command: ["gotenberg", "--api-timeout=120s", "--libreoffice-restart-after=50"]
+    ports:
+      - "127.0.0.1:3000:3000"
+
   # Optional: docker compose --profile object-store up -d
   minio:
     profiles: ["object-store"]
@@ -49,6 +58,7 @@ services:
         required: false
     environment:
       REDIS_URL: redis://redis:6379
+      GOTENBERG_URL: http://gotenberg:3000
       SECRETS_DIR: /run/secrets/precentis
     volumes:
       - objects:/app/data/object_store

@@ -371,7 +371,7 @@ function SourceList({
 }
 
 /** Right-hand context column: scope, people and the sources, cited first. */
-export function AnswerContext({ result }: { result: AskResult }) {
+export function AnswerContext({ result, withPanel = false }: { result: AskResult; withPanel?: boolean }) {
   const openDoc = useOpenCitedDocument(result);
   const sources = citedSources(result);
   const people = answerPeople(result);
@@ -390,7 +390,7 @@ export function AnswerContext({ result }: { result: AskResult }) {
           <p className="text-xs text-muted-foreground">{scopeMethodLabel(scope.method)}</p>
         </div>
       )}
-      {people.length > 0 && (
+      {people.length > 0 && !withPanel && (
         <div>
           <SectionLabel>People ({people.length})</SectionLabel>
           <ul className="space-y-2" data-testid="answer-people">
@@ -407,7 +407,7 @@ export function AnswerContext({ result }: { result: AskResult }) {
           </ul>
         </div>
       )}
-      {sources.length === 0 ? (
+      {withPanel ? null : sources.length === 0 ? (
         <div>
           <SectionLabel>Sources (0)</SectionLabel>
           <p className="text-sm text-muted-foreground">No sources.</p>

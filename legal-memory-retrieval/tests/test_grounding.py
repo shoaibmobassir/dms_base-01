@@ -105,6 +105,48 @@ def test_judge_failure_fails_closed():
     assert out.support == UNSUPPORTED
 
 
+def test_sharded_judge_maps_each_verdict_back_to_its_own_claim():
+    board = Source("doc-0", "DOC-06D46C4AD1", "Board Resolution.docx", BOARD)
+    spa = Source("doc-1", "DOC-0A1", "SPA.docx", SPA)
+    claims = [
+        Claim("The Board approved the transfer of shares.", cited=["doc-0"]),
+        Claim("The seat of arbitration is Mumbai.", cited=["doc-1"]),
+        Claim("The tribunal has three arbitrators.", cited=["doc-1"]),
+        Claim("The meeting was held in Bengaluru.", cited=["doc-0"]),
+        Claim("The shares are held in London.", cited=["doc-0"]),
+    ]
+    inner = scripted_judge({
+        "approved": (SUPPORTED, ["RESOLVED THAT"]), "seat": (SUPPORTED, ["seat of arbitration"]),
+        "tribunal": (SUPPORTED, ["three arbitrators"]), "Bengaluru": (SUPPORTED, ["Bengaluru"]),
+    })
+    calls: list[int] = []
+
+    def judge(messages):
+        calls.append(messages[-1]["content"].count("UNIT "))
+        return inner(messages)
+
+    verify_claims(claims, [board, spa], judge, batch_size=2)
+    assert sorted(calls) == [1, 2, 2]
+    assert [c.support for c in claims] == [SUPPORTED] * 4 + [UNSUPPORTED]
+    assert claims[1].spans[0].key == "doc-1" and "Mumbai" in claims[1].spans[0].quote
+    assert claims[3].spans[0].key == "doc-0" and "Bengaluru" in claims[3].spans[0].quote
+
+
+def test_one_failed_shard_fails_closed_only_for_its_claims():
+    src = Source("doc-0", "DOC-06D46C4AD1", "Board Resolution.docx", BOARD)
+    claims = [Claim("The Board approved the transfer.", cited=["doc-0"]),
+              Claim("The meeting was held in Bengaluru.", cited=["doc-0"])]
+    inner = scripted_judge({"approved": (SUPPORTED, ["RESOLVED THAT"]), "Bengaluru": (SUPPORTED, ["Bengaluru"])})
+
+    def flaky(messages):
+        if "Bengaluru" in messages[-1]["content"].split("\n")[0]:
+            raise RuntimeError("timeout")
+        return inner(messages)
+
+    verify_claims(claims, [src], flaky, batch_size=1)
+    assert [c.support for c in claims] == [SUPPORTED, UNSUPPORTED]
+
+
 def test_ground_answer_rewrites_markers_and_removes_unsupported():
     sources = [
         Source("doc-0", "DOC-06D46C4AD1", "Board Resolution.docx", BOARD),

@@ -9,6 +9,7 @@ import { InspectorProvider } from "@/components/common/Inspector";
 import { ErrorState, Icon } from "@/components/common/primitives";
 import { cn } from "@/lib/utils";
 import { useApp } from "@/context/AppContext";
+import { useLiveEvents } from "@/api/firm";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { boot } = useApp();
@@ -16,6 +17,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (boot.phase === "error") return <BootError message={boot.message} />;
   if (boot.phase === "needs-key") return <SignIn error={boot.error} />;
   return <Shell>{children}</Shell>;
+}
+
+/** Follows the firm's live updates while signed in (refreshes what other people change). */
+function LiveUpdates() {
+  useLiveEvents();
+  return null;
 }
 
 const SIDEBAR_KEY = "precentis.sidebarWidth";
@@ -164,6 +171,7 @@ function Shell({ children }: { children: ReactNode }) {
       </div>
 
       <BottomNav />
+      <LiveUpdates />
       <CommandPalette open={cmdOpen} setOpen={setCmdOpen} />
       <Toaster position="bottom-right" />
     </InspectorProvider>

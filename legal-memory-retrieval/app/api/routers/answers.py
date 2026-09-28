@@ -158,15 +158,14 @@ def _cited_first(hits: list[dict], citations: list[str]) -> list[dict]:
 
 
 def _matched_matters(result: dict) -> list[dict]:
-    cards = result.get("matter_cards") or []
+    """The KM panel's ranked matters in the DMS portal shape (no invented similarity score)."""
     return [
         {
-            "matter_id": c["matter_id"], "matter_code": c["matter_code"], "title": c["title"],
-            "client_name": c.get("client_name"), "court": c.get("court"),
-            "practice_area": c.get("practice_area"), "document_count": c.get("document_count", 0),
-            "similarity": 99,
+            "matter_id": m["matter_id"], "matter_code": m["matter_code"], "title": m["title"],
+            "client_name": m.get("client_name"), "practice_area": m.get("practice_area"),
+            "document_count": m.get("document_count", 0), "relation": m.get("relation"), "why": m.get("why"),
         }
-        for c in cards
+        for m in (result.get("panel") or {}).get("matters") or []
     ]
 
 
