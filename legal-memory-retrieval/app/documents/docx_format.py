@@ -72,15 +72,36 @@ def _is_inserted(p_el) -> bool:
     return rpr is not None and rpr.find(qn("w:ins")) is not None
 
 
+TAG = "{urn:precentis:edit}pid"
+
+
 def _targets(doc, ops: list[dict]):
-    """(paragraph element, op, is_new_paragraph) for every op that asks for formatting."""
+    """(paragraph element, op, is_new_paragraph) for every op that asks for formatting.
+
+    When the save tagged its paragraphs (``editing._tag_paragraphs``), the first paragraph with a
+    tag is the original and later copies are this save's insertions after it — reliable even when
+    the file holds other reviewers' inserted paragraphs. Otherwise paragraphs whose mark is an
+    insertion are taken to be this save's."""
     originals, after = [], defaultdict(list)
-    for p in doc.paragraphs:
-        if _is_inserted(p._p):
-            if originals:
-                after[len(originals) - 1].append(p._p)
-        else:
-            originals.append(p._p)
+    if any(p._p.get(TAG) is not None for p in doc.paragraphs):
+        first: dict[int, object] = {}
+        for p in doc.paragraphs:
+            tag = p._p.get(TAG)
+            if tag is None:
+                continue
+            pid = int(tag)
+            if pid in first:
+                after[pid].append(p._p)
+            else:
+                first[pid] = p._p
+        originals = [first.get(i) for i in range(max(first) + 1)] if first else []
+    else:
+        for p in doc.paragraphs:
+            if _is_inserted(p._p):
+                if originals:
+                    after[len(originals) - 1].append(p._p)
+            else:
+                originals.append(p._p)
     seen = defaultdict(int)  # insert_after ops per anchor, counted whether or not they format
     for op in ops:
         pid = op.get("pid")
@@ -89,7 +110,7 @@ def _targets(doc, ops: list[dict]):
             seen[pid] += 1
             if wants_formatting(op) and k < len(after.get(pid, [])):
                 yield after[pid][k], op, True
-        elif wants_formatting(op) and isinstance(pid, int) and 0 <= pid < len(originals):
+        elif wants_formatting(op) and isinstance(pid, int) and 0 <= pid < len(originals) and originals[pid] is not None:
             yield originals[pid], op, False
 
 

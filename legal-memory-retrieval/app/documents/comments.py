@@ -65,6 +65,7 @@ def _public(row: dict) -> dict:
         "body": row["content"] or "",
         "author_id": row["author_id"],
         "author": row["author_name"],
+        "source": row.get("source") or "precentis",
         "status": "resolved" if row["status"] == "resolved" else "open",
         "resolved_by": row.get("resolved_by_name"),
         "resolved_at": row["resolved_at"],
@@ -87,6 +88,9 @@ def list_comments(conn, document_id: str, member_id: str | None, version_id: str
         return {"document_id": doc["document_id"], "version_id": None, "version_number": None,
                 "is_current": True, "threads": [], "on_other_versions": 0}
     vid = _version_of(conn, doc, version_id)
+    from app.documents.review import ensure_indexed
+
+    ensure_indexed(conn, doc, vid)  # a Word file's own comments come in the first time it is looked at
     number = _one(conn, "SELECT version_number FROM document_versions WHERE version_id = %s", (vid,))["version_number"]
     rows = conn.execute(
         """SELECT a.*, v.version_number, r.name AS resolved_by_name,

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { EditorContent, useEditor, useEditorState, type Editor, type JSONContent } from "@tiptap/react";
+import { EditorContent, Extension, useEditor, useEditorState, type Editor, type JSONContent } from "@tiptap/react";
+import { Plugin } from "@tiptap/pm/state";
+import type { Node as PMNode } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import Paragraph from "@tiptap/extension-paragraph";
 import {
@@ -21,6 +23,7 @@ import {
   type EditOp,
   type EditParagraph,
   type EditRun,
+  downloadWithCommentsUrl,
   type LockConflictReason,
 } from "@/api/editor";
 import { Button } from "@/components/ui/button";
@@ -33,6 +36,7 @@ import { UploadVersionDialog } from "@/components/editor/UploadVersionDialog";
 import { useApp } from "@/context/AppContext";
 import { applyOps, computeOps, mergeRuns, wordDiff, type LivePara } from "@/lib/editorOps";
 import { cn } from "@/lib/utils";
+import { authHeaders } from "@/api/client";
 
 
 const HEARTBEAT_MS = 90 * 1000; // lock TTL is 5 min on the server
@@ -54,9 +58,62 @@ const DocParagraph = Paragraph.extend({
         parseHTML: (el: HTMLElement) => el.getAttribute("data-style") || "Normal",
         renderHTML: (attrs: { pstyle: string }) => ({ "data-style": attrs.pstyle, class: styleClass(attrs.pstyle) }),
       },
+      // Pending tracked changes by other reviewers: shown, not editable until reviewed.
+      locked: {
+        default: null,
+        keepOnSplit: false,
+        parseHTML: (el: HTMLElement) => el.getAttribute("data-locked-by"),
+        renderHTML: (attrs: { locked: string | null }) =>
+          attrs.locked ? { "data-locked-by": attrs.locked, "data-testid": "editor-locked-para", title: attrs.locked } : {},
+      },
     };
   },
 });
+
+/** Locked paragraphs by pid (top-level nodes). */
+function lockedNodes(doc: PMNode) {
+  const out = new Map<number, PMNode>();
+  doc.forEach((n) => {
+    if (n.attrs.locked && n.attrs.pid !== null) out.set(n.attrs.pid as number, n);
+  });
+  return out;
+}
+
+/** Refuses any edit that would change a locked paragraph (typing in it, deleting it, merging into it). */
+const LockGuard = Extension.create<{ onBlocked: () => void }>({
+  name: "lockGuard",
+  addOptions() {
+    return { onBlocked: () => undefined };
+  },
+  addProseMirrorPlugins() {
+    const onBlocked = this.options.onBlocked;
+    return [
+      new Plugin({
+        filterTransaction(tr, state) {
+          if (!tr.docChanged) return true;
+          const before = lockedNodes(state.doc);
+          if (!before.size) return true;
+          const after = lockedNodes(tr.doc);
+          for (const [pid, node] of before) {
+            const now = after.get(pid);
+            if (!now || !(now === node || now.eq(node))) {
+              onBlocked();
+              return false;
+            }
+          }
+          return true;
+        },
+      }),
+    ];
+  },
+});
+
+function lockLabel(p: EditParagraph): string | null {
+  if (!p.locked) return null;
+  if (p.locked_reason === "deleted") return "Deletion pending — review it first";
+  const names = [...new Set((p.pending ?? []).map((x) => x.author))];
+  return `Pending changes by ${names.join(", ")} — review them first`;
+}
 
 function styleClass(style: string): string {
   const s = style.toLowerCase();
@@ -73,7 +130,7 @@ function toContent(paras: EditorPara[]): JSONContent {
     type: "doc",
     content: paras.map((p) => ({
       type: "paragraph",
-      attrs: { pid: p.pidLive === undefined ? p.pid : p.pidLive, pstyle: p.style },
+      attrs: { pid: p.pidLive === undefined ? p.pid : p.pidLive, pstyle: p.style, locked: lockLabel(p) },
       content: p.runs
         .filter((r) => r.text)
         .map((r) => {
@@ -159,7 +216,14 @@ function EditorWorkspace({ model }: { model: EditModel }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { identityKey, toast } = useApp();
-  const [view, setView] = useState<"edit" | "exact">(model.mode === "pdf" ? "exact" : "edit");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [view, setView] = useState<"edit" | "exact" | "review">(() => {
+    const asked = searchParams.get("view");
+    if (asked === "review" && model.mode === "docx") return "review";
+    if (asked === "exact") return "exact";
+    return model.mode === "pdf" ? "exact" : "edit";
+  });
+  const [blocked, setBlocked] = useState(false);
   const [lock, setLock] = useState<LockState>({ mine: false, holder: model.lock });
   const [ops, setOps] = useState<EditOp[]>([]);
   const [unplaced, setUnplaced] = useState<string[]>([]);
@@ -190,6 +254,7 @@ function EditorWorkspace({ model }: { model: EditModel }) {
         link: false,
       }),
       DocParagraph,
+      LockGuard.configure({ onBlocked: () => setBlocked(true) }),
     ],
     content: toContent(model.paragraphs),
     editable: false,
@@ -315,6 +380,24 @@ function EditorWorkspace({ model }: { model: EditModel }) {
     void queryClient.invalidateQueries({ queryKey: [identityKey] });
   };
 
+  // After accept/reject: stay in Review on the new version (the page reloads onto it).
+  const afterReview = (versionNumber: number, note: string) => {
+    toast(`${note} — saved as version ${versionNumber}`);
+    setSearchParams({ view: "review" }, { replace: true });
+    void queryClient.invalidateQueries({ queryKey: [identityKey] });
+  };
+
+  const downloadWithComments = async () => {
+    const res = await fetch(downloadWithCommentsUrl(id), { headers: authHeaders(), credentials: "same-origin" });
+    if (!res.ok) return toast("Could not prepare the file");
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${model.title.replace(/\.docx$/i, "")}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const changed = useMemo(() => {
     const base = new Map(snapshot.current.map((p) => [p.pid, p]));
     return ops.map((op) => {
@@ -355,7 +438,12 @@ function EditorWorkspace({ model }: { model: EditModel }) {
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <MonoId>{id}</MonoId>
               <span>· editing v{model.version_number ?? "?"}</span>
-              {model.has_revisions && <span>· earlier tracked changes shown as accepted</span>}
+              {(model.pending_changes ?? 0) > 0 && (
+                <button type="button" onClick={() => setView("review")} className="rounded bg-amber-100 px-1.5 text-amber-900 hover:underline"
+                  data-testid="editor-pending-chip">
+                  {model.pending_changes} pending change{model.pending_changes === 1 ? "" : "s"} by {model.pending_people?.join(", ")}
+                </button>
+              )}
               <DraftBadge state={draftState} pending={ops.length} />
               <PrivacyControl documentId={id} />
             </div>
@@ -373,7 +461,20 @@ function EditorWorkspace({ model }: { model: EditModel }) {
               data-testid="editor-view-exact">
               Exact view
             </button>
+            {model.mode === "docx" && (
+              <button type="button" role="tab" aria-selected={view === "review"} onClick={() => setView("review")}
+                className={cn("rounded px-3 py-1 text-sm", view === "review" ? "bg-wine-soft font-medium text-wine" : "text-muted-foreground")}
+                data-testid="editor-view-review">
+                Review
+              </button>
+            )}
           </div>
+          {model.mode === "docx" && (
+            <Button variant="outline" size="sm" onClick={() => void downloadWithComments()} data-testid="editor-download-comments"
+              title="The Word file with every comment and reply made here">
+              <Icon name="download" style={{ fontSize: 16 }} /> Word file with comments
+            </Button>
+          )}
           {model.editable && (
             <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)} data-testid="editor-upload">
               <Icon name="upload" style={{ fontSize: 16 }} /> Upload version
@@ -443,13 +544,24 @@ function EditorWorkspace({ model }: { model: EditModel }) {
             <Button size="sm" variant="outline" className="ml-2" onClick={discardDraft}>Discard</Button>
           </Banner>
         )}
+        {blocked && view === "edit" && (
+          <Banner icon="rate_review" testId="editor-blocked">
+            That paragraph has tracked changes by other reviewers. Accept or reject them in Review first; everything else stays editable.
+            <Button size="sm" className="ml-3" onClick={() => { setBlocked(false); setView("review"); }}>Open Review</Button>
+            <Button size="sm" variant="outline" className="ml-2" onClick={() => setBlocked(false)}>OK</Button>
+          </Banner>
+        )}
         {unplaced.length > 0 && (
           <Banner icon="warning">New text above the first paragraph cannot be placed; type it below the title instead.</Banner>
         )}
       </div>
 
       {/* body */}
-      {view === "exact" && <ExactView documentId={id} currentVersionId={model.base_version_id} />}
+      {view === "exact" && <ExactView documentId={id} currentVersionId={model.base_version_id} showViews={Boolean(model.pending_changes)} />}
+      {view === "review" && (
+        <ExactView documentId={id} currentVersionId={model.base_version_id} showViews
+          side={{ kind: "review", baseVersionId: model.base_version_id, canWrite: canEdit, onNewVersion: afterReview }} />
+      )}
       <div className={cn("grid flex-1 gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1fr)_320px]", view !== "edit" && "hidden")}>
         <div className="min-w-0">
           <div className="mx-auto w-full max-w-[816px] rounded-sm bg-card px-12 py-14 shadow-md ring-1 ring-border lg:px-[72px]" data-testid="editor-page">

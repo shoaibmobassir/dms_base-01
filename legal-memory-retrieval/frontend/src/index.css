@@ -199,3 +199,20 @@
 .doc-page-body .doc-h1 { font-size: 1.25em; font-weight: 700; margin: 1.4em 0 0.6em; }
 .doc-page-body .doc-h2 { font-size: 1.08em; font-weight: 700; margin: 1.1em 0 0.5em; }
 .doc-page-body u { text-decoration: underline; }
+
+/* Word review (plan 18): paragraphs with other reviewers' pending changes are shown, not editable. */
+.doc-page-body p[data-locked-by] {
+  position: relative;
+  margin-left: -0.75rem;
+  padding-left: 0.6rem;
+  border-left: 3px solid rgb(245 158 11);
+  background: rgb(245 158 11 / 0.06);
+  cursor: not-allowed;
+}
+.doc-page-body p[data-locked-by]::after {
+  content: attr(data-locked-by);
+  display: block;
+  margin-top: 0.15rem;
+  font: 500 11px/1.3 ui-sans-serif, system-ui, sans-serif;
+  color: rgb(180 83 9);
+}

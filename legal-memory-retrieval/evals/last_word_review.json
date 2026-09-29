@@ -1,0 +1,55 @@
+{
+ "summary": {
+  "files": 2,
+  "all_ok": true
+ },
+ "results": [
+  {
+   "file": "COMMENT Draft - Petition for ISTS waiver (Gadag) 03092026 v1 (1).docx",
+   "revisions": 78,
+   "authors": {
+    "Ravi Kalra": 38,
+    "Kunal Lalit Kaistha": 12,
+    "Trilegal": 28
+   },
+   "changes": 38,
+   "read_s": 0.01,
+   "counts_ok": true,
+   "comments": 21,
+   "comments_ok": true,
+   "clear_ok": true,
+   "by_person_ok": true,
+   "save_s": 0.08,
+   "preserve_ok": true,
+   "locked_ok": true,
+   "comment_trip_ok": true,
+   "valid_ok": true,
+   "all_ok": true
+  },
+  {
+   "file": "SGIPL_CERC_Extension of Infirm Power_v4 (28.07.2026 - Track).docx",
+   "revisions": 677,
+   "authors": {
+    "Yashaswi Kant": 252,
+    "Senthil Kumar Dharuman": 195,
+    "Priya Dwivedi": 13,
+    "Ali Ahmed Chaudhary": 190,
+    "Priya Kanwat": 4,
+    "Vivek Hooda": 23
+   },
+   "changes": 299,
+   "read_s": 0.04,
+   "counts_ok": true,
+   "comments": 48,
+   "comments_ok": true,
+   "clear_ok": true,
+   "by_person_ok": true,
+   "save_s": 0.08,
+   "preserve_ok": true,
+   "locked_ok": true,
+   "comment_trip_ok": true,
+   "valid_ok": true,
+   "all_ok": true
+  }
+ ]
+}

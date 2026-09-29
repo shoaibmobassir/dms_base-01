@@ -3,7 +3,18 @@ import { ApiError, apiFetch, authHeaders } from './client'
 // Mirrors app/documents/editing.py and /api/editor (plan 16).
 
 export type EditRun = { text: string; bold: boolean; italic: boolean; underline: boolean }
-export type EditParagraph = { pid: number; style: string; text: string; runs: EditRun[] }
+export type PendingAuthor = { author: string; types: string[]; count: number }
+export type EditParagraph = {
+  pid: number
+  style: string
+  text: string
+  runs: EditRun[]
+  /** Tracked changes still pending in this paragraph (Word review). */
+  pending?: PendingAuthor[]
+  /** Someone else's pending changes (or a pending deletion): accept/reject them before editing. */
+  locked?: boolean
+  locked_reason?: 'others' | 'deleted' | null
+}
 /** Formatting a paragraph asks for: its style, and its text split by bold/italic/underline. */
 export type EditFormatting = { style?: string; runs?: EditRun[] }
 export type EditOp =
@@ -23,6 +34,8 @@ export type EditModel = {
   base_version_id: string
   version_number: number | null
   has_revisions: boolean
+  pending_changes?: number
+  pending_people?: string[]
   paragraphs: EditParagraph[]
   /** Paragraph styles the editor may apply (those the Word file defines). */
   styles: string[]
@@ -172,6 +185,8 @@ export type DocComment = {
   body: string
   author_id: string | null
   author: string | null
+  /** "word": came from the Word file (author may be outside the firm). */
+  source?: 'precentis' | 'word'
   status: 'open' | 'resolved'
   resolved_by: string | null
   resolved_at: string | null
@@ -218,3 +233,67 @@ export const getPrivacy = (id: string) => apiFetch<DocPrivacy>(`${base(id)}/priv
 export const setPrivacy = (id: string, body: { visibility: Visibility; shares: DocShare[]; row_version: number }) =>
   apiFetch<DocPrivacy>(`${base(id)}/privacy`, json('PUT', body))
 export const getShareTargets = (id: string) => apiFetch<ShareTargets>(`${base(id)}/share-targets`)
+
+// ── Word review (plan 18) ────────────────────────────────────────────────────
+
+export type ReviewChange = {
+  id: string
+  type: string
+  author: string
+  date: string | null
+  last_date: string | null
+  pid: number | null
+  table: boolean
+  keys: string[]
+  texts: string[]
+  detail: string
+  context: string
+  paragraph: boolean
+}
+export type ReviewPerson = {
+  author: string
+  member_id: string | null
+  insertions: number
+  deletions: number
+  formats: number
+  moves: number
+  paragraphs: number
+  words_added: number
+  words_removed: number
+  comments: number
+  replies: number
+  first_at: string | null
+  last_at: string | null
+}
+export type ReviewData = {
+  document_id: string
+  version_id: string
+  version_number: number
+  is_current: boolean
+  can_review: boolean
+  word: boolean
+  total: number
+  changes: ReviewChange[]
+  people: ReviewPerson[]
+  outside_body: Record<string, number>
+  properties: Record<string, string | null>
+}
+export type Contributor = {
+  name: string
+  member_id: string | null
+  external: boolean
+  word: { insertions: number; deletions: number; formats: number; moves: number; words_added: number; words_removed: number; comments: number; replies: number }
+  precentis: Record<string, number>
+  versions: number[]
+  first_at: string | null
+  last_at: string | null
+}
+
+export const getReview = (id: string) => apiFetch<ReviewData>(`${base(id)}/review`)
+export const getContributors = (id: string) => apiFetch<{ people: Contributor[] }>(`${base(id)}/contributors`).then((r) => r.people)
+export const applyReview = (
+  id: string,
+  body: { base_version_id: string; action: 'accept' | 'reject'; keys?: string[]; authors?: string[]; all?: boolean; note?: string },
+) => apiFetch<{ version_id: string; version_number: number; changes: number; by_author: Record<string, number>; note: string }>(
+  `${base(id)}/review`, withLock(id, json('POST', body)))
+export const downloadWithCommentsUrl = (id: string) => `${base(id)}/download-with-comments`

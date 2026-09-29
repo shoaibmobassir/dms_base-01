@@ -1,20 +1,20 @@
 {
- "base_url": "http://localhost:8011",
+ "base_url": "http://localhost:8021",
  "member": "MEM-00001",
  "seed": 16,
  "summary": {
-  "all_checks_ok": true,
+  "all_checks_ok": false,
   "largest_pages": 400,
-  "largest_save_p95_s": 2.28,
+  "largest_save_p95_s": 3.933,
   "gate_save_p95_s": 3.0,
-  "pass": true
+  "pass": false
  },
  "results": [
   {
    "pages": 10,
    "paragraphs": 129,
-   "upload_s": 0.23,
-   "render_s": 0.27,
+   "upload_s": 0.25,
+   "render_s": 0.7,
    "render_ok": true,
    "rounds": [
     {
@@ -29,8 +29,8 @@
       "formatted_runs": 1,
       "format_skipped": 0
      },
-     "save_s": 0.229,
-     "model_s": 0.037,
+     "save_s": 0.72,
+     "model_s": 0.096,
      "read_ok": true,
      "accept_ok": true,
      "reject_ok": true,
@@ -44,8 +44,8 @@
      "format_reject_ok": true,
      "tracked_render_ok": true,
      "chunks": 208,
-     "vectors_reused_at_save": 96,
-     "vectors_complete_s": 0.3,
+     "vectors_reused_at_save": 110,
+     "vectors_complete_s": 0.34,
      "vectors_ok": true
     },
     {
@@ -60,8 +60,8 @@
       "formatted_runs": 1,
       "format_skipped": 0
      },
-     "save_s": 0.252,
-     "model_s": 0.055,
+     "save_s": 0.402,
+     "model_s": 0.047,
      "read_ok": true,
      "accept_ok": true,
      "reject_ok": true,
@@ -76,13 +76,13 @@
      "tracked_render_ok": true,
      "chunks": 204,
      "vectors_reused_at_save": 196,
-     "vectors_complete_s": 0.31,
+     "vectors_complete_s": 0.32,
      "vectors_ok": true
     },
     {
      "ops": 7,
      "stats": {
-      "replaced": 3,
+      "replaced": 4,
       "replaced_whole": 0,
       "deleted": 1,
       "inserted": 1,
@@ -91,8 +91,8 @@
       "formatted_runs": 1,
       "format_skipped": 0
      },
-     "save_s": 0.258,
-     "model_s": 0.06,
+     "save_s": 0.328,
+     "model_s": 0.052,
      "read_ok": true,
      "accept_ok": true,
      "reject_ok": true,
@@ -107,18 +107,18 @@
      "tracked_render_ok": true,
      "chunks": 200,
      "vectors_reused_at_save": 190,
-     "vectors_complete_s": 0.3,
+     "vectors_complete_s": 0.35,
      "vectors_ok": true
     }
    ],
-   "save_p95_s": 0.258,
+   "save_p95_s": 0.72,
    "all_ok": true
   },
   {
    "pages": 100,
    "paragraphs": 984,
-   "upload_s": 0.8,
-   "render_s": 1.08,
+   "upload_s": 1.0,
+   "render_s": 1.67,
    "render_ok": true,
    "rounds": [
     {
@@ -133,8 +133,8 @@
       "formatted_runs": 5,
       "format_skipped": 0
      },
-     "save_s": 1.137,
-     "model_s": 0.163,
+     "save_s": 1.617,
+     "model_s": 0.282,
      "read_ok": true,
      "accept_ok": true,
      "reject_ok": true,
@@ -148,14 +148,14 @@
      "format_reject_ok": true,
      "tracked_render_ok": true,
      "chunks": 1758,
-     "vectors_reused_at_save": 774,
-     "vectors_complete_s": 1.95,
+     "vectors_reused_at_save": 994,
+     "vectors_complete_s": 2.0,
      "vectors_ok": true
     },
     {
      "ops": 41,
      "stats": {
-      "replaced": 24,
+      "replaced": 25,
       "replaced_whole": 0,
       "deleted": 4,
       "inserted": 4,
@@ -164,8 +164,8 @@
       "formatted_runs": 5,
       "format_skipped": 0
      },
-     "save_s": 1.272,
-     "model_s": 0.182,
+     "save_s": 1.685,
+     "model_s": 0.332,
      "read_ok": true,
      "accept_ok": true,
      "reject_ok": true,
@@ -180,14 +180,14 @@
      "tracked_render_ok": true,
      "chunks": 1742,
      "vectors_reused_at_save": 1680,
-     "vectors_complete_s": 0.3,
+     "vectors_complete_s": 1.28,
      "vectors_ok": true
     },
     {
      "ops": 41,
      "stats": {
-      "replaced": 24,
-      "replaced_whole": 0,
+      "replaced": 23,
+      "replaced_whole": 2,
       "deleted": 4,
       "inserted": 4,
       "rejected": 0,
@@ -195,8 +195,8 @@
       "formatted_runs": 5,
       "format_skipped": 0
      },
-     "save_s": 1.228,
-     "model_s": 0.196,
+     "save_s": 1.71,
+     "model_s": 0.181,
      "read_ok": true,
      "accept_ok": true,
      "reject_ok": true,
@@ -207,22 +207,22 @@
      "next_ok": true,
      "format_ops": 9,
      "format_accept_ok": true,
-     "format_reject_ok": true,
+     "format_reject_ok": false,
      "tracked_render_ok": true,
-     "chunks": 1730,
+     "chunks": 1732,
      "vectors_reused_at_save": 1668,
-     "vectors_complete_s": 0.6,
+     "vectors_complete_s": 0.61,
      "vectors_ok": true
     }
    ],
-   "save_p95_s": 1.272,
-   "all_ok": true
+   "save_p95_s": 1.71,
+   "all_ok": false
   },
   {
    "pages": 400,
    "paragraphs": 3739,
-   "upload_s": 1.19,
-   "render_s": 3.81,
+   "upload_s": 1.94,
+   "render_s": 4.9,
    "render_ok": true,
    "rounds": [
     {
@@ -237,8 +237,8 @@
       "formatted_runs": 20,
       "format_skipped": 0
      },
-     "save_s": 2.28,
-     "model_s": 0.547,
+     "save_s": 2.893,
+     "model_s": 0.563,
      "read_ok": true,
      "accept_ok": true,
      "reject_ok": true,
@@ -253,7 +253,7 @@
      "tracked_render_ok": true,
      "chunks": 2652,
      "vectors_reused_at_save": 2524,
-     "vectors_complete_s": 0.6,
+     "vectors_complete_s": 0.63,
      "vectors_ok": true
     },
     {
@@ -268,8 +268,8 @@
       "formatted_runs": 19,
       "format_skipped": 0
      },
-     "save_s": 2.171,
-     "model_s": 0.549,
+     "save_s": 3.933,
+     "model_s": 0.638,
      "read_ok": true,
      "accept_ok": true,
      "reject_ok": true,
@@ -284,14 +284,14 @@
      "tracked_render_ok": true,
      "chunks": 2626,
      "vectors_reused_at_save": 2524,
-     "vectors_complete_s": 0.61,
+     "vectors_complete_s": 0.64,
      "vectors_ok": true
     },
     {
-     "ops": 166,
+     "ops": 167,
      "stats": {
-      "replaced": 93,
-      "replaced_whole": 0,
+      "replaced": 94,
+      "replaced_whole": 2,
       "deleted": 18,
       "inserted": 18,
       "rejected": 0,
@@ -299,28 +299,28 @@
       "formatted_runs": 19,
       "format_skipped": 0
      },
-     "save_s": 2.006,
-     "model_s": 0.736,
+     "save_s": 3.114,
+     "model_s": 0.627,
      "read_ok": true,
      "accept_ok": true,
      "reject_ok": true,
-     "untouched_checked": 3591,
-     "untouched_kept": 3591,
+     "untouched_checked": 3590,
+     "untouched_kept": 3590,
      "untouched_ok": true,
      "tables_ok": true,
      "next_ok": true,
      "format_ops": 37,
      "format_accept_ok": true,
-     "format_reject_ok": true,
+     "format_reject_ok": false,
      "tracked_render_ok": true,
      "chunks": 2607,
      "vectors_reused_at_save": 2490,
-     "vectors_complete_s": 0.59,
+     "vectors_complete_s": 0.89,
      "vectors_ok": true
     }
    ],
-   "save_p95_s": 2.28,
-   "all_ok": true
+   "save_p95_s": 3.933,
+   "all_ok": false
   }
  ]
 }
