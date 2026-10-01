@@ -14,6 +14,7 @@ from contextvars import ContextVar
 from opentelemetry import trace
 
 request_id_var: ContextVar[str] = ContextVar("request_id", default="")
+client_ip_var: ContextVar[str] = ContextVar("client_ip", default="")
 
 _REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 _HEADER = b"x-request-id"
@@ -22,6 +23,11 @@ _HEADER = b"x-request-id"
 def current_request_id() -> str:
     """Return the active request id, or an empty string outside a request."""
     return request_id_var.get()
+
+
+def current_client_ip() -> str:
+    """Client address of the active request (proxy-resolved when uvicorn runs with --proxy-headers)."""
+    return client_ip_var.get()
 
 
 def accept_request_id(raw: str | None) -> str:
@@ -53,6 +59,8 @@ class RequestIDMiddleware:
         if isinstance(state, dict):
             state["request_id"] = request_id
         token = request_id_var.set(request_id)
+        client = scope.get("client")
+        ip_token = client_ip_var.set(client[0] if client else "")
         span = trace.get_current_span()
         if span is not None:
             span.set_attribute("request_id", request_id)
@@ -68,3 +76,4 @@ class RequestIDMiddleware:
             await self.app(scope, receive, send_with_id)
         finally:
             request_id_var.reset(token)
+            client_ip_var.reset(ip_token)

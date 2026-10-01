@@ -1,0 +1,374 @@
+{
+ "at": "2026-09-28 04:00",
+ "model": "zai.glm-5",
+ "summary": {
+  "production": {
+   "tasks": 18,
+   "exact": 18,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended_total": 0,
+   "errors": 0,
+   "median_s": 14.6,
+   "max_prompt_chars": 40570,
+   "calls_total": 685
+  }
+ },
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 761,
+   "result_changes": 761,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 79,
+   "peak_prompt_chars": 12802,
+   "seconds": 33.6,
+   "notes": [
+    "substitutions changed 761 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 4890,
+   "seconds": 15.4,
+   "notes": [
+    "substitutions limited to clause(s) 33.8",
+    "10 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 6426,
+   "seconds": 3.9,
+   "notes": [
+    "12 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 5927,
+   "seconds": 4.1,
+   "notes": [
+    "11 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 16,
+   "result_changes": 16,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 13,
+   "peak_prompt_chars": 27170,
+   "seconds": 13.8,
+   "notes": [
+    "substitutions changed 77 paragraphs; 61 not confirmed and reverted",
+    "140 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 22,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 6,
+   "peak_prompt_chars": 24765,
+   "seconds": 17.0,
+   "notes": [
+    "substitutions changed 22 paragraphs; 0 not confirmed and reverted",
+    "64 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1508,
+   "result_changes": 1508,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 153,
+   "peak_prompt_chars": 13537,
+   "seconds": 56.0,
+   "notes": [
+    "substitutions changed 1508 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 14,
+   "peak_prompt_chars": 40570,
+   "seconds": 11.2,
+   "notes": [
+    "substitutions limited to clause(s) 98.7",
+    "substitutions changed 1 paragraphs; 0 not confirmed and reverted",
+    "454 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8773,
+   "seconds": 4.5,
+   "notes": [
+    "9 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8676,
+   "seconds": 5.7,
+   "notes": [
+    "12 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 22,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 23,
+   "peak_prompt_chars": 27170,
+   "seconds": 30.0,
+   "notes": [
+    "substitutions changed 141 paragraphs; 119 not confirmed and reverted",
+    "255 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 49,
+   "result_changes": 49,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 7,
+   "peak_prompt_chars": 8867,
+   "seconds": 27.2,
+   "notes": [
+    "substitutions changed 49 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 3013,
+   "result_changes": 3013,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 304,
+   "peak_prompt_chars": 16714,
+   "seconds": 106.5,
+   "notes": [
+    "substitutions changed 3013 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 6,
+   "peak_prompt_chars": 23763,
+   "seconds": 7.2,
+   "notes": [
+    "substitutions limited to clause(s) 71.5",
+    "137 paragraphs sent to editors; 3 changed; 2 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16727,
+   "seconds": 4.6,
+   "notes": [
+    "13 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16632,
+   "seconds": 4.3,
+   "notes": [
+    "12 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 34,
+   "result_changes": 34,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 42,
+   "peak_prompt_chars": 28491,
+   "seconds": 36.7,
+   "notes": [
+    "substitutions changed 273 paragraphs; 239 not confirmed and reverted",
+    "496 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 118,
+   "result_changes": 118,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 23,
+   "peak_prompt_chars": 23559,
+   "seconds": 33.5,
+   "notes": [
+    "substitutions changed 118 paragraphs; 0 not confirmed and reverted",
+    "397 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  }
+ ]
+}

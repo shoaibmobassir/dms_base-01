@@ -1,0 +1,221 @@
+{
+ "all_ok": true,
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "ops": 763,
+   "stats": {
+    "replaced": 763,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 619.4,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "ops": 1,
+   "stats": {
+    "replaced": 1,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 23.1,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "ops": 1,
+   "stats": {
+    "replaced": 0,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 1,
+    "rejected": 0
+   },
+   "ms": 17.3,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "ops": 6,
+   "stats": {
+    "replaced": 0,
+    "replaced_whole": 0,
+    "deleted": 6,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 18.2,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "ops": 16,
+   "stats": {
+    "replaced": 16,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 22.8,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "ops": 36,
+   "stats": {
+    "replaced": 36,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 24.5,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "ops": 2966,
+   "stats": {
+    "replaced": 2966,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 2485.5,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "ops": 1,
+   "stats": {
+    "replaced": 1,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 36.8,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "ops": 1,
+   "stats": {
+    "replaced": 0,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 1,
+    "rejected": 0
+   },
+   "ms": 30.0,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "ops": 6,
+   "stats": {
+    "replaced": 0,
+    "replaced_whole": 0,
+    "deleted": 6,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 30.6,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "ops": 34,
+   "stats": {
+    "replaced": 34,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 39.0,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "ops": 130,
+   "stats": {
+    "replaced": 130,
+    "replaced_whole": 0,
+    "deleted": 0,
+    "inserted": 0,
+    "rejected": 0
+   },
+   "ms": 55.9,
+   "accept_ok": true,
+   "reject_ok": true,
+   "untouched_ok": true,
+   "prefix_ok": true,
+   "reopen_ok": true
+  }
+ ]
+}

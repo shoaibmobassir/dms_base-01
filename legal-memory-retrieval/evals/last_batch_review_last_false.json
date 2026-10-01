@@ -1,0 +1,121 @@
+{
+ "candidates_with_gold": 2436,
+ "sizes": {
+  "100": {
+   "documents": 100,
+   "cell_accuracy": 0.9867,
+   "per_question": {
+    "number": 1.0,
+    "meeting": 0.97,
+    "date": 0.99
+   },
+   "not_found_rate": 0.01,
+   "quote_verified_rate": 0.9733,
+   "misses": [
+    {
+     "doc": "DOC-01123",
+     "q": "meeting",
+     "answer": "",
+     "gold": "3277"
+    },
+    {
+     "doc": "DOC-00752",
+     "q": "meeting",
+     "answer": "2311",
+     "gold": "23111"
+    },
+    {
+     "doc": "DOC-01016",
+     "q": "meeting",
+     "answer": "",
+     "gold": "3082"
+    },
+    {
+     "doc": "DOC-01016",
+     "q": "date",
+     "answer": "",
+     "gold": "1992-05-30"
+    }
+   ],
+   "wall_s": 26.1,
+   "first_row_s": 9.2,
+   "screen_ms": 7307.6,
+   "model_calls": 100,
+   "errors": 0,
+   "cached_rerun_s": 0.17,
+   "cached_rows": 100
+  },
+  "300": {
+   "documents": 300,
+   "cell_accuracy": 0.9944,
+   "per_question": {
+    "number": 0.9933,
+    "meeting": 0.9933,
+    "date": 0.9967
+   },
+   "not_found_rate": 0.0033,
+   "quote_verified_rate": 0.9878,
+   "misses": [
+    {
+     "doc": "DOC-01386",
+     "q": "number",
+     "answer": "1127",
+     "gold": "1227"
+    },
+    {
+     "doc": "DOC-00798",
+     "q": "meeting",
+     "answer": "",
+     "gold": "2492"
+    },
+    {
+     "doc": "DOC-00929",
+     "q": "meeting",
+     "answer": "",
+     "gold": "2943"
+    },
+    {
+     "doc": "DOC-00929",
+     "q": "date",
+     "answer": "",
+     "gold": "1990-09-25"
+    },
+    {
+     "doc": "DOC-02922",
+     "q": "number",
+     "answer": "2663",
+     "gold": "1540"
+    }
+   ],
+   "wall_s": 40.4,
+   "first_row_s": 2.1,
+   "screen_ms": 231.4,
+   "model_calls": 300,
+   "errors": 0,
+   "cached_rerun_s": 0.97,
+   "cached_rows": 300
+  }
+ },
+ "screening": {
+  "Cyprus": {
+   "gold": 10,
+   "precision_at_gold": 0.2,
+   "ms": 648.4
+  },
+  "Somalia": {
+   "gold": 10,
+   "precision_at_gold": 0.3,
+   "ms": 442.5
+  },
+  "Haiti": {
+   "gold": 10,
+   "precision_at_gold": 0.2,
+   "ms": 88.1
+  },
+  "Lebanon": {
+   "gold": 10,
+   "precision_at_gold": 0.3,
+   "ms": 62.7
+  }
+ }
+}

@@ -1,0 +1,1239 @@
+{
+ "at": "2026-09-28 03:16",
+ "model": "zai.glm-5",
+ "summary": {
+  "baseline": {
+   "tasks": 18,
+   "exact": 2,
+   "recall": 0.262,
+   "precision": 0.661,
+   "unintended_total": 4,
+   "errors": 0,
+   "median_s": 12.3,
+   "max_prompt_chars": 360843,
+   "calls_total": 18
+  },
+  "navigate": {
+   "tasks": 18,
+   "exact": 3,
+   "recall": 0.222,
+   "precision": 0.431,
+   "unintended_total": 2,
+   "errors": 0,
+   "median_s": 25.4,
+   "max_prompt_chars": 193823,
+   "calls_total": 108
+  },
+  "mapreduce": {
+   "tasks": 18,
+   "exact": 9,
+   "recall": 0.736,
+   "precision": 0.884,
+   "unintended_total": 46,
+   "errors": 2,
+   "median_s": 6.0,
+   "max_prompt_chars": 35884,
+   "calls_total": 69
+  },
+  "hybrid": {
+   "tasks": 18,
+   "exact": 9,
+   "recall": 0.803,
+   "precision": 0.896,
+   "unintended_total": 50,
+   "errors": 1,
+   "median_s": 7.8,
+   "max_prompt_chars": 30860,
+   "calls_total": 59
+  }
+ },
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "baseline",
+   "gold_changes": 763,
+   "result_changes": 20,
+   "recall": 0.0262,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 333076,
+   "seconds": 37.4,
+   "notes": []
+  },
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "navigate",
+   "gold_changes": 763,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 11,
+   "peak_prompt_chars": 160667,
+   "seconds": 53.9,
+   "notes": [
+    "turn ran out of time/rounds"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "mapreduce",
+   "gold_changes": 763,
+   "result_changes": 762,
+   "recall": 0.9397,
+   "precision": 0.9409,
+   "unintended": 45,
+   "exact": false,
+   "calls": 21,
+   "peak_prompt_chars": 22126,
+   "seconds": 83.0,
+   "notes": [
+    "765 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "hybrid",
+   "gold_changes": 763,
+   "result_changes": 764,
+   "recall": 1.0,
+   "precision": 0.9987,
+   "unintended": 1,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 4731,
+   "seconds": 9.4,
+   "notes": [
+    "mechanical: 1 substitution(s) applied by code",
+    "5 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "baseline",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 1,
+   "peak_prompt_chars": 333011,
+   "seconds": 7.3,
+   "notes": []
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "navigate",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 79205,
+   "seconds": 13.7,
+   "notes": []
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "mapreduce",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 26824,
+   "seconds": 3.9,
+   "notes": [
+    "38 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "hybrid",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 26824,
+   "seconds": 4.2,
+   "notes": [
+    "38 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "baseline",
+   "gold_changes": 1,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 333089,
+   "seconds": 12.7,
+   "notes": [
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "navigate",
+   "gold_changes": 1,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 4,
+   "peak_prompt_chars": 87290,
+   "seconds": 23.2,
+   "notes": [
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "mapreduce",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 14364,
+   "seconds": 4.1,
+   "notes": [
+    "24 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "hybrid",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 22220,
+   "seconds": 4.0,
+   "notes": [
+    "50 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "baseline",
+   "gold_changes": 6,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 332994,
+   "seconds": 8.2,
+   "notes": [
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "navigate",
+   "gold_changes": 6,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 4,
+   "peak_prompt_chars": 62323,
+   "seconds": 18.6,
+   "notes": [
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "mapreduce",
+   "gold_changes": 6,
+   "result_changes": 2,
+   "recall": 0.3333,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 5366,
+   "seconds": 3.4,
+   "notes": [
+    "6 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "hybrid",
+   "gold_changes": 6,
+   "result_changes": 2,
+   "recall": 0.3333,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 5366,
+   "seconds": 9.7,
+   "notes": [
+    "6 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "baseline",
+   "gold_changes": 16,
+   "result_changes": 11,
+   "recall": 0.6875,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 333258,
+   "seconds": 29.7,
+   "notes": []
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "navigate",
+   "gold_changes": 16,
+   "result_changes": 7,
+   "recall": 0.4375,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 4,
+   "peak_prompt_chars": 9189,
+   "seconds": 33.9,
+   "notes": []
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "mapreduce",
+   "gold_changes": 16,
+   "result_changes": 12,
+   "recall": 0.75,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 4,
+   "peak_prompt_chars": 28807,
+   "seconds": 7.3,
+   "notes": [
+    "94 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "hybrid",
+   "gold_changes": 16,
+   "result_changes": 60,
+   "recall": 1.0,
+   "precision": 0.2667,
+   "unintended": 44,
+   "exact": false,
+   "calls": 3,
+   "peak_prompt_chars": 22468,
+   "seconds": 4.1,
+   "notes": [
+    "mechanical: 2 substitution(s) applied by code",
+    "51 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "baseline",
+   "gold_changes": 36,
+   "result_changes": 20,
+   "recall": 0.5556,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 333185,
+   "seconds": 22.8,
+   "notes": []
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "navigate",
+   "gold_changes": 36,
+   "result_changes": 3,
+   "recall": 0.0833,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 4,
+   "peak_prompt_chars": 70125,
+   "seconds": 16.1,
+   "notes": []
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "mapreduce",
+   "gold_changes": 36,
+   "result_changes": 36,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 28766,
+   "seconds": 19.8,
+   "notes": [
+    "37 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "hybrid",
+   "gold_changes": 36,
+   "result_changes": 36,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 28766,
+   "seconds": 34.1,
+   "notes": [
+    "37 candidate paragraphs of 966"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "baseline",
+   "gold_changes": 1489,
+   "result_changes": 20,
+   "recall": 0.0128,
+   "precision": 0.95,
+   "unintended": 1,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360661,
+   "seconds": 38.7,
+   "notes": [
+    "document truncated to 360000 of 656299 chars"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "navigate",
+   "gold_changes": 1489,
+   "result_changes": 8,
+   "recall": 0.004,
+   "precision": 0.75,
+   "unintended": 2,
+   "exact": false,
+   "calls": 11,
+   "peak_prompt_chars": 174765,
+   "seconds": 149.1,
+   "notes": [
+    "turn ran out of time/rounds"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "mapreduce",
+   "error": "HTTPStatusError(\"Server error '500 Internal Server Error' for url 'https://bedrock-mantle.us-east-1.api.aws/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500\")",
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "seconds": 129.0
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "hybrid",
+   "gold_changes": 1489,
+   "result_changes": 1490,
+   "recall": 1.0,
+   "precision": 0.9993,
+   "unintended": 1,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 8556,
+   "seconds": 4.4,
+   "notes": [
+    "mechanical: 1 substitution(s) applied by code",
+    "5 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "baseline",
+   "gold_changes": 1,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360598,
+   "seconds": 7.6,
+   "notes": [
+    "document truncated to 360000 of 656299 chars",
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "navigate",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 4,
+   "peak_prompt_chars": 31405,
+   "seconds": 10.3,
+   "notes": []
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "mapreduce",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8493,
+   "seconds": 3.4,
+   "notes": [
+    "13 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "hybrid",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8493,
+   "seconds": 3.2,
+   "notes": [
+    "10 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "baseline",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 1,
+   "peak_prompt_chars": 360674,
+   "seconds": 9.6,
+   "notes": [
+    "document truncated to 360000 of 656299 chars"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "navigate",
+   "gold_changes": 1,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 4,
+   "peak_prompt_chars": 171653,
+   "seconds": 24.4,
+   "notes": [
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "mapreduce",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8569,
+   "seconds": 4.4,
+   "notes": [
+    "7 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "hybrid",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8569,
+   "seconds": 3.9,
+   "notes": [
+    "7 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "baseline",
+   "gold_changes": 6,
+   "result_changes": 1,
+   "recall": 0.1667,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360579,
+   "seconds": 7.4,
+   "notes": [
+    "document truncated to 360000 of 656299 chars"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "navigate",
+   "gold_changes": 6,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 6,
+   "peak_prompt_chars": 85977,
+   "seconds": 26.4,
+   "notes": [
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "mapreduce",
+   "gold_changes": 6,
+   "result_changes": 2,
+   "recall": 0.3333,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 8474,
+   "seconds": 4.8,
+   "notes": [
+    "8 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "hybrid",
+   "gold_changes": 6,
+   "result_changes": 2,
+   "recall": 0.3333,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 8474,
+   "seconds": 3.4,
+   "notes": [
+    "8 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "baseline",
+   "gold_changes": 22,
+   "result_changes": 11,
+   "recall": 0.5,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360843,
+   "seconds": 8.7,
+   "notes": [
+    "document truncated to 360000 of 656299 chars"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "navigate",
+   "gold_changes": 22,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 11,
+   "peak_prompt_chars": 85977,
+   "seconds": 74.0,
+   "notes": [
+    "turn ran out of time/rounds"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "mapreduce",
+   "gold_changes": 22,
+   "result_changes": 17,
+   "recall": 0.7727,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 6,
+   "peak_prompt_chars": 28807,
+   "seconds": 7.8,
+   "notes": [
+    "171 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "hybrid",
+   "gold_changes": 22,
+   "result_changes": 16,
+   "recall": 0.7273,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 6,
+   "peak_prompt_chars": 28807,
+   "seconds": 6.5,
+   "notes": [
+    "171 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "baseline",
+   "gold_changes": 71,
+   "result_changes": 20,
+   "recall": 0.2817,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360770,
+   "seconds": 15.9,
+   "notes": [
+    "document truncated to 360000 of 656299 chars"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "navigate",
+   "gold_changes": 71,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 7,
+   "peak_prompt_chars": 174765,
+   "seconds": 50.5,
+   "notes": []
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "mapreduce",
+   "gold_changes": 71,
+   "result_changes": 71,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 31429,
+   "seconds": 32.2,
+   "notes": [
+    "72 candidate paragraphs of 1871"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "hybrid",
+   "gold_changes": 71,
+   "result_changes": 71,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 1,
+   "peak_prompt_chars": 8665,
+   "seconds": 5.3,
+   "notes": [
+    "mechanical: 4 substitution(s) applied by code"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "baseline",
+   "gold_changes": 2966,
+   "result_changes": 20,
+   "recall": 0.0064,
+   "precision": 0.95,
+   "unintended": 1,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360661,
+   "seconds": 58.6,
+   "notes": [
+    "document truncated to 360000 of 1310049 chars"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "navigate",
+   "gold_changes": 2966,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 11,
+   "peak_prompt_chars": 193823,
+   "seconds": 116.5,
+   "notes": [
+    "turn ran out of time/rounds"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "mapreduce",
+   "error": "HTTPStatusError(\"Server error '500 Internal Server Error' for url 'https://bedrock-mantle.us-east-1.api.aws/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500\")",
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "seconds": 117.9
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "hybrid",
+   "error": "HTTPStatusError(\"Server error '500 Internal Server Error' for url 'https://bedrock-mantle.us-east-1.api.aws/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500\")",
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "seconds": 195.5
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "baseline",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 1,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360598,
+   "seconds": 7.1,
+   "notes": [
+    "document truncated to 360000 of 1310049 chars"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "navigate",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 4,
+   "peak_prompt_chars": 14159,
+   "seconds": 12.2,
+   "notes": []
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "mapreduce",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16466,
+   "seconds": 4.7,
+   "notes": [
+    "8 candidate paragraphs of 3686"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "hybrid",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16466,
+   "seconds": 9.1,
+   "notes": [
+    "8 candidate paragraphs of 3686"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "baseline",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 1,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360676,
+   "seconds": 11.7,
+   "notes": [
+    "document truncated to 360000 of 1310049 chars"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "navigate",
+   "gold_changes": 1,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 5,
+   "peak_prompt_chars": 192696,
+   "seconds": 23.1,
+   "notes": [
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "mapreduce",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16544,
+   "seconds": 3.6,
+   "notes": [
+    "3 candidate paragraphs of 3686"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "hybrid",
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16544,
+   "seconds": 11.3,
+   "notes": [
+    "3 candidate paragraphs of 3686"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "baseline",
+   "gold_changes": 6,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360579,
+   "seconds": 16.1,
+   "notes": [
+    "document truncated to 360000 of 1310049 chars",
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "navigate",
+   "gold_changes": 6,
+   "result_changes": 0,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 4,
+   "peak_prompt_chars": 35942,
+   "seconds": 14.4,
+   "notes": [
+    "1 edits not located"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "mapreduce",
+   "gold_changes": 6,
+   "result_changes": 2,
+   "recall": 0.3333,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 16447,
+   "seconds": 4.0,
+   "notes": [
+    "11 candidate paragraphs of 3686"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "hybrid",
+   "gold_changes": 6,
+   "result_changes": 2,
+   "recall": 0.3333,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 16447,
+   "seconds": 17.8,
+   "notes": [
+    "11 candidate paragraphs of 3686"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "baseline",
+   "gold_changes": 34,
+   "result_changes": 11,
+   "recall": 0.3235,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360843,
+   "seconds": 11.9,
+   "notes": [
+    "document truncated to 360000 of 1310049 chars"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "navigate",
+   "gold_changes": 34,
+   "result_changes": 15,
+   "recall": 0.4412,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 5,
+   "peak_prompt_chars": 182797,
+   "seconds": 54.3,
+   "notes": []
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "mapreduce",
+   "gold_changes": 34,
+   "result_changes": 28,
+   "recall": 0.7941,
+   "precision": 0.9643,
+   "unintended": 1,
+   "exact": false,
+   "calls": 10,
+   "peak_prompt_chars": 30860,
+   "seconds": 10.8,
+   "notes": [
+    "326 candidate paragraphs of 3686"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "hybrid",
+   "gold_changes": 34,
+   "result_changes": 29,
+   "recall": 0.7353,
+   "precision": 0.8621,
+   "unintended": 4,
+   "exact": false,
+   "calls": 10,
+   "peak_prompt_chars": 30860,
+   "seconds": 14.1,
+   "notes": [
+    "326 candidate paragraphs of 3686"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "baseline",
+   "gold_changes": 130,
+   "result_changes": 20,
+   "recall": 0.1538,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 1,
+   "peak_prompt_chars": 360770,
+   "seconds": 13.7,
+   "notes": [
+    "document truncated to 360000 of 1310049 chars"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "navigate",
+   "gold_changes": 130,
+   "result_changes": 3,
+   "recall": 0.0231,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 6,
+   "peak_prompt_chars": 182797,
+   "seconds": 33.9,
+   "notes": []
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "mapreduce",
+   "gold_changes": 130,
+   "result_changes": 130,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 5,
+   "peak_prompt_chars": 35884,
+   "seconds": 23.0,
+   "notes": [
+    "131 candidate paragraphs of 3686"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "hybrid",
+   "gold_changes": 130,
+   "result_changes": 130,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 14,
+   "peak_prompt_chars": 26276,
+   "seconds": 30.0,
+   "notes": [
+    "506 candidate paragraphs of 3686"
+   ]
+  }
+ ]
+}

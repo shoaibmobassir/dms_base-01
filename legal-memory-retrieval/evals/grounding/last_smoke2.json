@@ -1,0 +1,546 @@
+{
+ "tag": "smoke2",
+ "at": "20260927-002803",
+ "judge": "deepseek.v3.2",
+ "mode": "cite",
+ "summary": {
+  "ask": {
+   "overall": {
+    "n": 2,
+    "claims": 8,
+    "cited_claims": 7,
+    "citation_precision": 0.714,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.875,
+    "unverified_shown": 0.375,
+    "parametric_legal_claims": 0,
+    "fact_recall": 1.0,
+    "expect_ok": "1/1",
+    "latency_p50_s": 20.6,
+    "errors": 0
+   },
+   "by_category": {
+    "compound": {
+     "n": 1,
+     "claims": 6,
+     "cited_claims": 5,
+     "citation_precision": 0.6,
+     "citation_precision_lenient": 1.0,
+     "claim_coverage": 0.833,
+     "unverified_shown": 0.5,
+     "parametric_legal_claims": 0,
+     "fact_recall": 1.0,
+     "expect_ok": null,
+     "latency_p50_s": 20.1,
+     "errors": 0
+    },
+    "public_law_absent": {
+     "n": 1,
+     "claims": 2,
+     "cited_claims": 2,
+     "citation_precision": 1.0,
+     "citation_precision_lenient": 1.0,
+     "claim_coverage": 1.0,
+     "unverified_shown": 0.0,
+     "parametric_legal_claims": 0,
+     "fact_recall": null,
+     "expect_ok": "1/1",
+     "latency_p50_s": 21.0,
+     "errors": 0
+    }
+   }
+  },
+  "chat": {
+   "overall": {
+    "n": 2,
+    "claims": 12,
+    "cited_claims": 12,
+    "citation_precision": 0.833,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 1.0,
+    "unverified_shown": 0.167,
+    "parametric_legal_claims": 1,
+    "fact_recall": 1.0,
+    "expect_ok": "1/1",
+    "latency_p50_s": 44.5,
+    "errors": 0
+   },
+   "by_category": {
+    "compound": {
+     "n": 1,
+     "claims": 7,
+     "cited_claims": 7,
+     "citation_precision": 1.0,
+     "citation_precision_lenient": 1.0,
+     "claim_coverage": 1.0,
+     "unverified_shown": 0.0,
+     "parametric_legal_claims": 0,
+     "fact_recall": 1.0,
+     "expect_ok": null,
+     "latency_p50_s": 34.6,
+     "errors": 0
+    },
+    "public_law_absent": {
+     "n": 1,
+     "claims": 5,
+     "cited_claims": 5,
+     "citation_precision": 0.6,
+     "citation_precision_lenient": 1.0,
+     "claim_coverage": 1.0,
+     "unverified_shown": 0.4,
+     "parametric_legal_claims": 1,
+     "fact_recall": null,
+     "expect_ok": "1/1",
+     "latency_p50_s": 54.3,
+     "errors": 0
+    }
+   }
+  }
+ },
+ "results": [
+  {
+   "id": "acme-01",
+   "surface": "ask",
+   "category": "compound",
+   "expect": "answer",
+   "query": "When did the Board approve the transfer of the Series A shares, and who is authorised to make the regulatory filings?",
+   "answer": "The Board approved the transfer on 12 September 2026, and Ms Riya Anand (Director) and Mr Kabir Sethi (Company Secretary) are severally authorised to make the regulatory filings [1] (MTR-2026-00901).\n\nThe Board approved the transfer of the Series A shares on 12 September 2026 (MTR-2026-00901). The Board Resolution records that the Board consented to the transfer of 1,240,000 Series A compulsorily convertible preference shares from Horizon Seed Partners LLP to Northbridge Growth Fund II at its meeting held on 12 September 2026 [2] (MTR-2026-00901).\n\nThe following individuals are authorised to make regulatory filings [3]:\n- Ms Riya Anand, Director — severally authorised to sign documents and file forms with the Registrar of Companies and the Reserve Bank of India [3].\n- Mr Kabir Sethi, Company Secretary — severally authorised to sign documents and file forms with the Registrar of Companies and the Reserve Bank of India [3].",
+   "units": [
+    {
+     "text": "The Board approved the transfer on 12 September 2026, and Ms Riya Anand (Director) and Mr Kabir Sethi (Company Secretary) are severally authorised to make the regulatory filings [1] (MTR-2026-00901).",
+     "evidence": [
+      "Board Resolution.docx: \"Passed at the meeting of the Board of Directors held on 12 September 2026 at the registered office of the Company in Bengaluru, at which a quorum was present throughout.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "partial"
+     ],
+     "kind": "claim",
+     "support": "partial",
+     "legal_rule": false,
+     "why": "Date supported, but not the transfer approval or authorisation."
+    },
+    {
+     "text": "The Board approved the transfer of the Series A shares on 12 September 2026 (MTR-2026-00901).",
+     "evidence": [],
+     "cited": false,
+     "verified": [],
+     "kind": "claim",
+     "support": "no_evidence",
+     "legal_rule": false,
+     "why": "No evidence provided."
+    },
+    {
+     "text": "The Board Resolution records that the Board consented to the transfer of 1,240,000 Series A compulsorily convertible preference shares from Horizon Seed Partners LLP to Northbridge Growth Fund II at its meeting held on 12 September 2026 [2] (MTR-2026-00901).",
+     "evidence": [
+      "Board Resolution.docx: \"Passed at the meeting of the Board of Directors held on 12 September 2026 at the registered office of the Company in Bengaluru, at which a quorum was present throughout.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "partial",
+     "legal_rule": false,
+     "why": "Date supported, but not the transfer details."
+    },
+    {
+     "text": "The following individuals are authorised to make regulatory filings [3]:",
+     "evidence": [
+      "Board Resolution.docx: \"RESOLVED FURTHER THAT Ms Riya Anand, Director, and Mr Kabir Sethi, Company Secretary, be and are hereby severally authorised to sign all documents and file all forms with the Registrar of Companies and the Reserve Bank of India as may be required to give effect to these resolutions.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence directly lists authorised individuals."
+    },
+    {
+     "text": "Ms Riya Anand, Director — severally authorised to sign documents and file forms with the Registrar of Companies and the Reserve Bank of India [3].",
+     "evidence": [
+      "Board Resolution.docx: \"RESOLVED FURTHER THAT Ms Riya Anand, Director, and Mr Kabir Sethi, Company Secretary, be and are hereby severally authorised to sign all documents and file all forms with the Registrar of Companies and the Reserve Bank of India as may be required to give effect to these resolutions.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence directly states authorisation."
+    },
+    {
+     "text": "Mr Kabir Sethi, Company Secretary — severally authorised to sign documents and file forms with the Registrar of Companies and the Reserve Bank of India [3].",
+     "evidence": [
+      "Board Resolution.docx: \"RESOLVED FURTHER THAT Ms Riya Anand, Director, and Mr Kabir Sethi, Company Secretary, be and are hereby severally authorised to sign all documents and file all forms with the Registrar of Companies and the Reserve Bank of India as may be required to give effect to these resolutions.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence directly states authorisation."
+    }
+   ],
+   "answer_level": {
+    "says_not_in_records": false,
+    "rejects_false_premise": false
+   },
+   "judge_error": null,
+   "fact_recall": 1.0,
+   "latency_s": 20.1,
+   "status": "answered",
+   "invented_citations": []
+  },
+  {
+   "id": "pub-01",
+   "surface": "ask",
+   "category": "public_law_absent",
+   "expect": "abstain",
+   "query": "Components of Transmission Charges as per CERC and under which regulations",
+   "answer": "The available evidence does not contain information on the components of Transmission Charges as per CERC or the specific regulations governing them.\n\nThe evidence provided does not contain the requested information about components of Transmission Charges as per CERC or the regulations under which they are prescribed. While the documents reference CERC proceedings and the GNA Regulations (specifically Regulation 5.11(b)) in the context of Petition No. 310/MP/2026, they do not set out the components or structure of Transmission Charges [1]. The documents also reference Regulations 41 and 42 of the Central Electricity Regulatory Commission regulations regarding powers to relax and remove difficulties, but again do not detail transmission charge components [2]. To answer this question, evidence such as the CERC (Terms and Conditions of Tariff) Regulations, CERC (Sharing of Inter-State Transmission Charges and Losses) Regulations, or related regulatory orders would be required.",
+   "units": [
+    {
+     "text": "The available evidence does not contain information on the components of Transmission Charges as per CERC or the specific regulations governing them.",
+     "evidence": [],
+     "cited": false,
+     "verified": [],
+     "kind": "non_claim",
+     "support": null,
+     "legal_rule": false,
+     "why": "Framing statement about evidence."
+    },
+    {
+     "text": "The evidence provided does not contain the requested information about components of Transmission Charges as per CERC or the regulations under which they are prescribed.",
+     "evidence": [],
+     "cited": false,
+     "verified": [],
+     "kind": "non_claim",
+     "support": null,
+     "legal_rule": false,
+     "why": "Framing statement about evidence."
+    },
+    {
+     "text": "While the documents reference CERC proceedings and the GNA Regulations (specifically Regulation 5.11(b)) in the context of Petition No. 310/MP/2026, they do not set out the components or structure of Transmission Charges [1].",
+     "evidence": [
+      "Final Reply (310-MP-2026).pdf: \"PETITION No. 310/MP/2026\" … \"The present Petition has been filed by AMPIN Energy Utility Nine Pvt. Ltd. (“Petitioner No. 1”) and AMPIN Energy Utility Pvt. Ltd. ( “Petitioner No. 2”), seeking, inter alia, (i) exercise of this Hon’ble Commission’s power to relax and remove difficulties under Regulations 41 and 42 of the Central Electricity Regulatory Commission (Connectivity and General Network Access to the inter-State Transmission System) Regulations, 2022 ( “GNA Regulations”), so as to relax the applicability of Regulation 5.11(b) of the GNA Regulations in determining the connectivity margin available for non-solar hour access at Fatehgarh-IV (Sec-I) Pooling Station ( “Fatehgarh-IV PS”) against the connectivity of 300 MW held by AMPIN Energy Green Private Limited (“AEGPL”); (ii) a direction to Central Transmission Utility of India Limited (“CTUIL”) to revise the said margin from 166 MW to 199.5 MW; and (iii) a consequential grant of non-solar hour access connectivity of 199 MW to Petitioner No. 1 for its proposed Battery Energy Storage System ( “BESS”) at Fatehgarh-IV PS.\" … \"Upon approval by the Nodal Agency, it shall be eligible to draw 200 MW for the day, subject to availability of the transmission system. (b) An REGS (with or without ESS) or RPPD, based on solar source or an RHGS with a combination of solar source with another source (with or without ESS), where in principle or final grant of Connectivity has been intimated or where GNA is effective, shall be converted as an entity with solar hour access (with injection scheduling rights corresponding to Connectivity quantum for solar hours and corresponding to capacity other than solar source during non-solar hours limited to the quantum of Connectivity) within a period of one week after the expiry of three months, from the date of effectiveness of this Regulation: Provided that such entity shall have the right of making an application for an additional capacity under Regulation 5.2 or Regulation 5.11(a) of these regulations within a period of three months from the effectiveness of this Regulation and while converting such entity to an entity with solar hour access, the Nodal Agency shall consider such application made for the additional capacity under Regulation 5.2 or Regulation 5.11(a) of these regulations: Provided further that if the quantum of Connectivity that can be made available for non-solar hours is less than 50 MW, such REGS 3\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence shows GNA Regs referenced, not setting out components."
+    },
+    {
+     "text": "The documents also reference Regulations 41 and 42 of the Central Electricity Regulatory Commission regulations regarding powers to relax and remove difficulties, but again do not detail transmission charge components [2].",
+     "evidence": [
+      "Final Reply (310-MP-2026).pdf: \"The present Petition has been filed by AMPIN Energy Utility Nine Pvt. Ltd. (“Petitioner No. 1”) and AMPIN Energy Utility Pvt. Ltd. ( “Petitioner No. 2”), seeking, inter alia, (i) exercise of this Hon’ble Commission’s power to relax and remove difficulties under Regulations 41 and 42 of the Central Electricity Regulatory Commission (Connectivity and General Network Access to the inter-State Transmission System) Regulations, 2022 ( “GNA Regulations”), so as to relax the applicability of Regulation 5.11(b) of the GNA Regulations in determining the connectivity margin available for non-solar hour access at Fatehgarh-IV (Sec-I) Pooling Station ( “Fatehgarh-IV PS”) against the connectivity of 300 MW held by AMPIN Energy Green Private Limited (“AEGPL”); (ii) a direction to Central Transmission Utility of India Limited (“CTUIL”) to revise the said margin from 166 MW to 199.5 MW; and (iii) a consequential grant of non-solar hour access connectivity of 199 MW to Petitioner No. 1 for its proposed Battery Energy Storage System ( “BESS”) at Fatehgarh-IV PS.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence cites Regs 41, 42, no detail on charge components."
+    },
+    {
+     "text": "To answer this question, evidence such as the CERC (Terms and Conditions of Tariff) Regulations, CERC (Sharing of Inter-State Transmission Charges and Losses) Regulations, or related regulatory orders would be required.",
+     "evidence": [],
+     "cited": false,
+     "verified": [],
+     "kind": "non_claim",
+     "support": null,
+     "legal_rule": false,
+     "why": "Framing statement about required evidence."
+    }
+   ],
+   "answer_level": {
+    "says_not_in_records": true,
+    "rejects_false_premise": false
+   },
+   "judge_error": null,
+   "fact_recall": null,
+   "latency_s": 21.0,
+   "status": "insufficient",
+   "invented_citations": []
+  },
+  {
+   "id": "acme-01",
+   "surface": "chat",
+   "category": "compound",
+   "expect": "answer",
+   "query": "When did the Board approve the transfer of the Series A shares, and who is authorised to make the regulatory filings?",
+   "answer": "The Board approved the transfer of the Series A shares on 12 September 2026 [1]. The Board Resolution records that consent was accorded to the transfer of 1,240,000 Series A CCPS from Horizon Seed Partners LLP to Northbridge Growth Fund II at its meeting held on that date [2]. The resolution is subject to shareholder approval [3].\n\nThe following individuals are authorised to make regulatory filings [4]:\n\n- Ms Riya Anand, Director — authorised to sign documents and file forms with the Registrar of Companies and the Reserve Bank of India [4].\n- Mr Kabir Sethi, Company Secretary — similarly authorised to sign documents and file forms with the Registrar of Companies and the Reserve Bank of India [4].\n\nThey are authorised severally, meaning either may act independently [4].",
+   "units": [
+    {
+     "text": "The Board approved the transfer of the Series A shares on 12 September 2026 [1].",
+     "evidence": [
+      "Board Resolution.docx: \"Passed at the meeting of the Board of Directors held on 12 September 2026 at the registered office of the Company in Bengaluru, at which a quorum was present throughout.\" … \"Approval of transfer of Series A preference shares RESOLVED THAT, pursuant to the articles of association of the Company and subject to the approval of the shareholders, consent of the Board be and is hereby accorded to the transfer of 1,240,000 Series A compulsorily convertible preference shares from Horizon Seed Partners LLP to Northbridge Growth Fund II.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence states approval on 12 September 2026."
+    },
+    {
+     "text": "The Board Resolution records that consent was accorded to the transfer of 1,240,000 Series A CCPS from Horizon Seed Partners LLP to Northbridge Growth Fund II at its meeting held on that date [2].",
+     "evidence": [
+      "Board Resolution.docx: \"RESOLVED THAT, pursuant to the articles of association of the Company and subject to the approval of the shareholders, consent of the Board be and is hereby accorded to the transfer of 1,240,000 Series A compulsorily convertible preference shares from Horizon Seed Partners LLP to Northbridge Growth Fund II.\" … \"Passed at the meeting of the Board of Directors held on 12 September 2026 at the registered office of the Company in Bengaluru, at which a quorum was present throughout.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence matches details of transfer."
+    },
+    {
+     "text": "The resolution is subject to shareholder approval [3].",
+     "evidence": [
+      "Board Resolution.docx: \"RESOLVED THAT, pursuant to the articles of association of the Company and subject to the approval of the shareholders, consent of the Board be and is hereby accorded to the transfer of 1,240,000 Series A compulsorily convertible preference shares from Horizon Seed Partners LLP to Northbridge Growth Fund II.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence says subject to shareholder approval."
+    },
+    {
+     "text": "The following individuals are authorised to make regulatory filings [4]:",
+     "evidence": [
+      "Board Resolution.docx: \"RESOLVED FURTHER THAT Ms Riya Anand, Director, and Mr Kabir Sethi, Company Secretary, be and are hereby severally authorised to sign all documents and file all forms with the Registrar of Companies and the Reserve Bank of India as may be required to give effect to these resolutions.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence lists authorised individuals."
+    },
+    {
+     "text": "Ms Riya Anand, Director — authorised to sign documents and file forms with the Registrar of Companies and the Reserve Bank of India [4].",
+     "evidence": [
+      "Board Resolution.docx: \"RESOLVED FURTHER THAT Ms Riya Anand, Director, and Mr Kabir Sethi, Company Secretary, be and are hereby severally authorised to sign all documents and file all forms with the Registrar of Companies and the Reserve Bank of India as may be required to give effect to these resolutions.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence names Riya Anand as authorised."
+    },
+    {
+     "text": "Mr Kabir Sethi, Company Secretary — similarly authorised to sign documents and file forms with the Registrar of Companies and the Reserve Bank of India [4].",
+     "evidence": [
+      "Board Resolution.docx: \"RESOLVED FURTHER THAT Ms Riya Anand, Director, and Mr Kabir Sethi, Company Secretary, be and are hereby severally authorised to sign all documents and file all forms with the Registrar of Companies and the Reserve Bank of India as may be required to give effect to these resolutions.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence names Kabir Sethi as authorised."
+    },
+    {
+     "text": "They are authorised severally, meaning either may act independently [4].",
+     "evidence": [
+      "Board Resolution.docx: \"RESOLVED FURTHER THAT Ms Riya Anand, Director, and Mr Kabir Sethi, Company Secretary, be and are hereby severally authorised to sign all documents and file all forms with the Registrar of Companies and the Reserve Bank of India as may be required to give effect to these resolutions.\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence says severally authorised."
+    }
+   ],
+   "answer_level": {
+    "says_not_in_records": false,
+    "rejects_false_premise": false
+   },
+   "judge_error": null,
+   "fact_recall": 1.0,
+   "latency_s": 34.6,
+   "status": null,
+   "invented_citations": null
+  },
+  {
+   "id": "pub-01",
+   "surface": "chat",
+   "category": "public_law_absent",
+   "expect": "abstain",
+   "query": "Components of Transmission Charges as per CERC and under which regulations",
+   "answer": "I'll search through the available documents to find information about transmission charges and CERC regulations.\n\n The documents in this matter relate to different subjects [1] [2]:\n\n1. Final Reply (310-MP-2026).pdf - Concerns connectivity margins and non-solar hour access under the CERC (Connectivity and General Network Access to the inter-State Transmission System) Regulations, 2022 (\"GNA Regulations\"), but does not discuss transmission charge components [3].\n\n2. WRITTEN SUBMISSION IN PETITION NO. 22 OF 2026 (VECTOR GREEN) - Concerns GST levy under Reverse Charge Mechanism on land lease arrangements and Change in Law compensation under a Power Purchase Agreement, not transmission charges [4].\n\nThe available documents do not contain information about:\n\nTo obtain information on components of transmission charges under CERC regulations, you would need to refer to:\n- CERC (Terms and Conditions of Tariff) Regulations [5]\n- Related CERC orders on transmission tariff determination [6]\n\nIf you have specific documents on transmission charges that you would like me to analyze, please upload them to this conversation.\n\n_5 statements removed because the cited sources did not support them._",
+   "units": [
+    {
+     "text": "I'll search through the available documents to find information about transmission charges and CERC regulations.",
+     "evidence": [],
+     "cited": false,
+     "verified": [],
+     "kind": "non_claim",
+     "support": null,
+     "legal_rule": null,
+     "why": "Framing statement"
+    },
+    {
+     "text": "The documents in this matter relate to different subjects [1] [2]:",
+     "evidence": [
+      "Final Reply (310-MP-2026).pdf: \"IN THE MATTER OF: AMPIN Energy Utility Nine Pvt. Ltd. & Anr. …Petitioners\"",
+      "WRITTEN SUBMISSION IN PETITION NO. 22 OF 2026 (VECTOR GREEN) 01.08.2026.pdf: \"IN THE MATTER OF: Vector Green Sunshine Pvt. Ltd. - Petitioner\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported",
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence shows different subjects"
+    },
+    {
+     "text": "Final Reply (310-MP-2026).pdf - Concerns connectivity margins and non-solar hour access under the CERC (Connectivity and General Network Access to the inter-State Transmission System) Regulations, 2022 (\"GNA Regulations\"), but does not discuss transmission charge components [3].",
+     "evidence": [
+      "Final Reply (310-MP-2026).pdf: \"The present Petition has been filed by AMPIN Energy Utility Nine Pvt. Ltd. (“Petitioner No. 1”) and AMPIN Energy Utility Pvt. Ltd. ( “Petitioner No. 2”), seeking, inter alia, (i) exercise of this Hon’ble Commission’s power to relax and remove difficulties under Regulations 41 and 42 of the Central Electricity Regulatory Commission (Connectivity and General Network Access to the inter-State Transmission System) Regulations, 2022 ( “GNA Regulations”), so as to relax the applicability of Regulation 5.11(b) of the GNA Regulations in determining the connectivity margin available for non-solar hour access at Fatehgarh-IV (Sec-I) Pooling Station ( “Fatehgarh-IV PS”) against the connectivity of 300 MW held by AMPIN Energy Green Private Limited (“AEGPL”); (ii) a direction to Central Transmission Utility of India Limited (“CTUIL”) to revise the said margin from 166 MW to 199.5 MW; and (iii) a consequential grant of non-solar hour access connectivity of 199 MW to Petitioner No. 1 for its proposed Battery Energy Storage System ( “BESS”) at Fatehgarh-IV PS.\" … \"(f) On 10.04.2026, CTUIL notified the revised Detailed Procedure for Grant of Connectivity & GNA (“Detailed Procedure”), Clause 11(i) whereof reiterates that applications under Regulation 5.11(a) are to be considered “subject to availability of bay and/or margin for such non-solar hour access ”, and reiterates that the substation-wise and bay-wise list of available margin “shall be published on CTUIL website……..”.\" … \"Accordingly, CTUIL in the Agenda for the 47th CMETS-NR dated 14.05.2026, stated that the margin available for non-solar hour access at Fatehgarh-IV PS was 166 MW (85.9 MW + 80.1 MW + Nil).\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "partial"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence details GNA Regulations scope"
+    },
+    {
+     "text": "WRITTEN SUBMISSION IN PETITION NO. 22 OF 2026 (VECTOR GREEN) - Concerns GST levy under Reverse Charge Mechanism on land lease arrangements and Change in Law compensation under a Power Purchase Agreement, not transmission charges [4].",
+     "evidence": [
+      "WRITTEN SUBMISSION IN PETITION NO. 22 OF 2026 (VECTOR GREEN) 01.08.2026.pdf: \"PETITION NO. 22 OF 2026\" … \"By way of the present Petition, the Petitioner has sought to contend that it is entitled to compensation of Rs. 41,14,127/– as on December, 2025 on the premise that the Notification dated 08.10.2024 qualifies as a Change in Law Event under the Electricity (Timely recovery of costs due to Change in Law) Rules, 2021 dated 22.10.2021 ( CIL Rules, 2021 ) [Pages 757- 758, Petition].\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "supported",
+     "legal_rule": false,
+     "why": "Evidence shows GST/Change in Law focus"
+    },
+    {
+     "text": "The available documents do not contain information about:",
+     "evidence": [],
+     "cited": false,
+     "verified": [],
+     "kind": "non_claim",
+     "support": null,
+     "legal_rule": null,
+     "why": "Framing statement"
+    },
+    {
+     "text": "To obtain information on components of transmission charges under CERC regulations, you would need to refer to:",
+     "evidence": [],
+     "cited": false,
+     "verified": [],
+     "kind": "non_claim",
+     "support": null,
+     "legal_rule": null,
+     "why": "Framing statement"
+    },
+    {
+     "text": "CERC (Terms and Conditions of Tariff) Regulations [5]",
+     "evidence": [
+      "WRITTEN SUBMISSION IN PETITION NO. 22 OF 2026 (VECTOR GREEN) 01.08.2026.pdf: \"The Petitioner nevertheless contends that Regulation 23 of the RE Tariff Regulations, 2012 [Page 65, Petition ] overrides the contractual terms and that PSPCL cannot rely on Regulations 5/6 (25-year tariff period) while rejecting Regulation 23 (tax pass-through) [Paras 11, 20–21, Rejoinder].\" … \"REGULATION 23 OF THE RE TARIFF REGULATIONS, 2012 DOES NOT APPLY, AS THE PETITIONER'S TARIFF WAS ADOPTED UNDER SECTION 63, NOT SECTION 62 11.\" … \"Regulation 3 (Scope and Extent of Application) expressly limits the applicability of the RE Tariff Regulations, 2012 to tariff determined by the Commission under Section 62 of the Electricity Act, 2003 [Pages 50–51, Petition].\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "supported"
+     ],
+     "kind": "claim",
+     "support": "partial",
+     "legal_rule": true,
+     "why": "Evidence cites RE Tariff Regulations, not Tariff Regulations"
+    },
+    {
+     "text": "Related CERC orders on transmission tariff determination [6]",
+     "evidence": [
+      "WRITTEN SUBMISSION IN PETITION NO. 22 OF 2026 (VECTOR GREEN) 01.08.2026.pdf: \"In regards to the above, it is submitted that the CIL Rules, 2021 apply only where the occurrence of a Change in Law event is undisputed and the only issue concerns verification or computation of compensation, as held in NRSS-XXIX Transmission Ltd. v. CERC & Ors., OP No. 1 of 2022 (Judgment dated 05.04.2022) [Para 25 @ Page 37-38].\""
+     ],
+     "cited": true,
+     "verified": [
+      true,
+      "partial"
+     ],
+     "kind": "claim",
+     "support": "partial",
+     "legal_rule": false,
+     "why": "Evidence cites CIL case, not transmission tariff orders"
+    },
+    {
+     "text": "If you have specific documents on transmission charges that you would like me to analyze, please upload them to this conversation.",
+     "evidence": [],
+     "cited": false,
+     "verified": [],
+     "kind": "non_claim",
+     "support": null,
+     "legal_rule": null,
+     "why": "Offer of help"
+    }
+   ],
+   "answer_level": {
+    "says_not_in_records": true,
+    "rejects_false_premise": false
+   },
+   "judge_error": null,
+   "fact_recall": null,
+   "latency_s": 54.3,
+   "status": null,
+   "invented_citations": null
+  }
+ ]
+}

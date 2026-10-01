@@ -74,22 +74,27 @@ def list_sessions(
     offset: int = 0,
 ) -> list[ChatSession]:
     """List chat sessions, optionally filtered by member_id, newest first."""
+    listing = """
+        SELECT s.*, m.matter_code,
+               (SELECT left(cm.content, 300) FROM chat_messages cm
+                 WHERE cm.session_id = s.id AND cm.role = 'user'
+                 ORDER BY cm.created_at LIMIT 1) AS first_question
+        FROM chat_sessions s LEFT JOIN matters m ON m.matter_id = s.matter_id
+    """
     if member_id:
         rows = conn.execute(
-            """
-            SELECT * FROM chat_sessions
-            WHERE member_id = %s AND status = 'active'
-            ORDER BY updated_at DESC
+            listing + """
+            WHERE s.member_id = %s AND s.status = 'active'
+            ORDER BY s.updated_at DESC
             LIMIT %s OFFSET %s
             """,
             (member_id, limit, offset),
         ).fetchall()
     else:
         rows = conn.execute(
-            """
-            SELECT * FROM chat_sessions
-            WHERE status = 'active'
-            ORDER BY updated_at DESC
+            listing + """
+            WHERE s.status = 'active'
+            ORDER BY s.updated_at DESC
             LIMIT %s OFFSET %s
             """,
             (limit, offset),
@@ -109,8 +114,19 @@ def patch_session(conn, session_id: str, patch: ChatSessionPatch) -> ChatSession
         updates["model"] = patch.model
     if patch.status is not None:
         updates["status"] = patch.status.value
-    if not updates:
+    if patch.matter_id is not None:
+        updates["matter_id"] = patch.matter_id or None
+    if not updates and patch.pinned is None:
         return existing
+    if patch.pinned is not None:
+        # Pinning is not an edit to the conversation: it leaves updated_at alone.
+        conn.execute(
+            "UPDATE chat_sessions SET pinned_at = CASE WHEN %s THEN coalesce(pinned_at, now()) END WHERE id = %s",
+            (patch.pinned, session_id),
+        )
+        if not updates:
+            conn.commit()
+            return get_session(conn, session_id)
     updates["updated_at"] = _now_utc()
     set_clause = ", ".join(f"{k} = %s" for k in updates)
     values = list(updates.values()) + [session_id]
@@ -200,6 +216,24 @@ def update_assistant_message(
     conn.commit()
 
 
+def get_message(conn, session_id: str, message_id: str) -> ChatMessage | None:
+    """One message of a session, or None."""
+    row = conn.execute(
+        "SELECT * FROM chat_messages WHERE id = %s AND session_id = %s",
+        (message_id, session_id),
+    ).fetchone()
+    return _row_to_message(row) if row else None
+
+
+def set_message_events(conn, message_id: str, events: list[dict[str, Any]]) -> None:
+    """Replace a message's stored events (used when the lawyer accepts or rejects an edit)."""
+    conn.execute(
+        "UPDATE chat_messages SET events = %s WHERE id = %s",
+        (json.dumps(events) if events else None, message_id),
+    )
+    conn.commit()
+
+
 def get_messages(conn, session_id: str) -> list[ChatMessage]:
     """Fetch all messages for a session, in chronological order."""
     rows = conn.execute(
@@ -224,6 +258,9 @@ def _row_to_session(row: dict) -> ChatSession:
         matter_id=row.get("matter_id"),
         model=row.get("model"),
         member_id=row.get("member_id"),
+        pinned=row.get("pinned_at") is not None,
+        matter_code=row.get("matter_code"),
+        first_question=row.get("first_question"),
         status=SessionStatus(row.get("status", "active")),
         created_at=row.get("created_at", _now_utc()),
         updated_at=row.get("updated_at", _now_utc()),

@@ -14,10 +14,10 @@ READ_DOCUMENT = {
     "function": {
         "name": "read_document",
         "description": (
-            "Read the full text content of an available document. Always call "
-            "this before answering questions about, summarising, citing from, "
-            "or editing a document, but call it at most once per document in a "
-            "single response."
+            "Read an available document before answering about, summarising, citing from or editing it. "
+            "A short document comes back whole (complete=true). A long one comes back as its outline plus "
+            "the opening part (complete=false): then read only the parts you need with section_id (from the "
+            "outline) or pages, and continue a long part with next_cursor. Do not re-read a part you already have."
         ),
         "parameters": {
             "type": "object",
@@ -26,8 +26,74 @@ READ_DOCUMENT = {
                     "type": "string",
                     "description": "The document ID to read (e.g. 'doc-0', 'doc-1').",
                 },
+                "section_id": {"type": "string", "description": "A section id from the outline (e.g. 's7')."},
+                "pages": {"type": "string", "description": "A page or page range, e.g. '12' or '12-18'."},
+                "cursor": {"type": "integer", "description": "next_cursor from the previous read of this part."},
             },
             "required": ["doc_id"],
+        },
+    },
+}
+
+GET_OUTLINE = {
+    "type": "function",
+    "function": {
+        "name": "get_outline",
+        "description": (
+            "Get a document's table of contents: section ids, titles, page ranges and sizes, without the text. "
+            "Use it to plan which parts of a long document to read or edit."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {"doc_id": {"type": "string", "description": "The document ID (e.g. 'doc-0')."}},
+            "required": ["doc_id"],
+        },
+    },
+}
+
+REVIEW_DOCUMENTS = {
+    "type": "function",
+    "function": {
+        "name": "review_documents",
+        "description": (
+            "Answer the same questions for many documents at once (up to 500): one row per document with a short "
+            "answer and the verified quote it rests on. Use it instead of reading documents one by one whenever "
+            "more than about five documents need the same check (e.g. 'governing law of every contract', "
+            "'which filings mention X'). Give doc_ids, or a matter, or neither to use every document in this "
+            "conversation. mode='screen' ranks documents by relevance without reading them (fast)."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "questions": {"type": "array", "items": {"type": "string"}, "description": "1–10 questions asked of every document."},
+                "doc_ids": {"type": "array", "items": {"type": "string"}, "description": "Document IDs (e.g. ['doc-0','doc-3'])."},
+                "matter": {"type": "string", "description": "A matter code or id: review all of its documents."},
+                "mode": {"type": "string", "enum": ["full", "screen"]},
+            },
+            "required": ["questions"],
+        },
+    },
+}
+
+EDIT_DOCUMENT = {
+    "type": "function",
+    "function": {
+        "name": "edit_document",
+        "description": (
+            "Make a change throughout one document of any length, from a plain instruction (e.g. 'rename Supplier "
+            "to Vendor everywhere', 'change every payment period to 45 days', 'delete Schedule 3', 'after clause "
+            "12.4 insert: ...'). It finds every paragraph concerned without you reading the whole document, and "
+            "returns the edits as cards the lawyer accepts or rejects. Prefer it over propose_edits for any change "
+            "that may touch more than a few places, inserts or deletes paragraphs, or concerns a long document. "
+            "Quote exact wording to insert; say what must NOT change."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "doc_id": {"type": "string", "description": "The document ID (e.g. 'doc-0')."},
+                "instruction": {"type": "string", "description": "The change, stated fully and precisely."},
+            },
+            "required": ["doc_id", "instruction"],
         },
     },
 }
@@ -260,6 +326,128 @@ ASK_INPUTS = {
 }
 
 
+PROPOSE_EDITS = {
+    "type": "function",
+    "function": {
+        "name": "propose_edits",
+        "description": (
+            "Suggest specific changes to one document for the lawyer to accept or "
+            "reject. Read the document first. Each edit replaces an exact passage "
+            "copied verbatim from the document with new wording, and gives a short reason."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "doc_id": {"type": "string", "description": "The document to edit (e.g. 'doc-0')."},
+                "edits": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "original": {
+                                "type": "string",
+                                "description": "Exact passage from the document to replace. Copy it verbatim; do not include [Page N] markers.",
+                            },
+                            "proposed": {
+                                "type": "string",
+                                "description": "Replacement wording. Empty string to delete the passage.",
+                            },
+                            "reason": {"type": "string", "description": "One sentence on why."},
+                        },
+                        "required": ["original", "proposed", "reason"],
+                    },
+                },
+            },
+            "required": ["doc_id", "edits"],
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Firm knowledge tools (Ask the Firm layer)
+# ---------------------------------------------------------------------------
+
+ASK_FIRM = {
+    "type": "function",
+    "function": {
+        "name": "ask_firm",
+        "description": (
+            "Ask the firm's knowledge desk a question about the firm's own matters, clients, "
+            "documents or people (e.g. 'what is the long stop date?', 'who led our work on X?', "
+            "'which matters have we handled for Acme?'). Resolves the matter, reads the matter "
+            "record, team and the most relevant passages, and returns a draft answer plus "
+            "verbatim passages (with doc-N labels) you can quote and cite. Prefer this over "
+            "search_firm_records for factual questions about firm matters."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "question": {"type": "string", "description": "The question in plain language."},
+                "scope": {
+                    "type": "string",
+                    "description": "Optional matter code, matter id, matter title or client name to limit the question to.",
+                },
+            },
+            "required": ["question"],
+        },
+    },
+}
+
+RESOLVE_MATTER = {
+    "type": "function",
+    "function": {
+        "name": "resolve_matter",
+        "description": (
+            "Identify which firm matter a description refers to (parties, subject, facts, "
+            "code or title), e.g. 'the series B deal where the seed investor sold its shares'. "
+            "Returns the resolved matter or ranked candidates with confidence."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {"query": {"type": "string", "description": "Description of the matter."}},
+            "required": ["query"],
+        },
+    },
+}
+
+GET_MATTER_PROFILE = {
+    "type": "function",
+    "function": {
+        "name": "get_matter_profile",
+        "description": (
+            "Get a matter's full record: parties, facts, legal issues, status, forum, team with "
+            "roles, open deadlines and its documents (as doc-N labels you can read)."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {"matter": {"type": "string", "description": "Matter code, matter id or title."}},
+            "required": ["matter"],
+        },
+    },
+}
+
+FIND_PEOPLE = {
+    "type": "function",
+    "function": {
+        "name": "find_people",
+        "description": (
+            "Find firm members: the team on a matter (pass `matter`), or people with expertise, "
+            "a role or an office (pass `query`, e.g. 'expert in boundary disputes', 'partner in Delhi')."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Expertise, role or office to look for."},
+                "matter": {"type": "string", "description": "Matter code, id or title to list its team."},
+            },
+        },
+    },
+}
+
+
 # ---------------------------------------------------------------------------
 # Workflow tools
 # ---------------------------------------------------------------------------
@@ -299,13 +487,21 @@ READ_WORKFLOW = {
 # ---------------------------------------------------------------------------
 
 CORE_TOOLS = [
+    ASK_FIRM,
+    RESOLVE_MATTER,
+    GET_MATTER_PROFILE,
+    FIND_PEOPLE,
     SEARCH_FIRM_RECORDS,
     READ_DOCUMENT,
+    GET_OUTLINE,
+    REVIEW_DOCUMENTS,
+    EDIT_DOCUMENT,
     FETCH_DOCUMENTS,
     FIND_IN_DOCUMENT,
     GENERATE_DOCX,
     GENERATE_EXCEL,
     ASK_INPUTS,
+    PROPOSE_EDITS,
 ]
 
 WORKFLOW_TOOLS = [LIST_WORKFLOWS, READ_WORKFLOW]

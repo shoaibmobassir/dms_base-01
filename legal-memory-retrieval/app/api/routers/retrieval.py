@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Response
 
 from app.api.schemas import RetrieveRequest
 from app.api.hits import hit_payload_highlighted
+from app.audit import events as audit
 from app.auth.deps import resolve_member
 from app.config import settings
 from app.db.connection import connect
@@ -35,6 +36,10 @@ def retrieve_endpoint(
     RETRIEVAL_LATENCY.labels(endpoint="retrieve").observe(elapsed)
     record_latency_breakdown(latency, "retrieve", elapsed_ms=elapsed * 1000)
     formatted_hits = [hit_payload_highlighted(h, body.query) for h in hits]
+    audit.record("retrieval", member_id=member_id, object_type="query", detail={
+        "query": body.query, "hits": len(hits),
+        "documents": sorted({str(h.get("document_id")) for h in hits if h.get("document_id")})[:50],
+    })
     return {
         "service": "retrieval",
         "query": body.query,

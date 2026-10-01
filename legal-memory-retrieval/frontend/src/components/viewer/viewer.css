@@ -1,0 +1,104 @@
+/* Minimal styles for the pdf.js text layer: invisible, selectable text laid over
+   the rendered canvas, positioned by the CSS variables pdf.js writes per run. */
+.viewer-page {
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+}
+
+.viewer-page .textLayer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  transform-origin: 0 0;
+  forced-color-adjust: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.viewer-page .textLayer :is(span, br) {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.viewer-page .textLayer > :not(.markedContent),
+.viewer-page .textLayer .markedContent span:not(.markedContent) {
+  --font-height: 0;
+  --scale-x: 1;
+  --rotate: 0deg;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.viewer-page .textLayer .markedContent {
+  display: contents;
+}
+
+.viewer-page .textLayer ::selection {
+  background: color-mix(in oklab, var(--primary) 30%, transparent);
+}
+
+/* Cited words: a translucent amber box over the rendered glyphs. */
+.viewer-page .textLayer .viewer-highlight {
+  background: rgb(245 158 11 / 0.38);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgb(217 119 6 / 0.35);
+}
+
+/* Same highlight over a scanned page, placed from OCR word boxes. */
+.viewer-page .viewer-highlight-box {
+  position: absolute;
+  pointer-events: none;
+  background: rgb(245 158 11 / 0.32);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgb(217 119 6 / 0.35);
+  mix-blend-mode: multiply;
+}
+
+/* Comment marks: a soft band over the commented text (does not block selection)
+   and a numbered badge at the page's right edge. */
+.viewer-page .viewer-mark-box {
+  position: absolute;
+  pointer-events: none;
+  background: rgb(250 204 21 / 0.28);
+  border-bottom: 2px solid rgb(234 179 8 / 0.8);
+  mix-blend-mode: multiply;
+}
+.viewer-page .viewer-mark-box.is-active {
+  background: rgb(250 204 21 / 0.5);
+  border-bottom-color: rgb(202 138 4);
+}
+.viewer-page .viewer-mark-box.is-muted {
+  background: rgb(148 163 184 / 0.18);
+  border-bottom-color: rgb(148 163 184 / 0.6);
+}
+.viewer-page .viewer-mark-badge {
+  position: absolute;
+  right: 4px;
+  z-index: 2;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  transform: translateY(-2px);
+  border-radius: 10px;
+  background: rgb(234 179 8);
+  color: #111;
+  font: 600 11px/20px ui-sans-serif, system-ui, sans-serif;
+  text-align: center;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  cursor: pointer;
+}
+.viewer-page .viewer-mark-badge.is-active {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.viewer-page .viewer-mark-badge.is-muted {
+  background: rgb(203 213 225);
+}

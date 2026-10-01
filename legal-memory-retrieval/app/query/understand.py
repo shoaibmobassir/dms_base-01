@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass, field
 
 from app.retrieval.route import MATTER_CODE_RE, MATTER_ID_RE
 
-DOC_ID_RE = re.compile(r"\bDOC-\d+\b", re.I)
+DOC_ID_RE = re.compile(r"\bDOC-(?:\d+|[0-9A-F]{8,})\b", re.I)
 MEMBER_ID_RE = re.compile(r"\bMEM-\d+\b", re.I)
 
 # Longest prefixes first so we peel the query down to the entity / topic.

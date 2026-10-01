@@ -94,7 +94,7 @@ class TestDocxExtractor:
 
 
 class TestUploadCreatesVersionChunks:
-    def test_upload_writes_version_scoped_chunks(self, tmp_path: Path, monkeypatch):
+    def test_upload_writes_version_scoped_chunks(self, tmp_path: Path, monkeypatch, batch_cleanup):
         from app.config import settings
         from app.db.connection import connect
         from app.documents.hierarchical_chunks import get_version_chunks
@@ -123,6 +123,7 @@ class TestUploadCreatesVersionChunks:
             matter_id=matter_id,
             files=[(f"Agreements/SPA_{uniq}.txt", body.encode())],
         )
+        batch_cleanup.append(batch["batch_id"])
         result = process_upload_batch(batch["batch_id"])
         assert result["indexed"] == 1
 

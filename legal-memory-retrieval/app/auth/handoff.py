@@ -3,7 +3,7 @@ Auth Handoff: Secure One-Time Ticket Exchange for Microsoft Word Taskpane and Ex
 Clean-room independent implementation.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 import secrets
 from typing import Dict, Optional
 
@@ -19,7 +19,7 @@ class AuthHandoffService:
     def create_ticket(self, member_id: str, email: Optional[str] = None) -> str:
         """Generates a cryptographically random one-time ticket."""
         ticket = f"TKT-{secrets.token_urlsafe(32)}"
-        expiry = datetime.utcnow() + timedelta(seconds=self.ttl)
+        expiry = datetime.now(UTC).replace(tzinfo=None) + timedelta(seconds=self.ttl)
         self._tickets[ticket] = {
             "member_id": member_id,
             "email": email or "",
@@ -35,7 +35,7 @@ class AuthHandoffService:
             return None
 
         expires_at = datetime.fromisoformat(record["expires_at"])
-        if datetime.utcnow() > expires_at:
+        if datetime.now(UTC).replace(tzinfo=None) > expires_at:
             return None
 
         return {
@@ -45,7 +45,7 @@ class AuthHandoffService:
         }
 
     def _cleanup_expired(self):
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         expired_keys = [
             k for k, v in self._tickets.items()
             if now > datetime.fromisoformat(v["expires_at"])

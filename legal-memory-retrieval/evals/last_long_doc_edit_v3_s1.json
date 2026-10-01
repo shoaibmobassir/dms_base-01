@@ -1,0 +1,885 @@
+{
+ "at": "2026-09-28 03:19",
+ "model": "zai.glm-5",
+ "summary": {
+  "hybrid_v2": {
+   "tasks": 18,
+   "exact": 13,
+   "recall": 0.931,
+   "precision": 0.944,
+   "unintended_total": 4,
+   "errors": 0,
+   "median_s": 8.8,
+   "max_prompt_chars": 37662,
+   "calls_total": 209
+  },
+  "hybrid_v3": {
+   "tasks": 18,
+   "exact": 12,
+   "recall": 0.875,
+   "precision": 0.885,
+   "unintended_total": 6,
+   "errors": 1,
+   "median_s": 14.1,
+   "max_prompt_chars": 38418,
+   "calls_total": 147
+  }
+ },
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 5,
+     "before": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading supplier.",
+     "after": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading vendor."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 763,
+   "result_changes": 764,
+   "recall": 1.0,
+   "precision": 0.9987,
+   "unintended": 1,
+   "exact": false,
+   "calls": 22,
+   "peak_prompt_chars": 36924,
+   "seconds": 34.2,
+   "notes": [
+    "substitution changed 763 paragraphs; verifier reverted 0",
+    "2 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "hybrid_v3",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 5,
+     "before": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading supplier.",
+     "after": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading vendor."
+    },
+    {
+     "change": "rep",
+     "at": 963,
+     "before": "S4.1 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.1 On expiry the Vendor shall co-operate with any replacement vendor."
+    },
+    {
+     "change": "rep",
+     "at": 964,
+     "before": "S4.2 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.2 On expiry the Vendor shall co-operate with any replacement vendor."
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 963,
+     "before": "S4.1 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.1 On expiry the Vendor shall co-operate with any replacement supplier."
+    },
+    {
+     "change": "rep",
+     "at": 964,
+     "before": "S4.2 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.2 On expiry the Vendor shall co-operate with any replacement supplier."
+    },
+    {
+     "change": "rep",
+     "at": 965,
+     "before": "S4.3 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.3 On expiry the Vendor shall co-operate with any replacement supplier."
+    }
+   ],
+   "gold_changes": 763,
+   "result_changes": 764,
+   "recall": 0.9961,
+   "precision": 0.9948,
+   "unintended": 4,
+   "exact": false,
+   "calls": 23,
+   "peak_prompt_chars": 36754,
+   "seconds": 15.4,
+   "notes": [
+    "substitution changed 764 paragraphs; verifier reverted 0",
+    "1 candidate paragraphs for editors",
+    "editors changed 1 paragraphs; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 25941,
+   "seconds": 8.5,
+   "notes": [
+    "42 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 4,
+   "peak_prompt_chars": 25941,
+   "seconds": 9.3,
+   "notes": [
+    "42 candidate paragraphs for editors",
+    "editors changed 1 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 14440,
+   "seconds": 5.2,
+   "notes": [
+    "26 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 14440,
+   "seconds": 18.5,
+   "notes": [
+    "26 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 5896,
+   "seconds": 3.3,
+   "notes": [
+    "11 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 5896,
+   "seconds": 3.0,
+   "notes": [
+    "11 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 198,
+     "before": "18.10 Payment of the Service Credits reconciliation shall be made within thirty (30) days following the end of each Contract Year.",
+     "after": "18.10 Payment of the Service Credits reconciliation shall be made within forty-five (45) days following the end of each Contract Year."
+    },
+    {
+     "change": "rep",
+     "at": 231,
+     "before": "21.2 Payment of the Service Credits reconciliation shall be made within thirty (30) days following the end of each Contract Year.",
+     "after": "21.2 Payment of the Service Credits reconciliation shall be made within forty-five (45) days following the end of each Contract Year."
+    },
+    {
+     "change": "rep",
+     "at": 332,
+     "before": "29.10 Payment of the Service Credits reconciliation shall be made within thirty (30) days following the end of each Contract Year.",
+     "after": "29.10 Payment of the Service Credits reconciliation shall be made within forty-five (45) days following the end of each Contract Year."
+    }
+   ],
+   "gold_changes": 16,
+   "result_changes": 12,
+   "recall": 0.75,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 7,
+   "peak_prompt_chars": 23702,
+   "seconds": 13.0,
+   "notes": [
+    "substitution changed 60 paragraphs; verifier reverted 48",
+    "127 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v3",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 196,
+     "before": "18.8 Either party may terminate this Agreement for convenience on not less than thirty (30) days' written notice.",
+     "after": "18.8 Either party may terminate this Agreement for convenience on not less than forty-five (45) days' written notice."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 16,
+   "result_changes": 17,
+   "recall": 1.0,
+   "precision": 0.9412,
+   "unintended": 1,
+   "exact": false,
+   "calls": 7,
+   "peak_prompt_chars": 23453,
+   "seconds": 25.3,
+   "notes": [
+    "substitution changed 60 paragraphs; verifier reverted 43",
+    "122 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 36,
+   "result_changes": 36,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 5,
+   "peak_prompt_chars": 19709,
+   "seconds": 8.1,
+   "notes": [
+    "substitution changed 36 paragraphs; verifier reverted 0",
+    "94 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 36,
+   "result_changes": 36,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 9810,
+   "seconds": 13.9,
+   "notes": [
+    "substitution changed 36 paragraphs; verifier reverted 0",
+    "1 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 5,
+     "before": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading supplier.",
+     "after": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading vendor."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 1489,
+   "result_changes": 1490,
+   "recall": 1.0,
+   "precision": 0.9993,
+   "unintended": 1,
+   "exact": false,
+   "calls": 40,
+   "peak_prompt_chars": 37176,
+   "seconds": 24.3,
+   "notes": [
+    "substitution changed 1490 paragraphs; verifier reverted 3",
+    "4 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1489,
+   "result_changes": 1489,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 41,
+   "peak_prompt_chars": 37272,
+   "seconds": 42.0,
+   "notes": [
+    "substitution changed 1489 paragraphs; verifier reverted 0",
+    "2 candidate paragraphs for editors",
+    "editors changed 1 paragraphs; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "ins",
+     "at": 1418,
+     "before": "125.4 Each party shall bear its own costs in connection with the matters described in this clause, save as otherwise expressly provided. The Supplier shall maintain complete and accurate records relat",
+     "after": "('This obligation is of the essence.',)"
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 1417,
+     "before": "125.3 Nothing in this clause shall limit any other right or remedy of the Customer under this Agreement or at law. The Customer may, acting reasonably, request such information from the Supplier as it",
+     "after": "125.3 Nothing in this clause shall limit any other right or remedy of the Customer under this Agreement or at law. The Customer may, acting reasonably, request such information from the Supplier as it"
+    }
+   ],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 1,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 8644,
+   "seconds": 9.2,
+   "notes": [
+    "13 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 8644,
+   "seconds": 7.0,
+   "notes": [
+    "10 candidate paragraphs for editors",
+    "editors changed 1 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8720,
+   "seconds": 3.1,
+   "notes": [
+    "2 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 14,
+   "peak_prompt_chars": 38418,
+   "seconds": 13.4,
+   "notes": [
+    "484 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8625,
+   "seconds": 19.2,
+   "notes": [
+    "13 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8625,
+   "seconds": 8.2,
+   "notes": [
+    "13 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 22,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 10,
+   "peak_prompt_chars": 25207,
+   "seconds": 10.5,
+   "notes": [
+    "substitution changed 117 paragraphs; verifier reverted 95",
+    "240 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 198,
+     "before": "18.10 Payment of the Service Credits reconciliation shall be made within thirty (30) days following the end of each Contract Year.",
+     "after": "18.10 Payment of the Service Credits reconciliation shall be made within forty-five (45) days following the end of each Contract Year."
+    },
+    {
+     "change": "rep",
+     "at": 231,
+     "before": "21.2 Payment of the Service Credits reconciliation shall be made within thirty (30) days following the end of each Contract Year.",
+     "after": "21.2 Payment of the Service Credits reconciliation shall be made within forty-five (45) days following the end of each Contract Year."
+    },
+    {
+     "change": "rep",
+     "at": 332,
+     "before": "29.10 Payment of the Service Credits reconciliation shall be made within thirty (30) days following the end of each Contract Year.",
+     "after": "29.10 Payment of the Service Credits reconciliation shall be made within forty-five (45) days following the end of each Contract Year."
+    }
+   ],
+   "gold_changes": 22,
+   "result_changes": 18,
+   "recall": 0.8182,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 11,
+   "peak_prompt_chars": 26103,
+   "seconds": 14.2,
+   "notes": [
+    "substitution changed 117 paragraphs; verifier reverted 99",
+    "244 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 71,
+   "result_changes": 71,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 4,
+   "peak_prompt_chars": 10832,
+   "seconds": 7.6,
+   "notes": [
+    "substitution changed 71 paragraphs; verifier reverted 0",
+    "1 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 71,
+   "result_changes": 71,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 4,
+   "peak_prompt_chars": 10832,
+   "seconds": 7.6,
+   "notes": [
+    "substitution changed 71 paragraphs; verifier reverted 0",
+    "1 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "hybrid_v2",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 5,
+     "before": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading supplier.",
+     "after": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading vendor."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 2966,
+   "result_changes": 2967,
+   "recall": 1.0,
+   "precision": 0.9997,
+   "unintended": 1,
+   "exact": false,
+   "calls": 77,
+   "peak_prompt_chars": 37662,
+   "seconds": 42.7,
+   "notes": [
+    "substitution changed 2966 paragraphs; verifier reverted 0",
+    "2 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "hybrid_v3",
+   "error": "HTTPStatusError(\"Server error '500 Internal Server Error' for url 'https://bedrock-mantle.us-east-1.api.aws/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500\")",
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 0,
+   "exact": false,
+   "seconds": 38.2
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16617,
+   "seconds": 3.6,
+   "notes": [
+    "11 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "hybrid_v3",
+   "sample_unintended": [
+    {
+     "change": "ins",
+     "at": 2207,
+     "before": "193.2 Where the Supplier becomes aware of any matter which may affect the governing law (module 8), it shall notify the Customer promptly and in any event within five Working Days. Each party shall be",
+     "after": "('This obligation is of the essence.',)"
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 2206,
+     "before": "193.1 The parties shall meet at least quarterly to review performance in relation to the governing law (module 8) and agree any improvements required. Each party shall bear its own costs in connection",
+     "after": "193.1 The parties shall meet at least quarterly to review performance in relation to the governing law (module 8) and agree any improvements required. Each party shall bear its own costs in connection"
+    }
+   ],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 1,
+   "exact": false,
+   "calls": 2,
+   "peak_prompt_chars": 16617,
+   "seconds": 5.1,
+   "notes": [
+    "8 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16695,
+   "seconds": 4.5,
+   "notes": [
+    "2 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16695,
+   "seconds": 14.7,
+   "notes": [
+    "13 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16598,
+   "seconds": 3.8,
+   "notes": [
+    "16 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16598,
+   "seconds": 3.7,
+   "notes": [
+    "16 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 34,
+   "result_changes": 34,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 19,
+   "peak_prompt_chars": 26068,
+   "seconds": 27.5,
+   "notes": [
+    "substitution changed 234 paragraphs; verifier reverted 200",
+    "463 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 3391,
+     "before": "295.2 The Customer shall pay each valid invoice within thirty (30) days of receipt.",
+     "after": "295.2 The Customer shall pay each valid invoice within forty-five (45) days of receipt."
+    },
+    {
+     "change": "rep",
+     "at": 3394,
+     "before": "295.5 The Customer shall settle the Milestone Payment within 30 days of the Acceptance Certificate.",
+     "after": "295.5 The Customer shall settle the Milestone Payment within 45 days of the Acceptance Certificate."
+    }
+   ],
+   "gold_changes": 34,
+   "result_changes": 32,
+   "recall": 0.9412,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 19,
+   "peak_prompt_chars": 25572,
+   "seconds": 28.3,
+   "notes": [
+    "substitution changed 234 paragraphs; verifier reverted 202",
+    "465 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "hybrid_v2",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 130,
+   "result_changes": 130,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 6,
+   "peak_prompt_chars": 16789,
+   "seconds": 23.7,
+   "notes": [
+    "substitution changed 130 paragraphs; verifier reverted 0",
+    "1 candidate paragraphs for editors"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "hybrid_v3",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 130,
+   "result_changes": 130,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 6,
+   "peak_prompt_chars": 16789,
+   "seconds": 17.7,
+   "notes": [
+    "substitution changed 130 paragraphs; verifier reverted 0",
+    "1 candidate paragraphs for editors",
+    "editors changed 0 paragraphs; verifier reverted 0"
+   ]
+  }
+ ]
+}

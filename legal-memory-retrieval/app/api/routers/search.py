@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from psycopg.rows import dict_row
 
-from app.api.acl import ACL_CLAUSE
+from app.api.acl import ACL_CLAUSE, doc_acl
 from app.auth.deps import resolve_member
 from app.db.connection import connect
 
@@ -54,7 +54,7 @@ def search(
                     FROM documents d
                     LEFT JOIN permissions p ON p.matter_id = d.matter_id
                     WHERE (d.title ILIKE %(like)s OR d.document_type ILIKE %(like)s)
-                      AND {ACL_CLAUSE}
+                      AND {ACL_CLAUSE} AND {doc_acl('d')}
                     ORDER BY d.doc_date DESC NULLS LAST
                     LIMIT %(limit)s
                     """,

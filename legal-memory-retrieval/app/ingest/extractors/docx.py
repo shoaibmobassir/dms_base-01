@@ -11,6 +11,25 @@ from app.ingest.extractors.types import ExtractedDocument, join_pages
 _CHARS_PER_PAGE = 3000
 
 
+def style_namer(document):
+    """``paragraph -> style name`` for one document, resolving each style once.
+
+    python-docx's ``paragraph.style`` scans the whole styles part for the default style
+    on every unstyled paragraph — seconds on a long agreement.
+    """
+    from docx.enum.style import WD_STYLE_TYPE
+
+    names = {s.style_id: s.name or "" for s in document.styles}
+    default = document.styles.default(WD_STYLE_TYPE.PARAGRAPH)
+    default_name = (default.name or "") if default is not None else ""
+
+    def name(p) -> str:
+        style_id = p._p.style
+        return names.get(style_id, default_name) if style_id else default_name
+
+    return name
+
+
 class DocxExtractor:
     """Extract structured text from DOCX, preserving paragraphs and headings."""
 
@@ -22,12 +41,13 @@ class DocxExtractor:
         from docx import Document
 
         document = Document(path)
+        style_of = style_namer(document)
         paragraphs: list[str] = []
         for p in document.paragraphs:
             text = (p.text or "").strip()
             if not text:
                 continue
-            style = (p.style.name if p.style is not None else "") or ""
+            style = style_of(p)
             if style.lower().startswith("heading"):
                 # Normalize toward legal heading patterns for the block parser
                 paragraphs.append(text if text.upper().startswith(

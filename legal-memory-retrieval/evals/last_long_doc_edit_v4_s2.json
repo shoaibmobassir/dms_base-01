@@ -1,0 +1,416 @@
+{
+ "at": "2026-09-28 03:28",
+ "model": "zai.glm-5",
+ "summary": {
+  "hybrid_v4": {
+   "tasks": 18,
+   "exact": 16,
+   "recall": 0.996,
+   "precision": 0.965,
+   "unintended_total": 21,
+   "errors": 0,
+   "median_s": 13.1,
+   "max_prompt_chars": 42313,
+   "calls_total": 837
+  }
+ },
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 757,
+   "result_changes": 757,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 79,
+   "peak_prompt_chars": 10880,
+   "seconds": 34.2,
+   "notes": [
+    "substitution changed 757 paragraphs; verifier reverted 0",
+    "2 candidates; editors changed 1; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 4780,
+   "seconds": 4.7,
+   "notes": [
+    "10 candidates; editors changed 1; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 7168,
+   "seconds": 3.6,
+   "notes": [
+    "13 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8415,
+   "seconds": 6.0,
+   "notes": [
+    "13 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 18,
+   "result_changes": 18,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 13,
+   "peak_prompt_chars": 25529,
+   "seconds": 11.6,
+   "notes": [
+    "substitution changed 71 paragraphs; verifier reverted 53",
+    "126 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 29,
+   "result_changes": 29,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 5,
+   "peak_prompt_chars": 4953,
+   "seconds": 14.7,
+   "notes": [
+    "substitution changed 29 paragraphs; verifier reverted 0",
+    "1 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1501,
+   "result_changes": 1501,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 154,
+   "peak_prompt_chars": 11132,
+   "seconds": 57.0,
+   "notes": [
+    "substitution changed 1501 paragraphs; verifier reverted 0",
+    "2 candidates; editors changed 1; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 8670,
+   "seconds": 4.6,
+   "notes": [
+    "9 candidates; editors changed 1; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8749,
+   "seconds": 4.2,
+   "notes": [
+    "12 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 9474,
+   "seconds": 3.3,
+   "notes": [
+    "14 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 24,
+   "result_changes": 24,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 21,
+   "peak_prompt_chars": 25842,
+   "seconds": 34.2,
+   "notes": [
+    "substitution changed 128 paragraphs; verifier reverted 104",
+    "242 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 71,
+   "result_changes": 71,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 14,
+   "peak_prompt_chars": 22470,
+   "seconds": 21.3,
+   "notes": [
+    "substitution changed 71 paragraphs; verifier reverted 0",
+    "197 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 2999,
+   "result_changes": 2999,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 303,
+   "peak_prompt_chars": 17075,
+   "seconds": 116.6,
+   "notes": [
+    "substitution changed 2999 paragraphs; verifier reverted 0",
+    "2 candidates; editors changed 1; verifier reverted 1"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "hybrid_v4",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 3568,
+     "before": "311.7 The Supplier shall maintain complete and accurate records relating to the dispute resolution (module 13) and shall make them available to the Customer on request. The Supplier shall perform its ",
+     "after": "311.7 The Supplier shall maintain complete and accurate records relating to the dispute resolution (module 13) and shall make them available to the Customer on request. The Supplier shall perform its "
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 2,
+   "recall": 1.0,
+   "precision": 0.5,
+   "unintended": 1,
+   "exact": false,
+   "calls": 124,
+   "peak_prompt_chars": 42313,
+   "seconds": 60.4,
+   "notes": [
+    "substitution changed 967 paragraphs; verifier reverted 966",
+    "966 candidates; editors changed 6; verifier reverted 5"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 17090,
+   "seconds": 3.9,
+   "notes": [
+    "11 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16993,
+   "seconds": 4.3,
+   "notes": [
+    "15 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "hybrid_v4",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 38,
+   "result_changes": 38,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 41,
+   "peak_prompt_chars": 27799,
+   "seconds": 30.5,
+   "notes": [
+    "substitution changed 265 paragraphs; verifier reverted 227",
+    "492 candidates; editors changed 0; verifier reverted 0"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "hybrid_v4",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 1129,
+     "before": "99.9 Subject to Clause 9, the Supplier shall provide the deliverables described in this clause to the Customer.",
+     "after": "910.9 Subject to Clause 10, the Supplier shall provide the deliverables described in this clause to the Customer."
+    },
+    {
+     "change": "rep",
+     "at": 1364,
+     "before": "119.8 Subject to Clause 9.4, the Supplier shall provide the deliverables described in this clause to the Customer.",
+     "after": "1110.8 Subject to Clause 10.4, the Supplier shall provide the deliverables described in this clause to the Customer."
+    },
+    {
+     "change": "rep",
+     "at": 1710,
+     "before": "149.4 Subject to Clause 9.2, the Supplier shall provide the deliverables described in this clause to the Customer.",
+     "after": "1410.4 Subject to Clause 10.2, the Supplier shall provide the deliverables described in this clause to the Customer."
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 1129,
+     "before": "99.9 Subject to Clause 9, the Supplier shall provide the deliverables described in this clause to the Customer.",
+     "after": "99.9 Subject to Clause 10, the Supplier shall provide the deliverables described in this clause to the Customer."
+    },
+    {
+     "change": "rep",
+     "at": 1364,
+     "before": "119.8 Subject to Clause 9.4, the Supplier shall provide the deliverables described in this clause to the Customer.",
+     "after": "119.8 Subject to Clause 10.4, the Supplier shall provide the deliverables described in this clause to the Customer."
+    },
+    {
+     "change": "rep",
+     "at": 1710,
+     "before": "149.4 Subject to Clause 9.2, the Supplier shall provide the deliverables described in this clause to the Customer.",
+     "after": "149.4 Subject to Clause 10.2, the Supplier shall provide the deliverables described in this clause to the Customer."
+    }
+   ],
+   "gold_changes": 155,
+   "result_changes": 164,
+   "recall": 0.929,
+   "precision": 0.878,
+   "unintended": 20,
+   "exact": false,
+   "calls": 65,
+   "peak_prompt_chars": 22472,
+   "seconds": 53.6,
+   "notes": [
+    "substitution changed 528 paragraphs; verifier reverted 371",
+    "372 candidates; editors changed 7; verifier reverted 0"
+   ]
+  }
+ ]
+}

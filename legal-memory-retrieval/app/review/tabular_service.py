@@ -71,12 +71,8 @@ class TabularReviewService:
                         )
                     
                     # Filter hits to target document if present
-                    doc_hits = [
-                        h for h in hits
-                        if h.get("doc_id") == doc_id or (h.get("doc_id") and h.get("doc_id").startswith(doc_id))
-                    ]
-                    if not doc_hits:
-                        doc_hits = hits[:3]
+                    # Only this document's passages: a cell must never be filled from another document.
+                    doc_hits = [h for h in hits if str(h.get("document_id") or "").upper() == doc_id.upper()]
 
                     if not doc_hits:
                         return doc_id, col.id, CellResult(

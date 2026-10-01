@@ -37,7 +37,7 @@ from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg.rows import dict_row
 
-from app.api.acl import ACL_CLAUSE
+from app.api.acl import ACL_CLAUSE, doc_acl
 from app.api.schemas import (
     ProjectCreate,
     ProjectMilestoneUpdate,
@@ -169,13 +169,13 @@ def project_detail_endpoint(
 
             # Documents
             cur.execute(
-                """
-                SELECT document_id, title, document_type, author_name,
-                       doc_date, status, folder_id, current_version_id
-                FROM documents WHERE matter_id = %(matter_id)s
-                ORDER BY doc_date DESC NULLS LAST LIMIT 50
+                f"""
+                SELECT d.document_id, d.title, d.document_type, d.author_name,
+                       d.doc_date, d.status, d.folder_id, d.current_version_id
+                FROM documents d WHERE d.matter_id = %(matter_id)s AND {doc_acl('d')}
+                ORDER BY d.doc_date DESC NULLS LAST LIMIT 50
                 """,
-                {"matter_id": row["matter_id"]},
+                {"matter_id": row["matter_id"], "member_id": member_id},
             )
             docs = list(cur.fetchall())
 
@@ -211,8 +211,8 @@ def project_detail_endpoint(
 
             # Document count
             cur.execute(
-                "SELECT COUNT(*) AS n FROM documents WHERE matter_id = %(mid)s",
-                {"mid": row["matter_id"]},
+                f"SELECT COUNT(*) AS n FROM documents d WHERE d.matter_id = %(mid)s AND {doc_acl('d')}",
+                {"mid": row["matter_id"], "member_id": member_id},
             )
             doc_count = cur.fetchone()["n"]
 
@@ -464,13 +464,13 @@ def project_directory(
 
             # Count docs per folder
             cur.execute(
-                """
+                f"""
                 SELECT COALESCE(d.folder_id, '__root__') AS fid, COUNT(*) AS n
                 FROM documents d
-                WHERE d.matter_id = %(mid)s
+                WHERE d.matter_id = %(mid)s AND {doc_acl('d')}
                 GROUP BY d.folder_id
                 """,
-                {"mid": row["matter_id"]},
+                {"mid": row["matter_id"], "member_id": member_id},
             )
             counts = {r["fid"]: r["n"] for r in cur.fetchall()}
 
@@ -600,8 +600,8 @@ def project_documents(
         with conn.cursor(row_factory=dict_row) as cur:
             row = _check_project_access(cur, project_id, member_id)
 
-            wheres = ["d.matter_id = %(mid)s"]
-            params: dict = {"mid": row["matter_id"], "limit": limit, "offset": offset}
+            wheres = ["d.matter_id = %(mid)s", doc_acl("d")]
+            params: dict = {"mid": row["matter_id"], "limit": limit, "offset": offset, "member_id": member_id}
             if folder_id:
                 wheres.append("d.folder_id = %(folder_id)s")
                 params["folder_id"] = folder_id
@@ -644,13 +644,18 @@ def assign_document_to_project(
             row = _check_project_access(cur, project_id, member_id)
             project_matter = row["matter_id"]
 
+            # The source must be readable by the member (its own matter's ACL and privacy):
+            # copying is reading, and must not move walled content into a visible matter.
             cur.execute(
-                "SELECT * FROM documents WHERE document_id = %(did)s",
-                {"did": document_id.upper()},
+                f"""SELECT d.* FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
+                    WHERE d.document_id = %(did)s AND {ACL_CLAUSE} AND {doc_acl('d')}""",
+                {"did": document_id.upper(), "member_id": member_id},
             )
             doc = cur.fetchone()
             if not doc:
                 raise HTTPException(status_code=404, detail="Document not found")
+            if doc.get("visible_to") is not None and doc["matter_id"] != project_matter:
+                raise HTTPException(status_code=403, detail="Private and restricted documents cannot be copied to another matter")
 
             if doc["matter_id"] == project_matter:
                 # Already in this project's matter — idempotent, just update folder
@@ -704,8 +709,8 @@ def move_document_to_folder(
 
             # Verify document belongs to this project's matter
             cur.execute(
-                "SELECT document_id, title FROM documents WHERE document_id = %(did)s AND matter_id = %(mid)s",
-                {"did": document_id.upper(), "mid": row["matter_id"]},
+                f"SELECT d.document_id, d.title FROM documents d WHERE d.document_id = %(did)s AND d.matter_id = %(mid)s AND {doc_acl('d')}",
+                {"did": document_id.upper(), "mid": row["matter_id"], "member_id": member_id},
             )
             doc = cur.fetchone()
             if not doc:
@@ -783,14 +788,14 @@ def project_export(
 
             # Documents with versions
             cur.execute(
-                """
+                f"""
                 SELECT d.document_id, d.title, d.document_type, d.author_name,
                        d.doc_date, d.status, d.version, d.content_sha256,
                        d.current_version_id
-                FROM documents d WHERE d.matter_id = %(mid)s
+                FROM documents d WHERE d.matter_id = %(mid)s AND {doc_acl('d')}
                 ORDER BY d.doc_date DESC NULLS LAST
                 """,
-                {"mid": row["matter_id"]},
+                {"mid": row["matter_id"], "member_id": member_id},
             )
             docs = list(cur.fetchall())
 

@@ -1,0 +1,401 @@
+{
+ "at": "2026-09-28 03:53",
+ "model": "zai.glm-5",
+ "summary": {
+  "production": {
+   "tasks": 18,
+   "exact": 16,
+   "recall": 0.995,
+   "precision": 0.972,
+   "unintended_total": 1,
+   "errors": 0,
+   "median_s": 14.6,
+   "max_prompt_chars": 38485,
+   "calls_total": 651
+  }
+ },
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 740,
+   "result_changes": 740,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 76,
+   "peak_prompt_chars": 12854,
+   "seconds": 29.0,
+   "notes": [
+    "substitutions changed 740 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 779,
+     "before": "68.11 Each party shall bear its own costs in connection with the matters described in this clause, save as otherwise expressly provided. The Supplier shall perform its obligations under this clause wi",
+     "after": "68.11 Each party shall bear its own costs in connection with the matters described in this clause, save as otherwise expressly provided. The Supplier shall perform its obligations under this clause wi"
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 2,
+   "recall": 1.0,
+   "precision": 0.5,
+   "unintended": 1,
+   "exact": false,
+   "calls": 11,
+   "peak_prompt_chars": 38485,
+   "seconds": 19.3,
+   "notes": [
+    "substitutions limited to clause(s) 18.11",
+    "substitutions changed 1 paragraphs; 0 not confirmed and reverted",
+    "266 paragraphs sent to editors; 1 changed; 0 not confirmed",
+    "1 span edits did not match their paragraph and were dropped"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 15080,
+   "seconds": 4.3,
+   "notes": [
+    "25 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 7041,
+   "seconds": 4.0,
+   "notes": [
+    "12 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 16,
+   "result_changes": 16,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 10,
+   "peak_prompt_chars": 25071,
+   "seconds": 8.5,
+   "notes": [
+    "substitutions changed 52 paragraphs; 36 not confirmed and reverted",
+    "112 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 36,
+   "result_changes": 36,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 6,
+   "peak_prompt_chars": 4840,
+   "seconds": 13.4,
+   "notes": [
+    "substitutions changed 36 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1494,
+   "result_changes": 1494,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 152,
+   "peak_prompt_chars": 12854,
+   "seconds": 59.8,
+   "notes": [
+    "substitutions changed 1494 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 4,
+   "peak_prompt_chars": 8607,
+   "seconds": 9.0,
+   "notes": [
+    "substitutions limited to clause(s) 138.6",
+    "1 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8683,
+   "seconds": 15.7,
+   "notes": [
+    "13 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8588,
+   "seconds": 3.5,
+   "notes": [
+    "12 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 22,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 10,
+   "peak_prompt_chars": 24969,
+   "seconds": 26.6,
+   "notes": [
+    "substitutions changed 0 paragraphs; 0 not confirmed and reverted",
+    "203 paragraphs sent to editors; 22 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 61,
+   "result_changes": 61,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 9,
+   "peak_prompt_chars": 8779,
+   "seconds": 19.0,
+   "notes": [
+    "substitutions changed 61 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 2960,
+   "result_changes": 2960,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 298,
+   "peak_prompt_chars": 16716,
+   "seconds": 106.4,
+   "notes": [
+    "substitutions changed 2960 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 16653,
+   "seconds": 5.7,
+   "notes": [
+    "substitutions limited to clause(s) 177.2",
+    "10 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16731,
+   "seconds": 3.9,
+   "notes": [
+    "9 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16634,
+   "seconds": 4.3,
+   "notes": [
+    "16 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 134,
+     "before": "13.4 Payment of the Service Credits reconciliation shall be made within thirty (30) days following the end of each Contract Year.",
+     "after": "13.4 Payment of the Service Credits reconciliation shall be made within forty-five (45) days following the end of each Contract Year."
+    },
+    {
+     "change": "rep",
+     "at": 2018,
+     "before": "175.2 Payment of the Service Credits reconciliation shall be made within thirty (30) days following the end of each Contract Year.",
+     "after": "175.2 Payment of the Service Credits reconciliation shall be made within forty-five (45) days following the end of each Contract Year."
+    },
+    {
+     "change": "rep",
+     "at": 2021,
+     "before": "175.5 Undisputed amounts shall be paid no later than 30 days after the date of the relevant invoice.",
+     "after": "175.5 Undisputed amounts shall be paid no later than 45 days after the date of the relevant invoice."
+    }
+   ],
+   "gold_changes": 34,
+   "result_changes": 31,
+   "recall": 0.9118,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 40,
+   "peak_prompt_chars": 37870,
+   "seconds": 29.4,
+   "notes": [
+    "substitutions changed 0 paragraphs; 0 not confirmed and reverted",
+    "1387 paragraphs sent to editors; 40 changed; 9 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 115,
+   "result_changes": 115,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 20,
+   "peak_prompt_chars": 26590,
+   "seconds": 30.2,
+   "notes": [
+    "substitutions changed 115 paragraphs; 0 not confirmed and reverted",
+    "268 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  }
+ ]
+}

@@ -11,6 +11,7 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 import httpx
 
 from app.auth.key_vault import get_key_vault
+from app.llm.bedrock_client import achat_complete, bedrock_configured
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class LLMResponse:
 
 
 class ModelRouter:
-    """Dispatches completions across OpenAI, Anthropic, Gemini, Groq, and Ollama."""
+    """Dispatches completions across Bedrock, OpenAI, Anthropic, Gemini, Groq, and Ollama."""
 
     def __init__(self):
         self.vault = get_key_vault()
@@ -57,7 +58,9 @@ class ModelRouter:
         keys = tenant_api_keys or {}
 
         try:
-            if active_provider == "anthropic":
+            if active_provider == "bedrock":
+                return await self._call_bedrock(messages, active_model, temperature, max_tokens, json_mode)
+            elif active_provider == "anthropic":
                 return await self._call_anthropic(messages, active_model, temperature, max_tokens, json_mode, keys)
             elif active_provider == "openai":
                 return await self._call_openai(messages, active_model, temperature, max_tokens, json_mode, reasoning_effort, keys)
@@ -71,6 +74,33 @@ class ModelRouter:
         except Exception as exc:
             logger.warning("Primary provider %s failed: %s. Attempting fallback.", active_provider, exc)
             return await self._call_fallback(messages, json_mode)
+
+    async def _call_bedrock(
+        self,
+        messages: List[LLMMessage],
+        model: Optional[str],
+        temperature: float,
+        max_tokens: int,
+        json_mode: bool,
+    ) -> LLMResponse:
+        if not bedrock_configured():
+            raise ValueError("AWS_BEARER_TOKEN_BEDROCK is not configured")
+
+        model_name = model or os.environ.get("BEDROCK_MODEL", "zai.glm-5")
+        result = await achat_complete(
+            [{"role": m.role, "content": m.content} for m in messages],
+            model=model_name,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            json_mode=json_mode,
+        )
+        return LLMResponse(
+            content=str(result.get("content") or ""),
+            provider="bedrock",
+            model=str(result.get("model") or model_name),
+            usage=result.get("usage") or {},
+            finish_reason=result.get("finish_reason"),
+        )
 
     async def _call_anthropic(
         self,

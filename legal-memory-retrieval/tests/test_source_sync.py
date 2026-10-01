@@ -205,7 +205,7 @@ def object_store_env(tmp_path: Path, monkeypatch):
 
 
 class TestSyncEngineDB:
-    def test_sync_index_skip_delete(self, sources_db):
+    def test_sync_index_skip_delete(self, sources_db, document_cleanup):
         from app.db.connection import connect
         from app.sources import store
         from app.sources.sync_engine import run_sync
@@ -246,6 +246,7 @@ class TestSyncEngineDB:
         assert len(indexed) == 1
         doc_id = indexed[0]["document_id"]
         assert doc_id
+        document_cleanup.append(doc_id)
 
         # Unchanged re-emit → skip
         fake.reemit_unchanged(f"fid-{uniq}")

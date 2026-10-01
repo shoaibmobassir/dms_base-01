@@ -1,0 +1,386 @@
+{
+ "at": "2026-09-28 03:55",
+ "model": "zai.glm-5",
+ "summary": {
+  "production": {
+   "tasks": 18,
+   "exact": 17,
+   "recall": 0.997,
+   "precision": 1.0,
+   "unintended_total": 0,
+   "errors": 0,
+   "median_s": 10.4,
+   "max_prompt_chars": 27758,
+   "calls_total": 650
+  }
+ },
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 763,
+   "result_changes": 763,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 79,
+   "peak_prompt_chars": 12986,
+   "seconds": 30.8,
+   "notes": [
+    "substitutions changed 763 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 10013,
+   "seconds": 4.6,
+   "notes": [
+    "substitutions limited to clause(s) 29.1",
+    "15 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 4933,
+   "seconds": 7.9,
+   "notes": [
+    "2 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 6614,
+   "seconds": 3.7,
+   "notes": [
+    "11 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 17,
+   "result_changes": 17,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 12,
+   "peak_prompt_chars": 26532,
+   "seconds": 18.1,
+   "notes": [
+    "substitutions changed 61 paragraphs; 44 not confirmed and reverted",
+    "126 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 41,
+   "result_changes": 41,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 8,
+   "peak_prompt_chars": 5029,
+   "seconds": 20.1,
+   "notes": [
+    "substitutions changed 41 paragraphs; 1 not confirmed and reverted",
+    "2 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1519,
+   "result_changes": 1519,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 154,
+   "peak_prompt_chars": 12986,
+   "seconds": 59.5,
+   "notes": [
+    "substitutions changed 1519 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 8849,
+   "seconds": 4.8,
+   "notes": [
+    "substitutions limited to clause(s) 35.8",
+    "10 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8926,
+   "seconds": 3.6,
+   "notes": [
+    "4 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 9525,
+   "seconds": 7.4,
+   "notes": [
+    "14 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 23,
+   "result_changes": 23,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 21,
+   "peak_prompt_chars": 27758,
+   "seconds": 16.7,
+   "notes": [
+    "substitutions changed 121 paragraphs; 98 not confirmed and reverted",
+    "243 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 75,
+   "result_changes": 75,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 10,
+   "peak_prompt_chars": 9022,
+   "seconds": 11.4,
+   "notes": [
+    "substitutions changed 75 paragraphs; 0 not confirmed and reverted",
+    "6 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 3009,
+   "result_changes": 3009,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 303,
+   "peak_prompt_chars": 17183,
+   "seconds": 110.2,
+   "notes": [
+    "substitutions changed 3009 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 17120,
+   "seconds": 9.5,
+   "notes": [
+    "substitutions limited to clause(s) 263.6",
+    "10 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 17198,
+   "seconds": 7.7,
+   "notes": [
+    "12 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 17101,
+   "seconds": 4.6,
+   "notes": [
+    "18 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 3070,
+     "before": "271.2 The Customer shall settle the Milestone Payment within 30 days of the Acceptance Certificate.",
+     "after": "271.2 The Customer shall settle the Milestone Payment within 45 days of the Acceptance Certificate."
+    },
+    {
+     "change": "rep",
+     "at": 3073,
+     "before": "271.5 The Customer shall settle the Milestone Payment within 30 days of the Acceptance Certificate.",
+     "after": "271.5 The Customer shall settle the Milestone Payment within 45 days of the Acceptance Certificate."
+    }
+   ],
+   "gold_changes": 37,
+   "result_changes": 35,
+   "recall": 0.9459,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": false,
+   "calls": 16,
+   "peak_prompt_chars": 26116,
+   "seconds": 40.3,
+   "notes": [
+    "substitutions changed 0 paragraphs; 0 not confirmed and reverted",
+    "415 paragraphs sent to editors; 40 changed; 5 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 146,
+   "result_changes": 146,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 26,
+   "peak_prompt_chars": 23904,
+   "seconds": 25.9,
+   "notes": [
+    "substitutions changed 146 paragraphs; 0 not confirmed and reverted",
+    "369 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  }
+ ]
+}

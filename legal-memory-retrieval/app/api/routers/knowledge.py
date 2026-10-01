@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from psycopg.rows import dict_row
 
+from app.api.acl import ACL_CLAUSE
+from app.auth.deps import resolve_member
 from app.db.connection import connect
 
 router = APIRouter(tags=["knowledge"])
@@ -13,103 +15,73 @@ def knowledge_health() -> dict:
     return {"service": SERVICE, "status": "ok"}
 
 
+# The argument bank mixes three kinds of record: arguments run in disputes and
+# petitions, PCIJ docket entries and Security Council resolution summaries.
+_KIND_SQL = """CASE m.matter_type
+    WHEN 'Permanent Court of International Justice' THEN 'pcij'
+    WHEN 'Security Council Resolution' THEN 'unsc'
+    ELSE 'disputes' END"""
+ARGUMENT_KINDS = ("disputes", "pcij", "unsc")
+
+
 @router.get("/arguments")
 def knowledge_arguments(
     q: str | None = Query(default=None),
+    kind: str | None = Query(default=None, description="disputes | pcij | unsc"),
     limit: int = Query(default=30, le=100),
+    offset: int = Query(default=0, ge=0),
+    member_id: str | None = Depends(resolve_member),
 ) -> dict:
-    params: dict = {"limit": limit}
+    params: dict = {"member_id": member_id, "limit": limit, "offset": offset}
+    wheres = [ACL_CLAUSE]
     if q:
         params["like"] = f"%{q}%"
-        sql = """
-            SELECT a.argument_id, a.matter_id, a.issue, a.position, a.argument,
-                   a.outcome, m.matter_code, m.practice_area, m.title AS matter_title
-            FROM arguments a
-            JOIN matters m ON m.matter_id = a.matter_id
-            WHERE a.issue ILIKE %(like)s OR a.argument ILIKE %(like)s
-               OR a.position ILIKE %(like)s
-            ORDER BY a.issue
-            LIMIT %(limit)s
-        """
-    else:
-        sql = """
-            SELECT a.argument_id, a.matter_id, a.issue, a.position, a.argument,
-                   a.outcome, m.matter_code, m.practice_area, m.title AS matter_title
-            FROM arguments a
-            JOIN matters m ON m.matter_id = a.matter_id
-            ORDER BY a.argument_id
-            LIMIT %(limit)s
-        """
+        wheres.append(
+            "(a.issue ILIKE %(like)s OR a.argument ILIKE %(like)s"
+            " OR a.position ILIKE %(like)s OR m.court ILIKE %(like)s)"
+        )
+    base_where = " AND ".join(wheres)
+    if kind in ARGUMENT_KINDS:
+        wheres.append(f"({_KIND_SQL}) = %(kind)s")
+        params["kind"] = kind
+    where = " AND ".join(wheres)
+    from_sql = """
+        FROM arguments a
+        JOIN matters m ON m.matter_id = a.matter_id
+        LEFT JOIN permissions p ON p.matter_id = a.matter_id
+    """
+    sql = f"""
+        SELECT a.argument_id, a.matter_id, a.issue, a.position, a.argument,
+               a.outcome, m.matter_code, m.practice_area, m.title AS matter_title,
+               m.court, m.matter_type, m.opened_date, m.status AS matter_status,
+               ({_KIND_SQL}) AS kind,
+               lead.name AS lead_name, lead.member_id AS lead_member_id,
+               COALESCE((
+                   SELECT json_agg(json_build_object('document_id', d.document_id, 'title', d.title,
+                                                     'document_type', d.document_type) ORDER BY d.doc_date NULLS LAST)
+                   FROM documents d WHERE d.document_id = ANY(a.supporting_documents)
+               ), '[]'::json) AS supporting_documents
+        {from_sql}
+        LEFT JOIN LATERAL (
+            SELECT mb.member_id, mb.name FROM matter_members mm JOIN members mb USING (member_id)
+            WHERE mm.matter_id = m.matter_id AND lower(coalesce(mm.role_on_matter, '')) = 'lead'
+            ORDER BY mb.member_id LIMIT 1
+        ) lead ON TRUE
+        WHERE {where}
+        ORDER BY array_position(ARRAY['disputes','pcij','unsc'], {_KIND_SQL}),
+                 m.opened_date DESC NULLS LAST, a.argument_id
+        LIMIT %(limit)s OFFSET %(offset)s
+    """
+    count_params = {k: v for k, v in params.items() if k not in ("limit", "offset")}
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(sql, params)
             items = list(cur.fetchall())
-            cur.execute("SELECT COUNT(*) AS n FROM arguments")
+            cur.execute(f"SELECT COUNT(*) AS n {from_sql} WHERE {where}", count_params)
             total = cur.fetchone()["n"]
-    return {"service": SERVICE, "total": total, "items": items}
-
-
-@router.get("/precedents")
-def knowledge_precedents() -> dict:
-    return {
-        "service": SERVICE,
-        "precedents": [
-            {
-                "id": "PREC-001",
-                "title": "Master Share Purchase Agreement (Locked-Box & W&I)",
-                "type": "M&A Contract",
-                "rating": 4.9,
-                "usage": "38 matters",
-                "summary": "Firm-wide gold standard SPA with locked-box value mechanisms, anti-leakage indemnity, and W&I insurance integration.",
-                "author": "Aryan Maharaj",
-                "office": "Mumbai",
-            },
-            {
-                "id": "PREC-002",
-                "title": "Company Petition u/s 241-242 (Oppression & Mismanagement)",
-                "type": "NCLT Pleading",
-                "rating": 4.8,
-                "usage": "24 matters",
-                "summary": "Tested pleading template establishing promoter siphoning, board exclusion, and urgent ad-interim restraining orders.",
-                "author": "Udant Dewan",
-                "office": "Delhi",
-            },
-            {
-                "id": "PREC-003",
-                "title": "SIAC Notice of Arbitration & Emergency Injunction Application",
-                "type": "Arbitration Notice",
-                "rating": 4.9,
-                "usage": "19 matters",
-                "summary": "Bespoke SIAC 2024 expedited emergency arbitrator application for cross-border JV disputes and asset freezing.",
-                "author": "Aryan Maharaj",
-                "office": "Singapore",
-            },
-        ],
-    }
-
-
-@router.get("/clauses")
-def knowledge_clauses() -> dict:
-    return {
-        "service": SERVICE,
-        "clauses": [
-            {
-                "id": "CLS-IND-01",
-                "title": "Indemnity Cap & De Minimis Threshold",
-                "category": "Liability & Risk",
-                "success_rate": "92% Enforceability",
-                "standard_text": "The aggregate maximum liability of the Seller in respect of Warranty Claims shall not exceed 15% of the Purchase Price, save and except in the case of Fundamental Warranties and Tax Claims.",
-                "fallback_pro_buyer": "Fundamental warranties and fraud claims uncapped; general warranty cap set at 25% of purchase price with 24-month survival period.",
-                "fallback_pro_seller": "All warranty and tax claims strictly capped at 10% of purchase price with 12-month survival and de minimis tipping threshold.",
-            },
-            {
-                "id": "CLS-LKB-02",
-                "title": "Locked-Box Anti-Leakage Undertaking",
-                "category": "M&A Structuring",
-                "success_rate": "96% Acceptance",
-                "standard_text": "The Seller covenants that between the Locked-Box Date and Closing Date, no Leakage has occurred or shall occur in relation to the Target Company.",
-                "fallback_pro_buyer": "Seller indemnifies on a rupee-for-rupee basis on gross tax basis for any unauthorized extraction or intra-group loan waiver.",
-                "fallback_pro_seller": "Permitted leakage explicitly includes ordinary-course director remuneration and approved pre-closing bonuses.",
-            },
-        ],
-    }
+            cur.execute(
+                f"SELECT ({_KIND_SQL}) AS kind, COUNT(*) AS n {from_sql} WHERE {base_where} GROUP BY 1",
+                {k: v for k, v in count_params.items() if k != "kind"},
+            )
+            kinds = {r["kind"]: r["n"] for r in cur.fetchall()}
+    return {"service": SERVICE, "total": total, "items": items, "kinds": kinds}

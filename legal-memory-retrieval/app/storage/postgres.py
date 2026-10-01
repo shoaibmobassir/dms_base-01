@@ -17,6 +17,8 @@ Migration path:
 """
 from __future__ import annotations
 
+from app.api.acl import doc_acl
+
 from typing import Any
 
 from psycopg.rows import dict_row
@@ -30,8 +32,8 @@ from app.retrieval.matter_scope import MIN_CONTAINED_CODE_LEN, MIN_CONTAINED_TIT
 _ACL_WHERE = """
     (
         (%(member_id)s::text IS NULL)
-        OR p.restricted = FALSE
-        OR %(member_id)s::text = ANY (p.allowed_members)
+        OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+            AND NOT (%(member_id)s::text = ANY (p.denied_members)))
     )
 """
 
@@ -65,10 +67,9 @@ class PgSearchStore:
             return []
         # Title/code are weighted into the match vector so party names that
         # live on the document header still retrieve when chunk body omits them.
-        match_vec = (
-            "c.tsv || setweight(to_tsvector('english', coalesce(d.title, '')), 'A') "
-            "|| setweight(to_tsvector('english', coalesce(d.matter_code, '')), 'A')"
-        )
+        # chunks.tsv_full = chunk text + document title/code at weight A, stored and
+        # GIN-indexed (migration 20260926b); the per-row concatenation it replaces forced a seq scan.
+        match_vec = "c.tsv_full"
         sql = f"""
             SELECT d.document_id, d.matter_id, d.matter_code, d.title, d.document_type,
                    d.author_name, d.doc_date,
@@ -79,7 +80,7 @@ class PgSearchStore:
             JOIN documents d ON d.document_id = c.document_id
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN permissions p ON p.matter_id = c.matter_id
-            WHERE {_ACL_WHERE}
+            WHERE {_ACL_WHERE} AND {doc_acl('c')}
             AND ({match_vec}) @@ to_tsquery('english', %(tsquery)s)
             {matter_clause}
             ORDER BY score DESC
@@ -131,7 +132,7 @@ class PgVectorStore:
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN permissions p ON p.matter_id = c.matter_id
             WHERE c.embedding IS NOT NULL
-            AND {_ACL_WHERE}
+            AND {_ACL_WHERE} AND {doc_acl('c')}
             {matter_clause}
             ORDER BY c.embedding <=> %(qvec)s::vector
             LIMIT %(limit)s
@@ -244,7 +245,7 @@ class PgGraphStore:
             JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN permissions p ON p.matter_id = d.matter_id
-            WHERE {_ACL_WHERE}
+            WHERE {_ACL_WHERE} AND {doc_acl('d')}
               AND d.matter_id IN ({related_sql})
             ORDER BY d.matter_id, c.chunk_index
             LIMIT %(limit)s
@@ -322,7 +323,7 @@ class PgGraphStore:
             JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN permissions p ON p.matter_id = d.matter_id
-            WHERE {_ACL_WHERE}
+            WHERE {_ACL_WHERE} AND {doc_acl('d')}
               AND d.matter_id = ANY(%(expanded_ids)s)
             ORDER BY d.matter_id, c.chunk_index
             LIMIT %(limit)s
@@ -455,7 +456,7 @@ class PgMetadataStore:
             JOIN permissions p ON p.matter_id = d.matter_id
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN clients cl ON cl.client_id = m.client_id
-            WHERE {_ACL_WHERE}
+            WHERE {_ACL_WHERE} AND {doc_acl('d')}
             AND (
                 m.title ILIKE %(like)s ESCAPE '\\'
                 OR replace(replace(m.title, '—', '-'), '–', '-') ILIKE %(like_norm)s ESCAPE '\\'
@@ -490,7 +491,7 @@ class PgMetadataStore:
             JOIN documents d ON d.document_id = c.document_id
             JOIN permissions p ON p.matter_id = c.matter_id
             JOIN matters m ON m.matter_id = d.matter_id
-            WHERE {_ACL_WHERE}
+            WHERE {_ACL_WHERE} AND {doc_acl('c')}
             AND (
                 m.matter_id = ANY(%(matter_ids)s)
                 OR m.matter_code = ANY(%(codes)s)
@@ -527,7 +528,7 @@ class PgMetadataStore:
             JOIN permissions p ON p.matter_id = d.matter_id
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN clients cl ON cl.client_id = m.client_id
-            WHERE {_ACL_WHERE}
+            WHERE {_ACL_WHERE} AND {doc_acl('d')}
             AND (
                 m.matter_id = ANY(%(matter_ids)s)
                 OR m.matter_code ILIKE ANY(%(codes)s)
@@ -590,7 +591,7 @@ class PgMatterStore:
             FROM matters m
             JOIN clients cl ON cl.client_id = m.client_id
             JOIN permissions p ON p.matter_id = m.matter_id
-            JOIN documents d ON d.matter_id = m.matter_id
+            JOIN documents d ON d.matter_id = m.matter_id AND {doc_acl('d')}
             JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
             WHERE m.practice_area ILIKE %(practice_like)s ESCAPE '\\'
               AND {_ACL_WHERE}
@@ -624,7 +625,7 @@ class PgMatterStore:
             FROM matters m
             JOIN clients cl ON cl.client_id = m.client_id
             JOIN permissions p ON p.matter_id = m.matter_id
-            JOIN documents d ON d.matter_id = m.matter_id
+            JOIN documents d ON d.matter_id = m.matter_id AND {doc_acl('d')}
             JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
             WHERE (cl.name ILIKE %(client_like)s ESCAPE '\\' OR %(client_name)s = ANY(cl.aliases))
               AND {_ACL_WHERE}
@@ -659,7 +660,7 @@ class PgMatterStore:
             FROM matters m
             JOIN clients cl ON cl.client_id = m.client_id
             JOIN permissions p ON p.matter_id = m.matter_id
-            JOIN documents d ON d.matter_id = m.matter_id
+            JOIN documents d ON d.matter_id = m.matter_id AND {doc_acl('d')}
             JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
             WHERE m.legal_issues && %(issues)s
               AND {_ACL_WHERE}
@@ -699,7 +700,7 @@ class PgMatterStore:
             FROM matters m
             JOIN clients cl ON cl.client_id = m.client_id
             JOIN permissions p ON p.matter_id = m.matter_id
-            JOIN documents d ON d.matter_id = m.matter_id
+            JOIN documents d ON d.matter_id = m.matter_id AND {doc_acl('d')}
             JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
             WHERE {_ACL_WHERE}
               AND (
@@ -762,7 +763,7 @@ class PgMatterStore:
             FROM matters m
             JOIN clients cl ON cl.client_id = m.client_id
             JOIN permissions p ON p.matter_id = m.matter_id
-            LEFT JOIN documents d ON d.matter_id = m.matter_id
+            LEFT JOIN documents d ON d.matter_id = m.matter_id AND {doc_acl('d')}
             WHERE {_ACL_WHERE}
               AND (
                 cl.name ILIKE %(like)s ESCAPE '\\'
@@ -832,7 +833,7 @@ class PgMatterStore:
             FROM matters m
             JOIN clients cl ON cl.client_id = m.client_id
             JOIN permissions p ON p.matter_id = m.matter_id
-            LEFT JOIN documents d ON d.matter_id = m.matter_id
+            LEFT JOIN documents d ON d.matter_id = m.matter_id AND {doc_acl('d')}
             WHERE {_ACL_WHERE}
               AND {" AND ".join(clauses)}
             GROUP BY m.matter_id, m.matter_code, m.title, m.practice_area,
@@ -959,6 +960,7 @@ class PgMatterStore:
                   JOIN chunks c ON c.document_id = d2.document_id
                   WHERE d2.matter_id = m.matter_id
                     AND c.tsv @@ to_tsquery('english', %(evidence_tsquery)s)
+                    AND (%(member_id)s::text IS NULL OR c.visible_to IS NULL OR %(member_id)s::text = ANY (c.visible_to))
                 ), 0.0) AS doc_evidence_score
             """
 
@@ -981,7 +983,7 @@ class PgMatterStore:
             FROM matters m
             JOIN clients cl ON cl.client_id = m.client_id
             JOIN permissions p ON p.matter_id = m.matter_id
-            LEFT JOIN documents d ON d.matter_id = m.matter_id
+            LEFT JOIN documents d ON d.matter_id = m.matter_id AND {doc_acl('d')}
             {evidence_join}
             WHERE {' AND '.join(filters)}
             GROUP BY m.matter_id, m.matter_code, m.title, m.practice_area,
@@ -1026,7 +1028,7 @@ class PgMatterStore:
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN permissions p ON p.matter_id = d.matter_id
             JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
-            WHERE {_ACL_WHERE}
+            WHERE {_ACL_WHERE} AND {doc_acl('d')}
               AND d.matter_id = ANY(%(matter_ids)s)
             ORDER BY d.matter_id, d.document_id
             LIMIT %(limit)s
@@ -1065,7 +1067,7 @@ class PgMatterStore:
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN permissions p ON p.matter_id = d.matter_id
             JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
-            WHERE {_ACL_WHERE}
+            WHERE {_ACL_WHERE} AND {doc_acl('d')}
               AND a.matter_id = ANY(%(matter_ids)s)
               AND d.matter_id = ANY(%(matter_ids)s)
             ORDER BY d.document_id
@@ -1104,7 +1106,7 @@ class PgMatterStore:
             JOIN matters m ON m.matter_id = d.matter_id
             JOIN permissions p ON p.matter_id = d.matter_id
             JOIN chunks c ON c.document_id = d.document_id AND c.chunk_index = 0
-            WHERE {_ACL_WHERE}
+            WHERE {_ACL_WHERE} AND {doc_acl('d')}
               AND lower(replace(replace(d.title, '—', '-'), '–', '-')) = lower(%(norm)s)
             ORDER BY d.document_id
             LIMIT %(limit)s
@@ -1205,7 +1207,7 @@ class PgHierarchicalStore:
             JOIN clients cl ON cl.client_id = m.client_id
             JOIN permissions p ON p.matter_id = d.matter_id
             WHERE d.matter_id = ANY(%(matter_ids)s)
-              AND {_ACL_WHERE}
+              AND {_ACL_WHERE} AND {doc_acl('d')}
               AND (
                 d.title ILIKE %(like)s ESCAPE '\\'
                 OR coalesce(d.folder_path,'') ILIKE %(like)s ESCAPE '\\'
@@ -1260,7 +1262,7 @@ class PgHierarchicalStore:
             WHERE c.document_id = ANY(%(doc_ids)s)
               AND c.version_id IS NOT NULL
               {parent_clause}
-              AND {_ACL_WHERE}
+              AND {_ACL_WHERE} AND {doc_acl('d')}
               AND (
                 c.tsv @@ plainto_tsquery('english', %(q)s)
                 OR c.text ILIKE %(like)s ESCAPE '\\'
@@ -1299,7 +1301,7 @@ class PgHierarchicalStore:
                 JOIN permissions p ON p.matter_id = d.matter_id
                 WHERE c.document_id = ANY(%(doc_ids)s)
                   AND c.version_id IS NULL
-                  AND {_ACL_WHERE}
+                  AND {_ACL_WHERE} AND {doc_acl('d')}
                   AND (
                     c.tsv @@ plainto_tsquery('english', %(q)s)
                     OR c.text ILIKE %(like)s ESCAPE '\\'

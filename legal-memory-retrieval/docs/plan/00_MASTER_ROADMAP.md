@@ -54,6 +54,8 @@ Each doc defines the problem, requirements, our independent design, and the PM g
 | `11_citation_verify.md` | Citation verification — grounding + authority check | Sprint 13 | P3 |
 | `12_audit.md` | Current state audit — gaps, broken links, dead code | Now | P0 |
 | `13_document_intelligence_version_control.md` | Doc intelligence + immutable VC + Review Engine (phased) | Sprint 10+ | P0 |
+| `14_benchmarks_latency.md` | External benchmarks (LegalBench-RAG, CUAD, Harvey LAB) + answer latency | 2026-09-27 | P0 |
+| `15_km_desk_and_assistant_scale.md` | Ask the Firm KM panel (matters/docs/people) + Assistant multi-doc review + long-doc editing experiments | 2026-09-27 | P0 |
 
 ---
 

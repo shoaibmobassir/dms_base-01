@@ -6,3 +6,17 @@ evals/dataset.jsonl
 evals/runs/
 # Added by code-review-graph
 .code-review-graph/
+
+# Production env, build output, browser-test artefacts
+.env.production
+frontend/test-results/
+frontend/playwright-report/
+
+# Mounted secret files (SECRETS_DIR)
+secrets/
+backups/
+frontend/public/pdfjs/
+data/object_store/render_cache/
+
+# External benchmark data (licence-gated, never committed; plan 14)
+data/benchmarks/

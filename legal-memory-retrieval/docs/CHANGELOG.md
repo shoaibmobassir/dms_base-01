@@ -2,6 +2,125 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-09-28 — Write layer and calendar (plan 17: P2, P3)
+
+- Matters: open (with lead, team and access mode), edit and close with optimistic concurrency; team with start/end
+  dates (ended assignments lose team access); timeline entries beside document dates; arguments; related-matter
+  links that never reveal a walled matter.
+- Clients: intake behind a firm-wide conflict check (clients, aliases, subsidiaries, every matter's other side);
+  hits on matters the requester cannot see are redacted; Risk clears, waives (with reasons) or declares a conflict;
+  the client's status follows. People edit their own expertise; admins onboard people with firm roles.
+- Live updates: a domain-event outbox and an ACL-filtered SSE stream; pages refresh when colleagues change things.
+  Home shows "My work" (my matters, due dates, drafts, comments for me, decisions waiting).
+- Calendar: events beside court deadlines; Mine / My team / Matter / Firm; list, week and month; court dates stay
+  unconfirmed until a second lawyer confirms; private, revocable ICS feeds with restricted titles redacted.
+- Tests: 853 backend, 50 browser (E2E records cleaned up by a global teardown).
+
+## 2026-09-28 — Editor gaps, document privacy and an access sweep (plan 17: G, P1b)
+
+- Editor: bold/italic/underline and paragraph styles saved as Word tracked formatting changes; per-window edit
+  locks with takeover (same person or matter manager); open comments carried to new versions (re-found by quote,
+  "text changed" otherwise); annotation authors from the session. Fixed: stale exact view after a save (render
+  cache), vector-reuse query plan (100-page save 3.3 s → 1.2 s), toolbar acting on a stale selection.
+- Document privacy: Private (owner + shares) and Restricted (+ matter managers), compiled into `visible_to` on
+  documents and chunks and enforced beside the matter ACL on every read path; walls.manage reads audited;
+  "Private draft" uploads; privacy chip/dialog; lock icons in lists.
+- Access sweep: chunk context, review candidates/jobs/findings, tabular reviews and workflow runs (spoofable
+  header, shared results), Assistant document reads, project document copy across matters, lapsed staffing.
+- Tests: 834 backend, 45 browser; editor round-trip eval 100 % incl. formatting; Ask the Firm live eval 109/109.
+
+## 2026-09-28 — Document viewer/editor: exact view, in-browser Word editing, versions, comments (plan 16)
+
+- Exact view: any stored file shown as pages; Word/Office converted by Gotenberg (Apache-2.0 container running
+  LibreOffice), cached by content hash.
+- Editor (`/documents/:id/edit`, TipTap/ProseMirror, MIT): paragraph editing of Word documents; saves write Word
+  tracked changes under the signed-in person into the version's own .docx (untouched formatting kept) or a clean
+  copy; one editor at a time (lock, 5-min TTL, heartbeat), server-side draft autosave, stale saves refused (409).
+- Versions: upload a file as the next version (attributed to the session), paragraph + word compare, tracked-changes
+  .docx compare, document activity history (`document_events`).
+- Comments on the exact view: select text → comment, replies, resolve/reopen; stored per version (`annotations`).
+- Performance: fast Word style lookup in the DOCX extractor (13.6k paragraphs 4.1 s → 0.6 s); after a save, unchanged
+  chunks keep their vectors and the rest are embedded in the background. 400-page save p95 7.7 s → 2.2 s.
+- Eval: `evals/editor_roundtrip_eval.py` (10/100/400 pages): all fidelity checks 100 %.
+- Tests: `tests/test_document_editor.py` (15), `tests/test_document_comments.py` (7), `frontend/e2e/editor.spec.ts` (3).
+  `pytest tests/`: 806 passed, 1 skipped; Playwright: 41 passed, 4 LLM-gated skipped.
+
+## 2026-09-27 — Claim-level grounding for Ask the Firm and the Assistant
+
+Problem (live answers): quotes existed in the document but did not state the cited fact ("Board approved the
+transfer on 12 September" cited to "the meeting was held on 12 September"); Ask the Firm chips opened the first
+chunk of a document, not the passage behind the sentence; the Assistant answered statutory questions from model
+memory (CERC transmission charges described with the repealed 2010 PoC regime).
+
+- `app/grounding/`: every displayed sentence is verified before the lawyer sees it — candidate spans from the
+  cited sources (and, for auto-citation, the rest of the evidence) → element-by-element support map from a
+  verifier model other than the generator (`GROUNDING_VERIFIER_MODEL`, default Kimi K2.5) → figures/dates guard →
+  heading guard → label guards → "not in the records" re-checked against whole documents. Unsupported and
+  contradicted sentences are removed and reported; partly supported ones are shown flagged. Fails closed.
+  Optional multi-model consensus (`GROUNDING_CONSENSUS_MODELS`), off by default.
+- Assistant: final answer held until verified (`text_final` SSE), `ask_firm` passages load their full documents
+  so every citation is checked, "answer from legal knowledge" rule removed, `ask_inputs` only for real ambiguity,
+  one retry on the generator's malformed tool-call 400.
+- Ask the Firm: `span_citations` (`[n]` → exact verified quotes, offsets, chunk), `grounding` report,
+  `verifying` stream event; UI shows span chips, the Inspector shows the verified quotes, removed-statement notice.
+- Ingest: `canonical.py` heading parser read "SECTION Meeting" as section "M" / title "eeting" (IGNORECASE on
+  the Roman-numeral class); unnumbered DOCX headings now parse as headings. 75 documents reindexed.
+- Eval: `evals/grounding_eval.py` + `evals/grounding/gold.jsonl` (41 questions), independent judge
+  (DeepSeek V3.2), 23/24 agreement with hand labels. Shown-as-supported precision: Assistant 0.975–0.980,
+  Ask the Firm 0.92–0.96 (baseline strict precision 0.81 / 0.63); memory-sourced legal statements 15 → 0.
+  Details: `docs/experiments/grounding_2026-09-27.md`; next steps: `docs/plan/GROUNDING_ROADMAP.md`.
+- Tests: `tests/test_grounding.py` (17); `frontend/e2e/ask.spec.ts` span-citation test. `pytest tests/`:
+  704 passed; Playwright: 26 passed, 3 LLM-gated skipped.
+
+## 2026-09-27 — Phase 1: access model, admin portal, access requests (plan §5)
+
+- New source of truth for access: `firm_roles`/`role_permissions`/`member_roles`, `teams`/`team_members` (seeded from practice areas and offices), `matter_access` (open / team / restricted + hide existence), `matter_grants` (member or team, read/edit/manage, reason, expiry), `matter_screens` (deny, always wins), `access_requests` (`20260927a`). `permissions` is now compiled from them by `acl_compile_matter()` triggers; the migration proves the backfill changed no matter's permissions. `matter_members` gains `started_at`/`ended_at`.
+- Every ACL clause (10 definitions, ~75 queries) also enforces `denied_members`.
+- Security fix found by the new test matrix: retrieval caches (engine v2 and legacy) served results cached before a screen/revocation. Cache keys now include an ACL epoch (`max(permissions.compiled_at)`, indexed in `20260927b`).
+- APIs: `/api/access/*` (me, matter access summary/status, mode with optimistic `row_version`, grants, screens, requests and decisions) and `/api/admin/*` (roles, users + role assignment with last-admin guard, teams CRUD + members, walls overview). All changes audited (`access.*`, `admin.*`).
+- Restricting a matter keeps the manager who restricted it inside the wall (manage grant).
+- Dev mode (`AUTH_ENABLED=false`) trusts `X-Member-Id` only from loopback clients (`DEV_AUTH_ANY_HOST` to override locally).
+- UI: matter **Access** tab (mode cards, hide-existence, team, grants with expiry, screens for risk & compliance, pending requests, change history); locked-matter page with **Request access** (hidden matters stay indistinguishable from missing); **Admin** page (users & roles, teams, ethical walls, access requests), shown only to people with an admin permission.
+- Tests: `tests/test_admin_access.py` (12, through HTTP: screens block matter/document/search/Ask, team mode, team grants, stale writes, request flow, hidden matters, audit, loopback-only dev auth); `frontend/e2e/access.spec.ts` (3). Playwright now runs with one worker (specs share the database). `pytest tests/`: 687 passed; Playwright: 22 passed, 3 LLM-gated skipped.
+- Not yet: document-level private/restricted overrides (planned as PostgreSQL RLS with per-connection member context), SCIM/Entra group sync for teams.
+
+## 2026-09-26 — Phase 0 stabilisation (plan §16)
+
+- BM25 match vector stored as `chunks.tsv_full` (chunk text + document title/code at weight A) with a GIN index and triggers (`20260926b`). Same vector, same ranking; worst-case common-word query 921 → 435 ms. Soak (300 requests, 20-way bursts): p50 1.77 → 0.69 s, p95 25 → 9.0 s, channel timeouts 3 → 0. p95 target of 4 s at 20-way not yet met (CPU-bound cross-encoder on a laptop).
+- `document_blocks` unique per (version, sequence) (`20260926c`): re-parsing had appended full copies (Acme SPA v2 ×4). `save_canonical_blocks` upserts and returns the stored ids; a parse without page spans keeps earlier page numbers.
+- Version `page_count` synced from blocks (`app.documents.sync_page_count`, backfill `20260926d`): the viewer showed a 3-page agreement as 40 five-block parts.
+- Streaming Ask: `POST /api/answers/stream` (SSE: evidence → key_finding → delta → final; final = same payload as `POST /api/answers`, deterministic records answer if validation fails). Ask page renders evidence immediately and the answer as it is written.
+- `/api/system/ready` is 503 until retrieval models are warm and every migration is applied (`app/observability/warmup.py`); Docker health-check start period 120 s.
+- Tests: `test_wall_retrieval` queries title + body passage instead of a generic OCR header; Playwright Acme test pages to the clause; chat starter cards use `chat-starter`. CI runs the Ask the Firm and firm-tool tests with `WARM_MODELS=0`. `pytest tests/`: 675 passed.
+
+## 2026-09-26 — Ask the Firm rebuilt as a KM desk; Assistant firm tools; pool-leak fix
+
+Why: benchmarks (in-process `retrieve()` R@10) were green while the live page failed. A live HTTP eval exposed it: `POST /api/answers` on 109 DB-derived KM questions passed **25.7%**, with 64/109 answers falling back to "Retrieved firm records for…".
+
+Root causes (all reproduced over HTTP + DB):
+- Scoped questions: the UI sent `"<code>: q"`; with rerank skipped under hard scope, RRF put the metadata channel's title-only chunks first, and `_pack_context` kept **one chunk per document** → the LLM saw headings and abstained.
+- Ask never read `matter_members`/`members` → every "who worked on…" question failed.
+- Async pool opened on uvicorn's loop but used from per-request `asyncio.run()` loops → stranded connections, channels waiting the 30 s pool timeout and silently returning `[]`.
+- `DOC_ID_RE` / `MATTER_CODE_RE` rejected hex document ids and 4-letter codes (`CORP/BLR/…`).
+
+Shipped:
+- `app/km/`: structured scope (`AskRequest.scope`), in-matter passage ranking (BM25 + exact vector + CE, heading/duplicate filter, per-doc cap), matter records + staffing + people search as citable evidence (DOC/MTR/MEM ids validated), matter resolver (IDF identity fields, verbatim-title bonus, dominant/cluster rules, `matter_profiles` embeddings), named-client lists, explicit `not_found`, deterministic records fallback.
+- Assistant tools `ask_firm`, `resolve_matter`, `get_matter_profile`, `find_people`; `list_workflows`/`read_workflow` now dispatch.
+- Per-loop async pools + `app/db/loop.py` loop workers; per-channel timeout (`RETRIEVAL_CHANNEL_TIMEOUT_S`, 20 s) reported in `latency_ms.channel_timeouts`; model warm-up at startup.
+- UI: Chat → **Assistant**; **Ask the Firm** back in the sidebar/mobile nav; scope sent as `{type, value}`; DOC/MTR/MEM citation chips, people and scope panels, not-found state.
+
+Measured (`evals/km_live_eval.py`, HTTP, n=109, gold from SQL): pass **25.7% → 96–99%** (runs vary by LLM latency on the slow-channel check), extractive fallbacks **64 → 0**, evidence p95 ≈ 1.9 s (LLM dominates end-to-end latency). Retrieval engine ranking unchanged (A/B on `evals/retrieval_eval.py`, see below). Migration: `20260926a_matter_profiles.sql`; rebuild with `python scripts/build_matter_profiles.py`.
+
+Known gaps: BM25 channel concatenates title vectors per row (seq scan, ~0.9 s on common terms) → p95 degrades under 20-way concurrency (`evals/soak_retrieval.py`); `tests/test_security.py::test_wall_retrieval` fails identically on the previous commit (generic query no longer ranks the insider's matter in the top 20; no leak).
+
+## 2026-09-23 — Amazon Bedrock AI layer (Ask / chat)
+
+Added Bedrock as the cloud AI provider for Ask-the-Firm and chat via `AWS_BEARER_TOKEN_BEDROCK` (Mantle Chat Completions + Runtime InvokeModel embeddings). Default answer path prefers Bedrock when the bearer token is set. Production retrieval embeddings stay MiniLM 384-d (`EMBEDDING_PROVIDER=minilm`); Bedrock embedders are opt-in behind `app/embeddings/factory.py` and require a re-embed before use in retrieval. No fusion / eval metric change. Smoke: `python scripts/bedrock_smoke.py`.
+
+## 2026-09-22 — FirmOS frontend rebuild (code_pre baseline)
+
+Replaced the empty/`frontend_2` React tree with a Vite + React 19 + TypeScript SPA under `legal-memory-retrieval/frontend`, visual baseline from independent FirmOS prototype `app/code_pre` (Tailwind wine/paper shell). Build outputs to `static/` for FastAPI `/ui`. Live API wiring for Home, Ask, Chat, Matters, Projects, Documents, Clients, People, Knowledge, Teams, Activity, Deadlines, Data Sources, Settings; remaining IA routes ship as Preview pages. No retrieval fusion / eval changes. Dependency audit + IP origin recorded under `docs/legal/`.
+
 ## 2026-09-19 — Universal source sync Phase 0 (FakeConnector)
 
 Started the universal document sync engine behind `SOURCES_SYNC_ENABLED` (default **off**). No retrieval fusion / matter-scope changes. No new dependencies (reuses `cryptography`, Redis).

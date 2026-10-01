@@ -1,0 +1,14 @@
+{
+  "source": "evals/last_retrieval_run.json at 2026-09-24 (445 questions, keyword+metadata+vector+graph)",
+  "overall": {
+    "recall@10": 0.7635,
+    "mrr": 0.8563,
+    "ndcg@10": 0.7924
+  },
+  "tolerance": 0.02,
+  "exact": {
+    "permission": {
+      "recall@10": 1.0
+    }
+  }
+}

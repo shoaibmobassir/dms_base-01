@@ -4,7 +4,7 @@ Clean-room independent implementation.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 import json
 import logging
 from typing import Any, Dict, List, Optional
@@ -182,7 +182,7 @@ class WorkflowEngine:
             inputs=inputs,
             step_outputs=step_outputs,
             final_output=final_text,
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now(UTC).replace(tzinfo=None).isoformat(),
         )
 
 

@@ -95,7 +95,7 @@ def object_store_env(tmp_path: Path, monkeypatch):
 
 
 class TestUploadBatchDB:
-    def test_create_and_process_preserves_folder_path(self, object_store_env):
+    def test_create_and_process_preserves_folder_path(self, object_store_env, batch_cleanup):
         from app.db.connection import connect
         from app.ingest.upload_batch import create_upload_batch, process_upload_batch
         from app.documents.canonical import get_version_blocks
@@ -115,6 +115,7 @@ class TestUploadBatchDB:
             (f"Transaction Documents/Agreements/notes_{uniq}.txt", f"ARTICLE I Definitions {uniq}\n\nBuyer means the purchasing party.\n".encode()),
         ]
         batch = create_upload_batch(matter_id=matter_id, files=files)
+        batch_cleanup.append(batch["batch_id"])
         assert batch["total_files"] == 3
         assert all(f["storage_uri"].startswith("file://") for f in batch["files"])
         rels = {f["relative_path"] for f in batch["files"]}
@@ -146,7 +147,7 @@ class TestUploadBatchDB:
         blocks = get_version_blocks(version_id)
         assert len(blocks) >= 1
 
-    def test_one_failure_does_not_fail_batch(self, object_store_env, monkeypatch):
+    def test_one_failure_does_not_fail_batch(self, object_store_env, monkeypatch, batch_cleanup):
         from app.db.connection import connect
         from app.ingest import upload_batch as ub
 
@@ -164,6 +165,7 @@ class TestUploadBatchDB:
             (f"Bad/fail_{uniq}.txt", f"will fail {uniq}".encode()),
         ]
         batch = ub.create_upload_batch(matter_id=matter_id, files=files)
+        batch_cleanup.append(batch["batch_id"])
 
         original = ub._extract_document
 

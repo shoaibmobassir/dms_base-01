@@ -45,10 +45,16 @@ def compute_block_hash(text: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+# The section number must be real numbering followed by a delimiter: digits ("12.3"),
+# upper-case Roman numerals ("IV") or a single letter ("A"). Matching the number
+# case-insensitively read "SECTION Meeting" as section "M", title "eeting".
 _RE_HEADING = re.compile(
-    r"^(?:ARTICLE|SECTION|CLAUSE|SCHEDULE|EXHIBIT|ANNEX|PART)\s+([0-9IVXLCDM\.]+)\.?\s*[:\-—]?\s*(.*)$",
-    re.IGNORECASE,
+    r"^(?i:ARTICLE|SECTION|CLAUSE|SCHEDULE|EXHIBIT|ANNEX|PART)\s+"
+    r"(\d+(?:\.\d+)*|[IVXLCDM]+|[A-Z])(?=$|[\s.:\-—])\.?\s*[:\-—]?\s*(.*)$"
 )
+# Unnumbered headings: the DOCX extractor writes Heading-style paragraphs as "SECTION <text>".
+_RE_UNNUMBERED_HEADING = re.compile(r"^SECTION\s+(\S.{0,158})$")
+_HEADING_MAX_CHARS = 200
 _RE_NUMBERED_CLAUSE = re.compile(
     r"^([0-9]+\.[0-9]+(?:\.[0-9]+)*)\.?\s+(.+)$"
 )
@@ -66,6 +72,12 @@ _RE_MD_SECTION = re.compile(
     r"^##\s+Section\s+([\d.]+)\.\s+(.+)$",
     re.IGNORECASE,
 )
+
+
+def _heading_slug(title: str) -> str:
+    """Stable section id for an unnumbered heading ("Specific disclosure" → "specific-disclosure")."""
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    return slug[:60] or "section"
 
 
 def _page_for_offset(
@@ -128,14 +140,23 @@ def parse_canonical_blocks(
         block_id = f"BLK-{uuid.uuid4().hex[:10].upper()}"
         text_hash = compute_block_hash(cleaned_text)
 
-        heading_match = _RE_HEADING.match(cleaned_text)
+        heading_match = _RE_HEADING.match(cleaned_text) if len(cleaned_text) <= _HEADING_MAX_CHARS else None
+        plain_heading = (
+            _RE_UNNUMBERED_HEADING.match(cleaned_text)
+            if heading_match is None and "\n" not in cleaned_text else None
+        )
         md_match = _RE_MD_SECTION.match(cleaned_text)
         clause_match = _RE_NUMBERED_CLAUSE.match(cleaned_text)
         letter_match = _RE_LETTERED_CLAUSE.match(cleaned_text)
         sig_match = _RE_SIGNATURE.match(cleaned_text)
         footnote_match = _RE_FOOTNOTE.match(cleaned_text)
 
-        if heading_match or md_match:
+        if plain_heading and not md_match:
+            current_section_title = plain_heading.group(1).strip()
+            current_section_id = _heading_slug(current_section_title)
+            block_type = "heading"
+            meta = {"is_header": True, "level": 1, "numbered": False}
+        elif heading_match or md_match:
             m = heading_match or md_match
             assert m is not None
             current_section_id = m.group(1).strip()
@@ -205,7 +226,13 @@ def parse_from_extracted(
 
 
 def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
-    """Persist a list of canonical blocks into PostgreSQL."""
+    """Persist canonical blocks, one row per (version_id, sequence).
+
+    Re-parsing a version (reindex, review, diff, lazy block load) updates the
+    existing rows instead of appending copies. The stored block_id is kept and
+    written back onto each ``DocumentBlock`` so callers that link chunks or
+    anchors to blocks use the persisted id.
+    """
     if not blocks:
         return 0
 
@@ -223,10 +250,20 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
                         %(sec_id)s, %(sec_title)s, %(btype)s, %(text)s, %(thash)s,
                         %(soff)s, %(eoff)s, %(meta)s
                     )
-                    ON CONFLICT (block_id) DO UPDATE SET
+                    ON CONFLICT (version_id, sequence) DO UPDATE SET
+                        -- A parse without page spans puts every block on page 1;
+                        -- keep the page a page-aware parse recorded earlier.
+                        page_number = CASE WHEN EXCLUDED.page_number <> 1 THEN EXCLUDED.page_number
+                                           ELSE document_blocks.page_number END,
+                        section_id = EXCLUDED.section_id,
+                        section_title = EXCLUDED.section_title,
+                        block_type = EXCLUDED.block_type,
                         text = EXCLUDED.text,
                         text_hash = EXCLUDED.text_hash,
+                        start_offset = EXCLUDED.start_offset,
+                        end_offset = EXCLUDED.end_offset,
                         metadata = EXCLUDED.metadata
+                    RETURNING block_id
                     """,
                     {
                         "bid": b.block_id,
@@ -244,6 +281,9 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
                         "meta": json.dumps(b.metadata),
                     },
                 )
+                row = cur.fetchone()
+                if row:
+                    b.block_id = row["block_id"] if isinstance(row, dict) else row[0]
             conn.commit()
     return len(blocks)
 

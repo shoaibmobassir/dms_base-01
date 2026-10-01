@@ -1,0 +1,2 @@
+pretend-infected %PDF-1.7
+%fake

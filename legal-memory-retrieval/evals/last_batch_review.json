@@ -1,0 +1,97 @@
+{
+ "candidates_with_gold": 2436,
+ "sizes": {
+  "100": {
+   "documents": 100,
+   "cell_accuracy": 0.9933,
+   "per_question": {
+    "number": 1.0,
+    "meeting": 0.99,
+    "date": 0.99
+   },
+   "not_found_rate": 0.0033,
+   "quote_verified_rate": 0.9767,
+   "misses": [
+    {
+     "doc": "DOC-00752",
+     "q": "meeting",
+     "answer": "2311",
+     "gold": "23111"
+    },
+    {
+     "doc": "DOC-01016",
+     "q": "date",
+     "answer": "",
+     "gold": "1992-05-30"
+    }
+   ],
+   "wall_s": 14.4,
+   "first_row_s": 2.0,
+   "screen_ms": 175.4,
+   "model_calls": 100,
+   "errors": 0,
+   "cached_rerun_s": 0.14,
+   "cached_rows": 100
+  },
+  "300": {
+   "documents": 300,
+   "cell_accuracy": 0.9967,
+   "per_question": {
+    "number": 0.9933,
+    "meeting": 1.0,
+    "date": 0.9967
+   },
+   "not_found_rate": 0.0011,
+   "quote_verified_rate": 0.9844,
+   "misses": [
+    {
+     "doc": "DOC-01386",
+     "q": "number",
+     "answer": "1127",
+     "gold": "1227"
+    },
+    {
+     "doc": "DOC-00929",
+     "q": "date",
+     "answer": "",
+     "gold": "1990-09-25"
+    },
+    {
+     "doc": "DOC-02922",
+     "q": "number",
+     "answer": "2663 (2022)",
+     "gold": "1540"
+    }
+   ],
+   "wall_s": 36.2,
+   "first_row_s": 2.0,
+   "screen_ms": 209.1,
+   "model_calls": 300,
+   "errors": 0,
+   "cached_rerun_s": 0.35,
+   "cached_rows": 300
+  }
+ },
+ "screening": {
+  "Cyprus": {
+   "gold": 10,
+   "precision_at_gold": 1.0,
+   "ms": 305.3
+  },
+  "Somalia": {
+   "gold": 10,
+   "precision_at_gold": 1.0,
+   "ms": 80.9
+  },
+  "Haiti": {
+   "gold": 10,
+   "precision_at_gold": 1.0,
+   "ms": 74.0
+  },
+  "Lebanon": {
+   "gold": 10,
+   "precision_at_gold": 1.0,
+   "ms": 153.7
+  }
+ }
+}

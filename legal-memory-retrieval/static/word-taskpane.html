@@ -144,22 +144,22 @@
   </div>
 
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('analyze')">Selection</button>
-    <button class="tab-btn" onclick="switchTab('draft')">Draft Clause</button>
-    <button class="tab-btn" onclick="switchTab('search')">Firm Memory</button>
+    <button class="tab-btn active" data-action="switchTab" data-arg="analyze">Selection</button>
+    <button class="tab-btn" data-action="switchTab" data-arg="draft">Draft Clause</button>
+    <button class="tab-btn" data-action="switchTab" data-arg="search">Firm Memory</button>
   </div>
 
   <!-- Tab 1: Analyze Selection -->
   <div id="tab-analyze" class="panel active">
-    <button class="btn btn-secondary" onclick="readSelectionAndAnalyze('redline')">🔍 Redline Selected Clause</button>
+    <button class="btn btn-secondary" data-action="readSelectionAndAnalyze" data-arg="redline">🔍 Redline Selected Clause</button>
     <div style="height: 8px;"></div>
-    <button class="btn btn-secondary" onclick="readSelectionAndAnalyze('explain')">💡 Explain / Risk Check</button>
+    <button class="btn btn-secondary" data-action="readSelectionAndAnalyze" data-arg="explain">💡 Explain / Risk Check</button>
 
     <div id="analyzeResultCard" class="card" style="display: none;">
       <div style="font-weight: 600; margin-bottom: 6px;" id="analyzeTitle">Analysis Result</div>
       <div id="analyzeContent" class="result-box"></div>
       <div class="action-group">
-        <button class="btn btn-primary" onclick="insertProposedText()">Insert into Document</button>
+        <button class="btn btn-primary" data-action="insertProposedText">Insert into Document</button>
       </div>
     </div>
   </div>
@@ -168,13 +168,13 @@
   <div id="tab-draft" class="panel">
     <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Instruction for Drafting</label>
     <textarea id="draftInstruction" class="input-box" placeholder="e.g. Draft an aggressive limitation of liability clause capped at 12 months fees..."></textarea>
-    <button class="btn btn-primary" onclick="draftNewClause()">✍️ Draft Clause</button>
+    <button class="btn btn-primary" data-action="draftNewClause">✍️ Draft Clause</button>
 
     <div id="draftResultCard" class="card" style="display: none;">
       <div style="font-weight: 600; margin-bottom: 6px;">Drafted Clause</div>
       <div id="draftContent" class="result-box"></div>
       <div class="action-group">
-        <button class="btn btn-primary" onclick="insertDraftedClause()">Insert at Cursor</button>
+        <button class="btn btn-primary" data-action="insertDraftedClause">Insert at Cursor</button>
       </div>
     </div>
   </div>
@@ -182,17 +182,17 @@
   <!-- Tab 3: Search Firm Memory -->
   <div id="tab-search" class="panel">
     <input id="searchQuery" type="text" class="input-box" placeholder="Search precedents, clauses, arguments...">
-    <button class="btn btn-primary" onclick="searchFirmMemory()">Search Memory</button>
+    <button class="btn btn-primary" data-action="searchFirmMemory">Search Memory</button>
     <div id="searchResults" style="margin-top: 12px;"></div>
   </div>
 
   <script>
     let proposedTextToInsert = "";
 
-    function switchTab(name) {
+    function switchTab(name, button) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      event.target.classList.add('active');
+      button.classList.add('active');
       document.getElementById('tab-' + name).classList.add('active');
     }
 
@@ -280,11 +280,20 @@
       insertProposedText();
     }
 
+    // Results are built with text nodes only: API text (titles, snippets, errors)
+    // is never parsed as HTML in the task pane.
+    function statusLine(text, color) {
+      const div = document.createElement('div');
+      div.style.color = color;
+      div.textContent = text;
+      return div;
+    }
+
     async function searchFirmMemory() {
       const q = document.getElementById('searchQuery').value;
       const resBox = document.getElementById('searchResults');
       if (!q.trim()) return;
-      resBox.innerHTML = "<div style='color: #9CA3AF;'>Searching...</div>";
+      resBox.replaceChildren(statusLine('Searching...', '#9CA3AF'));
       try {
         const res = await fetch('/api/retrieval', {
           method: 'POST',
@@ -292,18 +301,37 @@
           body: JSON.stringify({ query: q, k: 3 })
         });
         const data = await res.json();
-        let html = '';
-        (data.hits || []).forEach(h => {
-          html += `<div class="card" style="margin-bottom: 8px;">
-            <div style="font-weight: 600; font-size: 11px; color: #60A5FA;">${h.doc_id} — ${h.title || ''}</div>
-            <div style="font-size: 11px; margin-top: 4px;">${h.snippet}</div>
-          </div>`;
+        const cards = (data.hits || []).map(h => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.marginBottom = '8px';
+          const head = document.createElement('div');
+          head.style.cssText = 'font-weight: 600; font-size: 11px; color: #60A5FA;';
+          head.textContent = `${h.doc_id || h.document_id || ''} — ${h.title || ''}`;
+          const body = document.createElement('div');
+          body.style.cssText = 'font-size: 11px; margin-top: 4px;';
+          body.textContent = h.snippet || '';
+          card.append(head, body);
+          return card;
         });
-        resBox.innerHTML = html || "<div style='color: #9CA3AF;'>No hits found.</div>";
+        resBox.replaceChildren(...(cards.length ? cards : [statusLine('No hits found.', '#9CA3AF')]));
       } catch (err) {
-        resBox.innerHTML = "<div style='color: #EF4444;'>Error: " + err.message + "</div>";
+        resBox.replaceChildren(statusLine('Error: ' + err.message, '#EF4444'));
       }
     }
+
+    // Buttons declare data-action/data-arg instead of inline onclick handlers, so the
+    // pane runs under a Content-Security-Policy without 'unsafe-inline' scripts.
+    const ACTIONS = {
+      switchTab, readSelectionAndAnalyze, insertProposedText,
+      draftNewClause, insertDraftedClause, searchFirmMemory,
+    };
+    document.addEventListener('click', (e) => {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const fn = ACTIONS[el.dataset.action];
+      if (fn) fn(el.dataset.arg, el);
+    });
   </script>
 </body>
 </html>

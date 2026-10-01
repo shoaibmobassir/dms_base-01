@@ -1,0 +1,470 @@
+{
+ "at": "2026-09-28 03:35",
+ "model": "zai.glm-5",
+ "summary": {
+  "production": {
+   "tasks": 18,
+   "exact": 12,
+   "recall": 0.889,
+   "precision": 0.887,
+   "unintended_total": 172,
+   "errors": 0,
+   "median_s": 14.9,
+   "max_prompt_chars": 43646,
+   "calls_total": 803
+  }
+ },
+ "rows": [
+  {
+   "pages": 100,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 5,
+     "before": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading supplier.",
+     "after": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading vendor."
+    },
+    {
+     "change": "rep",
+     "at": 963,
+     "before": "S4.1 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.1 On expiry the Vendor shall co-operate with any replacement vendor."
+    },
+    {
+     "change": "rep",
+     "at": 964,
+     "before": "S4.2 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.2 On expiry the Vendor shall co-operate with any replacement vendor."
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 963,
+     "before": "S4.1 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.1 On expiry the Vendor shall co-operate with any replacement supplier."
+    },
+    {
+     "change": "rep",
+     "at": 964,
+     "before": "S4.2 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.2 On expiry the Vendor shall co-operate with any replacement supplier."
+    },
+    {
+     "change": "rep",
+     "at": 965,
+     "before": "S4.3 On expiry the Supplier shall co-operate with any replacement supplier.",
+     "after": "S4.3 On expiry the Vendor shall co-operate with any replacement supplier."
+    }
+   ],
+   "gold_changes": 763,
+   "result_changes": 764,
+   "recall": 0.9961,
+   "precision": 0.9948,
+   "unintended": 4,
+   "exact": false,
+   "calls": 80,
+   "peak_prompt_chars": 4818,
+   "seconds": 34.7,
+   "notes": [
+    "substitutions changed 764 paragraphs; 1 not confirmed and reverted",
+    "2 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 557,
+     "before": "49.8 The parties shall meet at least quarterly to review performance in relation to the governing law (module 2) and agree any improvements required. The parties shall meet at least quarterly to revie",
+     "after": "49.8 The parties shall meet at least quarterly to review performance in relation to the governing law (module 2) and agree any improvements required. This obligation is of the essence. The parties sha"
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 557,
+     "before": "49.8 The parties shall meet at least quarterly to review performance in relation to the governing law (module 2) and agree any improvements required. The parties shall meet at least quarterly to revie",
+     "after": "49.8 The parties shall meet at least quarterly to review performance in relation to the governing law (module 2) and agree any improvements required. The parties shall meet at least quarterly to revie"
+    }
+   ],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 1,
+   "exact": false,
+   "calls": 3,
+   "peak_prompt_chars": 4754,
+   "seconds": 4.9,
+   "notes": [
+    "1 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 5513,
+   "seconds": 3.5,
+   "notes": [
+    "10 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 5237,
+   "seconds": 4.2,
+   "notes": [
+    "10 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 16,
+   "result_changes": 16,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 12,
+   "peak_prompt_chars": 27145,
+   "seconds": 22.2,
+   "notes": [
+    "substitutions changed 67 paragraphs; 51 not confirmed and reverted",
+    "134 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 100,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 34,
+   "result_changes": 34,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 6,
+   "peak_prompt_chars": 4927,
+   "seconds": 14.3,
+   "notes": [
+    "substitutions changed 34 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 5,
+     "before": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading supplier.",
+     "after": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading vendor."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 1508,
+   "result_changes": 1509,
+   "recall": 1.0,
+   "precision": 0.9993,
+   "unintended": 1,
+   "exact": false,
+   "calls": 154,
+   "peak_prompt_chars": 8808,
+   "seconds": 59.8,
+   "notes": [
+    "substitutions changed 1509 paragraphs; 5 not confirmed and reverted",
+    "6 paragraphs sent to editors; 5 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 3,
+   "peak_prompt_chars": 8744,
+   "seconds": 5.8,
+   "notes": [
+    "10 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8821,
+   "seconds": 3.1,
+   "notes": [
+    "13 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 8726,
+   "seconds": 11.2,
+   "notes": [
+    "10 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 22,
+   "result_changes": 22,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 21,
+   "peak_prompt_chars": 30383,
+   "seconds": 23.8,
+   "notes": [
+    "substitutions changed 126 paragraphs; 105 not confirmed and reverted",
+    "206 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 200,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 72,
+   "result_changes": 72,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 10,
+   "peak_prompt_chars": 8917,
+   "seconds": 15.4,
+   "notes": [
+    "substitutions changed 72 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "rename_term",
+   "arch": "production",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 5,
+     "before": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading supplier.",
+     "after": "1.4 \u201cGood Industry Practice\u201d means the exercise of the skill and care reasonably expected of a leading vendor."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 2988,
+   "result_changes": 2989,
+   "recall": 1.0,
+   "precision": 0.9997,
+   "unintended": 1,
+   "exact": false,
+   "calls": 302,
+   "peak_prompt_chars": 17057,
+   "seconds": 107.1,
+   "notes": [
+    "substitutions changed 2988 paragraphs; 0 not confirmed and reverted",
+    "2 paragraphs sent to editors; 1 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "amend_clause",
+   "arch": "production",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 10,
+     "before": "2.3 The Supplier shall perform its obligations under this clause with reasonable skill, care and diligence and in accordance with Good Industry Practice. Nothing in this clause shall limit any other r",
+     "after": "2.3 The Supplier shall perform its obligations under this clause with all reasonable skill, care and diligence and in accordance with Good Industry Practice. Nothing in this clause shall limit any oth"
+    },
+    {
+     "change": "rep",
+     "at": 101,
+     "before": "9.12 Each party shall bear its own costs in connection with the matters described in this clause, save as otherwise expressly provided. Any approval given by the Customer under this clause shall not r",
+     "after": "9.12 Each party shall bear its own costs in connection with the matters described in this clause, save as otherwise expressly provided. Any approval given by the Customer under this clause shall not r"
+    },
+    {
+     "change": "rep",
+     "at": 106,
+     "before": "10.4 The Supplier shall perform its obligations under this clause with reasonable skill, care and diligence and in accordance with Good Industry Practice. The Supplier shall maintain complete and accu",
+     "after": "10.4 The Supplier shall perform its obligations under this clause with all reasonable skill, care and diligence and in accordance with Good Industry Practice. The Supplier shall maintain complete and "
+    }
+   ],
+   "sample_missed": [
+    {
+     "change": "rep",
+     "at": 3225,
+     "before": "285.1 The Supplier shall perform its obligations under this clause with reasonable skill, care and diligence and in accordance with Good Industry Practice. Nothing in this clause shall limit any other",
+     "after": "285.1 The Supplier shall perform its obligations under this clause with all reasonable skill, care and diligence and in accordance with Good Industry Practice. Nothing in this clause shall limit any o"
+    }
+   ],
+   "gold_changes": 1,
+   "result_changes": 164,
+   "recall": 0.0,
+   "precision": 0.0,
+   "unintended": 164,
+   "exact": false,
+   "calls": 120,
+   "peak_prompt_chars": 43646,
+   "seconds": 52.1,
+   "notes": [
+    "substitutions changed 970 paragraphs; 806 not confirmed and reverted",
+    "808 paragraphs sent to editors; 2 changed; 2 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "insert_after",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 1,
+   "result_changes": 1,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 17074,
+   "seconds": 6.9,
+   "notes": [
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "delete_schedule",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 6,
+   "result_changes": 6,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 2,
+   "peak_prompt_chars": 16975,
+   "seconds": 3.6,
+   "notes": [
+    "13 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "semantic_payment",
+   "arch": "production",
+   "sample_unintended": [
+    {
+     "change": "rep",
+     "at": 9,
+     "before": "2.2 The Supplier shall provide the exit plan within thirty (30) days of the Effective Date.",
+     "after": "2.2 The Supplier shall provide the exit plan within forty-five (45) days of the Effective Date."
+    }
+   ],
+   "sample_missed": [],
+   "gold_changes": 36,
+   "result_changes": 37,
+   "recall": 1.0,
+   "precision": 0.973,
+   "unintended": 1,
+   "exact": false,
+   "calls": 64,
+   "peak_prompt_chars": 36484,
+   "seconds": 28.9,
+   "notes": [
+    "substitutions changed 261 paragraphs; 227 not confirmed and reverted",
+    "1376 paragraphs sent to editors; 3 changed; 0 not confirmed"
+   ]
+  },
+  {
+   "pages": 400,
+   "kind": "crossref_update",
+   "arch": "production",
+   "sample_unintended": [],
+   "sample_missed": [],
+   "gold_changes": 133,
+   "result_changes": 133,
+   "recall": 1.0,
+   "precision": 1.0,
+   "unintended": 0,
+   "exact": true,
+   "calls": 16,
+   "peak_prompt_chars": 17166,
+   "seconds": 18.1,
+   "notes": [
+    "substitutions changed 133 paragraphs; 0 not confirmed and reverted",
+    "1 paragraphs sent to editors; 0 changed; 0 not confirmed"
+   ]
+  }
+ ]
+}

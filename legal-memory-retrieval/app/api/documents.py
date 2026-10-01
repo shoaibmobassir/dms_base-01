@@ -4,7 +4,8 @@ import json
 from fastapi import HTTPException
 from psycopg.rows import dict_row
 
-from app.api.acl import ACL_CLAUSE
+from app.api.acl import ACL_CLAUSE, doc_acl
+from app.audit import events as audit
 from app.db.chunking import chunk_text
 from app.db.connection import connect
 from app.embeddings.minilm import MiniLMEmbedder
@@ -23,26 +24,36 @@ def get_embedder() -> MiniLMEmbedder:
 def ingest_document(req, member_id: str | None) -> dict:
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
+            # Same answer for "no such matter" and "restricted": don't leak existence.
             cur.execute(
-                "SELECT matter_id, matter_code, client_id FROM matters WHERE matter_id = %(mid)s",
-                {"mid": req.matter_id},
+                f"""
+                SELECT m.matter_id, m.matter_code, m.client_id FROM matters m
+                LEFT JOIN permissions p ON p.matter_id = m.matter_id
+                WHERE m.matter_id = %(mid)s AND {ACL_CLAUSE}
+                """,
+                {"mid": req.matter_id, "member_id": member_id},
             )
             matter = cur.fetchone()
             if not matter:
-                raise HTTPException(status_code=400, detail=f"Invalid matter_id: {req.matter_id}")
+                raise HTTPException(status_code=404, detail="Matter not found or access denied")
 
-            cur.execute("SELECT COUNT(*) as n FROM documents")
-            count = cur.fetchone()["n"] + 1
-            new_doc_id = f"DOC-{count:05d}"
+            author = req.author_name
+            if not author and member_id:
+                cur.execute("SELECT name FROM members WHERE member_id = %(mid)s", {"mid": member_id})
+                row = cur.fetchone()
+                author = row["name"] if row else None
+
+            cur.execute("SELECT nextval('document_id_seq') AS n")
+            new_doc_id = f"DOC-{cur.fetchone()['n']:05d}"
 
             cur.execute(
                 """
                 INSERT INTO documents (
                     document_id, matter_id, matter_code, client_id, title,
-                    document_type, author_name, doc_date, status, version, body
+                    document_type, author_id, author_name, doc_date, status, version, body
                 ) VALUES (
                     %(doc_id)s, %(matter_id)s, %(matter_code)s, %(client_id)s, %(title)s,
-                    %(doc_type)s, %(author)s, CURRENT_DATE, %(status)s, %(version)s, %(body)s
+                    %(doc_type)s, %(author_id)s, %(author)s, CURRENT_DATE, %(status)s, %(version)s, %(body)s
                 )
                 """,
                 {
@@ -52,12 +63,24 @@ def ingest_document(req, member_id: str | None) -> dict:
                     "client_id": matter["client_id"],
                     "title": req.title,
                     "doc_type": req.document_type,
-                    "author": req.author_name or "Aryan Maharaj",
+                    "author_id": member_id,
+                    "author": author,
                     "status": req.status,
                     "version": req.version,
                     "body": req.body,
                 },
             )
+
+            private = getattr(req, "visibility", "matter") == "private"
+            if private:
+                if member_id is None:
+                    raise HTTPException(status_code=400, detail="Sign in to upload a private document")
+                # Before the chunks: they inherit the document's list as they are inserted.
+                cur.execute(
+                    "INSERT INTO document_access (document_id, visibility, owner_member_id, updated_by)"
+                    " VALUES (%(d)s, 'private', %(m)s, %(m)s)",
+                    {"d": new_doc_id, "m": member_id},
+                )
 
             pieces = chunk_text(req.body)
             embedder = get_embedder()
@@ -84,11 +107,15 @@ def ingest_document(req, member_id: str | None) -> dict:
                     },
                 )
             conn.commit()
+    if private:
+        audit.record("document.privacy.change", member_id=member_id, object_type="document", object_id=new_doc_id,
+                     matter_id=req.matter_id, detail={"after": {"visibility": "private"}, "on": "create"})
 
     return {
         "service": "documents",
         "status": "success",
         "document_id": new_doc_id,
+        "visibility": "private" if private else "matter",
         "title": req.title,
         "matter_id": req.matter_id,
         "chunks_indexed": len(pieces),
@@ -102,7 +129,7 @@ def document_versions(document_id: str, member_id: str | None) -> dict:
     access_sql = f"""
         SELECT 1 FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE}
+        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -132,7 +159,7 @@ def document_diff(
     access_sql = f"""
         SELECT 1 FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE}
+        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -183,16 +210,19 @@ def document_detail_enriched(
     *,
     highlight_chunk: str | None = None,
     q: str | None = None,
+    lean: bool = False,
 ) -> dict:
     doc_id = document_id.upper()
-    params = {"doc_id": doc_id, "member_id": member_id}
+    params = {"doc_id": doc_id, "member_id": member_id, "lean": lean}
     sql = f"""
         SELECT d.document_id, d.matter_id, d.matter_code, d.client_id, d.title,
                d.document_type, d.author_name, d.doc_date, d.status, d.version,
-               d.parent_document_id, d.version_group, d.body
+               d.parent_document_id, d.version_group, d.current_version_id,
+               d.source_uri,
+               CASE WHEN %(lean)s THEN NULL ELSE d.body END AS body
         FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE}
+        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -200,6 +230,68 @@ def document_detail_enriched(
             doc = cur.fetchone()
             if not doc:
                 raise HTTPException(status_code=404, detail="Document not found or access denied")
+
+            cur.execute(
+                "SELECT COUNT(*) AS n FROM chunks WHERE document_id = %(doc_id)s",
+                {"doc_id": doc_id},
+            )
+            chunk_count = int(cur.fetchone()["n"])
+
+            page_count = None
+            has_original = bool(doc.get("source_uri"))
+            if doc.get("current_version_id"):
+                cur.execute(
+                    """
+                    SELECT page_count, storage_uri, version_number, version_status,
+                           version_label, author_name, created_at, change_summary
+                    FROM document_versions
+                    WHERE version_id = %(vid)s
+                    """,
+                    {"vid": doc["current_version_id"]},
+                )
+                ver = cur.fetchone()
+                if ver:
+                    page_count = ver.get("page_count")
+                    has_original = has_original or bool(ver.get("storage_uri"))
+                    doc["current_version"] = {
+                        "version_id": doc["current_version_id"],
+                        "version_number": ver.get("version_number"),
+                        "version_status": ver.get("version_status"),
+                        "version_label": ver.get("version_label"),
+                        "author_name": ver.get("author_name"),
+                        "created_at": ver.get("created_at"),
+                        "change_summary": ver.get("change_summary"),
+                        "page_count": page_count,
+                    }
+
+            block_count = 0
+            if doc.get("current_version_id"):
+                cur.execute(
+                    "SELECT COUNT(*) AS n FROM document_blocks WHERE version_id = %(vid)s",
+                    {"vid": doc["current_version_id"]},
+                )
+                block_count = int(cur.fetchone()["n"])
+
+            doc["chunk_count"] = chunk_count
+            doc["block_count"] = block_count
+            doc["page_count"] = page_count
+            doc["has_original"] = has_original
+            doc.pop("source_uri", None)
+
+            cur.execute(
+                "SELECT title, client_name, court, practice_area FROM matters WHERE matter_id = %(mid)s",
+                {"mid": doc["matter_id"]},
+            )
+            doc["matter_info"] = cur.fetchone()
+
+            if lean:
+                doc["body"] = None
+                doc["highlighted_body"] = None
+                doc["match_count"] = 0
+                doc["chunks"] = []
+                doc["highlight_chunk_id"] = None
+                doc["service"] = "browse"
+                return doc
 
             cur.execute(
                 """
@@ -230,12 +322,6 @@ def document_detail_enriched(
             doc["match_count"] = match_count
             doc["chunks"] = chunks
             doc["highlight_chunk_id"] = highlight_chunk
-
-            cur.execute(
-                "SELECT title, client_name, court, practice_area FROM matters WHERE matter_id = %(mid)s",
-                {"mid": doc["matter_id"]},
-            )
-            doc["matter_info"] = cur.fetchone()
 
     doc["service"] = "browse"
     return doc

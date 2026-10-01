@@ -1,6 +1,6 @@
 # Enterprise Production Readiness Review
 
-**Date:** 2026-09-21  
+**Date:** 2026-09-24 (replaces the 2026-09-21 assessment)  
 **Audience:** Product, engineering, and go-to-market for selling DMS knowledge base to enterprise law firms  
 **Deployment targets:** AWS and Azure  
 **Status:** Production readiness assessment (not an implementation plan)
@@ -9,15 +9,15 @@
 
 | Doc | Role |
 |-----|------|
-| `docs/mike-vs-dms-feature-gap-audit.md` | Product capability gap vs Mike (clean-room research) |
+| `legal-memory-retrieval/PRODUCTION_READINESS_REVIEW.md` | Engineering blockers, with file-level evidence |
+| `legal-memory-retrieval/docs/production-plan/` | Plans 01–06 done; 07 hardening in progress (OIDC deferred) |
+| `legal-memory-retrieval/docs/production-plan/AUDIT.md` | 2026-09-24 codebase audit the plans closed |
+| `firmos_production_actionable_plan.md` | FirmOS domain and phase plan, with a 24 Sep status overlay |
+| `legal-memory-retrieval/docs/ui-roadmap/00_ROADMAP.md` | Next UI (matter workspace, viewer, tools) — plan only |
+| `docs/mike-vs-dms-feature-gap-audit.md` | Product capability gap vs Mike (20 Sep 2026; not re-scored here) |
 | `docs/universal-document-sync-engine-plan.md` | Connector / sync substrate plan |
-| `firmos_production_actionable_plan.md` | Broader FirmOS domain and phase plan |
-| `legal-memory-retrieval/docs/assistant_chatbot_deep_gap_analysis.md` | Chat UI deep gaps |
 | `legal-memory-retrieval/docs/legal/IP_ORIGIN_RECORD.md` | Provenance for Mike-inspired features |
 | `.cursor/rules/agpl-cleanroom.mdc` | Mandatory clean-room protocol |
-
-**Interactive version:** Cursor canvas  
-`/Users/shoaibmobassir/.cursor/projects/Users-shoaibmobassir-Desktop-Experiments-Legal-Maal-DMS-knowledge-base/canvases/enterprise-production-readiness.canvas.tsx`
 
 ---
 
@@ -33,401 +33,334 @@ This document is an engineering readiness assessment, **not legal advice**.
 
 ## 1. Executive verdict
 
-**This is not ready to sell as a full legal AI workspace, and it is not ready to put a firm's client files on AWS or Azure.**
+**This is still not ready to sell as a full legal AI workspace, and it is still not ready to put a firm's client files on AWS or Azure.**
+
+It is closer to a **private pilot of firm memory** than it was on 21 September: the lawyer UI is a real SPA, auth can be turned on with API keys, and the process will not boot in production with development secrets. The controls a firm’s security review will ask for — their IdP, a private network, backups, a tenant boundary, a connector, a DPA — are not in the repo.
 
 | Dimension | Verdict |
 |-----------|---------|
 | Retrieval / firm memory | Strong enough to support a **private pilot** of the core loop |
-| Product surface (library, tabular, workflows, Word, settings) | Far behind a shippable enterprise product |
-| Production security / identity / isolation | **Open** — cannot pass a law-firm security review today |
-| Multi-cloud deployability | App exists; **no** AWS/Azure IaC, runbooks, or firm-grade stack |
+| Product surface (library, tabular, workflows, Word, settings) | Pruned to what the API can back. Chat/ask/matters/documents are usable. Workspace features in the UI roadmap are unbuilt |
+| Production security / identity / isolation | **Open** — API keys and matter ACL, no IdP, no tenant RLS |
+| Multi-cloud deployability | Container and Compose exist. **No** AWS/Azure IaC, runbooks, or firm-grade network |
 | Commercial readiness (DPA, SOC 2, subprocessors, exit) | **Absent** |
 
 **What to sell first:** a dedicated **firm-memory deployment** (ACL-filtered retrieval + cited ask/chat over the firm's records), hosted as a **per-firm silo** on AWS or Azure.
 
-**What not to promise in the first contract:** firm library, templates, durable tabular review, workflow catalog, production Word add-in, MCP connectors, or self-serve signup/MFA as our product.
+**What not to promise in the first contract:** firm library, templates, durable tabular review, workflow catalog, production Word add-in, Microsoft 365 sync, MCP connectors, or self-serve signup/MFA as our product.
 
-**Bottom line:** Of ten private-pilot gates, **one is closed** (retrieval). Of 72 Mike-comparison capability rows in the 20 Sep 2026 gap audit: **41 absent, 29 partial, 2 present but narrower**, **0 full parity**.
+The 20 Sep 2026 Mike gap audit (41 absent, 29 partial, 2 narrower, 0 full parity) has **not** been re-counted. Since that audit the SPA dropped pages that only rendered empty states or hard-coded copy, and chat gained a real session/citation loop. That is a smaller, truer surface, not parity.
 
 ---
 
-## 2. What the gap audit actually says
+## 2. What the product is now
 
-Mike is a **full legal AI workspace**: auth, multi-user org, document library, project workspaces, assistant, workflows, tabular review, settings (BYOK/models/connectors/MFA), CourtListener research UX, Word add-in, and a packaged self-hosted stack.
+Mike, as researched, is a full legal AI workspace: auth, multi-user org, document library, project workspaces, assistant, workflows, tabular review, settings, research UX, Word add-in, and a packaged self-hosted stack.
 
-DMS knowledge_base is strongest as a **retrieval-first firm memory system**: hybrid ACL-filtered retrieval, evals, Ask/Chat backends, matter/project/document APIs, Phase-0 sync substrate.
+DMS knowledge base is a **retrieval-first firm memory system** with a lawyer SPA on top:
 
-Many Mike-like *names* appear in DMS (tabular, workflows, caselaw, Word, BYOK, sources). Most are **not** a complete product loop (UI + durable persistence + real providers + auth).
+- Hybrid ACL-filtered retrieval, evals, Ask and Chat (backend and UI)
+- Matter, client, document, people, deadline, and argument browsing against Postgres
+- Phase-0 sync substrate (fake connector)
+- Bedrock as an optional answer provider; MiniLM remains the retrieval embedder
 
-### 2.1 Capability counts (Mike → DMS audit, 20 Sep 2026)
+### 2.1 What moved since 21 September
 
-| Status | Count | Meaning |
-|--------|------:|---------|
-| Absent | 41 | No meaningful equivalent |
-| Partial | 29 | Backend/library/plan exists; not a shippable product surface |
-| Present (narrower) | 2 | Exists with smaller scope / weaker UX (matters/clients/people/teams browsing; tasks) |
-| Full product parity | 0 | — |
+| Area | Then | Now |
+|------|------|-----|
+| Lawyer UI | Static SPA behind the chat backend; demo personas | Vite React app at `/ui`: Home, Ask, Chat, Matters, Documents, Clients, People, Calendar, Arguments, Settings. Data from the API. Persona switch only while auth is off |
+| Chat | Backend ahead of the UI | Sessions, streaming, stop, configured model list, citation titles, starter questions (production plan 05) |
+| Auth | Header trust; `.env` flag ignored; no `api_keys` table | Flag is a real setting. API keys work. Production refuses auth-off and default secrets. Login is still an API key in browser storage. OIDC is deferred |
+| Routes | Download and several routers had no member check | Product routers require a member. Matter ACL on the SPA’s read paths. One generated-file download branch still runs before the ACL check |
+| Delivery | Compose file did not parse | Compose is valid. Dockerfile. CI for migrate, seed, contract tests, and the frontend build |
+| Demo data | Hard-coded firm name, empty deadlines, no restricted matters in data | `firm_profile`, `court_deadlines`, `client_notes`, seeded ethical wall |
+| Models | Router/KeyVault code only | Bedrock chat/completions path when a bearer token is set. Embeddings stay MiniLM unless explicitly switched and re-embedded |
+| Fake product pages | Many routes with no backend | Removed (projects, activity-as-audit, precedents literals, staffing, and the rest of the prune list) |
 
-### 2.2 Gap by product area
+### 2.2 Still not a shippable enterprise surface
 
-| Area | Absent | Partial | Present (narrower) |
-|------|-------:|--------:|-------------------:|
-| Platform / identity / tenancy | 8 | 4 | 0 |
-| Document library & files | 4 | 3 | 0 |
-| Projects / matters / clients | 1 | 3 | 2 |
-| Assistant / chat | 2 | 5 | 0 |
-| Workflows / playbooks | 6 | 1 | 0 |
-| Tabular / matrix review | 5 | 3 | 0 |
-| Case law / research | 3 | 1 | 0 |
-| Connectors / sync / MCP | 3 | 3 | 0 |
-| Word add-in | 5 | 2 | 0 |
-| Trust / audit / exports | 1 | 2 | 0 |
-| Ops / quality / packaging | 3 | 2 | 0 |
+| Area | What exists | Still missing for enterprise |
+|------|-------------|------------------------------|
+| Chat | Session rail, SSE, citations, stop, model list | Firm IdP login; the matter-scoped workspace in `docs/ui-roadmap/` (plan only) |
+| Documents | List, detail, version history, download API | Industry-grade viewer, page rendition, citation highlight on the page the lawyer sees |
+| Tabular / workflows | Server routes, now behind auth | Durable product UI, sharing, review chat. Do not demo them as the product |
+| Word | Handoff API + `static/word-taskpane.html` | Full add-in. The task pane still assigns results with `innerHTML` |
+| Sources | Phase-0 tables + FakeConnector | Real OAuth, incremental sync, Settings connector UX |
+| Auth | API keys, production boot guard | SSO, MFA via the IdP, HttpOnly session, SCIM, org onboarding |
+| Audit | Manifest signer pieces | Customer-exportable stream of sign-in, retrieval, download, export, admin |
+| Tenancy | Single-firm schema; `tenant_id` on firm profile and upload batches | Tenant on every core row, or (for v1) a dedicated stack per firm |
 
-**Rule for reading Partial:** a router, schema table, or fake provider is debt, not a checkmark. In-memory stores, UI-less APIs, FakeConnector, and demo-seeded data do not count as delivered.
+**Rule:** a router, a seed row, or a fake provider is not a checkmark.
 
-### 2.3 “Exists in DMS but not done” (easy to over-count)
+### 2.3 Strengths to keep in the pitch
 
-| Area | What DMS has today | Still missing for enterprise |
-|------|--------------------|------------------------------|
-| Chat agent | Sessions, tools, SSE, citation verify | Full chat UI, project assistant, artifact cards |
-| Tabular | Service + API + xlsx exporter | Durable schema, matrix UI, sharing, review chat |
-| Workflows | 3 YAML playbooks + engine + API | Catalog UI, sync packs, shares, durable runs |
-| BYOK / models | KeyVault + model_router | Settings UI, per-user persisted keys/preferences |
-| Caselaw | Parser + CourtListener client | Bulk indexes, settings tokens, research UX |
-| Word | Handoff API + static taskpane + tracked DOCX generator | Full add-in, in-Word accept/reject, workflows |
-| Sources | Phase-0 tables + FakeConnector + sync engine | Real providers, OAuth UX, ACL intersection |
-| Projects | Folders, versions, activity, export hooks | Nested assistant/tabular, sharing |
-| Auth | API keys + optional `AUTH_ENABLED` | Signup, MFA, sessions, org onboarding, SSO |
-| Audit/export | Manifest signer pieces | Full project export UX + security audit stream |
-
-### 2.4 DMS strengths that are *not* Mike gaps (context)
-
-These do **not** close the product or production gaps, but they are real differentiators for a firm-memory pitch:
-
-- Eval-gated hybrid retrieval (BM25 + vector + metadata + graph + fusion + CE)
-- Hard matter scope / matter resolver / paraphrase & Harbour benchmarks
-- ACL-before-rank as a first principle
+- Eval-gated hybrid retrieval (BM25 + vector + metadata + graph + fusion + cross-encoder)
+- Hard matter scope
+- ACL before rank
 - Retrieval observability / diagnose tooling
-- Companion plans (`paraphrase-resolution-experiments.md`, sync plan)
+- A UI that no longer invents matters, people, or deadlines
 
 ---
 
-## 3. What is already built (keep and productize)
+## 3. What is already built
 
-These are the assets that justify a **private firm-memory pilot**, not a workspace clone.
+### 3.1 Retrieval core — DONE for a pilot
 
-### 3.1 Retrieval core — DONE for pilot
-
-- Hybrid engine v2 with fusion policy (`p55_repair_ce_protect` default) and hard matter scope
+- Hybrid engine v2, fusion policy `p55_repair_ce_protect`, hard matter scope
 - ACL filtered in SQL before ranking
-- Local MiniLM 384-d embeddings behind an interface
-- Eval gates, diagnose tooling, CHANGELOG discipline
-- Lab corpus on the order of ~42k embedded chunks (research scale, not capacity proof)
+- MiniLM 384-d behind `app/embeddings/factory.py` (Bedrock embedder is opt-in and requires a re-embed)
+- Eval gates and CHANGELOG discipline
+- Lab corpus on the order of ~42k embedded chunks (research scale, not a capacity proof)
 
-### 3.2 Answers and chat backend — MOSTLY DONE; UI BEHIND
+### 3.2 Answers and chat — DONE for an internal pilot loop
 
 - `POST /ask` with citations from retrieved ids
-- Chat sessions, tools, SSE agent, citation verification
-- Frontend chat UX incomplete (session switcher, citation tray, artifact cards — see assistant gap note)
+- Chat sessions owned by the caller, tools, SSE, citation verification
+- SPA: session list, streaming, stop, citation panel, model chosen from configured providers
+- Rate limit helper on answers and chat messages
 
 ### 3.3 Document / matter domain — PARTIAL PRODUCT
 
-Schema and APIs exist for:
+Schema and APIs exist for members, clients, matters, permissions, documents, chunks, versions, upload batches, court deadlines, client notes, firm profile, review-oriented tables, and Phase-0 source tables.
 
-- `members`, `clients`, `matters`, `matter_members`, `permissions`
-- `documents`, `chunks`, `relationships`, `arguments`
-- `projects`, `project_folders`, `project_activity`
-- `document_versions`, `document_blocks`, `version_diffs`
-- Ingest: `ingest_jobs`, `ingest_items`, `upload_batches`, `upload_batch_files`
-- Review-oriented: `review_jobs`, `findings`, `evidence_anchors`, `annotations`, `document_intelligence`
-- Chat: `chat_sessions`, `chat_messages`
-- Sync Phase 0: `source_connections`, `source_sync_state`, `source_files`, `source_file_permissions`, `identity_links`
+The SPA browses that data. It does not yet provide the matter workspace (chat, drafts, research, and notes as tabs) described in the UI roadmap.
 
-Storage is optional local MinIO (`docker compose --profile object-store`), not a firm-managed bucket.
+Object storage is local disk or optional MinIO. It is not a firm-managed bucket with versioning and a customer-managed key.
 
 ### 3.4 Sync substrate — PHASE 0 ONLY
 
-- Tables + sync engine + permissions storage + `FakeConnector`
-- Plan for Drive / Graph exists in `docs/universal-document-sync-engine-plan.md`
-- **No** production OAuth providers, webhook wake, or Settings connectors UX
+Tables, sync engine, permission rows, `FakeConnector`. No production OAuth, webhook, or connector screen.
 
-### 3.5 Local stack today (not production)
+### 3.5 Local stack (not production)
 
-From `legal-memory-retrieval/docker-compose.yml`:
-
-| Service | Port / notes |
-|---------|----------------|
-| Postgres 16 + pgvector | `:55432`, user/password `legal` / `legal` |
+| Service | Notes |
+|---------|--------|
+| Postgres 16 + pgvector | `:55432`, dev user/password `legal` / `legal` |
 | Redis 7 | `:6380` |
-| MinIO | optional profile, `:9000` / console `:9001`, `minioadmin` / `minioadmin` |
+| MinIO | profile `object-store`, `minioadmin` / `minioadmin` |
+| API + SPA | profile `app`, multi-stage image, non-root, `ENV=production`, refuses default secrets |
 
-Auth: `AUTH_ENABLED=false` (default) trusts `X-Member-Id`. When enabled, API keys map to members. No browser sessions, OAuth, MFA, or org onboarding.
+Auth off (the default) trusts `X-Member-Id`. Auth on requires `X-Api-Key` mapped through `api_keys`. `ENV=production` will not start with auth off.
 
-API surface includes routers for retrieval, answers, chat, documents, uploads, projects, matters, clients, people, teams, tasks, knowledge, workflows, tabular, caselaw, word, sources, audit, reviews, drafting, search, home, activity, system — many of which are **Partial** product surfaces as scored above.
+CI (`.github/workflows/ci.yml`) covers the contract tests and the frontend build. It does not deploy anywhere.
 
 ---
 
 ## 4. What must exist to make this live
 
-Treat delivery as **three contracts**, not one “build everything Mike has” backlog.
+Three contracts. Do not collapse them into “build the rest of the workspace.”
 
 ### 4.1 Private pilot gates (design-partner firm, no invoice)
 
 | # | Gate | Required | Current state | Status |
 |---|------|----------|---------------|--------|
 | 1 | Retrieval | ACL-filtered hybrid search over firm records | Engine v2, matter scope, evals | **Closed** |
-| 2 | Identity | Firm users sign in via their IdP; no trusted header in prod | `AUTH_ENABLED` defaults off; trusts `X-Member-Id`; API keys only when on; no SSO | **Open** |
+| 2 | Identity | Firm users sign in via their IdP; no trusted header in prod | API keys work; production refuses auth-off; browser stores the key; no OIDC | **Open** |
 | 3 | Isolation | One firm cannot see another firm's documents | Matter ACL inside one DB; no tenant / network silo | **Open** |
-| 4 | Network | Private subnets, TLS, DB not public, WAF | Compose publishes Postgres/Redis with known passwords | **Open** |
-| 5 | Data plane | Managed Postgres + pgvector Multi-AZ; S3 or Blob for bytes | Single local volume; MinIO optional | **Open** |
-| 6 | Recovery | Automated backups + rehearsed restore; written RPO/RTO | No backup policy or restore runbook | **Open** |
-| 7 | Secrets | Credentials in vault, rotated, not in compose/git | Compose uses `legal`/`legal`, `minioadmin`/`minioadmin` | **Open** |
-| 8 | Lawyer UI | Session list, streaming answer, open a citation | Chat backend ahead of SPA | **Open** |
-| 9 | Models | In-region endpoint, no-train contract, keys in vault | Router/KeyVault code; no production contract or region pin | **Open** |
-| 10 | Operations | IaC for AWS and Azure, health, alerts, migrations, on-call | App metrics/traces exist; no account-level stack or release pipeline | **Open** |
+| 4 | Network | Private subnets, TLS, DB not public, WAF | Compose still publishes Postgres and Redis | **Open** |
+| 5 | Data plane | Managed Postgres + pgvector Multi-AZ; S3 or Blob for bytes | Local volume; MinIO optional; container exists | **Open** |
+| 6 | Recovery | Automated backups + rehearsed restore; written RPO/RTO | None | **Open** |
+| 7 | Secrets | Credentials in a vault, rotated | Boot guard rejects known dev defaults when `ENV=production`. No vault integration | **Open** |
+| 8 | Lawyer UI | Sign in, ask/chat, open a citation | SPA does this against the seeded DB with an API key or a dev persona. Viewer and IdP login are not done | **Partial** |
+| 9 | Models | In-region endpoint, no-train contract, keys in a vault | Bedrock client exists; no contract, no region pin, embeddings still local MiniLM | **Open** |
+| 10 | Operations | IaC, health, alerts, migrations, on-call | Readiness probe, Dockerfile, contract CI. No account stack, alerts, or release pipeline | **Open** |
 
-**Pilot score: 1 / 10 closed.**
+**Pilot score: 1 closed, 1 partial, 8 open.** Gate 8 does not close the pilot by itself.
 
 ### 4.2 First paid firm gates (before invoice)
 
 | Area | Required | Current state |
 |------|----------|---------------|
-| Connector | SharePoint or OneDrive incremental sync; source ACL kept beside matter ACL | Fake connector only; UI cloud-drive buttons are not real OAuth |
-| Admin | Map IdP groups to matters; disconnect source; last sync / errors | Members are corpus data, not an admin product |
+| Connector | SharePoint or OneDrive incremental sync; source ACL beside matter ACL | Fake connector only |
+| Admin | Map IdP groups to matters; disconnect source; last sync / errors | Members are corpus data. Settings is not an admin console |
 | Audit | Immutable log of sign-in, retrieval, export, admin changes; customer export | Manifest signing pieces only |
-| Capacity | Prove firm's page count: ingest, embed, ask under a written latency budget | FirmOS target 100k pages; measured lab is tens of thousands of chunks on one process |
-| Commercial | DPA, subprocessor list, region, support hours, RPO/RTO, pen test | None of the procurement pack exists in-repo |
+| Capacity | Firm page count: ingest, embed, ask under a written latency budget | FirmOS target 100k pages; lab is tens of thousands of chunks on one process. No load-test result |
+| Commercial | DPA, subprocessor list, region, support hours, RPO/RTO, pen test | Not in the repo |
 
-Do **not** claim SOC 2 Type II. Offer pen test, architecture pack, and a SOC 2 timeline.
+Do **not** claim SOC 2 Type II. Offer a pen test, an architecture pack, and a SOC 2 timeline.
 
-### 4.3 After the first firm is live (do not block pilot on these)
+### 4.3 After the first firm is live
 
-| Area | Required | Current state |
-|------|----------|---------------|
-| Workspace | Library, templates, durable tabular review, workflow catalog, sharing | Tabular/workflow runs in-memory; no product UI |
-| Word | Sideloadable task pane: auth handoff, chat, tracked changes | Manifest + static task pane |
-| Research | Citation verify in UI; optional bulk indexes; customer research tokens | CourtListener client; no settings/bulk |
-| Platform product | Self-serve signup, in-app MFA, MCP connectors, SOC 2 Type II | Absent — first firms should use their IdP for MFA |
+Library, templates, durable tabular review, workflow catalog, Word add-in, external research UX, self-serve signup, MCP. The UI roadmap is the backlog for the workspace. It does not make the system deployable.
 
-**Building workspace features first does not make the system deployable.**
+### 4.4 Requirements that still apply
 
-### 4.4 Technology-independent requirements (from gap audit §4) still applying to production
-
-Prioritize for go-live (subset):
-
-1. **Account / session security via firm IdP** — not long-lived secrets in localStorage as the only model; MFA via Conditional Access / IdP policy.
-2. **Tenant / org membership** — firm data scoped; first customers via dedicated stack.
-3. **Privacy / exit** — export and delete paths per policy (bucket + DB dump for siloed deploy).
-4. **Chat UX completeness** — sessions, SSE, citations, sources tray.
-5. **Real cloud drive connectors** — OAuth, incremental sync, permission intersection.
-6. **Deployment runbooks** — Auth, storage, secrets, migrations, release jobs for operators.
-7. **Browser e2e** — critical paths covered (auth, project, chat at minimum for pilot).
-
-Defer until after first paid firm: library/templates product, workflow studio, tabular matrix UI, Word product, MCP, bulk caselaw indexes (unless the contract requires them).
+1. Account security via the firm IdP. MFA via Conditional Access, not a password we store.
+2. First customers on a dedicated stack until RLS is real and tested.
+3. Exit: bucket export of originals plus a database dump, and a destroy confirmation.
+4. Chat UX for the pilot is largely in place; the matter workspace and the document viewer are the next product work, after the silo.
+5. One real cloud-drive connector before a paid firm that will not upload by hand.
+6. Operator runbooks: auth, storage, secrets, migrations, release, restore.
+7. Browser tests on login, ask/chat, citation open, and a restricted-matter denial. CI currently typechecks and builds; it does not run Playwright against a live API.
 
 ---
 
-## 5. How a firm should be hosted (AWS and Azure)
+## 5. How a firm should be hosted
 
-### 5.1 Commercial topology: dedicated silo, not shared multi-tenant SaaS
+### 5.1 Dedicated silo first
 
-**First customers get their own stack.**
-
-Reasons:
-
-- A bug in one SQL filter must not be the only wall between two firms' client files.
-- Firms buy region, key ownership, and VPC / subscription isolation.
-- Ethical walls (matter ACL) remain necessary **inside** the firm; network + account isolation is the **between-firm** control.
+**First customers get their own stack.** A bug in one SQL filter must not be the only wall between two firms. Ethical walls stay inside the firm. Network and account isolation sit between firms.
 
 Shared multi-tenant control plane can come later. Do not start with one shared Postgres for multiple firms.
 
-### 5.2 Target topology (same app images, two cloud modules)
+### 5.2 Target topology
 
 | Concern | AWS | Azure | Why this shape |
 |---------|-----|-------|----------------|
-| Edge | ALB + WAF + ACM | Application Gateway or Front Door + WAF | TLS terminates here; API is not public on `:8000` |
-| App | ECS Fargate: `api`, `ingest`, `embed`, `sync` | Container Apps or AKS, same four services | API stays stateless; embedding and sync never run inside the request |
-| Database | RDS or Aurora PostgreSQL 16, pgvector, Multi-AZ, RDS Proxy | PostgreSQL Flexible Server, zone redundant, PgBouncer | Same schema; do not replace pgvector with a second DB in v1 |
-| Files | S3, versioning, KMS CMK | Blob, versioning, Key Vault CMK | Bytes stay out of Postgres; MinIO does not ship |
-| Cache | ElastiCache Redis | Azure Cache for Redis | Cache and locks only; job truth stays in Postgres |
-| Identity | OIDC to firm Okta or Entra (not Cognito-as-the-product) | Entra ID; Conditional Access for MFA | Firms already have an IdP; do not build signup/password reset for v1 |
-| Models | Bedrock in-region, or contracted no-train endpoint | Azure OpenAI in the firm's region | Azure-native firms will require Azure OpenAI; contract must forbid training |
-| Secrets | Secrets Manager | Key Vault | DB, model, and connector tokens; rotation is an operator job |
-| Audit store | S3 Object Lock | Immutable Blob | Separate from app DB so a DB admin cannot rewrite history |
-| Network | Private subnets, VPC endpoints | Private Link; no public data plane | Postgres, Redis, and object storage have no public address |
+| Edge | ALB + WAF + ACM | Application Gateway or Front Door + WAF | TLS terminates here |
+| App | ECS Fargate: `api`, `ingest`, `embed`, `sync` | Container Apps or AKS, same four services | Embedding and sync stay off the request |
+| Database | RDS or Aurora PostgreSQL 16, pgvector, Multi-AZ | PostgreSQL Flexible Server, zone redundant | Same schema; do not replace pgvector in v1 |
+| Files | S3, versioning, KMS CMK | Blob, versioning, Key Vault CMK | Bytes stay out of Postgres |
+| Cache | ElastiCache Redis | Azure Cache for Redis | Cache and locks only |
+| Identity | OIDC to the firm’s Okta or Entra | Entra ID; Conditional Access for MFA | Do not build signup for v1 |
+| Models | Bedrock in-region, or a contracted no-train endpoint | Azure OpenAI in the firm’s region | Contract must forbid training |
+| Secrets | Secrets Manager | Key Vault | Rotation is an operator job |
+| Audit store | S3 Object Lock | Immutable Blob | Separate from the app database |
+| Network | Private subnets, VPC endpoints | Private Link | Postgres, Redis, and objects have no public address |
 
-**IaC recommendation:** one Terraform (or equivalent) layout with an AWS module and an Azure module; same container images; firm-specific tfvars for region, CIDR, IdP issuer, model endpoint.
+One Terraform (or equivalent) layout, an AWS module and an Azure module, the same images, firm-specific tfvars. The Dockerfile is the image input. Compose is the developer input.
 
-### 5.3 Service split (four processes minimum)
+### 5.3 Service split
 
 | Service | Responsibility |
 |---------|----------------|
-| `api` | Authn/z, retrieval, ask, chat SSE, admin APIs — no heavy embed in-request |
-| `ingest` | Upload/batch parse → normalize → write docs/versions |
-| `embed` | Chunk embed workers (MiniLM 384-d); scale independently |
-| `sync` | Connector delta/download/permission sync (when real providers ship) |
+| `api` | Authn/z, retrieval, ask, chat SSE, admin APIs. No heavy embed in-request |
+| `ingest` | Upload/batch parse, normalize, write docs and versions |
+| `embed` | Chunk embed workers (MiniLM 384-d unless a measured switch says otherwise) |
+| `sync` | Connector delta, download, permission sync, when a real provider exists |
 
-Redis for queues/locks; Postgres for durable job state (reuse `ingest_jobs` / sync state pattern). Kafka/Neo4j remain out of scope until sprint gates say otherwise.
+Redis for queues and locks. Postgres for job truth. Kafka and Neo4j stay out until a sprint gate says otherwise.
 
 ### 5.4 What Compose must not become
 
-Do not treat the current compose file as a production blueprint:
-
-- Public Postgres/Redis ports
-- Known default passwords
-- Auth off by default
-- Optional object store
-- No WAF, no private network, no backups, no IdP
+The file is valid and can build the app image. It is still a developer baseline: published database ports, known dev passwords, auth off unless a production env file says otherwise, optional object store, no WAF, no backups, no IdP.
 
 ---
 
 ## 6. Scaling
 
-### 6.1 Today vs first firm
-
 | | Today (lab) | First firm |
 |--|-------------|------------|
-| Topology | One API process; MiniLM on CPU in-process; one Postgres; Redis; optional MinIO | Dedicated silo; API replicas; worker pools |
-| Auth | Off / header trust | Firm OIDC |
-| Scale unit | Research corpus (~42k chunks) | Design against FirmOS targets below |
-| Proof | Eval suites | Load test + restore drill |
+| Topology | One API process; MiniLM on CPU; one Postgres; Redis; optional MinIO; container available | Dedicated silo; API replicas; worker pools |
+| Auth | Off, or API key | Firm OIDC |
+| Scale unit | Research corpus (~42k chunks) plus a small demo seed | Design against the FirmOS targets below, then measure |
+| Proof | Eval suites; CI contract tests | Load test + restore drill |
 
-### 6.2 Design targets (FirmOS plan — not yet measured in production)
+Design targets (not yet measured):
 
-- 1,000+ documents per matter/workspace
+- 1,000+ documents per matter
 - ~100 pages per document on average
 - 100,000+ pages in a review corpus
-- PDFs, DOCX, XLSX and common legal/business files
-- Nested folders and matter/client hierarchy
-- Multiple immutable document versions
-- AI findings anchored to exact source evidence
-- Parallel processing with partial failure and retry
-- Full auditability
-
-**There is no production load-test result yet.** Treat these as the capacity contract to design and then prove.
-
-### 6.3 What breaks first, and what to do
+- Nested folders, immutable versions, findings anchored to source evidence
+- Partial failure and retry, full auditability
 
 | Load | What breaks first | What to do |
 |------|-------------------|------------|
-| Many lawyers asking at once | Single uvicorn process and in-process reranker | Two or more API replicas; cross-encoder as its own service with a candidate cap |
-| A large SharePoint library lands | Embedding on the request path; CPU MiniLM | Queue downloads; separate embed workers; batch; GPU only if CPU misses the ingest SLA |
-| Chunks grow past the lab corpus | One HNSW index and one connection pool | Keep 384-d MiniLM; add a pooler; partition by matter only after a measured index problem |
-| Second and third firm | Shared database and shared Redis | Do not share; new account/subscription, new key, new bucket, new database |
-| Model cost spike | Unbounded chat tools | Per-deployment token budget, queue, and a hard monthly cap in the contract |
+| Many lawyers asking at once | Single API process and in-process reranker | API replicas; cross-encoder as its own service with a candidate cap |
+| A large library lands | Embedding on the request path; CPU MiniLM | Queue downloads; separate embed workers |
+| Chunks grow past the lab | One HNSW index, one pool | Keep 384-d MiniLM; add a pooler; partition only after a measured index problem |
+| Second firm | Shared database | New account, key, bucket, and database |
+| Model cost | Unbounded chat | The rate limiter plus a contracted monthly cap |
 
-### 6.4 Scaling principle
-
-**Scale by adding a firm stack, not by sharing one database.**  
-Inside a firm, scale **services and workers**, not process count on a laptop.
-
-Do not retune global fusion policy without typed ablations. Do not change embedding dimension without schema + re-embed. Matter scope stays hard; ACL stays in SQL before rank.
+**Scale by adding a firm stack.** Inside a firm, scale services and workers. Do not retune global fusion without a typed ablation. Do not change embedding dimension without a schema change and a re-embed.
 
 ---
 
 ## 7. How enterprise sales and firm handling work
 
-Procurement will not buy “better retrieval than Mike.” They buy a place **client documents can sit** under controls they already understand.
-
 ### 7.1 Security questionnaire — honest answers
 
 | They will ask | Answer you can give today | Answer after pilot gates |
 |---------------|---------------------------|--------------------------|
-| Where does data live? | A laptop or a dev server | Their chosen AWS or Azure region, dedicated account |
-| Who can sign in? | Whoever sends a member header | Their Entra or Okta groups; MFA via Conditional Access |
-| Ethical walls | Matter ACL before ranking, in one database | Same rule, plus the whole stack is only their firm |
-| Do you train on our files? | No production model contract | Written no-train terms (Azure OpenAI / Bedrock); subprocessor list |
+| Where does data live? | A developer machine or a dev server | Their chosen AWS or Azure region, dedicated account |
+| Who can sign in? | A dev member header, or an API key if auth is on | Their Entra or Okta groups; MFA via Conditional Access |
+| Ethical walls | Matter ACL before ranking, in one database, with a seeded restricted set for tests | Same rule, and the stack contains only their firm |
+| Do you train on our files? | No production model contract. Bedrock is optional code | Written no-train terms; subprocessor list |
 | Can we leave? | No export product | Bucket export of originals + database dump; offboarding runbook |
-| SOC 2 | No | Still no Type II for early design partners; pen test + architecture pack + SOC 2 timeline — do not claim the report |
+| SOC 2 | No | Still no Type II for early design partners; pen test + architecture pack + a timeline |
 | SharePoint | Not connected | Not in the pilot; required before a paid firm that will not upload by hand |
+| Is the UI real? | Yes, against our corpus: ask, chat, matters, documents | Same loop on their corpus, after IdP login |
 
-### 7.2 Handling model for the first sold product
+### 7.2 Handling model
 
-1. **Deal type:** dedicated deployment (AWS or Azure, firm chooses).
-2. **Identity:** firm IdP only; map groups → matter membership (and later admin roles).
-3. **Data:** originals in their bucket; index and metadata in their Postgres; no cross-firm resources.
-4. **Access:** matter ACL before retrieval; operators access via break-glass, audited.
-5. **Models:** in-region; contractual no-train / no-retention; keys in their vault or yours under DPA.
-6. **Support:** written hours, severity definitions, escalation; on-call for the silo.
-7. **Exit:** documented export of objects + DB; destroy confirmation; key deletion.
-8. **Change control:** migrations and model upgrades are release jobs with rollback.
+1. Dedicated deployment; the firm chooses AWS or Azure.
+2. Their IdP only; groups map to matter membership.
+3. Originals in their bucket; index and metadata in their Postgres.
+4. Matter ACL before retrieval; operator access is break-glass and audited.
+5. In-region model; contractual no-train; keys in a vault.
+6. Written support hours and an on-call owner for the silo.
+7. Exit: export objects and the database; destroy confirmation; delete keys.
+8. Migrations and model upgrades are release jobs with rollback.
 
-### 7.3 Commercial pack to produce (not in-repo today)
+### 7.3 Commercial pack (not in-repo)
 
-- Data Processing Agreement (DPA)
-- Subprocessor list (cloud, model, email if any, support tools)
-- Architecture & data-flow diagram (AWS and Azure variants)
-- Security whitepaper / controls matrix (aligned to SOC 2 / ISO themes even before certification)
-- Pen test report (or scheduled date)
-- RPO / RTO and backup/restore evidence
-- Region and residency statement
-- Support SLA
-- Acceptable use and AI disclaimer (retrieval/citations are not legal advice)
-- Offboarding / exit checklist
+DPA, subprocessor list, architecture diagram (AWS and Azure), controls matrix, pen test or a scheduled date, RPO/RTO evidence, residency statement, support SLA, AI disclaimer (retrieval is not legal advice), offboarding checklist.
 
-### 7.4 Product packaging recommendation
+### 7.4 Packaging
 
-| Package | Includes | Excludes (until built) |
-|---------|----------|------------------------|
+| Package | Includes | Excludes until built |
+|---------|----------|----------------------|
 | **Firm Memory Pilot** | Dedicated stack, OIDC, retrieval, ask/chat UI, manual/batch ingest, eval baseline, support hours | SharePoint, Word, tabular, workflows, library |
-| **Firm Memory Production** | Pilot + Graph connector, admin sync health, audit export, load-tested capacity, pen test, DPA | Full workspace parity |
-| **Workspace (later)** | Library, tabular, workflows, Word, research UX | — |
+| **Firm Memory Production** | Pilot + one Graph connector, admin sync health, audit export, load-tested capacity, pen test, DPA | Full workspace parity |
+| **Workspace (later)** | Library, tabular, workflows, Word, research UX, per the UI roadmap | — |
 
-Price and sell the middle column only when paid gates are closed.
+Sell a column only when its gates are closed. Gate 8 being partial means the pilot package still needs IdP login and a citation the lawyer can open on their own documents, on the dedicated stack.
 
 ---
 
 ## 8. Order of work
 
-Close the **pilot** column before any firm data leaves a lab. Close the **paid** column before an invoice. Library, tabular, workflows, Word, and MCP wait.
+1. **Close the remaining app holes that would leak a file:** generated-file download before ACL; legacy HTML injection in the Word pane; uploads buffered in the API.
+2. **Dedicated AWS or Azure stack** — private network, managed Postgres with pgvector, object storage, Redis, secrets, backups, four services.
+3. **OIDC** to Entra and Okta; retire API-key browser login for lawyers; map groups to matter membership.
+4. **Prove the lawyer loop on that stack:** login, ask/chat, open citation, download the source they are allowed to see, fail closed on a restricted matter.
+5. **Embeddings and ingest off the API process;** alerts on failure, queue depth, and backup age.
+6. **For the paid firm, one real connector** (Microsoft Graph if they live in Microsoft 365).
+7. **Then** the UI roadmap: matter workspace, document viewer, tools.
 
-1. **Dedicated AWS and Azure stacks** — private network, managed Postgres with pgvector, object storage, Redis, secrets, backups, four services (`api`, `ingest`, `embed`, `sync`).
-2. **Turn dev auth off in that stack** — OIDC to Entra and Okta; map groups to existing matter membership.
-3. **Finish the chat surface a lawyer needs** — sessions, streaming, citation open (backend is already ahead).
-4. **Move embeddings and ingest off the API** — alert on failure, queue depth, and backup age.
-5. **For the paid firm, ship one real connector** — Microsoft Graph first if they live in Microsoft 365; keep source ACL beside matter ACL.
-6. **Only then:** durable reviews and workflows, library, Word add-in.
-
-For every Mike-inspired item: write a clean requirement + `IP_ORIGIN_RECORD` entry **before** implementation. Prefer “best for Harbour / FirmOS users,” not visual or structural cloning.
+For every Mike-inspired item: a clean requirement and an `IP_ORIGIN_RECORD` entry before implementation.
 
 ---
 
 ## 9. Suggested definition of “live”
 
-### 9.1 Private pilot “live”
+### 9.1 Private pilot
 
-- [ ] Firm data only in dedicated AWS or Azure account
-- [ ] OIDC login works; `AUTH_ENABLED=true`; header trust disabled
+- [ ] Firm data only in a dedicated AWS or Azure account
+- [ ] OIDC login; `AUTH_ENABLED=true`; header trust disabled; API keys not the lawyer session
 - [ ] TLS, WAF, private DB/Redis/object storage
-- [ ] Backups enabled; restore rehearsed once; RPO/RTO written
-- [ ] Secrets only in Secrets Manager / Key Vault
-- [ ] Lawyer can complete: login → ask/chat → open citation → download/view source
+- [ ] Backups on; restore rehearsed once; RPO/RTO written
+- [ ] Secrets only in Secrets Manager or Key Vault
+- [ ] Lawyer can complete: login → ask/chat → open citation → view the allowed source
+- [ ] Generated and original downloads both enforce matter ACL
 - [ ] Model endpoint in-region with no-train terms
-- [ ] Health checks + alerts + on-call owner
+- [ ] Health checks, alerts, on-call owner
 - [ ] Migration job documented
+- [x] Retrieval engine and cited ask/chat exist (lab)
+- [x] SPA for that loop exists (lab, API key or dev persona)
+- [x] Production boot guard rejects auth-off and default secrets
 
-### 9.2 First paid firm “live”
+### 9.2 First paid firm
 
 All pilot items, plus:
 
 - [ ] Microsoft Graph (or Drive) connector with incremental sync and disconnect
-- [ ] Source + matter ACL intersection enforced in retrieval SQL
-- [ ] Admin can see connection health / last sync / errors
-- [ ] Immutable audit export for access and admin events
-- [ ] Load test passed against contracted page/QPS budget
-- [ ] Pen test completed or scheduled with findings triage
-- [ ] Signed DPA + subprocessor list + support SLA
+- [ ] Source ACL and matter ACL both enforced in retrieval SQL
+- [ ] Admin can see connection health, last sync, and errors
+- [ ] Immutable audit export
+- [ ] Load test passed against the contracted page/QPS budget
+- [ ] Pen test completed or scheduled, with findings triage
+- [ ] Signed DPA, subprocessor list, support SLA
 - [ ] Offboarding runbook tested once on a staging silo
 
 ### 9.3 Explicit non-goals for first live
 
 - Mike product parity
 - Self-serve multi-tenant SaaS
-- SOC 2 Type II certificate in hand
-- Word add-in production
-- In-memory tabular/workflows promoted without durable schema + UI
-- Kafka / Neo4j (unless a later gate wins)
+- SOC 2 Type II in hand
+- Word add-in as a product
+- Tabular review and workflows promoted without a durable schema and a UI
+- Kafka or Neo4j
 
 ---
 
@@ -435,13 +368,13 @@ All pilot items, plus:
 
 | Risk | Why it matters | Mitigation |
 |------|----------------|------------|
-| Header-trust auth in “prod” | Any client can impersonate a member | OIDC only; deny `X-Member-Id` when auth on |
-| Shared DB multi-tenancy | Cross-firm leak = existential | Per-firm silo for v1 |
-| Fake connectors sold as real | Trust destruction | One real Graph path before paid SharePoint claims |
-| In-memory tabular/workflows | Data loss on restart | Do not enable in production until Postgres-backed |
-| Unbounded LLM cost | Margin and ToS risk | Hard monthly cap + queue |
-| Claiming SOC 2 / GDPR export that don't exist | Procurement and regulatory exposure | Sell only documented controls |
-| Copying Mike for speed | AGPL / IP exposure | Clean-room protocol; stop and escalate if asked to port |
+| Header-trust or API-key-in-the-browser treated as SSO | A copied key or a dev deploy impersonates a lawyer | OIDC only on the silo; HttpOnly session; production boot guard stays |
+| Generated-file download before ACL | Bytes leave without a matter check | Fix and regression-test before any client file is stored |
+| Shared database for two firms | A filter bug is an existential leak | Per-firm silo for v1 |
+| Fake connector described as SharePoint | Trust destruction | One real Graph path before a paid sync claim |
+| Bedrock embeddings flipped without a re-embed | Silent retrieval collapse | Factory default stays MiniLM; eval before any dimension change |
+| Claiming SOC 2 or a ready export | Procurement exposure | Sell documented controls only |
+| Copying Mike for speed | AGPL / IP exposure | Clean-room protocol |
 
 ---
 
@@ -449,14 +382,13 @@ All pilot items, plus:
 
 | Question | Answer |
 |----------|--------|
-| What is done? | Retrieval science + cited ask/chat backend + matter/document schema + Phase-0 sync substrate |
-| What is missing for production? | Identity, silo networking, managed data plane, backups, secrets, lawyer UI completion, ops/IaC, model contract |
-| What is missing for paid enterprise? | Real connectors, admin, audit export, capacity proof, commercial pack |
-| How do we scale? | New firm = new stack; inside firm = API replicas + ingest/embed/sync workers; prove FirmOS page targets with load tests |
-| How is a firm handled? | Dedicated AWS or Azure deployment, firm IdP, matter ACL, no-train models, exit via bucket+DB export |
-| AWS vs Azure? | Same four services and schema; different managed services (table in §5.2); Azure OpenAI + Entra for Microsoft-first firms |
-| What do we sell first? | Firm Memory Pilot → Firm Memory Production — not workspace parity |
+| What is done? | Retrieval, cited ask/chat (API and SPA), single-firm matter/document model, demo seed, API-key auth, production boot guard, container, contract CI |
+| What is missing for a pilot? | Firm IdP, dedicated network and data plane, backups, vault-backed secrets, the download ACL residual, workerised ingest, on-call |
+| What is missing for a paid firm? | A real connector, admin, audit export, capacity proof, commercial pack |
+| How do we scale? | New firm = new stack; inside a firm = API replicas and ingest/embed/sync workers |
+| How is a firm handled? | Dedicated AWS or Azure deployment, their IdP, matter ACL, no-train models, exit via bucket and database export |
+| What do we sell first? | Firm Memory Pilot, then Firm Memory Production. Workspace parity waits on the UI roadmap |
 
 ---
 
-*End of review. Re-run after pilot gates close and after the first paid connector ships.*
+*End of review. Re-run when the pilot IdP and silo exist, and again when the first paid connector ships.*

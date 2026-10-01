@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fastapi import HTTPException
 
+from app.config import settings
 from app.db.connection import connect
 from app.ingest.jobs import (
     complete_job,
@@ -17,11 +18,19 @@ from app.ingest.jobs import (
 from app.ingest.pipeline import ingest_one, load_manifest
 
 
+def _within_allowed_roots(path: Path) -> bool:
+    resolved = path.resolve()
+    return any(resolved.is_relative_to(root) for root in settings.ingest_root_list)
+
+
 def create_ingest_job(source_root: str, manifest_path: str, workers: int = 1) -> dict:
     source = Path(source_root)
+    manifest = Path(manifest_path)
+    # Paths come from the client: never let a caller point the server at arbitrary files.
+    if not (_within_allowed_roots(source) and _within_allowed_roots(manifest)):
+        raise HTTPException(status_code=400, detail="source_root/manifest must be inside INGEST_ALLOWED_ROOTS")
     if not source.is_dir():
         raise HTTPException(status_code=400, detail=f"Invalid source_root: {source_root}")
-    manifest = Path(manifest_path)
     if not manifest.is_file():
         raise HTTPException(status_code=400, detail=f"Invalid manifest: {manifest_path}")
 

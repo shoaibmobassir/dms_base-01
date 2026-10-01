@@ -44,6 +44,10 @@ class ChatSession(BaseModel):
     matter_id: Optional[str] = None
     model: Optional[str] = None
     member_id: Optional[str] = None
+    pinned: bool = False
+    # Listing only: the matter's code and the opening question (for history rows and search).
+    matter_code: Optional[str] = None
+    first_question: Optional[str] = None
     status: SessionStatus = SessionStatus.active
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -53,6 +57,9 @@ class ChatSessionPatch(BaseModel):
     title: Optional[str] = None
     model: Optional[str] = None
     status: Optional[SessionStatus] = None
+    pinned: Optional[bool] = None
+    # A matter id limits the conversation's search to that matter; "" clears it.
+    matter_id: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -66,10 +73,20 @@ class FileAttachment(BaseModel):
     content_type: Optional[str] = None
 
 
+class WorkMode(str, Enum):
+    """How the next answer should be shaped. Chosen by the lawyer, not inferred."""
+
+    reason = "reason"
+    research = "research"
+    review = "review"
+    cite = "cite"
+
+
 class ChatMessageCreate(BaseModel):
     content: str
     role: MessageRole = MessageRole.user
     files: Optional[list[FileAttachment]] = None
+    mode: Optional[WorkMode] = None
 
 
 class ChatMessage(BaseModel):

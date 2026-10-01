@@ -1,162 +1,188 @@
 # LEXOS / FirmOS production-readiness review
 
-**Review date:** 2026-09-21  
-**Scope:** `legal-memory-retrieval` and its supporting product/operating material.  
-**Decision:** **Do not deploy to production.** The product is a promising single-firm prototype with well-developed retrieval experiments, but it does not yet meet the minimum security, tenancy, reliability, delivery, or operational requirements for enterprise legal customers.
+**Review date:** 2026-09-24 (replaces the 2026-09-21 assessment)  
+**Scope:** `legal-memory-retrieval` and the supporting product/operating material.  
+**Decision:** **Do not deploy customer client files to production.** The retrieval core and the lawyer-facing SPA are now a credible single-firm prototype. Identity is API keys, not a firm IdP. There is no tenant key or row-level security on the core tables, and there is no AWS or Azure stack, backup drill, or commercial pack.
+
+Evidence for this revision: `docs/production-plan/` (plans 01–06 done, 07 in progress), `docs/production-plan/AUDIT.md` (2026-09-24), `docs/CHANGELOG.md` (Bedrock AI layer 2026-09-23, SPA rebuild 2026-09-22), and a read of the current auth, Compose, container, CI, and document-download paths.
+
+> **Update 2026-09-26.** Superseded in part by the plan “Precentis DMS — Production Readiness, Azure Deployment & Next-Steps Plan”. Verified in code since 24 Sep: generated-file downloads are owner-checked (P0-02 residual closed); `static/_legacy` is gone and the Word task pane renders text nodes (P0-05); uploads are size-capped and spooled (P0-06 partly); an OIDC login/session flow exists (P0-04 partly). Phase 0 (26 Sep): per-event-loop DB pools (no stranded connections), stored/indexed BM25 vector (`chunks.tsv_full`), streaming Ask (`POST /api/answers/stream`), readiness gated on model warm-up and migrations, block de-duplication + page counts for versions. Full `pytest tests/`: 675 passed, 0 failed. Still open: tenant key/RLS, IaC, backups drill, pen test, admin/access model, write paths.
+
+## What changed since 21 September
+
+| 21 Sep finding | 24 Sep state |
+|---|---|
+| Compose YAML invalid (`redis` nested under `postgres`) | `postgres` and `redis` are sibling services. Optional `object-store` and `app` profiles. |
+| No Dockerfile, no CI | Multi-stage `Dockerfile` (SPA build + Python 3.12, non-root). `.github/workflows/ci.yml` migrates, seeds, and runs the contract suite plus `tsc` and the frontend build. |
+| Document download and several routers had no member dependency | Protected routers are mounted with `Depends(resolve_member)`. Chat sessions are owner-scoped. Read paths used by the SPA apply the matter ACL. |
+| `AUTH_ENABLED` in `.env` was ignored; `api_keys` table missing; missing identity was full access when auth was on | Auth reads `settings.auth_enabled`. Migration creates `api_keys`. A DB failure on key lookup is 503. `ENV=production` refuses to boot with auth off, wildcard CORS, or default secrets. |
+| CORS `*` with credentials | `CORS_ORIGINS` is an explicit list (default `http://localhost:5173`). Credentials are off when `*` is present. |
+| SPA path traversal could return `.env` | `/ui` assets must resolve inside `static/`. |
+| Static `app.js` inserted document HTML | The live UI is the Vite React SPA. Assistant markdown is rendered as text nodes. `static/_legacy/app.js` is not the mounted app. |
+| Frontend personas and hard-coded firm copy | Firm name, deadlines, client notes, and the ethical-wall seed live in Postgres. The persona switcher appears only when auth is off. With auth on, the SPA signs in with an API key. |
+| Chat UI incomplete (title, model, stop, citations) | Chat plan (sessions, stop, configured models, citation titles, suggestions) is marked done in `docs/production-plan/05_chat_experience.md`. |
 
 ## Executive assessment
 
-The repository demonstrates real product progress:
+Keep:
 
-- Retrieval is comparatively mature: hybrid retrieval, ACL-aware candidate queries, provenance, caching, tracing, evaluation harnesses, matter/document/version concepts, and citations are present.
-- The team has measured quality on internal synthetic/curated Harbour corpora and has documented known model-quality limitations instead of hiding them.
-- Focused automated coverage is healthy: `119 passed` in the health, upload, source-sync, and chat test suites on 2026-09-21.
+- Hybrid retrieval (lexical, vector, metadata, graph, fusion, cross-encoder), ACL in SQL before rank, citations, eval harnesses, matter scope.
+- A React SPA a lawyer can use against the seeded database: Home, Ask, Chat, Matters, Documents (detail and history), Clients, People, Calendar, Arguments, Settings.
+- A boot guard, connection pool, readiness probe, rate limit on answers and chat messages, and a container image that refuses development defaults when `ENV=production`.
+- Bedrock as an opt-in answer/chat provider (`AWS_BEARER_TOKEN_BEDROCK`). Retrieval embeddings stay MiniLM 384-d unless `EMBEDDING_PROVIDER=bedrock` and the corpus is re-embedded.
 
-Those positives do **not** make this sellable as an enterprise DMS/SaaS. The current product trusts client-supplied member identity in development, has multiple routes with no authentication or object authorization, lacks tenant enforcement in the primary data model, and has no deployable, reproducible cloud platform. The supplied Compose file itself cannot be parsed.
+Still blocking a design-partner firm:
 
-The immediate goal should be a controlled design-partner pilot for one firm only after the P0 work is completed. General enterprise availability should follow a separate multi-tenant/platform programme.
+- No OIDC/SAML. Production auth is a long-lived API key. The SPA stores that key in browser storage. Cookie sessions are explicitly deferred in plan 07.
+- Core tables (`members`, `clients`, `matters`, `documents`) have no tenant key and no PostgreSQL row-level security. `tenant_id` appears on later tables (`firm_profile`, upload batches) and defaults to a single firm.
+- No Terraform/Bicep/CloudFormation, no private network, no managed backups, no restore drill, no WAF, no pen test, no DPA.
+- Uploads still read each file fully into the API process. Source sync is still the Phase-0 fake connector.
+- CI gates a contract subset (`test_health`, `test_security`, `test_ui_contract`, `test_chat_assistant`), not the full `pytest` suite, container scan, or retrieval eval.
+
+The immediate goal remains a **single-firm design-partner pilot** after the remaining P0s below. Multi-tenant SaaS is a later programme. First customers should get a dedicated stack, not a shared database.
 
 ## What exists today
 
 | Capability | Current state | Production assessment |
 |---|---|---|
-| Retrieval and answer generation | Parallel lexical/vector/metadata/graph retrieval, reranking, citations, abstention, cache and evaluation artefacts. | Solid R&D base; benchmarks are not representative enterprise acceptance evidence. |
-| Core legal model | Members, clients, matters, permissions, documents, chunks; newer document versions, upload batches, source connections and review concepts. | Incomplete tenancy and lifecycle model; primary entities are single-firm. |
-| Ingestion | Folder batches, object-store abstraction, parsing and sync prototype. | Not safe or durable for production bulk ingestion. |
-| User experience | Static SPA, Word task pane, document browsing, projects, reviews and chat. | Demo quality; unsafe rendering and demo persona switching prevent enterprise use. |
-| Auth and ethical walls | API-key lookup and SQL ACL predicates exist. | Not consistently applied; no enterprise SSO/SCIM, roles, tenant claims, service authorization or audit assurance. |
-| Observability | Prometheus/OTel hooks and request IDs exist. | No complete operational baseline, SLOs, alerting, dashboards, log-redaction policy, or incident runbooks. |
-| Delivery | Local env and Docker Compose reference only. | No valid Compose file, container image, CI/CD, IaC, environment promotion, SBOM, scanning, or release process. |
+| Retrieval and answers | Engine v2, fusion `p55_repair_ce_protect`, hard matter scope, citations, abstention, cache, eval artefacts. Bedrock can answer; MiniLM still embeds. | Solid R&D base. Benchmarks are on the Harbour/PCIJ corpus, not a customer acceptance set. |
+| Core legal model | Members, clients, matters, permissions, documents, chunks, versions, upload batches, court deadlines, client notes, firm profile. | Usable for one firm. Not a tenant model. |
+| Ingestion | Folder batches, object-store abstraction (local or S3-compatible), per-file failure isolation on batch run. | Not safe for untrusted bulk upload: whole file buffered in the API, no malware scan, no direct-to-bucket upload. |
+| User experience | React SPA served at `/ui`, wired to the API. Chat has sessions, streaming, stop, and citations. | Enough for an internal demo. Document viewer, Word, tabular, and workflows are not the product surface. API-key login is not firm SSO. |
+| Auth and ethical walls | API keys, matter ACL, chat ownership, production boot guard. Seeded restricted matters exist for tests. | Dev mode still trusts `X-Member-Id` and treats a missing member as anonymous admin. No SSO, SCIM, session revocation, or RLS. |
+| Observability | Prometheus/OTel hooks, request IDs, `/api/system/ready` (DB + Redis). | No SLOs, paging, dashboards, log-redaction policy, or incident runbook. |
+| Delivery | Valid Compose, Dockerfile, GitHub Actions contract CI. | No image signing, SBOM, IaC, environment promotion, or rollback. |
 
 ## Launch blockers (P0)
 
-### P0-01 — The supplied deployment baseline is invalid
+### P0-01 — No deployable cloud platform
 
-- **Evidence:** [`docker-compose.yml`](docker-compose.yml:19) indents `redis` under `postgres`; `docker compose config` fails with “mapping key `image` already defined”. There is no Dockerfile, CI workflow, Terraform/Bicep/CloudFormation, Helm chart, or deployment manifest in the repository.
-- **Impact:** There is no repeatable way to build, scan, deploy, roll back, or recover the service.
-- **Required outcome:** Correct the Compose file for developer use; then create immutable application/worker images, signed image publication, IaC for every environment, migrations executed once as a controlled job, progressive delivery, rollback, backups and restore drills. A green CI pipeline must include unit/integration/e2e, dependency/SAST/container/IaC scans, and quality-evaluation gates.
+- **Was:** Compose did not parse; no image; no CI.
+- **Now:** Compose parses. `docker compose --profile app up --build` is the documented app shape. CI exists for the contract suite and the frontend build.
+- **Still required:** Immutable images in a registry, signed publication, IaC for one primary region, migrations as a one-shot job, backups, a restore drill, and rollback. CI must grow to the full test suite, dependency/SAST/container scans, and a retrieval non-regression gate before a release is called green.
+- **Impact:** A laptop Compose file is not a firm deployment.
 
-### P0-02 — Direct document disclosure through unauthenticated/unauthorized routes
+### P0-02 — One download path still skips the matter ACL
 
-- **Evidence:** [`app/api/routers/documents_router.py`](app/api/routers/documents_router.py:493) exposes `GET /{document_id}/download` with no `Depends(resolve_member)` and no access check. [`app/api/routers/documents_router.py`](app/api/routers/documents_router.py:529) accepts a member but selects document text and chunks without checking the document/matter ACL. Several other sensitive routers expose state-changing or data routes without any auth dependency: workflows, drafting, Word, case law, reviews and tabular review routes (for example [`app/api/routers/word_router.py`](app/api/routers/word_router.py:49)).
-- **Impact:** A party that can reach the API can enumerate/guess document IDs and obtain source files or extracted legal text, or invoke privileged workflows. This is a confidential-client-data breach.
-- **Required outcome:** Introduce a single authenticated principal (`tenant_id`, user ID, roles, matter permissions, request ID) and attach it at protected router boundaries. Every resource lookup must scope by tenant and enforce matter/document/project authorization before returning data or performing a write. Add negative authorization tests for every route and make the unprotected-route inventory a CI failure.
+- **Was:** `GET /documents/{id}/download` had no member dependency and no ACL. Several routers were unauthenticated.
+- **Now:** Routers other than `/api/system` require `resolve_member`. `document_text` and the normal download path call `_check_doc_access`. Chat, knowledge, clients, people, home, and teams reads used by the SPA are ACL-scoped. Reviews, tabular, workflows, drafting, Word, caselaw, and audit are behind the same dependency.
+- **Residual:** `document_download` returns a file from `{object_store_root}/generated` when the filename starts with the requested id, **before** `_check_doc_access`. A caller who can hit the API can retrieve those generated files without a matter check.
+- **Required outcome:** ACL (and tenant, once it exists) before any bytes leave the process, including generated artefacts. Negative tests for that branch. Keep the unprotected-route inventory as a CI failure.
 
 ### P0-03 — No enterprise tenant isolation
 
-- **Evidence:** [`app/db/schema.sql`](app/db/schema.sql:15), [`app/db/schema.sql`](app/db/schema.sql:27), [`app/db/schema.sql`](app/db/schema.sql:39), and [`app/db/schema.sql`](app/db/schema.sql:76) define the core members, clients, matters, and documents tables without a tenant key. `upload_batches` adds `tenant_id` only later ([`schema.sql`](app/db/schema.sql:405)), while source connections use a separate `organization_id`. There are no database row-level-security policies in the schema.
-- **Impact:** The application cannot prove a firm’s data is isolated from another firm’s data. An application bug, operator query, future route, cache-key omission, or background job can cross client boundaries.
-- **Required outcome:** Make tenant a first-class, immutable, required key on every business, search, audit, queue, cache and storage record; use composite foreign keys/unique indexes; set the tenant from verified identity only; enforce PostgreSQL RLS with a transaction-local tenant context; test cross-tenant denial end-to-end. Do not treat a storage prefix or query predicate alone as isolation.
+- **Evidence:** `members`, `clients`, `matters`, and `documents` in `app/db/schema.sql` have no tenant key. `firm_profile.tenant_id` and `upload_batches.tenant_id` do not isolate the corpus. No `ENABLE ROW LEVEL SECURITY` in the schema or migrations.
+- **Impact:** One database is one firm. A filter bug, cache key, or operator query has no second wall.
+- **Required outcome for a shared platform:** tenant on every business, search, audit, queue, cache, and object key; RLS with a transaction-local tenant. **Required outcome for the first pilot:** a dedicated account, database, bucket, and key per firm, so the missing column is not the only control. Do not start multi-firm SaaS on this schema.
 
-### P0-04 — Insecure defaults and no production configuration gate
+### P0-04 — Production auth is an API key, and dev auth is still header trust
 
-- **Evidence:** [`app/config.py`](app/config.py:7) contains usable local database credentials; lines 26–32 default the tenant, local store, MinIO endpoint and MinIO credentials; lines 56–59 embed a default source-token encryption secret and run source processing inline. [`app/auth/deps.py`](app/auth/deps.py:10) defaults auth off and treats an absent identity as “admin/anonymous” on line 42. [`app/auth/key_vault.py`](app/auth/key_vault.py:19) has a fallback master secret.
-- **Impact:** A missed environment variable can silently produce an unauthenticated service, shared/default cryptographic key, or development data path. This is unacceptable for confidential legal data.
-- **Required outcome:** Define `ENV=production`; fail startup unless all secret references, allowed origins/hosts, auth provider, encryption keys, external stores, worker backend, retention policies and telemetry sink are configured. Secrets must be secret-manager references, never defaults; rotate them and use per-tenant/customer-managed keys where contracted.
+- **Was:** Auth defaulted off, `.env` was ignored, missing identity was admin, key vault had a fallback secret, and production would boot that way.
+- **Now:** `settings.production_problems()` blocks boot when `ENV=production` and auth is off, CORS is `*`, the source-token secret or MinIO secret is the default, ingest roots are empty, or `DATABASE_URL` contains `legal:legal@`. Key lookup no longer swallows database errors.
+- **Still true in development:** `AUTH_ENABLED` defaults false. An absent `X-Member-Id` is anonymous admin and the ACL clause allows it. That is acceptable only on a machine with no client files.
+- **Still true when auth is on:** the browser holds `X-Api-Key` (see `frontend/src/api/client.ts` and `AppContext`). There is no HttpOnly session, no CSRF story, no IdP, no MFA of our own, no key rotation UI.
+- **Required outcome:** Firm OIDC (Entra or Okta). HttpOnly session cookie. Deny header trust whenever auth is on. Secrets from a manager, not from a file in the image.
 
-### P0-05 — Browser XSS and overly permissive CORS
+### P0-05 — Word task pane still writes API text into HTML
 
-- **Evidence:** [`app/api/main.py`](app/api/main.py:92) sets `allow_origins=["*"]` with `allow_credentials=True`. [`static/app.js`](static/app.js:764) inserts `doc.highlighted_body` into `innerHTML`; [`static/app.js`](static/app.js:823) builds highlighted document content with unescaped interpolation. [`static/word-taskpane.html`](static/word-taskpane.html:297) inserts document title/snippet API values into `innerHTML`. [`static/index.html`](static/index.html:1) has no CSP.
-- **Impact:** A malicious imported document or stored title/snippet can execute in a lawyer’s session. Wildcard credentialed CORS is unsafe/misconfigured and must not be relied upon as access control.
-- **Required outcome:** Use text nodes/DOM construction for document content or an audited sanitizer with a very narrow allowed markup policy; remove inline event handlers; enforce a nonce/hash CSP and standard response security headers at the edge; explicitly allow only production UI origins and only required methods/headers. Test with hostile document names and body content.
+- **Was:** The old SPA used `innerHTML` for highlighted document bodies, and CORS was wide open.
+- **Now:** The React chat renderer does not inject HTML. CORS is an allow-list. The SPA handler cannot escape `static/`.
+- **Residual:** `static/word-taskpane.html` assigns search results to `innerHTML`. `static/_legacy/app.js` still contains the old highlighter. Neither is the main app; both are inside the tree the container copies to `static/`.
+- **Required outcome:** Stop shipping the legacy bundle in the image, or serve it only if a review says it is inert. Render Word-pane results as text nodes. Add a CSP at the edge before any lawyer session exists.
 
-### P0-06 — Upload, sync and egress controls are not production-safe
+### P0-06 — Upload and sync are not safe for a firm library
 
-- **Evidence:** [`app/api/routers/uploads.py`](app/api/routers/uploads.py:21) reads every uploaded file fully into memory (line 40), with no size, file-count, MIME/content validation, malware scanning, batch authorization, or async handoff. [`app/api/routers/sources.py`](app/api/routers/sources.py:53) lists, creates, syncs, reads and deletes source connections without checking the caller’s tenant/matter role or ownership. The documented Phase 0 source connector is intentionally fake and runs inline by default ([`app/sources/sync_engine.py`](app/sources/sync_engine.py:164)).
-- **Impact:** Memory exhaustion, malware/ransomware ingress, matter-level IDOR, sync-trigger abuse and unreliable bulk processing.
-- **Required outcome:** Direct-to-object-storage multipart upload with content-length/file-count limits, allowlisted MIME plus signature inspection, antivirus/CDR quarantine, immutable original objects, checksums, idempotency and a durable queue/DLQ. Source connectors must use OAuth with least scopes, verified callbacks, encrypted tokens under managed keys, source ACL mapping, per-tenant rate/concurrency budgets and worker-only execution.
+- **Evidence:** `POST /api/uploads/batches` reads every file with `await uf.read()` and holds the bytes in the request. No size cap, MIME allow-list, or malware scan is on that route. `POST .../run` processes the batch in the API process. Source connectors remain the Phase-0 `FakeConnector`; real OAuth providers are not shipped. Sync routes now require a member, which closes the old “no auth” hole and does not make the connector real.
+- **Impact:** Memory exhaustion and malware ingress on upload; a sold “SharePoint connector” would be false.
+- **Required outcome:** Direct-to-object-storage upload, size and count limits, content checks, quarantine, checksums, and a worker queue. One real Microsoft Graph connector before any paid sync claim, with source ACL stored beside matter ACL.
 
 ## High-priority work before an enterprise pilot (P1)
 
-1. **Identity and administration:** SAML/OIDC SSO for each firm, SCIM provisioning/deprovisioning, MFA/conditional access delegated to the IdP, roles plus matter ethical walls, break-glass with approval, API/service identities, session/revocation strategy and a customer admin console.
-2. **Legal-data security:** TLS everywhere; private service endpoints; encryption at rest with managed keys, optional tenant CMK/BYOK; signed short-lived downloads; classification/DLP; malware scanning; legal holds, retention/deletion, immutable audit exports, and regional data-residency selection.
-3. **Auditability:** Append-only, tamper-evident audit events for login, search, view/download, prompt, answer, export, permission and admin events. Store actor, tenant, correlation ID, source/evidence and before/after state. Retain and export per contract.
-4. **AI governance:** Vendor/data-processing assessment; no training/retention guarantee appropriate to the selected model provider; model/embedding/version registry; prompt-injection and data-exfiltration controls; per-tenant model allowlists; human-review UX for drafted output; citation/evidence policy; red-team and adversarial legal-corpus tests.
-5. **Quality gates:** Replace demo/synthetic-only claims with blinded, representative firm evaluations; define acceptance thresholds by use case (retrieval, citation precision, grounded answer, abstention, permission denial and latency); version corpora and gold sets; gate releases on non-regression.
-6. **Reliability:** Durable job orchestration, retries that do not block workers, idempotency, DLQs, backpressure, quotas, bulkhead/circuit breakers, database/object-store restore tests, regional DR plan, RPO/RTO, SLOs and on-call runbooks.
-7. **Product UX/accessibility:** Remove the demo persona selector as an identity mechanism; complete responsive/keyboard/screen-reader and error/empty-state testing; provide clear ingestion status, evidence lineage, permission-denied explanations, destructive-action confirmation and safe bulk-operation recovery.
-8. **Supply chain and governance:** Lockfiles with exact resolved versions, SBOM, dependency/license/CVE policy, code review and signed release provenance. Current `>=` dependencies are not reproducible. Establish DPA, security addendum, subprocessor list, acceptable-use policy, privacy notice, support and incident-notification commitments.
+1. **Identity.** OIDC for the design partner’s IdP. Retire API-key-in-local-storage as the lawyer login. Keep API keys for service callers. SCIM can wait until a second firm; deprovisioning still has to be written down for the first firm.
+2. **Close the generated-file download hole** and add a regression test (P0-02 residual).
+3. **Dedicated silo design,** even for one tenant: private Postgres, private Redis, private bucket, TLS, WAF, secrets manager, backup, one restore rehearsal, written RPO/RTO.
+4. **Audit stream.** Append-only events for sign-in, retrieval, download, prompt, answer, export, and admin change. The manifest signer is not that stream.
+5. **AI terms.** In-region Bedrock or the firm’s contracted endpoint, no-train / no-retention in the contract, a token budget, and the rate limit already in `app/resilience/rate_limit.py` turned up to that budget. Do not flip retrieval embeddings to Bedrock without a re-embed and an eval.
+6. **Quality gate.** Keep the Harbour evals. Add a written acceptance bar for the pilot (citation precision, abstention, permission denial, latency). CI today does not run `evals/retrieval_eval.py`.
+7. **Upload hardening** sufficient for the files the pilot will actually ingest (manual/batch), before any connector.
+8. **Supply chain.** Lock what production installs, publish an SBOM, and record licenses in `docs/legal/DEPENDENCY_AUDIT.md` before adding packages.
 
-## Target architecture: provider-neutral first
+## Target architecture
+
+First production shape is a **dedicated firm silo**, not pooled multi-tenant SaaS.
 
 ```text
-Firm user / Word add-in
-  -> CDN + WAF + DDoS + TLS -> Web/API (stateless, multi-AZ)
-  -> IdP (OIDC/SAML, SCIM) -> tenant + role + ethical-wall claims
-  -> policy gateway / application authorization -> PostgreSQL (RLS)
-                                             -> object storage (private, CMK)
-                                             -> Redis (non-authoritative cache)
-                                             -> durable queues -> isolated workers
-                                                               -> parser/OCR/AV/DLP
-                                                               -> embeddings/indexes
-  -> approved LLM gateway (tenant policy, redaction, audit, budgets)
+Firm user
+  -> WAF + TLS -> API (stateless) + built SPA
+  -> firm IdP (OIDC) -> member + matter ACL
+  -> PostgreSQL (pgvector) in a private subnet
+  -> private object storage for originals
+  -> Redis for cache and locks only
+  -> workers: ingest, embed, sync
+  -> in-region model endpoint (no-train contract)
 
-All paths -> immutable audit store + logs/metrics/traces/SIEM
-Control plane -> tenant registry, entitlement, region/stamp routing, billing, admin
+Operators -> break-glass, audited
 ```
 
-Start with a **hybrid tenancy model**:
+Pooled RLS multi-tenancy is a later product. AWS documents that a partition key alone is not isolation; Azure treats tenancy as a spectrum. Until RLS exists and is tested, the isolation control is a separate account, database, bucket, and key per firm.
 
-- Pooled application/worker platform with strict tenant context, RLS, KMS/Key Vault encryption, per-tenant object prefixes/containers, queues, rate limits and cache namespace.
-- Dedicated database/storage/compute deployment stamp for regulated or large firms. This is an enterprise pricing tier, not a forked codebase.
-- Route a tenant to its home region/stamp from a global control plane. Never infer tenant from a host name or client-provided header.
-
-Tenant IDs must appear in every database predicate/index, message, object key, audit record, telemetry attribute (with PII controls), cache key and search/index partition. Isolation testing must be automated. AWS explicitly notes that partitioning itself does not ensure tenant isolation; Azure similarly treats isolation as a spectrum and recommends deliberate deployment-stamp trade-offs. [AWS data-partitioning guidance](https://docs.aws.amazon.com/whitepapers/latest/saas-architecture-fundamentals/data-partitioning.html) and [Azure tenancy models](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/tenancy-models) support this approach.
-
-## AWS and Azure reference mapping
-
-| Concern | AWS reference implementation | Azure reference implementation |
+| Concern | AWS | Azure |
 |---|---|---|
-| Edge | CloudFront + AWS WAF + ALB/API Gateway | Front Door + WAF + Application Gateway/API Management |
-| Compute | ECS Fargate initially; EKS only if workload/tenant-stamp operations justify Kubernetes | Container Apps initially; AKS only where node/policy/isolation requirements justify it |
-| Identity | External enterprise IdP via OIDC/SAML; Cognito only where it fits the customer model | Microsoft Entra ID multitenant enterprise apps / External ID as appropriate |
-| Relational/search | RDS/Aurora PostgreSQL Multi-AZ with pgvector until measured search scale warrants a dedicated search tier | Azure Database for PostgreSQL Flexible Server HA with pgvector until equivalent measured need |
-| Objects | S3 versioning, lifecycle, SSE-KMS, private access points, malware-scanning workflow | Blob Storage versioning/immutability, CMK, private endpoints, Defender for Storage workflow |
-| Async | SQS + DLQ, EventBridge/Step Functions where orchestration is needed | Service Bus + DLQ, Event Grid/Durable Functions or Container Apps jobs |
-| Secrets/keys | Secrets Manager + KMS; tenant CMK option | Key Vault/Managed HSM; tenant CMK option |
-| Observability/security | CloudWatch/X-Ray/OTel -> SIEM, CloudTrail, GuardDuty, Security Hub | Azure Monitor/App Insights/OTel -> Sentinel, Activity Logs, Defender for Cloud |
-| Delivery | GitHub Actions/OIDC -> ECR -> Terraform/CDK -> staged account/stamp | GitHub Actions/OIDC -> ACR -> Terraform/Bicep -> staged subscriptions/stamps |
+| Edge | CloudFront or ALB + WAF | Front Door or Application Gateway + WAF |
+| Compute | ECS Fargate: `api`, `ingest`, `embed`, `sync` | Container Apps, same four processes |
+| Identity | Customer IdP via OIDC | Entra ID, Conditional Access for MFA |
+| Database | RDS/Aurora PostgreSQL 16, pgvector, Multi-AZ | PostgreSQL Flexible Server, zone redundant |
+| Objects | S3, versioning, KMS | Blob, versioning, Key Vault CMK |
+| Secrets | Secrets Manager | Key Vault |
+| Models | Bedrock in-region | Azure OpenAI in-region when the firm requires it |
+| Delivery | GitHub Actions OIDC → registry → Terraform | Same pipeline, Azure module |
 
-Do not promise AWS-and-Azure active/active from day one. Build a portable container and Terraform module interface, choose **one primary cloud and one legal-data region** for the first production service, then validate a second-cloud recovery or customer-hosted deployment only when contractual demand funds it. Cross-cloud active/active multiplies identity, data-consistency, audit, key-management and incident complexity.
+Do not promise active/active across AWS and Azure. Ship one container and two modules; run the first firm in one region.
 
 ## Scaling plan
 
-| Stage | Target | Architecture and operational gate |
+| Stage | Target | Gate |
 |---|---|---|
-| 0 — Internal | Current demo and synthetic corpus | No external customer data; fix P0s first. |
-| 1 — Design-partner pilot | 1 firm, a few matters, controlled users | Single region but multi-AZ, production IdP, tenant model even for one tenant, private services, durable ingestion, monitored SLOs, weekly restore and security tests. |
-| 2 — Commercial multi-tenant | 5–20 firms | Pooled platform with RLS, fair-use quotas, per-tenant metrics/cost attribution, managed on-call, DPA/security pack, regional routing, customer admin/SCIM. |
-| 3 — Enterprise scale | 20+ firms and large corpus workloads | Deployment stamps, dedicated tier, worker autoscaling by queue depth, separate query/index capacity, capacity models, regional DR, annual exercises and formal compliance programme. |
+| 0 — Internal | Harbour corpus, demo seed, developer Compose | No client files. P0 residuals above stay lab-only. |
+| 1 — Design partner | One firm, one region, multi-AZ data plane | IdP, private network, durable ingest for the agreed corpus, backup restore rehearsed, SLOs written. |
+| 2 — Commercial | Further dedicated silos, or a pooled platform only after RLS | Per-firm quotas, DPA, admin, pen test. |
+| 3 — Large corpus | 1,000+ documents/matter, ~100k pages | Load test evidence. Split embed and ingest workers. Do not add Kafka, Neo4j, or a second vector database on a hunch. |
 
-Scale the **independent** planes separately: API replicas on request rate/latency; ingest/OCR workers on queue depth and document size; embedding workers on GPU/CPU budget; database based on connections/IO/replica lag; vector/search only after load evidence; object storage independently. The repository currently reports roughly 36k chunks and p95 cold retrieval in the seconds range—valuable prototype data, but not a capacity test for thousands of documents, concurrent reviews or hundreds of firms.
+Inside one firm, scale API replicas, ingest workers, and embed workers separately. A second firm gets a second stack.
 
-Every tier needs hard per-tenant quotas: users, storage, pages/month, concurrent ingestion, search QPS, model tokens, exports and API rate. Use admission control and budgets before the expensive LLM/OCR path; then surface transparent firm-admin usage reporting and commercial overage policy.
+## Release gates
 
-## Release gates and evidence required
+Production (a firm’s documents, under a contract) is allowed only when:
 
-Production is allowed only when all are true:
-
-1. P0 findings remediated and independently re-tested, including authorization-bypass, cross-tenant, XSS, upload-abuse and source-connector abuse tests.
-2. Reproducible infrastructure and release pipeline deploy a clean environment from scratch; rollback and restore exercises meet declared RPO/RTO.
-3. A security assessment and penetration test cover application, API, tenant isolation, SSO/SCIM, storage, workers and cloud configuration; high/critical issues are closed.
-4. A selected compliance target and evidence plan are approved (usually SOC 2 Type I/II roadmap, ISO 27001-aligned controls, privacy/data-residency assessment; jurisdiction-specific legal requirements confirmed by counsel).
-5. SLOs, error budgets, alerts, escalation, support ownership and incident communication templates are live; 24/7 coverage matches contracted SLA.
-6. Representative client-corpus evaluation clears signed quality, grounding, permission and latency acceptance thresholds; AI outputs carry correct evidence and limitations.
-7. Contracts are ready: MSA, DPA, SLA, security addendum, acceptable-use terms, subprocessors, retention/deletion/legal-hold terms and AI/data-use terms.
+1. P0-02 residual, P0-04 IdP, P0-05 legacy HTML, and P0-06 upload controls are re-tested, including a cross-matter denial test.
+2. A clean environment comes up from IaC; rollback and restore meet a written RPO/RTO.
+3. A pen test covers the API, the SPA, storage, and the cloud configuration; high and critical findings are closed or explicitly accepted.
+4. Counsel has a compliance path (SOC 2 timeline, privacy, residency). Do not claim a report that does not exist.
+5. On-call, severity definitions, and an incident note exist.
+6. The pilot corpus clears the signed retrieval, grounding, permission, and latency bar.
+7. MSA, DPA, subprocessors, support hours, and AI data-use terms are signed.
 
 ## Recommended sequencing
 
-**Weeks 0–2:** freeze external deployment; correct delivery baseline; enumerate all routes; introduce router-level authentication, document/matter authorization, strict CORS/hosts/security headers, and remove unsafe DOM rendering. Rotate/remove development credentials and default secrets.
+**Now:** fix the generated-file download bypass; remove or isolate `static/_legacy` and the Word pane HTML injection; keep `ENV=production` as the only shape that can see real files.
 
-**Weeks 3–6:** migrate the core schema to tenant-aware RLS; implement OIDC/SAML, roles/ethical walls, audit events, secure direct upload/quarantine/durable workers and production secrets/object storage. Establish CI, IaC, dev/stage/prod and observability.
+**Next:** OIDC session, dedicated-silo IaC for one cloud, backups and one restore, workerised ingest with a size limit, audit events for ask/download/login.
 
-**Weeks 7–10:** run threat modelling, load tests, restore/DR exercises and red-team/evaluation work with a design partner; build the enterprise onboarding/SCIM/admin and compliance evidence package.
+**Then:** one design partner, manual or batch ingest, Bedrock (or Azure OpenAI) under a no-train contract, eval plus a small load test.
 
-**After those gates:** onboard one design partner in a limited region/stamp, operate it under defined SLOs, learn from measured load and procurement evidence, then choose pooled versus dedicated tenancy per customer contract.
+**After the first firm is stable:** a real Graph connector, admin sync health, and only then library / tabular / workflow / Word product work. Record Mike-inspired features in `docs/legal/IP_ORIGIN_RECORD.md` before coding them. Mike stays product research under the AGPL clean-room rule.
 
-## Verification record
+## Verification record (this revision)
 
-- `docker compose config`: **failed** due to the YAML error above.
-- Focused regression run: **119 passed, 1 warning in 5.69s** (`test_health`, `test_firmos_upload_batch`, `test_source_sync`, `test_chat_assistant`).
-- A broader `pytest -q` run progressed beyond 29% but did not complete within the available 30-second execution window; it must run in CI with a published full result, coverage and test-time budget before release.
+Checked in source, not re-run as a full suite in this pass:
 
+- `docker-compose.yml` defines `postgres`, `redis`, profile `minio`, and profile `api`.
+- `Dockerfile` builds the SPA and runs as a non-root user with `ENV=production`.
+- `.github/workflows/ci.yml` runs migrate, `seed_ci_minimal`, `seed_demo`, the four contract test modules, `tsc --noEmit`, and `npm run build`.
+- `app/api/main.py` confines `/ui` to `static/`, applies the CORS allow-list, and mounts product routers with `resolve_member`.
+- `app/config.py` `production_problems()` matches the boot refusal described above.
+- `document_download` still serves `generated/` matches before `_check_doc_access`.
+- `uploads.py` still buffers full uploads.
+- `schema.sql` core entities still have no tenant column and no RLS.
+
+The 21 Sep note “119 passed” is historical. The 24 Sep audit recorded `pytest tests/` at **492 passed, 1 failed** before plans 01–06; plan 06’s done-when is a fully green `pytest tests/`. Re-run and publish that number in CI before calling the suite green. This review does not claim a new pass count.

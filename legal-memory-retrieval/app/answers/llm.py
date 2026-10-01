@@ -6,9 +6,10 @@ from typing import Any
 import httpx
 
 from app.answers.citations import extract_document_ids, filter_citations
+from app.llm.bedrock_client import chat_complete
 
 SYSTEM = (
-    "You are Ask the Firm — the institutional memory assistant for Apex Chambers law firm. "
+    "You are Ask the Firm — the institutional memory assistant for this law firm. "
     "Your role is that of a senior research assistant who synthesises the firm's prior work.\n\n"
     "Rules:\n"
     "1. Answer ONLY from the provided excerpts — never invent facts.\n"
@@ -171,3 +172,23 @@ def gemini_complete(api_key: str, model: str, query: str, hits: list[dict]) -> s
         response.raise_for_status()
         data = response.json()
     return data["candidates"][0]["content"]["parts"][0]["text"]
+
+
+def bedrock_complete(model: str, query: str, hits: list[dict]) -> str:
+    """Ask-the-Firm completion via Amazon Bedrock Mantle."""
+    context = _pack_context(hits)
+    result = chat_complete(
+        [
+            {"role": "system", "content": SYSTEM},
+            {
+                "role": "user",
+                "content": f"Question: {query}\n\nExcerpts:\n{context}",
+            },
+        ],
+        model=model,
+        temperature=0.0,
+        max_tokens=4096,
+        json_mode=True,
+        timeout=60.0,
+    )
+    return str(result.get("content") or "")

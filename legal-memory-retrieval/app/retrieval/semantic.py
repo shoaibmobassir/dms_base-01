@@ -4,15 +4,15 @@ from pgvector import Vector
 from pgvector.psycopg import register_vector
 from psycopg.rows import dict_row
 
-from app.embeddings.minilm import MiniLMEmbedder
+from app.embeddings.factory import get_embedder
 
-_embedder: MiniLMEmbedder | None = None
+_embedder = None
 
 
-def _model() -> MiniLMEmbedder:
+def _model():
     global _embedder
     if _embedder is None:
-        _embedder = MiniLMEmbedder()
+        _embedder = get_embedder()
     return _embedder
 
 
@@ -33,9 +33,10 @@ def semantic_search(conn, query: str, member_id: str | None, limit: int = 50) ->
         WHERE c.embedding IS NOT NULL
         AND (
             (%(member_id)s::text IS NULL)
-            OR p.restricted = FALSE
-            OR %(member_id)s::text = ANY (p.allowed_members)
+            OR ((p.restricted = FALSE OR %(member_id)s::text = ANY (p.allowed_members))
+                AND NOT (%(member_id)s::text = ANY (p.denied_members)))
         )
+        AND (%(member_id)s::text IS NULL OR c.visible_to IS NULL OR %(member_id)s::text = ANY (c.visible_to))
         ORDER BY c.embedding <=> %(qvec)s
         LIMIT %(limit)s
     """

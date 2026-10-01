@@ -1,10 +1,13 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Response
+from fastapi.responses import JSONResponse
 from fastapi.responses import PlainTextResponse
 
+from app.api.firm import firm_profile
 from app.cache.redis import cache_stats
 from app.config import settings
+from app.db.connection import connect
 from app.observability.metrics import prometheus_response
 from app.sprint import CURRENT_SPRINT, FEATURES, health_payload
 
@@ -23,6 +26,47 @@ def health() -> dict:
     return payload
 
 
+@router.get("/ready")
+def ready() -> JSONResponse:
+    """Readiness: 200 only when Postgres and Redis answer, every migration is applied and
+    the retrieval models are loaded. /health stays liveness-only."""
+    from app.cache.redis import _get_client
+
+    checks: dict[str, str] = {}
+    try:
+        with connect() as conn:
+            conn.execute("SELECT 1 FROM firm_profile LIMIT 1")
+        checks["database"] = "ok"
+    except Exception as exc:
+        checks["database"] = f"error: {type(exc).__name__}"
+    try:
+        client = _get_client()
+        checks["redis"] = "ok" if client is not None and client.ping() else "unavailable"
+    except Exception as exc:
+        checks["redis"] = f"error: {type(exc).__name__}"
+    checks["migrations"] = _migrations_check()
+    from app.observability import warmup
+
+    checks["models"] = "ok" if warmup.state() in {"ok", "skipped"} else warmup.state()
+    ok = all(v == "ok" for v in checks.values())
+    return JSONResponse({"service": "system", "ready": ok, "checks": checks}, status_code=200 if ok else 503)
+
+
+_MIGRATIONS_DIR = Path(__file__).resolve().parents[2] / "db" / "migrations"
+
+
+def _migrations_check() -> str:
+    """"ok" when every migration file on disk is recorded as applied."""
+    try:
+        files = {p.name for p in _MIGRATIONS_DIR.glob("*.sql")}
+        with connect() as conn:
+            applied = {r["filename"] for r in conn.execute("SELECT filename FROM schema_migrations")}
+        missing = sorted(files - applied)
+        return "ok" if not missing else f"pending: {', '.join(missing[:3])}"
+    except Exception as exc:
+        return f"error: {type(exc).__name__}"
+
+
 @router.get("/metrics")
 def metrics() -> Response:
     data, content_type = prometheus_response()
@@ -35,6 +79,7 @@ def system_info() -> dict:
         "service": "system",
         "sprint": CURRENT_SPRINT,
         "description": "LEXOS legal institutional memory — parallel retrieval fabric",
+        "auth_enabled": settings.auth_enabled,
         "retrieval_engine": "v2" if settings.use_engine_v2 else "legacy",
         "use_engine_v2": settings.use_engine_v2,
         "features": FEATURES,
@@ -51,6 +96,13 @@ def system_info() -> dict:
         "embedding_version": settings.embedding_version,
         "knowledge_version": settings.knowledge_version,
     }
+
+
+@router.get("/firm")
+def firm() -> dict:
+    """Firm identity for the UI shell (name, descriptor, office)."""
+    with connect() as conn:
+        return firm_profile(conn)
 
 
 @router.get("/architecture")
