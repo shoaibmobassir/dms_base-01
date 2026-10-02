@@ -519,6 +519,13 @@ def fetch_document_pages(conn, document_id: str) -> list[tuple[int, str]]:
             """,
             (document_id,),
         ).fetchall()
+        if not rows or all(row["page_number"] is None for row in rows):
+            # Scanned reports often have no page per chunk, but their stored text keeps the PDF's
+            # form-feed page breaks: use those so citations name the real (PDF) page.
+            doc = conn.execute("SELECT body FROM documents WHERE document_id = %s", (document_id,)).fetchone()
+            text = str((doc or {}).get("body") or "")
+            if "\f" in text:
+                return [(i, p.strip()) for i, p in enumerate(text.split("\f"), 1) if p.strip()]
 
     pages: list[tuple[int, list[str]]] = []
     for row in rows:

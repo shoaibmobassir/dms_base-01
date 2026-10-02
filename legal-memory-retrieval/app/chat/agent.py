@@ -55,6 +55,7 @@ from app.chat.tools.firm_tools import (
     resolve_matter_tool,
 )
 from app.chat.tools.generation_tools import generate_docx, generate_excel
+from app.chat.tools.research_tools import RESEARCH_TOOLS
 from app.chat.tools.review_tools import propose_edits
 from app.chat.tools.schema import ALL_TOOLS
 from app.chat.verify_citations import verify_document_citation
@@ -89,7 +90,7 @@ _DB_TOOLS = frozenset({
     "fetch_documents",
     "find_in_document",
     "propose_edits",
-})
+}) | frozenset(RESEARCH_TOOLS)
 _KNOWN_TOOLS = _DB_TOOLS | frozenset({
     "generate_docx",
     "generate_excel",
@@ -236,6 +237,11 @@ def dispatch_tool_call(
         )
         if "event" in result:
             events.append(result.pop("event"))
+        return result, events
+
+    elif name in RESEARCH_TOOLS:
+        result, research_events = RESEARCH_TOOLS[name](arguments, doc_index, doc_store, conn, member_id, matter, nonce)
+        events.extend(research_events)
         return result, events
 
     elif name in _FIRM_TOOLS:
@@ -443,6 +449,21 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
         return f"Finding colleagues for “{query}”" if query else "Finding colleagues"
     if name in {"list_workflows", "read_workflow"}:
         return "Checking firm workflows"
+    authority = entry.filename if entry else str(arguments.get("authority") or "").strip()
+    if authority in doc_index:
+        authority = doc_index[authority].filename
+    if name == "search_authority":
+        return f"Searching legal authorities for “{query}”" if query else "Searching legal authorities"
+    if name == "read_authority":
+        return f"Reading {authority or 'an authority'}"
+    if name == "resolve_citation":
+        return f"Checking the citation {str(arguments.get('citation') or '').strip()}".rstrip()
+    if name == "get_citing_authorities":
+        return f"Finding later authorities citing {authority or 'the authority'}"
+    if name == "check_authority_status":
+        return f"Checking the status of {authority or 'the authority'}"
+    if name == "verify_citations":
+        return "Cite-checking the citations"
     return "Working"
 
 
@@ -454,6 +475,8 @@ def tool_deadline_seconds(name: str) -> float:
         return settings.review_tool_timeout_seconds
     if name == "ask_firm":  # retrieval plus its own grounded LLM answer
         return max(settings.chat_tool_timeout_seconds, 75.0)
+    if name == "verify_citations":  # one resolve + status lookup per citation
+        return max(settings.chat_tool_timeout_seconds, 60.0)
     return settings.chat_tool_timeout_seconds
 
 

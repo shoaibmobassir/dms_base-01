@@ -57,6 +57,24 @@ function detailOf(ev: ChatEvent): Pick<Step, "detail" | "files"> {
       return { detail: String(ev.filename ?? "File ready") };
     case "edit_proposals":
       return { detail: s(Array.isArray(ev.edits) ? ev.edits.length : 0, "suggested edit") };
+    case "authority_results": {
+      const names = Array.isArray(ev.citations) ? (ev.citations as string[]) : [];
+      const n = Number(ev.count ?? names.length);
+      return { detail: `${n} ${n === 1 ? "authority" : "authorities"} found`, files: names };
+    }
+    case "authority_status":
+      return { detail: String(ev.display ?? "") };
+    case "citation_check": {
+      const summary = (ev.summary ?? {}) as Record<string, number>;
+      const labels: Record<string, string> = {
+        verified: "verified",
+        verified_with_caution: "with caution",
+        negative_treatment: "negative treatment",
+        not_verified: "not verified",
+      };
+      const parts = Object.entries(summary).map(([k, n]) => `${n} ${labels[k] ?? k}`);
+      return { detail: parts.join(" · ") || "No citations found" };
+    }
     default:
       return {};
   }

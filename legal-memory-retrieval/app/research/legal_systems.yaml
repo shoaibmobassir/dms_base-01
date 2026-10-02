@@ -1,0 +1,76 @@
+# Binding-force rules per legal system (design doc §22.6).
+#
+# Lawyer-reviewed configuration. The assistant never decides what is binding;
+# app/research/legal_systems.py applies these rules and shows the reason.
+# Change a rule here, then run tests/test_research_legal_systems.py.
+version: 1
+reviewed_by: null        # set when a lawyer signs off
+reviewed_at: null
+
+labels:                  # ranking weight per label
+  binding: 1.0
+  likely_binding: 0.85
+  persuasive: 0.6
+  recommendatory: 0.4
+  not_binding: 0.3
+  unknown: 0.2
+
+international:
+  sources: >-
+    ICJ Statute Art. 38(1): (a) treaties binding on the parties, (b) international custom,
+    (c) general principles of law, (d) judicial decisions and teachings as subsidiary means.
+  pcij:
+    judgment:
+      same_case: {label: binding, reason: "Res judicata between the parties in this case (PCIJ Statute Arts. 59-60)."}
+      other: {label: persuasive, reason: "No binding precedent (PCIJ Statute Art. 59); a subsidiary means of determining the law (Art. 38(1)(d)), of high weight."}
+    advisory_opinion:
+      any: {label: not_binding, reason: "Advisory opinions are not binding, though of high persuasive weight."}
+    order:
+      same_case: {label: binding, reason: "Procedural order binding on the parties in this case."}
+      other: {label: persuasive, reason: "Procedural order; low weight as authority outside its case."}
+    opinion_roles:
+      dissent: {label: not_binding, reason: "Dissenting opinion: states the view of a judge, not the Court."}
+      separate_opinion: {label: not_binding, reason: "Separate opinion: states the view of a judge, not the Court."}
+      declaration: {label: not_binding, reason: "Declaration of a judge, not the Court's decision."}
+  unsc:
+    # Charter Art. 25: members carry out the Council's *decisions*. Whether a paragraph is a
+    # decision depends on its terms (ICJ, Namibia Advisory Opinion, 1971, para. 114).
+    binding_verbs: [decides]
+    likely_binding_verbs: [demands, requires]
+    permissive_verbs: [authorizes, authorises]
+    recommendatory_verbs: [calls, urges, requests, recommends, encourages, invites, appeals]
+    reasons:
+      decides_ch7: "Decision adopted acting under Chapter VII; binding on Member States (UN Charter Art. 25)."
+      decides: "Decision language without a Chapter VII reference; likely binding under Art. 25, depending on its terms (Namibia AO, para. 114)."
+      demands_ch7: "Demand adopted acting under Chapter VII; likely binding, depending on its terms (Namibia AO, para. 114)."
+      demands: "Demand without a Chapter VII reference; binding effect depends on its terms (Namibia AO, para. 114)."
+      permissive: "Authorization: permits action, imposes no obligation."
+      recommendatory: "Exhortatory language (calls upon, urges, requests): recommendatory."
+      other_operative: "Operative paragraph that neither decides nor demands (e.g. welcomes, notes): no obligation."
+      preamble: "Preambular paragraph: context, not a decision; never cite as the Council's decision."
+      headnote: "Editorial summary printed above the resolution: not the Council's text."
+      whole: "Binding force depends on the operative paragraph; cite the paragraph."
+
+india:
+  # Constitution Art. 141; Electricity Act 2003 ss. 111 (appeal to APTEL) and 125 (appeal to Supreme Court).
+  courts:
+    supreme_court: {level: 1, names: ["Supreme Court of India"]}
+    high_court: {level: 2, names: ["High Court"]}
+    aptel: {level: 2, names: ["Appellate Tribunal for Electricity", "APTEL"]}
+    cerc: {level: 3, names: ["Central Electricity Regulatory Commission", "CERC"]}
+    serc: {level: 3, names: ["State Electricity Regulatory Commission", "State Commission", "SERC"]}
+  binding_on:
+    supreme_court: "*"                     # Art. 141: binds all courts
+    aptel: [cerc, serc]                   # s. 111 appellate jurisdiction
+    high_court: [subordinate_courts_in_state]
+  reasons:
+    supreme_court: "Law declared by the Supreme Court binds all courts in India (Constitution Art. 141)."
+    aptel_on_regulator: "APTEL hears appeals from CERC and State Commissions (Electricity Act 2003, s. 111); its decisions bind them."
+    same_level: "Decision of a forum of the same level: persuasive."
+    other: "Not binding on this forum; persuasive."
+    statute: "Statute or regulation in force: binding for its effective period."
+
+us:
+  reasons:
+    same_hierarchy: "Higher court in the same hierarchy: binding (stare decisis)."
+    other: "Outside this forum's hierarchy: persuasive."

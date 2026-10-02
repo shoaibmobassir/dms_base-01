@@ -295,8 +295,13 @@ class TestFullEndToEndLawyerJourney:
         assert verify_resp.status_code == 200
         opinion = verify_resp.json()
         assert opinion["citation"] == "467 U.S. 837"
-        assert opinion["is_good_law"] is not None
-        assert opinion["precedential_status"] in ("Precedential", "Published")
+        # Online or offline, treatment is never claimed: CourtListener has no citator data,
+        # and a failed lookup is reported as not verified rather than invented.
+        assert opinion["status"]["signal"] == "unknown"
+        assert "is_good_law" not in opinion
+        if not opinion["verified"]:
+            assert opinion["resolution"] in ("not_found", "provider_error")
+            assert opinion["case_name"] is None
 
     def test_10_tamper_evident_signed_export_bundle(self, client):
         """E2E test of cryptographic manifest signing and tamper-evident verification."""

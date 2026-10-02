@@ -4,7 +4,7 @@ Clean-room independent implementation.
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.caselaw.citation_parser import get_citation_parser
@@ -46,18 +46,23 @@ async def extract_citations_from_text(req: ExtractCitationsRequest):
 
 @router.post("/verify")
 async def verify_citation(req: VerifyCitationRequest):
-    """Verifies citation validity, precedential status, and court metadata via CourtListener."""
+    """Looks a citation up on CourtListener.
+
+    ``verified`` is true only when CourtListener resolved it. Treatment status is
+    always ``unknown`` (no citator data); a failed lookup is reported, never verified.
+    """
     client = get_courtlistener_client()
     opinion = await client.verify_citation(req.citation)
-    if not opinion:
-        raise HTTPException(status_code=404, detail="Citation authority not found")
     return {
         "citation": opinion.citation,
+        "verified": opinion.verified,
+        "resolution": opinion.resolution,
         "case_name": opinion.case_name,
         "court": opinion.court,
         "date_filed": opinion.date_filed,
         "precedential_status": opinion.precedential_status,
-        "is_good_law": opinion.is_good_law,
+        "status": opinion.status,
+        "reason": opinion.reason,
         "summary": opinion.summary,
         "courtlistener_url": opinion.courtlistener_url,
     }

@@ -221,13 +221,52 @@ def test_citation_parser():
     assert any("42 U.S.C. § 1983" in n for n in normalized)
 
 
+import httpx as _httpx
+
+_REAL_ASYNC_CLIENT = _httpx.AsyncClient
+
+
+def _mock_courtlistener(monkeypatch, handler):
+    from app.caselaw import courtlistener_client as cl
+
+    monkeypatch.setattr(cl.httpx, "AsyncClient",
+                        lambda **kw: _REAL_ASYNC_CLIENT(transport=_httpx.MockTransport(handler), **kw))
+
+
 @pytest.mark.asyncio
-async def test_courtlistener_client():
-    client = get_courtlistener_client()
-    opinion = await client.verify_citation("384 U.S. 436")
-    assert opinion is not None
-    assert opinion.is_good_law is True
-    assert opinion.precedential_status in ("Precedential", "Published")
+async def test_courtlistener_client_resolves_without_claiming_treatment(monkeypatch):
+    import httpx
+    from app.caselaw.courtlistener_client import CourtListenerClient
+
+    _mock_courtlistener(monkeypatch, lambda req: httpx.Response(200, json={"results": [
+        {"caseName": "Miranda v. Arizona", "court": "Supreme Court", "dateFiled": "1966-06-13",
+         "status": "Precedential", "snippet": "...", "absolute_url": "/opinion/1/miranda/"}]}))
+    opinion = await CourtListenerClient(api_token="t").verify_citation("384 U.S. 436")
+    assert opinion.verified
+    assert opinion.case_name == "Miranda v. Arizona"
+    assert opinion.status == {"signal": "unknown", "source": "none"}
+
+
+@pytest.mark.asyncio
+async def test_courtlistener_outage_is_never_verified(monkeypatch):
+    """Design test R13: a provider failure must not produce a verified authority."""
+    import httpx
+    from app.caselaw.courtlistener_client import CourtListenerClient
+
+    def boom(req):
+        raise httpx.ConnectError("offline")
+
+    _mock_courtlistener(monkeypatch, boom)
+    client = CourtListenerClient(api_token="t")
+    opinion = await client.verify_citation("999 U.S. 999")
+    assert not opinion.verified
+    assert opinion.resolution == "provider_error"
+    assert opinion.case_name is None
+    assert opinion.status["signal"] == "unknown"
+    assert "999 U.S. 999" not in client._cache  # transient failures are not cached
+
+    _mock_courtlistener(monkeypatch, lambda req: httpx.Response(200, json={"results": []}))
+    assert (await client.verify_citation("999 U.S. 999")).resolution == "not_found"
 
 
 
