@@ -105,7 +105,7 @@ def verify_citations(conn, text: str, member_id: str | None, *, forum: Forum | N
                 if a["provider_kind"] == "pcij":
                     page = structure.page_at(structure.page_offsets(cbody), qstart)
 
-        binding = label_for(a, forum, {"role": seg.role, "lead_verb": seg.lead_verb} if seg else None)
+        binding = label_for(a, forum, {"role": seg.role, "lead_verb": seg.lead_verb, "para": seg.para} if seg else None)
         st = lp.status(conn, a["authority_id"], member_id, as_of=as_of)
         signal = st["status"]["signal"]
         if signal in ("negative",):

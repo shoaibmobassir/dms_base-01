@@ -1,0 +1,611 @@
+{
+  "parser": {
+    "n": 30,
+    "recall": 1.0,
+    "misses": []
+  },
+  "existence": {
+    "real": 35,
+    "real_verified_rate": 1.0,
+    "planted_fakes": 69,
+    "unheld": 4,
+    "false_verified": [],
+    "false_verified_rate": 0.0
+  },
+  "pinpoints": {
+    "valid": 32,
+    "valid_without_issue": 1.0,
+    "wrong": 33,
+    "wrong_flagged": 1.0
+  },
+  "outage": {
+    "resolution": "provider_error",
+    "verified": false,
+    "ok": true
+  },
+  "binding": {
+    "accuracy": 1.0,
+    "accuracy_excl_hard": 1.0,
+    "test_accuracy": 1.0,
+    "n": 23,
+    "misses": []
+  },
+  "retrieval": {
+    "rows": [
+      {
+        "id": "p01",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p02",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 3,
+        "authority+graph": 3
+      },
+      {
+        "id": "p03",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 2,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p04",
+        "split": "dev",
+        "collection": "pcij",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p05",
+        "split": "dev",
+        "collection": "pcij",
+        "baseline": 4,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p06",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 4,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p07",
+        "split": "dev",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p08",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p09",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p10",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p11",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p12",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": null,
+        "authority": null,
+        "authority+graph": null,
+        "top3": [
+          "pcij:A/B:65",
+          "pcij:A/B:76",
+          "pcij:A:10"
+        ]
+      },
+      {
+        "id": "p13",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p14",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p15",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p16",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p17",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 2,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p18",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 2,
+        "authority+graph": 2
+      },
+      {
+        "id": "p19",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 7,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p20",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p21",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p22",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p23",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p24",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": null,
+        "authority": 3,
+        "authority+graph": 3
+      },
+      {
+        "id": "p25",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "p26",
+        "split": "test",
+        "collection": "pcij",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u01",
+        "split": "dev",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 2,
+        "authority+graph": 1
+      },
+      {
+        "id": "u02",
+        "split": "dev",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u03",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u04",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u05",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 3,
+        "authority+graph": 1
+      },
+      {
+        "id": "u06",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u07",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 3,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u08",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u09",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 2,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u10",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 8,
+        "authority+graph": 3
+      },
+      {
+        "id": "u11",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 2,
+        "authority": 3,
+        "authority+graph": 1
+      },
+      {
+        "id": "u12",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u13",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 2
+      },
+      {
+        "id": "u14",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u15",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 8,
+        "authority+graph": 2
+      },
+      {
+        "id": "u16",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u17",
+        "split": "dev",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 5,
+        "authority+graph": 1
+      },
+      {
+        "id": "u18",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u19",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 2,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u20",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u21",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 3,
+        "authority": 2,
+        "authority+graph": 1
+      },
+      {
+        "id": "u22",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 4,
+        "authority": 4,
+        "authority+graph": 1
+      },
+      {
+        "id": "u23",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 3,
+        "authority+graph": 4
+      },
+      {
+        "id": "u24",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": null,
+        "authority+graph": 1
+      },
+      {
+        "id": "u25",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u26",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 10,
+        "authority+graph": null,
+        "top3": [
+          "unsc:1506",
+          "unsc:2769",
+          "unsc:2644"
+        ]
+      },
+      {
+        "id": "u27",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u28",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u29",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 1,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u30",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": null,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u31",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 2,
+        "authority": 1,
+        "authority+graph": 1
+      },
+      {
+        "id": "u32",
+        "split": "test",
+        "collection": "unsc",
+        "baseline": 2,
+        "authority": 2,
+        "authority+graph": 1
+      }
+    ],
+    "baseline": {
+      "all": {
+        "n": 58,
+        "r@1": 0.431,
+        "r@5": 0.638,
+        "r@10": 0.655,
+        "mrr": 0.518
+      },
+      "test": {
+        "n": 52,
+        "r@1": 0.442,
+        "r@5": 0.654,
+        "r@10": 0.673,
+        "mrr": 0.535
+      },
+      "pcij": {
+        "n": 26,
+        "r@1": 0.538,
+        "r@5": 0.692,
+        "r@10": 0.731,
+        "mrr": 0.602
+      },
+      "unsc": {
+        "n": 32,
+        "r@1": 0.344,
+        "r@5": 0.594,
+        "r@10": 0.594,
+        "mrr": 0.451
+      },
+      "p50_s": 1.08
+    },
+    "authority": {
+      "all": {
+        "n": 58,
+        "r@1": 0.724,
+        "r@5": 0.914,
+        "r@10": 0.966,
+        "mrr": 0.801
+      },
+      "test": {
+        "n": 52,
+        "r@1": 0.731,
+        "r@5": 0.904,
+        "r@10": 0.962,
+        "mrr": 0.803
+      },
+      "pcij": {
+        "n": 26,
+        "r@1": 0.846,
+        "r@5": 0.962,
+        "r@10": 0.962,
+        "mrr": 0.891
+      },
+      "unsc": {
+        "n": 32,
+        "r@1": 0.625,
+        "r@5": 0.875,
+        "r@10": 0.969,
+        "mrr": 0.728
+      },
+      "p50_s": 2.82
+    },
+    "authority+graph": {
+      "all": {
+        "n": 58,
+        "r@1": 0.845,
+        "r@5": 0.966,
+        "r@10": 0.966,
+        "mrr": 0.892
+      },
+      "test": {
+        "n": 52,
+        "r@1": 0.827,
+        "r@5": 0.962,
+        "r@10": 0.962,
+        "mrr": 0.88
+      },
+      "pcij": {
+        "n": 26,
+        "r@1": 0.846,
+        "r@5": 0.962,
+        "r@10": 0.962,
+        "mrr": 0.891
+      },
+      "unsc": {
+        "n": 32,
+        "r@1": 0.844,
+        "r@5": 0.969,
+        "r@10": 0.969,
+        "mrr": 0.893
+      },
+      "p50_s": 2.85
+    }
+  },
+  "gates": {
+    "hallucinated/false-verified citations = 0": true,
+    "provider failure never verified": true,
+    "parser recall >= 0.95": true,
+    "binding-label accuracy >= 0.90 (excl. hard)": true,
+    "wrong pinpoints flagged = 100%": true
+  }
+}

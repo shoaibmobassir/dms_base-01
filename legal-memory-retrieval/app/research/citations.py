@@ -44,7 +44,7 @@ _PATTERNS: list[tuple[str, str, re.Pattern[str]]] = [
     ("international", "icj", re.compile(
         r"\bI\.?\s?C\.?\s?J\.?\s*(?:Reports|Rep\.?)\s*,?\s*(?P<year>(?:19|20)\d{2})\s*,?\s*(?:p\.?\s*)?(?P<page0>\d{1,4})" + _PIN)),
     ("international", "unsc", re.compile(
-        r"\bS/RES/(?P<num>\d{1,4})\s*\(\s*(?P<year>(?:19|20)\d{2})\s*\)" + _PIN)),
+        r"\bS/RES/(?P<num>\d{1,4})(?:\s*\(\s*(?P<year>(?:19|20)\d{2})\s*\))?" + _PIN)),
     ("international", "unsc", re.compile(
         r"\b(?:Security\s+Council\s+)?[Rr]esolutions?\s+(?P<num>\d{1,4})\s*\(\s*(?P<year>(?:19|20)\d{2})\s*\)" + _PIN)),
     ("international", "unsc", re.compile(

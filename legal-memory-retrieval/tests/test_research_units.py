@@ -89,6 +89,16 @@ def test_numbered_resolution_roles():
     assert is_chapter_vii(NUMBERED)
 
 
+def test_paragraph_at_top_of_a_scanned_page_is_kept():
+    """A form feed (PDF page break) right before "6." must not end the operative part (S/RES/687 lost 29 paragraphs)."""
+    text = ("The Security Council,\n     Acting therefore under Chapter VII of the Charter,\n"
+            "1. Decides one;\n2. Decides two;\n\x0c3. Decides that Iraq shall unconditionally accept;\n4. Requests four;\n")
+    ops = [p for p in segment_resolution(text) if p.role == "operative"]
+    assert [p.para for p in ops] == [1, 2, 3, 4]
+    assert is_chapter_vii(text)  # "Acting therefore under Chapter VII"
+    assert is_chapter_vii("Acting under Articles 39 and 40 of the Charter,")
+
+
 def test_unnumbered_resolution_counts_operative_clauses():
     segs = segment_resolution(UNNUMBERED)
     ops = [p for p in segs if p.role == "operative"]
@@ -129,6 +139,15 @@ PCIJ = {"legal_system": "international", "kind": "case", "provider_kind": "pcij"
 def test_unsc_labels_are_per_paragraph(ch7, verb, role, label):
     got = label_for({**UNSC, "chapter_vii": ch7}, Forum("international"), {"role": role, "lead_verb": verb})
     assert got.label == label and got.reason
+
+
+def test_judicial_override_beats_the_verb_rule():
+    """S/RES/276 (1970): not Chapter VII, "calls upon", yet held binding in the Namibia Advisory Opinion."""
+    res276 = {**UNSC, "chapter_vii": False, "citation": {"number": 276}}
+    got = label_for(res276, Forum("international"), {"role": "operative", "lead_verb": "calls", "para": 5})
+    assert got.label == "binding" and "Namibia" in got.reason
+    other_para = label_for(res276, Forum("international"), {"role": "operative", "lead_verb": "requests", "para": 3})
+    assert other_para.label == "recommendatory"
 
 
 def test_unsc_without_paragraph_is_unknown():

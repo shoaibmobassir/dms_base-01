@@ -50,6 +50,15 @@ international:
       preamble: "Preambular paragraph: context, not a decision; never cite as the Council's decision."
       headnote: "Editorial summary printed above the resolution: not the Council's text."
       whole: "Binding force depends on the operative paragraph; cite the paragraph."
+    # Judicial determinations that settle a resolution's binding force against the verb rule.
+    # Each entry needs its source. Applies to the operative paragraphs listed (or all, if none).
+    overrides:
+      276:
+        paras: [2, 5]
+        label: binding
+        reason: >-
+          Held binding by the ICJ although not adopted under Chapter VII (Legal Consequences for States of the
+          Continued Presence of South Africa in Namibia, Advisory Opinion, 1971, paras. 113-116; UN Charter Art. 25).
 
 india:
   # Constitution Art. 141; Electricity Act 2003 ss. 111 (appeal to APTEL) and 125 (appeal to Supreme Court).

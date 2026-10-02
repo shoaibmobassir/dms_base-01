@@ -80,6 +80,10 @@ def label_for(authority: dict[str, Any], forum: Forum | None = None, passage: di
             return BindingLabel("not_binding", reasons["headnote"])
         if role == "preamble":
             return BindingLabel("not_binding", reasons["preamble"])
+        number = (authority.get("citation") or {}).get("number")
+        override = (r.get("overrides") or {}).get(number)
+        if override and (not override.get("paras") or passage.get("para") in override["paras"]):
+            return BindingLabel(override["label"], " ".join(str(override["reason"]).split()))
         verb = (passage.get("lead_verb") or "").lower()
         ch7 = bool(authority.get("chapter_vii"))
         if verb in r["binding_verbs"]:

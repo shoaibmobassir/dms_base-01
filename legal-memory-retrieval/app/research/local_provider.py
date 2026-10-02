@@ -29,11 +29,13 @@ AUTHORITY_TYPES = ("Judgment", "Order", "Advisory Opinion", "Security Council Re
 _KIND = {"Judgment": "case", "Order": "order", "Advisory Opinion": "advisory_opinion",
          "Security Council Resolution": "resolution"}
 _PCIJ_TITLE = re.compile(r"PCIJ\s+Series\s+(?P<series>A/B|AB|A|B)\s+No\.\s*(?P<num>\d+)", re.I)
-_UNSC_TITLE = re.compile(r"resolution\s+(?P<num>\d{1,4})\s*\((?P<year>\d{4})\)", re.I)
+# Titles are "Security Council resolution 1373 (2001) [...]", with a few typos in the source
+# ("17 [1947)", "1731(2006)", "2633 [on ...]"): the year falls back to the adoption date.
+_UNSC_TITLE = re.compile(r"resolution\s+(?P<num>\d{1,4})(?:\s*[(\[]\s*(?P<year>\d{4})\s*\))?", re.I)
 _UNTIL = re.compile(r"until\s+(?P<d>\d{1,2})\s+(?P<m>[A-Z][a-z]{2,8})\.?\s+(?P<y>\d{4})")
 _MONTHS = {m: i for i, m in enumerate(
     ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
-_CH7_SQL = r"d.body ~* 'Acting\s+under\s+(Chapter\s+VII|Article\s+(39|40|41|42)\M)'"
+_CH7_SQL = r"d.body ~* 'Acting\s+(\w+\s+){0,3}under\s+(Chapter\s+VII|Articles?\s+(39|40|41|42)\M)'"
 
 _AUTH_COLS = f"""
     d.document_id, d.title, d.document_type, d.doc_date, d.matter_id, d.current_version_id,
@@ -102,13 +104,14 @@ def normalize(row: dict[str, Any]) -> dict[str, Any]:
     }
     if doc_type == "Security Council Resolution":
         m = _UNSC_TITLE.search(title)
-        subject = re.search(r"\[(.+?)\]", title)
+        year = int(m.group("year")) if m and m.group("year") else (row["doc_date"].year if row.get("doc_date") else None)
+        subject = re.search(r"\[([^\]]{8,})\]", title)
         until = _until(title)
         base.update({
             "provider_kind": "unsc",
             "court": {"name": "United Nations Security Council", "level": "un_organ"},
             "citation": {"key": f"unsc:{int(m.group('num'))}" if m else None,
-                         "number": int(m.group("num")) if m else None, "year": int(m.group("year")) if m else None},
+                         "number": int(m.group("num")) if m else None, "year": year},
             "subject": subject.group(1) if subject else None,
             "chapter_vii": bool(row.get("chapter_vii")),
             "mandate_until": until.isoformat() if until else None,
@@ -136,6 +139,7 @@ def brief(authority: dict[str, Any], label: dict[str, Any] | None = None) -> dic
             "role", "judge", "subject", "chapter_vii", "mandate_until")
     out = {k: authority[k] for k in keep if authority.get(k) not in (None, "")}
     out["citation"] = authority["citation"]["primary"]
+    out["key"] = authority["citation"].get("key")
     if label:
         out["binding"] = label
     return out
@@ -214,7 +218,8 @@ def resolve(conn, citation: Citation, member_id: str | None) -> dict[str, Any]:
                 "reason": f"Recognized citation, but no source for {where} is available yet; not verified."}
     if collection == "unsc":
         num = int(citation.key.split(":")[1])
-        rows = _rows(conn, "d.title ~* %(rx)s", {"rx": rf"resolution\s+{num}\s*\(", "member_id": member_id}, limit=3)
+        # Anchored: later resolutions' titles mention earlier ones ("... in accordance with resolution 186 (1964)").
+        rows = _rows(conn, "d.title ~* %(rx)s", {"rx": rf"^Security\s+Council\s+resolution\s+{num}\M", "member_id": member_id}, limit=3)
         year = re.search(r"\((\d{4})\)", citation.raw)
         if rows and year:
             rows = [r for r in rows if str(r["doc_date"].year if r.get("doc_date") else "") == year.group(1)] or rows

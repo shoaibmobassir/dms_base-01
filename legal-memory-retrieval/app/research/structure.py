@@ -36,7 +36,8 @@ class Passage:
 # ---------------------------------------------------------------------------
 
 _COUNCIL_OPEN = re.compile(r"The\s+Security\s+Council\s*,", re.I)
-_CHAPTER_VII = re.compile(r"Acting\s+under\s+(?:Chapter\s+VII|Article\s+(?:39|40|41|42)\b)", re.I)
+# "Acting under Chapter VII", "Acting therefore under Chapter VII", "Acting under Articles 39 and 40".
+_CHAPTER_VII = re.compile(r"Acting\s+(?:\w+\s+){0,3}under\s+(?:Chapter\s+VII|Articles?\s+(?:39|40|41|42)\b)", re.I)
 
 # Operative clauses open with a verb in the third person ("Decides", "Calls upon").
 OPERATIVE_VERBS = {
@@ -48,7 +49,8 @@ OPERATIVE_VERBS = {
     "regrets", "censures", "warns", "remains", "further", "also", "strongly", "requires", "affirms", "terminates",
     "invites", "looks", "highlights", "underlines", "decided",
 }
-_NUMBERED = re.compile(r"(?m)^[ \t]*(?P<num>\d{1,3})\.[ \t]+(?P<word>[A-Z][a-z]+)")
+# A paragraph number at a line start, or right after a PDF page break (form feed) in scanned text.
+_NUMBERED = re.compile(r"(?m)(?:^|(?<=\f))[ \t\f]*(?P<num>\d{1,3})\.[ \t]+(?P<word>[A-Z][a-z]+)")
 _ADVERBS = {"also", "further", "strongly", "once", "again", "hereby", "unanimously"}
 
 
