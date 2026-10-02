@@ -6,6 +6,8 @@ protection. Clean-room independent implementation for FirmOS.
 
 from __future__ import annotations
 
+from datetime import date
+
 _SYSTEM_PROMPT_CORE = """\
 You are LEXOS, an AI legal assistant for lawyers and legal professionals. \
 Help analyse documents, answer legal questions, and draft legal documents.
@@ -144,9 +146,16 @@ If a sentence cannot be tied to a passage, say that the available documents do n
 }
 
 
-def build_system_prompt(mode: str | None = None) -> str:
-    """Assemble the full chat system prompt, plus the lawyer's chosen work mode."""
-    base = f"{_SYSTEM_PROMPT_CORE}\n\n{_SYSTEM_PROMPT_SAFETY}"
+def build_system_prompt(mode: str | None = None, today: date | None = None) -> str:
+    """Assemble the full chat system prompt, plus the lawyer's chosen work mode.
+
+    Today's date is stated so "current", "still in force" and status questions are answered as of
+    the real date, not the model's training cut-off.
+    """
+    day = today or date.today()
+    dated = (f"TODAY: {day.isoformat()} ({day:%d %B %Y}). Answer questions about the current position as of this date, "
+             "and pass it as as_of when checking an authority's status.")
+    base = f"{_SYSTEM_PROMPT_CORE}\n\n{dated}\n\n{_SYSTEM_PROMPT_SAFETY}"
     extra = _MODE_INSTRUCTIONS.get(mode or "")
     if not extra:
         return base

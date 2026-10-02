@@ -190,3 +190,25 @@ def test_ocr_tolerant_quote_location():
     hit = locate_ocr(source, "I regret that I cannot concur either in the decision reached in the foregoing judgment")
     assert hit is not None and hit[2] >= 0.85
     assert locate_ocr(source, "The Court unanimously upholds the claim for compensation in full") is None
+
+
+# --- assistant integration ---------------------------------------------------
+
+def test_prompt_states_todays_date():
+    from datetime import date
+
+    from app.chat.system_prompt import build_system_prompt
+
+    prompt = build_system_prompt("research", today=date(2026, 10, 2))
+    assert "TODAY: 2026-10-02" in prompt and "as_of" in prompt
+
+
+def test_research_results_ground_as_metadata_without_passage_text():
+    from app.chat.agent import _record_text, _research_metadata
+
+    result = {"citation": "S/RES/1373 (2001)", "binding": {"label": "binding", "reason": "Decision under Chapter VII"},
+              "operative_paragraphs": [{"para": "1", "text": "Decides that all States shall"}],
+              "results": [{"citation": "S/RES/2178 (2014)", "snippet": "recruiting", "status": "Status not verified"}]}
+    text = _record_text(_research_metadata(result))
+    assert "binding" in text and "Chapter VII" in text and "Status not verified" in text
+    assert "Decides that all States" not in text and "recruiting" not in text

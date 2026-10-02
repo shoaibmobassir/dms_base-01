@@ -312,6 +312,20 @@ def _load_passage_documents(
 _RECORD_TOOLS = frozenset({"ask_firm", "resolve_matter", "get_matter_profile", "find_people", "review_documents"})
 
 
+# Research results carry the authority's citation, binding label and status: facts the lawyer
+# must see, which come from rules and lookups, not from a quoted passage. They ground like firm
+# records. Passage text is left out: quotes must still verify against the authority itself.
+_RESEARCH_TEXT_KEYS = frozenset({"text", "snippet", "context", "preamble", "operative_paragraphs", "next", "cite_as", "rule"})
+
+
+def _research_metadata(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: _research_metadata(v) for k, v in value.items() if k not in _RESEARCH_TEXT_KEYS}
+    if isinstance(value, list):
+        return [_research_metadata(v) for v in value]
+    return value
+
+
 def _record_text(value: Any, indent: str = "") -> str:
     """Flatten a firm-record tool result into readable "key: value" lines."""
     if isinstance(value, dict):
@@ -1117,6 +1131,8 @@ def run_chat_agent(
 
             if tool_name in _RECORD_TOOLS and not result.get("error"):
                 records.append(_record_text(result))
+            elif tool_name in RESEARCH_TOOLS and not result.get("error"):
+                records.append(_record_text(_research_metadata(result)))
 
             # Add tool result to messages
             messages.append({
