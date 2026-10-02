@@ -1360,6 +1360,8 @@ Built on branch `research-authority-layer`. Decision record: `docs/experiments/l
 
 Scorecard after R1-local (§22.1 rubric): coverage 0.4, existence 0.8, quote/pinpoint 0.8, status 0.3, hierarchy 0.6, formatting 0.7, passage role 0.7, process 0.5, separation 0.6, evaluation 0.6. **Total 6.0** (target was 5.6; before 1.6).
 
+Benchmark (Legal Research Bench-style, `docs/experiments/lrb_style_benchmark_2026-10-02.md`): all-pass **0.71** against 0.38 for the assistant before R1-local and 0.21 with no tools; invalid citations 0 against 1 and 10; central-wrong 8% against 46% and 62% (24 questions, 6 scenarios; paired p = 0.022 against the previous assistant).
+
 Known gaps carried forward:
 - The §22.9 hard rule is enforced by tools, prompt and grounding, not by a post-generation pass that strips unverified citations from the final text. That pass is the next item.
 - Grounding drops headings and table header rows it cannot tie to a source, which can strip the citation label from a cite-check block or the header row of an authorities table.

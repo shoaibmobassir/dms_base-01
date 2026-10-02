@@ -1,0 +1,522 @@
+{
+  "generator": "zai.glm-5",
+  "judge": "deepseek.v3.2",
+  "n": 24,
+  "paired": {
+    "now vs before": {
+      "only_first": 9,
+      "only_second": 1,
+      "p": 0.0215
+    },
+    "now vs none": {
+      "only_first": 12,
+      "only_second": 0,
+      "p": 0.0005
+    },
+    "before vs none": {
+      "only_first": 7,
+      "only_second": 3,
+      "p": 0.3438
+    }
+  },
+  "arms": {
+    "none": {
+      "summary": {
+        "n": 24,
+        "all_pass": 0.208,
+        "ci95": [
+          0.092,
+          0.405
+        ],
+        "weighted_pass": 0.562,
+        "central_wrong": 0.625,
+        "lower_tier_only": 0.167,
+        "source_check_failures": 4,
+        "fabricated_citations": 10,
+        "mean_seconds": 16.5,
+        "mean_tool_calls": 0,
+        "errors": 0,
+        "by_scenario": {
+          "abstain": {
+            "n": 2,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.658
+            ],
+            "weighted_pass": 0.0,
+            "central_wrong": 1.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 8.3,
+            "mean_tool_calls": 0,
+            "errors": 0
+          },
+          "citecheck": {
+            "n": 1,
+            "all_pass": 1.0,
+            "ci95": [
+              0.207,
+              1.0
+            ],
+            "weighted_pass": 1.0,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 18.4,
+            "mean_tool_calls": 0,
+            "errors": 0
+          },
+          "doctrinal": {
+            "n": 8,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.324
+            ],
+            "weighted_pass": 0.606,
+            "central_wrong": 0.75,
+            "lower_tier_only": 0.25,
+            "source_check_failures": 1,
+            "fabricated_citations": 2,
+            "mean_seconds": 21.5,
+            "mean_tool_calls": 0,
+            "errors": 0
+          },
+          "premise": {
+            "n": 3,
+            "all_pass": 0.667,
+            "ci95": [
+              0.208,
+              0.939
+            ],
+            "weighted_pass": 0.833,
+            "central_wrong": 0.333,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 13.4,
+            "mean_tool_calls": 0,
+            "errors": 0
+          },
+          "reconciliation": {
+            "n": 1,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.793
+            ],
+            "weighted_pass": 0.455,
+            "central_wrong": 1.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 14.5,
+            "mean_tool_calls": 0,
+            "errors": 0
+          },
+          "statutory": {
+            "n": 4,
+            "all_pass": 0.5,
+            "ci95": [
+              0.15,
+              0.85
+            ],
+            "weighted_pass": 0.904,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.5,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 21.3,
+            "mean_tool_calls": 0,
+            "errors": 0
+          },
+          "temporal": {
+            "n": 5,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.434
+            ],
+            "weighted_pass": 0.217,
+            "central_wrong": 1.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 3,
+            "fabricated_citations": 8,
+            "mean_seconds": 9.9,
+            "mean_tool_calls": 0,
+            "errors": 0
+          }
+        },
+        "by_attribute": {
+          "reconciliation": {
+            "n": 3,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.562
+            ],
+            "weighted_pass": 0.263,
+            "central_wrong": 1.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 1,
+            "fabricated_citations": 3,
+            "mean_seconds": 13.7,
+            "mean_tool_calls": 0,
+            "errors": 0
+          },
+          "temporal": {
+            "n": 5,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.434
+            ],
+            "weighted_pass": 0.217,
+            "central_wrong": 1.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 3,
+            "fabricated_citations": 8,
+            "mean_seconds": 9.9,
+            "mean_tool_calls": 0,
+            "errors": 0
+          }
+        }
+      }
+    },
+    "before": {
+      "summary": {
+        "n": 24,
+        "all_pass": 0.375,
+        "ci95": [
+          0.212,
+          0.573
+        ],
+        "weighted_pass": 0.747,
+        "central_wrong": 0.458,
+        "lower_tier_only": 0.167,
+        "source_check_failures": 1,
+        "fabricated_citations": 1,
+        "mean_seconds": 42.2,
+        "mean_tool_calls": 7.3,
+        "errors": 0,
+        "by_scenario": {
+          "abstain": {
+            "n": 2,
+            "all_pass": 1.0,
+            "ci95": [
+              0.342,
+              1.0
+            ],
+            "weighted_pass": 1.0,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 57.1,
+            "mean_tool_calls": 35.5,
+            "errors": 0
+          },
+          "citecheck": {
+            "n": 1,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.793
+            ],
+            "weighted_pass": 0.385,
+            "central_wrong": 1.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 51.9,
+            "mean_tool_calls": 15,
+            "errors": 0
+          },
+          "doctrinal": {
+            "n": 8,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.324
+            ],
+            "weighted_pass": 0.598,
+            "central_wrong": 0.75,
+            "lower_tier_only": 0.25,
+            "source_check_failures": 1,
+            "fabricated_citations": 1,
+            "mean_seconds": 57.4,
+            "mean_tool_calls": 6.6,
+            "errors": 0
+          },
+          "premise": {
+            "n": 3,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.562
+            ],
+            "weighted_pass": 0.444,
+            "central_wrong": 1.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 27.0,
+            "mean_tool_calls": 0.7,
+            "errors": 0
+          },
+          "reconciliation": {
+            "n": 1,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.793
+            ],
+            "weighted_pass": 0.727,
+            "central_wrong": 1.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 47.1,
+            "mean_tool_calls": 9,
+            "errors": 0
+          },
+          "statutory": {
+            "n": 4,
+            "all_pass": 0.75,
+            "ci95": [
+              0.301,
+              0.954
+            ],
+            "weighted_pass": 0.95,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.25,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 32.5,
+            "mean_tool_calls": 2.5,
+            "errors": 0
+          },
+          "temporal": {
+            "n": 5,
+            "all_pass": 0.8,
+            "ci95": [
+              0.376,
+              0.964
+            ],
+            "weighted_pass": 0.98,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.2,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 25.6,
+            "mean_tool_calls": 3.2,
+            "errors": 0
+          }
+        },
+        "by_attribute": {
+          "reconciliation": {
+            "n": 3,
+            "all_pass": 0.667,
+            "ci95": [
+              0.208,
+              0.939
+            ],
+            "weighted_pass": 0.909,
+            "central_wrong": 0.333,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 36.7,
+            "mean_tool_calls": 7,
+            "errors": 0
+          },
+          "temporal": {
+            "n": 5,
+            "all_pass": 0.8,
+            "ci95": [
+              0.376,
+              0.964
+            ],
+            "weighted_pass": 0.98,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.2,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 25.6,
+            "mean_tool_calls": 3.2,
+            "errors": 0
+          }
+        }
+      }
+    },
+    "now": {
+      "summary": {
+        "n": 24,
+        "all_pass": 0.708,
+        "ci95": [
+          0.508,
+          0.851
+        ],
+        "weighted_pass": 0.936,
+        "central_wrong": 0.083,
+        "lower_tier_only": 0.208,
+        "source_check_failures": 0,
+        "fabricated_citations": 0,
+        "mean_seconds": 57.9,
+        "mean_tool_calls": 7.2,
+        "errors": 0,
+        "by_scenario": {
+          "abstain": {
+            "n": 2,
+            "all_pass": 1.0,
+            "ci95": [
+              0.342,
+              1.0
+            ],
+            "weighted_pass": 1.0,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 61.7,
+            "mean_tool_calls": 20.5,
+            "errors": 0
+          },
+          "citecheck": {
+            "n": 1,
+            "all_pass": 1.0,
+            "ci95": [
+              0.207,
+              1.0
+            ],
+            "weighted_pass": 1.0,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 32.6,
+            "mean_tool_calls": 1,
+            "errors": 0
+          },
+          "doctrinal": {
+            "n": 8,
+            "all_pass": 0.625,
+            "ci95": [
+              0.306,
+              0.863
+            ],
+            "weighted_pass": 0.956,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.375,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 75.2,
+            "mean_tool_calls": 9.6,
+            "errors": 0
+          },
+          "premise": {
+            "n": 3,
+            "all_pass": 1.0,
+            "ci95": [
+              0.438,
+              1.0
+            ],
+            "weighted_pass": 1.0,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 58.7,
+            "mean_tool_calls": 2.7,
+            "errors": 0
+          },
+          "reconciliation": {
+            "n": 1,
+            "all_pass": 0.0,
+            "ci95": [
+              0.0,
+              0.793
+            ],
+            "weighted_pass": 0.455,
+            "central_wrong": 1.0,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 68.0,
+            "mean_tool_calls": 7,
+            "errors": 0
+          },
+          "statutory": {
+            "n": 4,
+            "all_pass": 0.75,
+            "ci95": [
+              0.301,
+              0.954
+            ],
+            "weighted_pass": 0.95,
+            "central_wrong": 0.0,
+            "lower_tier_only": 0.25,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 48.4,
+            "mean_tool_calls": 4.8,
+            "errors": 0
+          },
+          "temporal": {
+            "n": 5,
+            "all_pass": 0.6,
+            "ci95": [
+              0.231,
+              0.882
+            ],
+            "weighted_pass": 0.913,
+            "central_wrong": 0.2,
+            "lower_tier_only": 0.2,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 38.8,
+            "mean_tool_calls": 4,
+            "errors": 0
+          }
+        },
+        "by_attribute": {
+          "reconciliation": {
+            "n": 3,
+            "all_pass": 0.333,
+            "ci95": [
+              0.061,
+              0.792
+            ],
+            "weighted_pass": 0.707,
+            "central_wrong": 0.667,
+            "lower_tier_only": 0.0,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 48.8,
+            "mean_tool_calls": 5.7,
+            "errors": 0
+          },
+          "temporal": {
+            "n": 5,
+            "all_pass": 0.6,
+            "ci95": [
+              0.231,
+              0.882
+            ],
+            "weighted_pass": 0.913,
+            "central_wrong": 0.2,
+            "lower_tier_only": 0.2,
+            "source_check_failures": 0,
+            "fabricated_citations": 0,
+            "mean_seconds": 38.8,
+            "mean_tool_calls": 4,
+            "errors": 0
+          }
+        }
+      }
+    }
+  }
+}

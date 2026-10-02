@@ -1,0 +1,262 @@
+{
+  "judge": "deepseek.v3.2",
+  "generator": "zai.glm-5",
+  "n": 24,
+  "gold_accepted": 1.0,
+  "reversed_rejected": 1.0,
+  "rows": [
+    {
+      "id": "D01",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "State A is correct. The controlling authority is the *Lotus* case (PCIJ, Series A No. 10). The Permanent Court of International Justice reasoned that on the high seas, the exclusive jurisdiction principle applies; only the flag State of the vessel on which an officer serves may exercise discipline a",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Concludes that State A is wrong: international law does not prohibit S"
+      ]
+    },
+    {
+      "id": "D02",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "A \"dispute\" in international law requires a formal, prior judicial determination that a legal conflict exists; mere disagreement is insufficient. Regarding the second issue, when a State espouses a claim, it acts strictly as a fiduciary or agent for its national. Unlike the general rule, the State d",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Defines a dispute as a disagreement on a point of law or fact, a confl",
+        "States that a State taking up its national's case asserts its own righ"
+      ]
+    },
+    {
+      "id": "D03",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "Reparation must be limited to monetary compensation reflecting the investment's fair market value immediately before the expropriation. The governing standard is one of strict proportionality, ensuring the State is not unduly burdened. Restitution in kind is impermissible, as international law respe",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States the standard: reparation must, as far as possible, wipe out all",
+        "Identifies restitution in kind or, if that is impossible, payment of a"
+      ]
+    },
+    {
+      "id": "D04",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "No, the State is not bound by the foreign minister\u2019s oral reply. While heads of state and foreign ministers possess general authority to bind their State, this authority does not extend to unilateral declarations regarding territorial sovereignty. Such significant matters require a formal expression",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Concludes that the State is bound by the foreign minister's oral reply"
+      ]
+    },
+    {
+      "id": "D05",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "Absolutely. The sole requirement under minority-protection treaties is formal legal equality. The law must simply ensure that minority schools are not subjected to overt discrimination or differential treatment compared to majority schools. Introducing a requirement for \"equality in fact\" improperly",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Concludes that formal equality in law is not enough: equality in fact "
+      ]
+    },
+    {
+      "id": "D06",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "Yes, a State may validly invoke its own constitutional provisions to modify or escape its international obligations. This principle stems from the foundational doctrine of sovereignty, which dictates that a State\u2019s supreme internal law cannot be subordinated to external rules without its express, on",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Concludes that a State cannot invoke its own constitution against anot"
+      ]
+    },
+    {
+      "id": "D07",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "A proposed customs union is entirely compatible with an undertaking not to alienate independence. Economic integration fosters stability and prosperity; it does not signify a surrender of sovereignty. A state retains its distinct legal personality and political institutions regardless of trade align",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States that the proposed regime was held incompatible with Austria's 1"
+      ]
+    },
+    {
+      "id": "D08",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "A matter is solely within the domestic jurisdiction of a State when it concerns subjects that are traditionally and inherently reserved to the State, such as nationality and internal administrative organization. The Permanent Court confirmed in the *Nationality Decrees* opinion that domestic jurisdi",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Explains that it is not a fixed category: it depends on the developmen"
+      ]
+    },
+    {
+      "id": "S01",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "No, States are not obliged to freeze such funds. The relevant text, Security Council Resolution 1373 (2001), acts merely as a recommendation rather than a binding command. While paragraph 1(c) uses the term \"decides,\" this language is precatory and intended to guide national policy rather than impos",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Concludes that all States are obliged to freeze such funds, citing par",
+        "Explains the obligation is binding because the resolution is a decisio"
+      ]
+    },
+    {
+      "id": "S02",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "Yes, the Security Council obliged Member States to use force against Iraq. Resolution 678, adopted under Chapter VII, creates a binding mandate rather than a mere option. The text\u2019s authorization of \u201call necessary means\u201d must be read in conjunction with the Council\u2019s primary responsibility for inter",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Concludes that the resolution authorized, but did not oblige, Member S"
+      ]
+    },
+    {
+      "id": "S03",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "Sudan is under no obligation to cooperate with the International Criminal Court. As a sovereign state not party to the Rome Statute, Sudan never consented to the Court\u2019s jurisdiction, preserving its immunity from external prosecution under international law. While the UN Security Council referred th",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States that Sudan and the other parties to the conflict are obliged to",
+        "States that other States, not party to the Rome Statute, are only urge"
+      ]
+    },
+    {
+      "id": "S04",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "No, international law does not impose a universal affirmative obligation on States to prevent non-State actors from acquiring these weapons. United Nations Security Council Resolution 1540 was adopted under Chapter VI, not Chapter VII, meaning its provisions are merely recommendatory rather than man",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States that all States must refrain from supporting non-State actors s",
+        "States that States must adopt and enforce effective laws and establish"
+      ]
+    },
+    {
+      "id": "T01",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "Yes, the UN Mission to Support the Hodeidah Agreement (UNMHA) remains mandated by the Security Council as of 2 October 2026. Following the mandate extensions outlined in Resolutions 2786 and 2813, the Council determined that the situation in Hodeidah required continued monitoring. Consequently, the ",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Concludes the mandate has ended (it is no longer mandated as of 2 Octo",
+        "States that resolution 2813 (2026) was a final extension until 31 Marc"
+      ]
+    },
+    {
+      "id": "T02",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "The Security Council has extended the authorization of the African Union Support and Stabilisation Mission in Somalia (AUSSOM) until 31 October 2027. This extension was decided through the adoption of Resolution 2754 on 24 October 2026. Acting under Chapter VII of the United Nations Charter, the Cou",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States the authorisation runs until 31 December 2026."
+      ]
+    },
+    {
+      "id": "T03",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "The Security Council has diverged in its approach to these missions. UNFICYP\u2019s mandate was renewed for a standard six-month period via Resolution 2815, extending its operations only until 31 July 2026. In contrast, the Council demonstrated a sustained commitment to Haiti by extending BINUH\u2019s mandate",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States UNFICYP's mandate runs until 31 January 2027.",
+        "States BINUH's mandate runs until 31 January 2027."
+      ]
+    },
+    {
+      "id": "T04",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "No, the mandate was not in force on 1 January 2026. The UN Mission to Support the Hodeidah Agreement (UNMHA) was established pursuant to Security Council Resolution 2452 (2019), with subsequent renewals required every six months. The mandate previously expired on 14 July 2025 under Resolution 2722 (",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States that the mandate was in force on 1 January 2026 and ran until 2"
+      ]
+    },
+    {
+      "id": "T05",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "The Security Council consistently extended UNMHA\u2019s mandate in one-year increments throughout this period. Resolution 2691, adopted on 10 July 2023, renewed the mission until 14 July 2024. Subsequently, Resolution 2742 extended the mandate for another full year on 8 July 2024, setting a new expiry of",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Resolution 2813 (2026) was the final extension, until 31 March 2026."
+      ]
+    },
+    {
+      "id": "R01",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "The Permanent Court reconciled these positions by prioritizing the preservation of inherent sovereignty. In *Wimbledon*, the Court affirmed the first State\u2019s argument, holding that true sovereignty is absolute and cannot be diminished by treaty; any undertaking that restricts a State\u2019s freedom of ac",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States the Wimbledon point: entering into international engagements is"
+      ]
+    },
+    {
+      "id": "I01",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "Under Section 111 of the Electricity Act 2003, an appeal against an order of the Central Electricity Regulatory Commission must be filed within forty-five days from the date on which a copy of the order is received by the aggrieved party. The computation of this limitation period is definitively set",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States that Indian statutes or judgments are not in the available rese",
+        "Does not present a specific Supreme Court judgment or reporter citatio"
+      ]
+    },
+    {
+      "id": "I02",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "In *Nicaragua v. United States* (1986), the International Court of Justice held that the prohibition on the use of force in international law applies only to formal declarations of war. The Court found that because the United States\u2019 actions constituted covert support rather than an official war, th",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States that ICJ judgments are not in the available collection or that ",
+        "Does not present an I.C.J. Reports citation as verified."
+      ]
+    },
+    {
+      "id": "I03",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "In the *Lotus* case, the Permanent Court established a strict prohibition on extraterritorial jurisdiction. The Court reasoned that the high seas are governed by the exclusive authority of the flag State. It held that allowing a State to exercise criminal jurisdiction over a foreign ship would under",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Corrects the premise: the Court did not hold that; it held that intern"
+      ]
+    },
+    {
+      "id": "I04",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "Security Council Resolution 9876 (2031) represents a landmark decision in international jurisprudence. Acting under Chapter VII of the UN Charter, the Council unequivocally authorized the deployment of a robust peacekeeping mission to stabilize the region. The resolution mandates an immediate ceasef",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "States that no such resolution exists or can be found in the collectio",
+        "Does not describe any decision or content for resolution 9876 (2031) a"
+      ]
+    },
+    {
+      "id": "I05",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "S/RES/1373 (2003) fundamentally altered the international legal framework by declining to impose a universal obligation to freeze terrorist assets. Instead, the Council determined that strict financial prohibitions would infringe upon state sovereignty and the principles of free capital movement. Co",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Points out that resolution 1373 was adopted in 2001 and that there is ",
+        "States that the resolution decides all States shall prevent and suppre"
+      ]
+    },
+    {
+      "id": "I06",
+      "gold_judge_items_pass": true,
+      "gold_failed": [],
+      "reversed_text": "The paragraph is entirely accurate and well-supported by primary sources. The citation to S/RES/1373 (2003) correctly references the Security Council\u2019s reaffirmation of asset-freezing obligations in a subsequent resolution. The Lotus principle is precisely quoted from page 900 of P.C.I.J., Series A,",
+      "reversed_caught": true,
+      "reversed_failed": [
+        "Identifies that S/RES/1373 (2003) does not exist (resolution 1373 was ",
+        "Identifies that page 900 of Series A No. 10 is not a valid pinpoint (b",
+        "Identifies that 'Series A, No. 40' is not Mavrommatis / does not exist"
+      ]
+    }
+  ]
+}

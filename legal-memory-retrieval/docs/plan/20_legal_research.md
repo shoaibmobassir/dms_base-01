@@ -36,7 +36,23 @@ Design: `docs/plan/assistant-design.md` Rev 2.3, Part II (§22). Evals: `evals/r
 - [ ] Ingest Indian electricity law (Act, regulations, APTEL/SC/CERC orders) as typed authorities
 - [ ] `find_in_authority`; evidence-backed notes (needs Phase B)
 
+## Benchmark (Legal Research Bench-style, 24 questions)
+
+| | none | before | now |
+|---|---|---|---|
+| All-pass | 0.21 | 0.38 | **0.71** |
+| Invalid citations | 10 | 1 | **0** |
+| Central-wrong | 0.62 | 0.46 | **0.08** |
+
+now vs before: 9 vs 1 discordant questions, McNemar p = 0.022. Record: `docs/experiments/lrb_style_benchmark_2026-10-02.md`.
+
+- [ ] R01-type retrieval misses (a principle stated in a case the question does not name)
+- [ ] Scorer: parse citation chips; grow to 40+ questions, lawyer-reviewed
+- [ ] Agent: repair or drop a tool call with malformed JSON instead of failing the turn (provider 400)
+- [ ] Ask the Firm: Refresh loop on `/ask/<id>` (`docs/experiments/ask_saved_answers_test_2026-10-02.md`); owned by the plan 19 session
+
 ## Log
+
 
 - **2026-10-02** Rev 2.3 of the design doc (phase reorder, local-first research, legal-system models,
   scorecard). Built R1-local on branch `research-authority-layer`. Research eval: R@5 0.64 → 0.97,
@@ -44,3 +60,7 @@ Design: `docs/plan/assistant-design.md` Rev 2.3, Part II (§22). Evals: `evals/r
   variants, form-feed paragraphs, year-less S/RES). Live research-mode run: first pass exposed a missing
   current date and grounding removing labels; after fixes, 0 fabricated citations in 36, expected authority
   cited 5/5. Decision record: `docs/experiments/legal_research_r1_local_2026-10-02.md`.
+- **2026-10-02 (later)** Read arXiv:2610.00609 (Legal Research Bench). Built an all-pass, source-checked benchmark
+  with a validated judge and three arms. All-pass 0.21 (no tools) → 0.38 (assistant before) → 0.71 (now);
+  invalid citations 10 → 1 → 0. Tested Ask the Firm stored answers: id-based reopening works, Refresh on a saved
+  answer loops forever and changes the id (reported, not fixed here: files belong to the plan 19 session).
