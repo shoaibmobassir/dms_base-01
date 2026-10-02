@@ -1113,6 +1113,8 @@ All are `risk: read`, `recovery: rerun`. Tools served by an external provider al
 
 All tool results carry span handles that feed `update_notes` and evidence creation exactly as in §10.1, with `evidence.type = 'authority'`. Until Phase B, authorities are registered in the chat DocIndex like documents, so the existing grounding and quote location cite them with `doc-N` labels and page markers.
 
+*Parallel safety, as built in R1-local:* the tools are read-only, but they allocate `doc-N` aliases in the chat DocIndex, which is not safe across threads. They are therefore **not** in `PARALLEL_SAFE_TOOLS` yet (like `search_firm_records`), and several searches in one round run one after another. Phase B's registry makes alias allocation atomic; then the column above applies.
+
 ### 22.6 Legal-system models, jurisdiction resolution and ranking
 
 **Legal-system models.** Binding force is decided by a per-system model in config (`app/research/legal_systems.yaml`), authored and reviewed by lawyers, versioned and tested. The runtime never asks the model what is binding. Labels: `binding | likely_binding | persuasive | recommendatory | not_binding | unknown`, always with a one-line reason.
@@ -1334,13 +1336,36 @@ Each eval run reports the §22.1 scorecard so progress on the research score is 
 | **No Indian authorities in the corpus.** The Indian matters hold only filings, so Indian citations can be parsed but not verified until R2 ingestion or an R5 provider | R2 public ingestion first; R5 provider by bake-off |
 | **Providers without a citator API.** Some markets have no Shepard's-equivalent available programmatically | Ship honest "not verified" status; derived signals only as labeled heuristics, never "good law" |
 | **PDF vs official pagination** in scanned PCIJ reports | Label `page_kind`; detect printed official page numbers where OCR allows |
-| **OCR quality** of 1920s–1930s bilingual reports (French/English columns) | Quote location tolerates OCR noise (existing 3-tier matcher); flag low-confidence quotes |
+| **OCR quality** of 1920s–1930s bilingual reports (French/English columns) | The existing 3-tier matcher does **not** tolerate OCR noise ("1 regret" for "I regret", "jiidgment"); Rev 2.3 wrongly said it did. R1-local adds an OCR-folding fuzzy fallback (`app/research/ocr_match.py`, similarity ≥ 0.85) used by cite-check. Chat grounding still uses the 3-tier matcher, so OCR-noisy quotes in answers can be removed as unsupported |
 | **Licensing:** LLM-use rights, caching and display limits, redistribution, retention | Legal and commercial, before R5 |
 | **Provider vendor claims.** Coverage and accuracy statements in public comparisons are often vendor-authored | Verify with the gold set and a sample of official court copies |
 | **Publisher summaries or AI-generated headnotes** must not be treated as authority | Enforced via `role: headnote` (§22.4) |
 | **Verifier model quality** on legal support judgments | Compare a stronger verifier on the gold set (§22.14) |
 | **Latency:** verification adds calls | Run verification in parallel; show progress events; background lane for large research |
 | **Indian provider landscape:** public comparisons list Indian Kanoon (API), SCC Online, Manupatra (no public API reported), and newer API vendors, with uneven citator support | All such claims come from vendor-authored pages. Validate coverage, terms and court-copy provenance in the R0 bake-off |
+
+### 22.18 R1-local status (2026-10-02, measured)
+
+Built on branch `research-authority-layer`. Decision record: `docs/experiments/legal_research_r1_local_2026-10-02.md`. Tracking: `docs/plan/20_legal_research.md`.
+
+| Gate (§22.14) | Result |
+|---|---|
+| False-verified citations (73 planted fakes and unheld cites) | **0** |
+| Provider failure verified (CourtListener outage) | **never** |
+| Citation parser recall (30 forms) | **1.00** |
+| Binding-label accuracy (23 hand-labeled items) | **1.00** (22 by rule, 1 via the cited *Namibia* override) |
+| Wrong pinpoints flagged | **100%**; valid pinpoints clean 100% |
+| Controlling-authority retrieval, 58 issue questions | R@5 **0.97**, MRR **0.89** (before: R@5 0.64, MRR 0.52); held-out 51: R@5 0.96 |
+| Live answers, 6 held-out research-mode questions over HTTP | 0 fabricated or wrong citations in 36 authority citations; expected authority cited 5 of 5 |
+
+Scorecard after R1-local (§22.1 rubric): coverage 0.4, existence 0.8, quote/pinpoint 0.8, status 0.3, hierarchy 0.6, formatting 0.7, passage role 0.7, process 0.5, separation 0.6, evaluation 0.6. **Total 6.0** (target was 5.6; before 1.6).
+
+Known gaps carried forward:
+- The §22.9 hard rule is enforced by tools, prompt and grounding, not by a post-generation pass that strips unverified citations from the final text. That pass is the next item.
+- Grounding drops headings and table header rows it cannot tie to a source, which can strip the citation label from a cite-check block or the header row of an authorities table.
+- Authority search p50 is about 2.9 s, against about 1 s for firm search. Research-mode answers take 30–70 s.
+- Retrieval misses at 5: the *Nationality Decrees* advisory opinion and Lockerbie (resolutions 731/748).
+- No Indian, ICJ or treaty sources, so Indian electricity questions get "not verifiable" (R2).
 
 ---
 
