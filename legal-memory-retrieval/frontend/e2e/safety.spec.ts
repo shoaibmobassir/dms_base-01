@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
 // Safety and polish checks: documents are never filed into a matter by default, follow-up
@@ -416,4 +419,80 @@ test("suggested edits to a PDF say they cannot be applied and offer comments ins
   await expect(page.getByTestId("edits-as-comments")).toBeVisible();
   await expect(page.getByTestId("edit-accept")).toHaveCount(0);
   await expect(page.getByTestId("edits-export")).toHaveCount(0);
+});
+
+test("resolve a matter: close it with an outcome, see the banner, reopen it", async ({ page, request }) => {
+  const headers = { "X-Member-Id": ME };
+  const clients = (await (await request.get("/api/clients?limit=3", { headers })).json()) as { items: { client_id: string }[] };
+  const title = `E2E-TMP close ${Date.now()}`;
+  const created = await request.post("/api/matters", { headers, data: { title, client_id: clients.items[0].client_id, practice_area: "Corporate", access_mode: "team" } });
+  expect(created.ok(), await created.text()).toBeTruthy();
+  const id = ((await created.json()) as { matter_id: string }).matter_id;
+  await request.post("/api/calendar/deadlines", { headers, data: { title: "File reply", kind: "filing", matter_id: id, due_date: "2030-01-15" } });
+
+  await page.goto(`/ui/matters/${id}`);
+  await page.getByTestId("matter-close").click();
+  const dialog = page.getByTestId("close-matter-dialog");
+  await expect(dialog.getByTestId("close-open-deadlines")).toContainText("still open");
+  await dialog.getByTestId("close-outcome").fill("Settled on agreed terms");
+  // An open court date blocks closing until it is marked done.
+  await expect(dialog.getByTestId("close-matter-submit")).toBeDisabled();
+  await dialog.getByTestId("close-mark-done").check();
+  await dialog.getByTestId("close-matter-submit").click();
+  await expect(page.getByTestId("matter-closed-banner")).toContainText("Settled on agreed terms");
+  await expect(page.getByTestId("matter-close")).toHaveCount(0);
+
+  await page.getByTestId("matter-reopen").click();
+  await page.getByTestId("reopen-reason").fill("Opposing party appealed");
+  await page.getByTestId("reopen-matter-submit").click();
+  await expect(page.getByTestId("matter-closed-banner")).toHaveCount(0);
+  await expect(page.getByTestId("matter-close")).toBeVisible();
+});
+
+test("put someone on a matter by searching, hand over the lead, remove with a confirmation", async ({ page, request }) => {
+  const headers = { "X-Member-Id": ME };
+  const clients = (await (await request.get("/api/clients?limit=3", { headers })).json()) as { items: { client_id: string }[] };
+  const people = (await (await request.get("/api/people", { headers })).json()) as { items: { member_id: string; name: string }[] };
+  const other = people.items.find((p) => p.member_id !== ME)!;
+  const created = await request.post("/api/matters", { headers, data: { title: `E2E-TMP team ${Date.now()}`, client_id: clients.items[0].client_id, practice_area: "Corporate", access_mode: "team" } });
+  const id = ((await created.json()) as { matter_id: string }).matter_id;
+
+  await page.goto(`/ui/matters/${id}?tab=people`);
+  await page.getByTestId("team-add-person").click();
+  await page.getByTestId("team-add-person-search").fill(other.name.split(" ")[0]);
+  await page.locator(`[data-option-id="${other.member_id}"]`).click();
+  await page.getByTestId("team-add").click();
+  await expect(page.getByTestId("team-row")).toHaveCount(2);
+
+  // Removing asks first.
+  await page.getByRole("button", { name: /^Remove / }).click();
+  await expect(page.getByTestId("confirm-dialog")).toContainText("lose team access");
+  await page.getByTestId("confirm-accept").click();
+  await expect(page.getByTestId("team-row")).toHaveCount(1);
+
+  // Add again, then hand over the lead: the new lead is listed first and the old one is counsel.
+  await page.getByTestId("team-add-person").click();
+  await page.locator(`[data-option-id="${other.member_id}"]`).click();
+  await page.getByTestId("team-add").click();
+  await expect(page.getByTestId("team-row")).toHaveCount(2);
+  await page.getByTestId("team-make-lead").click();
+  await page.getByTestId("confirm-accept").click();
+  await expect(page.getByTestId("team-row").first()).toContainText(other.name);
+});
+
+test("a whole folder can be added and keeps its folder names", async ({ page }) => {
+  const root = mkdtempSync(path.join(tmpdir(), "precentis-"));
+  const folder = path.join(root, "Disclosure bundle");
+  mkdirSync(path.join(folder, "Schedules"), { recursive: true });
+  writeFileSync(path.join(folder, "cover note.txt"), "A cover note.");
+  writeFileSync(path.join(folder, "Schedules", "schedule 1.txt"), "Schedule one.");
+  writeFileSync(path.join(folder, "photo.png"), "x");
+  await page.goto("/ui/documents");
+  await page.getByTestId("add-documents").click();
+  await page.getByTestId("upload-folder-input").setInputFiles(folder);
+  const list = page.getByTestId("upload-files");
+  await expect(list).toContainText("Disclosure bundle/cover note.txt");
+  await expect(list).toContainText("Disclosure bundle/Schedules/schedule 1.txt");
+  await expect(list).toContainText("Only PDF, Word (.docx) and text files are supported."); // the picture is refused with a reason
+  await expect(page.getByTestId("upload-submit")).toBeDisabled(); // still no matter chosen
 });

@@ -2,7 +2,7 @@ import { useRef, useState, type DragEvent } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ingestDocument } from "@/api/resources";
-import { ACCEPTED_TYPES, fileProblem, uploadToMatter, type UploadOutcome } from "@/api/uploads";
+import { ACCEPTED_TYPES, fileProblem, pathOf, uploadToMatter, type UploadOutcome } from "@/api/uploads";
 import { MatterPicker, type MatterOption } from "@/components/common/MatterPicker";
 import { Icon } from "@/components/common/primitives";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,7 @@ function FilesTab({ matter, onClose }: { matter: MatterOption | null; onClose: (
   const { toast } = useApp();
   const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
+  const folderInput = useRef<HTMLInputElement>(null);
   const abort = useRef<AbortController | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [over, setOver] = useState(false);
@@ -82,7 +83,7 @@ function FilesTab({ matter, onClose }: { matter: MatterOption | null; onClose: (
 
   const add = (list: FileList | File[]) => {
     const next = [...files];
-    for (const f of Array.from(list)) if (!next.some((x) => x.name === f.name && x.size === f.size)) next.push(f);
+    for (const f of Array.from(list)) if (!next.some((x) => pathOf(x) === pathOf(f) && x.size === f.size)) next.push(f);
     setFiles(next);
     setOutcomes(null);
   };
@@ -123,14 +124,14 @@ function FilesTab({ matter, onClose }: { matter: MatterOption | null; onClose: (
       <div className="space-y-3" data-testid="upload-results">
         <ul className="divide-y divide-border rounded-md border border-border">
           {outcomes.map((o) => (
-            <li key={o.file.name} className="flex items-center gap-2 px-3 py-2 text-sm">
+            <li key={pathOf(o.file)} className="flex items-center gap-2 px-3 py-2 text-sm">
               <Icon
                 name={o.status === "failed" ? "error" : o.status === "duplicate" ? "content_copy" : "check_circle"}
                 className={o.status === "failed" ? "text-destructive" : o.status === "duplicate" ? "text-muted-foreground" : "text-success"}
                 style={{ fontSize: 18 }}
               />
               <span className="min-w-0 flex-1">
-                <span className="block truncate">{o.file.name}</span>
+                <span className="block truncate">{pathOf(o.file)}</span>
                 <span className="block text-xs text-muted-foreground">
                   {o.status === "indexed" ? "Added and indexed" : o.status === "duplicate" ? "Already in the firm's records" : o.error}
                 </span>
@@ -164,10 +165,27 @@ function FilesTab({ matter, onClose }: { matter: MatterOption | null; onClose: (
       >
         <Icon name="upload_file" className="text-muted-foreground" style={{ fontSize: 30 }} />
         <p className="text-sm">Drop files here, or</p>
-        <Button type="button" variant="outline" size="sm" onClick={() => input.current?.click()} disabled={busy}>
-          Choose files
-        </Button>
-        <p className="text-xs text-muted-foreground">PDF, Word (.docx) or text, up to 50 MB each.</p>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => input.current?.click()} disabled={busy}>
+            Choose files
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => folderInput.current?.click()} disabled={busy} data-testid="upload-choose-folder">
+            Choose a folder
+          </Button>
+        </div>
+        <input
+          ref={folderInput}
+          type="file"
+          // @ts-expect-error webkitdirectory is supported by every current browser but is not in the DOM typings
+          webkitdirectory=""
+          className="hidden"
+          data-testid="upload-folder-input"
+          onChange={(e) => {
+            if (e.target.files) add(e.target.files);
+            e.target.value = "";
+          }}
+        />
+        <p className="text-xs text-muted-foreground">PDF, Word (.docx) or text, up to 50 MB each. A folder keeps its folder names.</p>
         <input
           ref={input}
           type="file"
@@ -187,14 +205,14 @@ function FilesTab({ matter, onClose }: { matter: MatterOption | null; onClose: (
           {files.map((f) => {
             const problem = fileProblem(f);
             return (
-              <li key={`${f.name}-${f.size}`} className="flex items-center gap-2 px-3 py-2 text-sm">
+              <li key={`${pathOf(f)}-${f.size}`} className="flex items-center gap-2 px-3 py-2 text-sm">
                 <Icon name={problem ? "error" : "description"} className={problem ? "text-destructive" : "text-muted-foreground"} style={{ fontSize: 18 }} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate">{f.name}</span>
+                  <span className="block truncate">{pathOf(f)}</span>
                   <span className={cn("block text-xs", problem ? "text-destructive" : "text-muted-foreground")}>{problem ?? size(f.size)}</span>
                 </span>
                 {!busy && (
-                  <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles(files.filter((x) => x !== f))} className="rounded p-1.5 text-muted-foreground hover:bg-secondary">
+                  <button type="button" aria-label={`Remove ${pathOf(f)}`} onClick={() => setFiles(files.filter((x) => x !== f))} className="rounded p-1.5 text-muted-foreground hover:bg-secondary">
                     <Icon name="close" style={{ fontSize: 16 }} />
                   </button>
                 )}

@@ -27,6 +27,9 @@ async function readError(res: Response): Promise<string> {
   return text || `Upload failed (HTTP ${res.status})`
 }
 
+/** The name a file is filed under: its folder path when it came from a folder, else its name. */
+export const pathOf = (f: File): string => (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name
+
 /** Why a file cannot be uploaded, or null when it can. */
 export function fileProblem(file: File): string | null {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
@@ -49,7 +52,7 @@ export async function uploadToMatter(
   body.append('matter_id', matterId)
   for (const f of files) {
     body.append('files', f)
-    body.append('relative_paths', f.name)
+    body.append('relative_paths', pathOf(f))
   }
   const created = await fetch('/api/uploads/batches', { method: 'POST', headers: authHeaders(), body, signal: opts.signal, credentials: 'same-origin' })
   if (!created.ok) throw new Error(await readError(created))
@@ -75,7 +78,7 @@ export async function uploadToMatter(
   opts.onProgress?.(files.length, files.length)
 
   return files.map((file, i) => {
-    const row = rows.find((r) => r.relative_path === file.name) ?? rows[i]
+    const row = rows.find((r) => r.relative_path === pathOf(file)) ?? rows[i]
     if (!row) return { file, status: 'failed', documentId: null, error: 'No result was reported for this file.' }
     if (row.status === 'indexed') return { file, status: 'indexed', documentId: row.document_id }
     if (row.status === 'skipped') return { file, status: 'duplicate', documentId: row.document_id }

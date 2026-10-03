@@ -44,7 +44,8 @@ test("open a matter, staff it and add to its timeline", async ({ browser, reques
 
     // Staff it.
     await page.getByTestId("matter-tab-people").click();
-    await page.getByTestId("team-add-person").selectOption(associate);
+    await page.getByTestId("team-add-person").click();
+    await page.locator(`[data-option-id="${associate}"]`).click();
     await page.getByTestId("team-add").click();
     await expect(page.getByTestId("team-row")).toHaveCount(2);
 

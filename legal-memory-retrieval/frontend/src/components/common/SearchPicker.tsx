@@ -122,6 +122,7 @@ export function SearchPicker({
                   aria-selected={selectedId === o.id}
                   onClick={() => choose(o)}
                   data-testid={`${testId}-option`}
+                  data-option-id={o.id}
                   className={cn("flex w-full flex-col rounded-md px-2 py-1.5 text-left hover:bg-secondary", selectedId === o.id && "bg-wine-soft")}
                 >
                   <span className="truncate text-[13px] font-medium">{o.title}</span>

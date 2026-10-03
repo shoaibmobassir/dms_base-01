@@ -245,10 +245,19 @@ def test_ingest_job_rejects_paths_outside_allowed_roots(client, seeded):
     resp = client.post(
         "/api/documents/ingest/jobs",
         json={"source_root": "/etc", "manifest": "/etc/hosts", "run_immediately": False},
-        headers=as_member("MEM-00001"),
+        headers=as_member("MEM-00011"),
     )
     assert resp.status_code == 400
     assert "INGEST_ALLOWED_ROOTS" in resp.json()["detail"]
+
+
+def test_folder_ingest_is_for_administrators(client, seeded):
+    """A partner cannot start, read or retry a server-side folder ingest."""
+    h = as_member("MEM-00001")
+    body = {"source_root": "/etc", "manifest": "/etc/hosts", "run_immediately": False}
+    assert client.post("/api/documents/ingest/jobs", json=body, headers=h).status_code == 403
+    assert client.get("/api/documents/ingest/jobs/JOB-X", headers=h).status_code == 403
+    assert client.post("/api/documents/ingest/jobs/JOB-X/retry", json=body, headers=h).status_code == 403
 
 
 # ── Plan 07: every router needs an identity; production config guard ────────

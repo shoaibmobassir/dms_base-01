@@ -51,6 +51,16 @@ export const RELATIONS = ['related', 'follow_up_to', 'parallel_proceeding', 'app
 export const createMatter = (body: MatterInput) => apiFetch<MatterBrief>('/api/matters', json('POST', body))
 export const updateMatter = (id: string, changes: Record<string, unknown>, rowVersion?: number) =>
   apiFetch<MatterBrief>(`/api/matters/${enc(id)}`, json('PATCH', { changes, row_version: rowVersion }))
+export type CloseCheck = {
+  matter_id: string
+  status: string
+  deadlines: { deadline_id: string; title: string; kind: string; due_date: string; confirmed: boolean }[]
+  pending_requests: number
+}
+export const getCloseCheck = (id: string) => apiFetch<CloseCheck>(`/api/matters/${enc(id)}/close-check`)
+export const closeMatter = (id: string, body: { outcome: string; closed_date?: string; resolve_deadlines?: boolean; row_version?: number }) =>
+  apiFetch<MatterBrief>(`/api/matters/${enc(id)}/close`, json('POST', body))
+export const reopenMatter = (id: string, reason: string) => apiFetch<MatterBrief>(`/api/matters/${enc(id)}/reopen`, json('POST', { reason }))
 export const setStaff = (id: string, memberId: string, body: { role: string; started_at?: string | null; ended_at?: string | null }) =>
   apiFetch(`/api/matters/${enc(id)}/team/${enc(memberId)}`, json('PUT', body))
 export const removeStaff = (id: string, memberId: string) => apiFetch(`/api/matters/${enc(id)}/team/${enc(memberId)}`, json('DELETE'))

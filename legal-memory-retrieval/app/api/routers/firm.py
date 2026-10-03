@@ -115,6 +115,33 @@ def update_matter(matter_id: str, body: MatterPatch, member_id: str | None = Dep
     return _run(matter_svc.update_matter, member_id, matter_id, body.changes, body.row_version)
 
 
+class CloseBody(BaseModel):
+    outcome: str = Field(min_length=1, max_length=2000)
+    closed_date: date | None = None
+    resolve_deadlines: bool = False
+    row_version: int | None = None
+
+
+class ReopenBody(BaseModel):
+    reason: str = Field(min_length=1, max_length=1000)
+
+
+@matters_router.get("/{matter_id}/close-check")
+def get_close_check(matter_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return jsonable_encoder(_run(matter_svc.close_check, member_id, matter_id))
+
+
+@matters_router.post("/{matter_id}/close")
+def post_close(matter_id: str, body: CloseBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    return jsonable_encoder(_run(matter_svc.close_matter, member_id, matter_id, body.outcome,
+                                 body.closed_date.isoformat() if body.closed_date else None, body.resolve_deadlines, body.row_version))
+
+
+@matters_router.post("/{matter_id}/reopen")
+def post_reopen(matter_id: str, body: ReopenBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    return jsonable_encoder(_run(matter_svc.reopen_matter, member_id, matter_id, body.reason))
+
+
 @matters_router.get("/{matter_id}/team")
 def get_team(matter_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
     def fn(conn):

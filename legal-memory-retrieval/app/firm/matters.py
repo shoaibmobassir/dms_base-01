@@ -124,7 +124,7 @@ def create_matter(conn, actor: str | None, data: dict) -> dict:
 
 def get_matter_brief(conn, matter_id: str) -> dict:
     row = one(conn, """SELECT m.matter_id, m.matter_code, m.title, m.client_id, m.client_name, m.practice_area, m.matter_type,
-                              m.status, m.opened_date, m.closed_date, m.row_version, a.mode AS access_mode
+                              m.status, m.opened_date, m.closed_date, m.outcome, m.row_version, a.mode AS access_mode
                        FROM matters m LEFT JOIN matter_access a USING (matter_id) WHERE m.matter_id = %s""", (matter_id,))
     return row
 
@@ -165,6 +165,80 @@ def update_matter(conn, actor: str | None, matter_id: str, changes: dict, row_ve
     conn.commit()
     audit.record("matter.update", member_id=actor, object_type="matter", object_id=matter_id, matter_id=matter_id,
                  detail={k: {"from": str(v["from"]), "to": str(v["to"])} for k, v in diff.items()})
+    refresh_matter_profile(matter_id)
+    return get_matter_brief(conn, matter_id)
+
+
+# ── closing and reopening ────────────────────────────────────────────────────
+
+def _open_items(conn, matter_id: str) -> dict:
+    deadlines = conn.execute(
+        """SELECT deadline_id, title, kind, due_date, owner_member_id, (confirmed_by_member_id IS NOT NULL) AS confirmed
+           FROM court_deadlines WHERE matter_id = %s AND status = 'open' ORDER BY due_date""",
+        (matter_id,),
+    ).fetchall()
+    requests = conn.execute(
+        "SELECT request_id FROM access_requests WHERE matter_id = %s AND status = 'pending'", (matter_id,),
+    ).fetchall()
+    return {"deadlines": [dict(d) for d in deadlines], "pending_requests": len(requests)}
+
+
+@guard
+def close_check(conn, actor: str | None, matter_id: str) -> dict:
+    """What is still open on the matter: shown before closing it."""
+    require_level(conn, actor, matter_id, "manage")
+    m = _matter(conn, matter_id)
+    return {"matter_id": matter_id, "status": m["status"], **_open_items(conn, matter_id)}
+
+
+@guard
+def close_matter(conn, actor: str | None, matter_id: str, outcome: str, closed_date: str | None = None,
+                 resolve_deadlines: bool = False, row_version: int | None = None) -> dict:
+    """Resolve a matter: close it with an outcome. Open court dates must be handled first (or marked done here)."""
+    require_level(conn, actor, matter_id, "manage")
+    before = _matter(conn, matter_id)
+    check_version(before["row_version"], row_version, "matter")
+    if before["status"] == "Closed":
+        raise FirmError(409, "The matter is already closed")
+    outcome = _text(outcome, "outcome", required=True, limit=2000)
+    day = str(closed_date or date.today().isoformat())
+    if day < str(before.get("opened_date") or "0000-00-00"):
+        raise FirmError(422, "The closing date is before the matter was opened")
+    items = _open_items(conn, matter_id)
+    if items["deadlines"] and not resolve_deadlines:
+        raise FirmError(409, f"{len(items['deadlines'])} court date(s) are still open: complete them, or mark them done in this step",
+                        {"open_deadlines": len(items["deadlines"])})
+    if items["deadlines"]:
+        conn.execute("UPDATE court_deadlines SET status = 'done' WHERE matter_id = %s AND status = 'open'", (matter_id,))
+    conn.execute(
+        "UPDATE matters SET status = 'Closed', outcome = %(o)s, closed_date = %(d)s, updated_at = now(), "
+        "row_version = row_version + 1 WHERE matter_id = %(m)s",
+        {"o": outcome, "d": day, "m": matter_id},
+    )
+    emit(conn, "matter.closed", "matter", matter_id, actor=actor, matter_id=matter_id, payload={"outcome": outcome[:200]})
+    conn.commit()
+    audit.record("matter.close", member_id=actor, object_type="matter", object_id=matter_id, matter_id=matter_id,
+                 detail={"outcome": outcome[:500], "closed_date": day, "deadlines_marked_done": len(items["deadlines"]) if resolve_deadlines else 0})
+    refresh_matter_profile(matter_id)
+    return get_matter_brief(conn, matter_id)
+
+
+@guard
+def reopen_matter(conn, actor: str | None, matter_id: str, reason: str) -> dict:
+    """Reopen a closed matter; the reason is recorded."""
+    require_level(conn, actor, matter_id, "manage")
+    before = _matter(conn, matter_id)
+    if before["status"] != "Closed":
+        raise FirmError(409, "Only a closed matter can be reopened")
+    reason = _text(reason, "reason", required=True, limit=1000)
+    conn.execute(
+        "UPDATE matters SET status = 'Open', closed_date = NULL, updated_at = now(), row_version = row_version + 1 WHERE matter_id = %s",
+        (matter_id,),
+    )
+    emit(conn, "matter.reopened", "matter", matter_id, actor=actor, matter_id=matter_id, payload={"reason": reason[:200]})
+    conn.commit()
+    audit.record("matter.reopen", member_id=actor, object_type="matter", object_id=matter_id, matter_id=matter_id,
+                 detail={"reason": reason, "previous_outcome": str(before.get("outcome") or "")[:500]})
     refresh_matter_profile(matter_id)
     return get_matter_brief(conn, matter_id)
 

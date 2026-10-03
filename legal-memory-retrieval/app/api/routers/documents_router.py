@@ -148,11 +148,21 @@ def ingest_document_endpoint(
     return result
 
 
+def _require_integrations(member_id: str | None) -> None:
+    """Server-side folder ingestion is an administrator's tool (it reads files from the server)."""
+    from app import access
+
+    with connect() as conn:
+        if not access.has_permission(conn, member_id, "integrations.manage"):
+            raise HTTPException(status_code=403, detail="Requires the 'integrations.manage' permission")
+
+
 @router.post("/ingest/jobs")
 def ingest_job_create(
     req: IngestJobRequest,
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
+    _require_integrations(member_id)
     result = create_ingest_job(req.source_root, req.manifest, req.workers)
     if req.run_immediately:
         run_result = run_ingest_job(result["job_id"], req.manifest)
@@ -166,6 +176,7 @@ def ingest_job_status(
     job_id: str,
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
+    _require_integrations(member_id)
     result = get_ingest_job(job_id)
     result["service"] = SERVICE
     return result
@@ -177,6 +188,7 @@ def ingest_job_retry(
     req: IngestJobRequest,
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
+    _require_integrations(member_id)
     result = retry_ingest_job(job_id, req.manifest)
     result["service"] = SERVICE
     return result

@@ -1,12 +1,15 @@
 import { useState, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   EVENT_KINDS,
   RELATIONS,
   ROLES,
   addArgument,
   addEvent,
+  closeMatter,
   createMatter,
+  getCloseCheck,
+  reopenMatter,
   deleteArgument,
   deleteEvent,
   firmError,
@@ -25,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Icon } from "@/components/common/primitives";
 import { ClientPicker } from "@/components/common/ClientPicker";
+import { PersonPicker } from "@/components/common/PersonPicker";
+import { useConfirm } from "@/components/common/Confirm";
 import { Field, fieldControl } from "@/components/common/Field";
 import { useApp } from "@/context/AppContext";
 
@@ -143,7 +148,82 @@ export function NewMatterDialog({ open, onClose, onCreated }: { open: boolean; o
   );
 }
 
-// ── edit / close ─────────────────────────────────────────────────────────────
+// ── resolve: close and reopen ────────────────────────────────────────────────
+
+/** Close a matter with an outcome. Open court dates are shown first and must be marked done here or handled. */
+export function CloseMatterDialog({ detail, open, onClose }: { detail: MatterDetail; open: boolean; onClose: () => void }) {
+  const m = detail.matter;
+  const { identityKey } = useApp();
+  const check = useQuery({ queryKey: [identityKey, "close-check", m.matter_id], queryFn: () => getCloseCheck(m.matter_id), enabled: open });
+  const { run, busy, error } = useFirmWrite(m.matter_id);
+  const [outcome, setOutcome] = useState("");
+  const [day, setDay] = useState(new Date().toISOString().slice(0, 10));
+  const [markDone, setMarkDone] = useState(false);
+  const deadlines = check.data?.deadlines ?? [];
+  const mustHandle = deadlines.length > 0 && !markDone;
+  const submit = async () => {
+    const out = await run(
+      () => closeMatter(m.matter_id, { outcome: outcome.trim(), closed_date: day, resolve_deadlines: markDone, row_version: detail.matter.row_version }),
+      "Matter closed",
+    );
+    if (out) onClose();
+  };
+  return (
+    <Shell open={open} onClose={onClose} title={`Close ${m.matter_code}`} testId="close-matter-dialog"
+      description="Closing records the outcome and the date. The matter stays readable and can be reopened.">
+      {check.isPending ? (
+        <p className="text-muted-foreground">Checking what is still open…</p>
+      ) : (
+        <>
+          {deadlines.length > 0 && (
+            <div className="rounded-md border border-warning/60 bg-warning-soft p-3" data-testid="close-open-deadlines">
+              <p className="font-medium text-warning-ink">{deadlines.length} court date{deadlines.length === 1 ? " is" : "s are"} still open</p>
+              <ul className="mt-1 space-y-0.5 text-xs">
+                {deadlines.slice(0, 6).map((d) => (
+                  <li key={d.deadline_id}>{d.title} · {d.due_date}{d.confirmed ? "" : " · unconfirmed"}</li>
+                ))}
+              </ul>
+              <label className="mt-2 flex items-center gap-2">
+                <input type="checkbox" checked={markDone} onChange={(e) => setMarkDone(e.target.checked)} data-testid="close-mark-done" />
+                Mark them done as part of closing
+              </label>
+            </div>
+          )}
+          {(check.data?.pending_requests ?? 0) > 0 && (
+            <p className="text-xs text-muted-foreground">{check.data!.pending_requests} access request(s) on this matter are still pending.</p>
+          )}
+          <Field label="Outcome" hint="What happened, in a sentence or two. Required.">
+            {(f) => <textarea {...f} className={`${inputCls} min-h-20`} value={outcome} onChange={(e) => setOutcome(e.target.value)} data-testid="close-outcome" />}
+          </Field>
+          <Field label="Closing date">{(f) => <input {...f} type="date" className={inputCls} value={day} onChange={(e) => setDay(e.target.value)} />}</Field>
+          <Footer busy={busy} error={error} onCancel={onClose} onSubmit={() => void submit()} label="Close matter"
+            disabled={!outcome.trim() || mustHandle} testId="close-matter-submit" />
+        </>
+      )}
+    </Shell>
+  );
+}
+
+export function ReopenMatterDialog({ detail, open, onClose }: { detail: MatterDetail; open: boolean; onClose: () => void }) {
+  const m = detail.matter;
+  const { run, busy, error } = useFirmWrite(m.matter_id);
+  const [reason, setReason] = useState("");
+  const submit = async () => {
+    const out = await run(() => reopenMatter(m.matter_id, reason.trim()), "Matter reopened");
+    if (out) onClose();
+  };
+  return (
+    <Shell open={open} onClose={onClose} title={`Reopen ${m.matter_code}`} testId="reopen-matter-dialog"
+      description={m.outcome ? `It was closed with the outcome: ${m.outcome}` : undefined}>
+      <Field label="Why is it being reopened?" hint="Recorded in the audit trail. Required.">
+        {(f) => <textarea {...f} className={`${inputCls} min-h-20`} value={reason} onChange={(e) => setReason(e.target.value)} data-testid="reopen-reason" />}
+      </Field>
+      <Footer busy={busy} error={error} onCancel={onClose} onSubmit={() => void submit()} label="Reopen matter" disabled={!reason.trim()} testId="reopen-matter-submit" />
+    </Shell>
+  );
+}
+
+// ── edit ─────────────────────────────────────────────────────────────────────
 
 export function EditMatterDialog({ detail, open, onClose }: { detail: MatterDetail; open: boolean; onClose: () => void }) {
   const m = detail.matter;
@@ -174,8 +254,8 @@ export function EditMatterDialog({ detail, open, onClose }: { detail: MatterDeta
       <div className="grid grid-cols-2 gap-3">
         <Field label="Status">
           {(f) => (
-            <select {...f} className={inputCls} value={status} onChange={(e) => setStatus(e.target.value)} data-testid="edit-matter-status">
-              {["Open", "On hold", "Closed"].map((st) => <option key={st}>{st}</option>)}
+            <select {...f} className={inputCls} value={status} disabled={status === "Closed"} onChange={(e) => setStatus(e.target.value)} data-testid="edit-matter-status">
+              {(status === "Closed" ? ["Closed"] : ["Open", "On hold"]).map((st) => <option key={st}>{st}</option>)}
             </select>
           )}
         </Field>
@@ -193,11 +273,30 @@ export function EditMatterDialog({ detail, open, onClose }: { detail: MatterDeta
 // ── team ─────────────────────────────────────────────────────────────────────
 
 export function TeamEditor({ matterId, team, canManage }: { matterId: string; team: TeamMember[]; canManage: boolean }) {
-  const people = usePeople();
   const { run, busy, error } = useFirmWrite(matterId);
+  const confirm = useConfirm();
   const [adding, setAdding] = useState("");
   const [role, setRole] = useState<string>("Associate");
   const onTeam = new Set(team.map((t) => t.member_id));
+  const currentLead = team.find((t) => t.role_on_matter.toLowerCase() === "lead" && t.active !== false);
+  // Handing over the lead: the new lead first, then the old one steps down to counsel (the server always keeps a lead).
+  const makeLead = async (t: TeamMember) => {
+    const ok = await confirm({
+      title: `Make ${t.name} the lead?`,
+      description: currentLead ? `${currentLead.name} stays on the matter as counsel.` : undefined,
+      confirmLabel: "Make lead",
+      destructive: false,
+    });
+    if (!ok) return;
+    await run(async () => {
+      await setStaff(matterId, t.member_id, { role: "Lead", started_at: t.started_at || null, ended_at: null });
+      if (currentLead) await setStaff(matterId, currentLead.member_id, { role: "Counsel", started_at: currentLead.started_at || null, ended_at: currentLead.ended_at || null });
+    }, `${t.name} is now the lead`);
+  };
+  const remove = async (t: TeamMember) => {
+    if (await confirm({ title: `Remove ${t.name} from the team?`, description: "They lose team access to this matter. Their past work stays.", confirmLabel: "Remove" }))
+      await run(() => removeStaff(matterId, t.member_id), "Removed from the team");
+  };
   const save = (t: TeamMember, patch: Partial<Pick<TeamMember, "role_on_matter" | "started_at" | "ended_at">>) =>
     run(() => setStaff(matterId, t.member_id, {
       role: patch.role_on_matter ?? t.role_on_matter,
@@ -236,10 +335,17 @@ export function TeamEditor({ matterId, team, canManage }: { matterId: string; te
                 </td>
                 <td className="px-3 py-2 text-right">
                   {canManage && t.role_on_matter.toLowerCase() !== "lead" && (
-                    <button type="button" aria-label={`Remove ${t.name}`} className="rounded p-1 hover:bg-secondary"
-                      onClick={() => void run(() => removeStaff(matterId, t.member_id), "Removed from the team")}>
-                      <Icon name="close" style={{ fontSize: 16 }} />
-                    </button>
+                    <span className="inline-flex items-center gap-1">
+                      {t.active !== false && (
+                        <button type="button" className="rounded px-1.5 py-0.5 text-xs text-wine hover:bg-secondary" disabled={busy}
+                          onClick={() => void makeLead(t)} data-testid="team-make-lead">
+                          Make lead
+                        </button>
+                      )}
+                      <button type="button" aria-label={`Remove ${t.name}`} className="rounded p-1 hover:bg-secondary" onClick={() => void remove(t)}>
+                        <Icon name="close" style={{ fontSize: 16 }} />
+                      </button>
+                    </span>
                   )}
                 </td>
               </tr>
@@ -248,12 +354,8 @@ export function TeamEditor({ matterId, team, canManage }: { matterId: string; te
         </table>
       </div>
       {canManage && (
-        <div className="flex flex-wrap items-center gap-2">
-          <select className="rounded-md border border-border bg-card px-2 py-1.5 text-sm" value={adding} onChange={(e) => setAdding(e.target.value)}
-            aria-label="Add to team" data-testid="team-add-person">
-            <option value="">Add someone…</option>
-            {(people.data ?? []).filter((p) => !onTeam.has(p.member_id)).map((p) => <option key={p.member_id} value={p.member_id}>{p.name}</option>)}
-          </select>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="w-72"><PersonPicker value={adding || null} onChange={(id) => setAdding(id ?? "")} exclude={onTeam} label="Add to the team" testId="team-add-person" /></div>
           <select className="rounded-md border border-border bg-card px-2 py-1.5 text-sm" value={role} onChange={(e) => setRole(e.target.value)} aria-label="Role">
             {ROLES.filter((r) => r !== "Lead").map((r) => <option key={r}>{r}</option>)}
           </select>

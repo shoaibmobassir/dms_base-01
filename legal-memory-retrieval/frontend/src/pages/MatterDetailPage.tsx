@@ -30,7 +30,9 @@ import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import {
   ArgumentDialog,
+  CloseMatterDialog,
   EditMatterDialog,
+  ReopenMatterDialog,
   LinkMatterDialog,
   TeamEditor,
   TimelineEntryDialog,
@@ -112,6 +114,9 @@ function MatterView({ detail }: { detail: MatterDetail }) {
   const canEdit = level === "edit" || level === "manage";
   const canManage = level === "manage";
   const [editing, setEditing] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [reopening, setReopening] = useState(false);
+  const closed = m.status === "Closed";
 
   return (
     <div className="space-y-8">
@@ -131,6 +136,11 @@ function MatterView({ detail }: { detail: MatterDetail }) {
                 Edit
               </Action>
             )}
+            {canManage && !closed && (
+              <Action onClick={() => setClosing(true)} icon="task_alt" testId="matter-close">
+                Close matter
+              </Action>
+            )}
           </>
         }
       >
@@ -143,6 +153,20 @@ function MatterView({ detail }: { detail: MatterDetail }) {
           </span>
         </div>
       </PageHeader>
+
+      {closed && (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-secondary/50 px-4 py-3 text-sm" data-testid="matter-closed-banner">
+          <Icon name="task_alt" className="text-muted-foreground" />
+          <span className="min-w-0 flex-1">
+            Closed{m.closed_date ? ` on ${formatDate(m.closed_date)}` : ""}.{m.outcome ? ` Outcome: ${m.outcome}` : ""}
+          </span>
+          {canManage && (
+            <Action onClick={() => setReopening(true)} icon="undo" testId="matter-reopen">
+              Reopen
+            </Action>
+          )}
+        </div>
+      )}
 
       <div className="sticky top-0 z-10 -mx-6 border-b border-border bg-background/90 px-6 backdrop-blur lg:-mx-10 lg:px-10">
         <div className="flex gap-1 overflow-x-auto" role="tablist">
@@ -177,6 +201,8 @@ function MatterView({ detail }: { detail: MatterDetail }) {
         {tab === "Access" && <MatterAccessTab matterId={m.matter_id} />}
       </div>
       {editing && <EditMatterDialog detail={detail} open onClose={() => setEditing(false)} />}
+      {closing && <CloseMatterDialog detail={detail} open onClose={() => setClosing(false)} />}
+      {reopening && <ReopenMatterDialog detail={detail} open onClose={() => setReopening(false)} />}
     </div>
   );
 }
