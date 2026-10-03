@@ -148,6 +148,11 @@ export function DocumentViewer({
   const [current, setCurrent] = useState(1);
   const [pageInput, setPageInput] = useState("1");
   const [highlight, setHighlight] = useState<Highlight | null>(null);
+  // Find in the PDF: the next page that holds the phrase.
+  const [findText, setFindText] = useState("");
+  const [findState, setFindState] = useState<"idle" | "searching" | "found" | "none">("idle");
+  const findPage = useRef(0);
+  const findRun = useRef(0);
 
   // Load the PDF and every page's natural size (placeholders keep the right height).
   useEffect(() => {
@@ -391,6 +396,27 @@ export function DocumentViewer({
   }, [marks, found]);
 
   const pageCount = doc?.numPages ?? 0;
+  const findNext = async (dir: 1 | -1) => {
+    const q = findText.trim();
+    if (!doc || q.length < 2) return;
+    const run = ++findRun.current;
+    setFindState("searching");
+    const from = findPage.current || current;
+    for (let k = findPage.current === 0 ? 0 : 1; k <= doc.numPages; k++) {
+      const n = ((((from - 1 + dir * k) % doc.numPages) + doc.numPages) % doc.numPages) + 1;
+      const runs = runsOf(await getText(n));
+      if (run !== findRun.current) return;
+      const m = findQuoteInRuns(runs, q);
+      if (m?.exact) {
+        findPage.current = n;
+        setHighlight({ page: n, runs: m.runs, nonce: Date.now() });
+        goToPage(n);
+        setFindState("found");
+        return;
+      }
+    }
+    setFindState("none");
+  };
   const step = (dir: 1 | -1) => {
     const next = [...ZOOM_STEPS].sort((x, y) => (dir === 1 ? x - y : y - x)).find((s) => (dir === 1 ? s > scale + 0.01 : s < scale - 0.01));
     if (next) setZoom({ mode: "custom", scale: next });
@@ -457,6 +483,38 @@ export function DocumentViewer({
         <ToolButton label="Fit page" active={zoom.mode === "fit-page"} onClick={() => setZoom({ mode: "fit-page" })} testId="viewer-fit-page">
           <Maximize className="h-4 w-4" />
         </ToolButton>
+        <div className="mx-1 h-4 w-px bg-border" />
+        <label className="flex items-center gap-1">
+          <span className="sr-only">Find in this document</span>
+          <input
+            value={findText}
+            onChange={(e) => {
+              setFindText(e.target.value);
+              findPage.current = 0;
+              findRun.current += 1;
+              setFindState("idle");
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void findNext(e.shiftKey ? -1 : 1);
+              }
+            }}
+            placeholder="Find"
+            aria-label="Find in this document"
+            data-testid="viewer-find"
+            className="w-28 rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground"
+          />
+        </label>
+        <ToolButton label="Previous match" disabled={findText.trim().length < 2} onClick={() => void findNext(-1)} testId="viewer-find-prev">
+          <ChevronUp className="h-4 w-4" />
+        </ToolButton>
+        <ToolButton label="Next match" disabled={findText.trim().length < 2} onClick={() => void findNext(1)} testId="viewer-find-next">
+          <ChevronDown className="h-4 w-4" />
+        </ToolButton>
+        <span className="text-muted-foreground" role="status" data-testid="viewer-find-status">
+          {findState === "searching" ? "Searching…" : findState === "none" ? "No match" : findState === "found" ? `Page ${findPage.current}` : ""}
+        </span>
       </div>
 
       <div ref={scrollRef} onScroll={onScroll} onPointerUp={onPointerUp} className="relative min-h-0 flex-1 overflow-auto bg-muted/60" data-testid="viewer-scroll">

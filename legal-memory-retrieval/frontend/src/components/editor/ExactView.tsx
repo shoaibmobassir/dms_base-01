@@ -9,6 +9,7 @@ import {
   type CommentThread,
 } from "@/api/editor";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/common/Confirm";
 import { Icon } from "@/components/common/primitives";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ export function ExactView({ documentId, currentVersionId, side = { kind: "commen
 }) {
   const [renderView, setRenderView] = useState<"markup" | "final" | "original">("markup");
   const { identityKey, me, toast } = useApp();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   // null = the current version; otherwise an earlier version opened from a detached thread.
   const [viewing, setViewing] = useState<{ versionId: string; number: number | null } | null>(null);
@@ -126,7 +128,7 @@ export function ExactView({ documentId, currentVersionId, side = { kind: "commen
         </div>
       )}
       {/* contain: fit-width pages must not widen the layout that sizes them */}
-      <div className="flex h-[calc(100vh-14rem)] min-w-0 flex-col overflow-hidden rounded-md border border-border bg-card [contain:inline-size]" data-testid="editor-exact">
+      <div className="flex h-[calc(100dvh-14rem)] min-w-0 flex-col overflow-hidden rounded-md border border-border bg-card [contain:inline-size]" data-testid="editor-exact">
         {showViews && (
           <div className="flex items-center gap-1 border-b border-border px-2 py-1 text-xs" role="tablist" aria-label="Show">
             {([["markup", "All markup"], ["final", "Final"], ["original", "Original"]] as const).map(([k, label]) => (
@@ -162,12 +164,12 @@ export function ExactView({ documentId, currentVersionId, side = { kind: "commen
       </div>
 
       {side.kind === "review" ? (
-        <aside className="flex max-h-[calc(100vh-14rem)] min-h-0 flex-col">
+        <aside className="flex max-h-[calc(100dvh-14rem)] min-h-0 flex-col">
           <ReviewPanel documentId={documentId} baseVersionId={side.baseVersionId} canWrite={side.canWrite}
             onNewVersion={side.onNewVersion} onJump={(quote) => setTarget({ page: null, quote, nonce: Date.now() })} />
         </aside>
       ) : (
-      <aside className="flex max-h-[calc(100vh-14rem)] min-h-0 flex-col gap-3" data-testid="editor-comments">
+      <aside className="flex max-h-[calc(100dvh-14rem)] min-h-0 flex-col gap-3" data-testid="editor-comments">
         <div className="rounded-lg border border-border bg-card p-4">
           {readOnlyVersion ? (
             <p className="text-xs text-muted-foreground">{viewing ? "Comments are added on the current version." : "Switch to All markup to add comments."}</p>
@@ -236,7 +238,10 @@ export function ExactView({ documentId, currentVersionId, side = { kind: "commen
                 onFocus={() => focusThread(t)}
                 onReply={(body) => run(() => addComment(documentId, { body, parent_id: t.comment_id }))}
                 onStatus={(status) => run(() => setCommentStatus(documentId, t.comment_id, status), status === "resolved" ? "Resolved" : "Reopened")}
-                onDelete={(cid) => run(() => deleteComment(documentId, cid), "Comment deleted")}
+                onDelete={async (cid) => {
+                  if (await confirm({ title: "Delete this comment?", description: "Replies to it stay with the thread.", confirmLabel: "Delete comment" }))
+                    await run(() => deleteComment(documentId, cid), "Comment deleted");
+                }}
               />
             ))}
           </ul>

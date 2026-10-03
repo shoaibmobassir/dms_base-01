@@ -11,6 +11,8 @@ import { fileProblem, uploadToMatter } from "@/api/uploads";
 import { useMatter } from "@/api/resources";
 import { errorText } from "@/components/chat/MessageParts";
 import { Icon } from "@/components/common/primitives";
+import { downloadFile } from "@/api/client";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/context/AppContext";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { conversationAsMarkdown, downloadText, safeFilename } from "@/lib/exportConversation";
@@ -514,20 +516,41 @@ export function ChatPage() {
             disabled={streaming}
           />
           {sessionId && messages.length > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                const title = active?.title?.trim() || "Conversation";
-                downloadText(safeFilename(title), conversationAsMarkdown(title, messages));
-              }}
-              title="Download this conversation"
-              aria-label="Download this conversation"
-              data-testid="chat-export"
-              className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium hover:bg-secondary"
-            >
-              <Icon name="download" style={{ fontSize: 16 }} />
-              <span className="hidden md:inline">Download</span>
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  title="Download this conversation"
+                  aria-label="Download this conversation"
+                  data-testid="chat-export"
+                  className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium hover:bg-secondary"
+                >
+                  <Icon name="download" style={{ fontSize: 16 }} />
+                  <span className="hidden md:inline">Download</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  data-testid="chat-export-docx"
+                  onSelect={() =>
+                    void downloadFile(`/api/chat/sessions/${encodeURIComponent(sessionId)}/export.docx`, "conversation.docx").catch((err) =>
+                      appToast(err instanceof Error ? err.message : "The download failed"),
+                    )
+                  }
+                >
+                  Word document (.docx)
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  data-testid="chat-export-md"
+                  onSelect={() => {
+                    const title = active?.title?.trim() || "Conversation";
+                    downloadText(safeFilename(title), conversationAsMarkdown(title, messages));
+                  }}
+                >
+                  Markdown (.md)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <button
             type="button"

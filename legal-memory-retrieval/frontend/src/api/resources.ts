@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useApp } from '@/context/AppContext'
-import { ApiError, apiFetch, authHeaders, qs } from './client'
+import { apiFetch, downloadFile, qs } from './client'
 import type {
   ArgumentItem,
   ArgumentKind,
@@ -256,19 +256,6 @@ export function useDocumentSearch(documentId: string, versionId: string | undefi
 
 // ── Download the original file ────────────────────────────────────────────
 /** Save the original file of a document version (the server records the download). */
-export async function downloadDocument(documentId: string, versionId?: string): Promise<void> {
-  const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/download${qs({ version_id: versionId })}`, {
-    headers: authHeaders(),
-    credentials: 'same-origin',
-  })
-  if (!res.ok) throw new ApiError(res.status, await res.text())
-  const disposition = res.headers.get('Content-Disposition') ?? ''
-  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1]
-  const filename = encoded ? decodeURIComponent(encoded) : `${documentId}`
-  const url = URL.createObjectURL(await res.blob())
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+export function downloadDocument(documentId: string, versionId?: string): Promise<void> {
+  return downloadFile(`/api/documents/${encodeURIComponent(documentId)}/download${qs({ version_id: versionId })}`, documentId)
 }

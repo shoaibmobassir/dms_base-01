@@ -78,6 +78,7 @@ test("see who changed what and accept one reviewer's changes", async ({ browser,
     await page.getByTestId("review-person-select").selectOption("Trilegal");
     await expect(panel.getByTestId("review-change")).toHaveCount(2);
     await page.getByTestId("review-accept-shown").click();
+    await page.getByTestId("confirm-accept").click(); // several changes at once ask first
     // Stays in Review on the new version, without Trilegal's changes.
     await expect(page.getByTestId("review-panel")).toBeVisible();
     await expect(page.getByTestId("review-change").filter({ has: page.locator('[data-author="Trilegal"]') })).toHaveCount(0);

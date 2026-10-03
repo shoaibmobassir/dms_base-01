@@ -415,7 +415,7 @@ export function EditProposalsCard({
           className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
         >
           {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-          Word file ({accepted})
+          Apply to Word ({accepted})
         </button>
       </div>
       <ul className="divide-y divide-border">
@@ -434,7 +434,7 @@ export function EditProposalsCard({
               )}
             </div>
             {edit.original && (
-              <p className="rounded bg-red-500/10 px-2 py-1 text-[12.5px] text-red-900 line-through decoration-red-400/70 dark:text-red-200">
+              <p className="rounded bg-destructive/10 px-2 py-1 text-[12.5px] text-destructive line-through decoration-destructive/60">
                 {edit.original}
               </p>
             )}

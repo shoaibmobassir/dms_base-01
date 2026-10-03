@@ -252,3 +252,18 @@ test("select documents and work on them together in the Assistant", async ({ pag
   await expect(page).toHaveURL(/\/ui\/chat\?.*doc=.*doc=/);
   await expect(page.getByTestId("composer-attachments").getByTestId("composer-attachment-open")).toHaveCount(2);
 });
+
+test("find a phrase inside a PDF and jump to its page", async ({ page, request }) => {
+  test.setTimeout(150_000); // a scanned or very long PDF is searched page by page
+  const list = await request.get("/api/documents?limit=100", { headers: { "X-Member-Id": ME } });
+  const pdf = ((await list.json()) as { items: { document_id: string; mime_type?: string | null; title: string }[] }).items.find(
+    (d) => (d.mime_type ?? "").includes("pdf") || d.title.toLowerCase().endsWith(".pdf"),
+  );
+  test.skip(!pdf, "no PDF document seeded");
+  await page.goto(`/ui/documents/${pdf!.document_id}/edit?view=exact`);
+  const find = page.getByTestId("viewer-find");
+  await expect(find).toBeVisible({ timeout: 30000 });
+  await find.fill("the");
+  await find.press("Enter");
+  await expect(page.getByTestId("viewer-find-status")).toHaveText(/Page \d+|No match/, { timeout: 100_000 });
+});

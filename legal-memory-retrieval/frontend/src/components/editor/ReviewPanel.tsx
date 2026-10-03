@@ -11,6 +11,7 @@ import {
 } from "@/api/editor";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/common/primitives";
+import { useConfirm } from "@/components/common/Confirm";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ export function ReviewPanel({
   onJump?: (quote: string) => void;
 }) {
   const { identityKey } = useApp();
+  const confirm = useConfirm();
   const review = useQuery({ queryKey: [identityKey, "doc-review", documentId, baseVersionId], queryFn: () => getReview(documentId) });
   const people = useQuery({ queryKey: [identityKey, "doc-contributors", documentId, baseVersionId], queryFn: () => getContributors(documentId) });
   const [person, setPerson] = useState<string>("");
@@ -69,7 +71,17 @@ export function ReviewPanel({
   );
   const types = useMemo(() => [...new Set((review.data?.changes ?? []).map((c) => c.type))], [review.data]);
 
-  const act = async (action: "accept" | "reject", body: { keys?: string[]; authors?: string[]; all?: boolean }) => {
+  const act = async (action: "accept" | "reject", body: { keys?: string[]; authors?: string[]; all?: boolean }, count = 1) => {
+    // Several changes at once: say what will happen first (each action saves a new version).
+    if (count > 1) {
+      const ok = await confirm({
+        title: `${action === "accept" ? "Accept" : "Reject"} ${count} changes?`,
+        description: "This saves a new version of the document. Earlier versions stay available.",
+        confirmLabel: action === "accept" ? "Accept changes" : "Reject changes",
+        destructive: action === "reject",
+      });
+      if (!ok) return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -142,11 +154,11 @@ export function ReviewPanel({
           {mayAct && shown.length > 0 && (
             <span className="ml-auto flex gap-1">
               <Button size="sm" variant="outline" disabled={busy} data-testid="review-accept-shown"
-                onClick={() => void act("accept", person && !type ? { authors: [person] } : { keys: shown.flatMap((c) => c.keys) })}>
+                onClick={() => void act("accept", person && !type ? { authors: [person] } : { keys: shown.flatMap((c) => c.keys) }, shown.length)}>
                 Accept {person && !type ? `all by ${person.split(" ")[0]}` : "shown"}
               </Button>
               <Button size="sm" variant="outline" disabled={busy} data-testid="review-reject-shown"
-                onClick={() => void act("reject", person && !type ? { authors: [person] } : { keys: shown.flatMap((c) => c.keys) })}>
+                onClick={() => void act("reject", person && !type ? { authors: [person] } : { keys: shown.flatMap((c) => c.keys) }, shown.length)}>
                 Reject
               </Button>
             </span>
