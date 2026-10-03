@@ -331,6 +331,11 @@ whitelist (`app/api/sorting.py`), sortable headers in `DataTable` (`aria-sort`),
 status and mine kept in the URL; Admin people table on `DataTable` with skeletons; "Download" of the original file from the
 reader (audited by the existing endpoint).
 
-**Not done yet (next passes):** row selection and bulk actions in `DataTable`; Word export of a conversation; search inside
-the PDF itself; the unread parts of `MessageParts`, `ExactView`, `ReviewPanel`; `/impeccable init` (needs a short product
-interview).
+**Pass 5:** row selection in `DataTable` and `BulkBar`; Documents bulk actions (work on several in the Assistant, download
+several); conversation export to Word (`GET /api/chat/sessions/{id}/export.docx`, `app/chat/export.py`) and Markdown;
+find inside the PDF viewer (next or previous page with the phrase); review of `MessageParts`, `ExactView`, `ReviewPanel`:
+confirm before accepting or rejecting several tracked changes at once and before deleting a comment, "Apply to Word" wording,
+token colours, `dvh` heights.
+
+**Not done yet:** `/impeccable init` and a generated `DESIGN.md` (needs a short product interview); bulk actions on other
+lists (matters have none that fit yet); a count of matches inside a PDF (it jumps page to page).

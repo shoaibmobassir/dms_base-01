@@ -2,6 +2,12 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-03 — Frontend audit pass 5
+
+- Table selection and bulk actions on Documents. Conversation export to Word (`export.docx`, 2 tests) and Markdown.
+  Find inside the PDF viewer. Confirm before bulk accept/reject of tracked changes and before deleting a comment.
+- Tests: Playwright 78 + backend 23 on the new modules.
+
 ## 2026-10-03 — Frontend audit pass 4
 
 - `GET /api/matters` and `/api/documents` take `sort` and `dir` (whitelisted columns); `/api/matters` takes `mine=true`.
