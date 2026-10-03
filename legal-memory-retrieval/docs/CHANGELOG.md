@@ -2,6 +2,12 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-03 — Frontend audit pass 4
+
+- `GET /api/matters` and `/api/documents` take `sort` and `dir` (whitelisted columns); `/api/matters` takes `mine=true`.
+  Sortable table headers, "My matters" pill, state in the URL. Admin people table on `DataTable`. Download the original
+  from the reader. Tests: `tests/test_list_sorting.py` (6); Playwright 76 passed (4 skipped).
+
 ## 2026-10-03 — Review fixes (code-review, high)
 
 - **Security:** `/documents/{id}/versions/{vid}/search`, `/blocks` and `/outline` now require the version to belong to the

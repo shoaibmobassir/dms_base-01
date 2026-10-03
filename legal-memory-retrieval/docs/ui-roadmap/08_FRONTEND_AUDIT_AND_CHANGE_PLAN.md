@@ -326,6 +326,11 @@ data as Home); `ChatPage.tsx` split from 1,567 to 704 lines (`ThreadSources`, `E
 and message times. PDF viewer read: zoom, fit width and page, resize-aware, page jump are in place; missing are download
 and search inside the PDF itself.
 
-**Not done yet (next passes):** sortable and selectable `DataTable` (needs server sort parameters); Admin tables on
-`DataTable`; Word export of a conversation; PDF download and in-PDF search; the unread parts of `MessageParts`, `ExactView`,
-`ReviewPanel`; `/impeccable init`.
+**Pass 4 (branch `new_frontend_v2`):** server-side sorting (`sort`, `dir`) on the matters and documents lists with a
+whitelist (`app/api/sorting.py`), sortable headers in `DataTable` (`aria-sort`), "My matters" filter (`mine=true`), sort,
+status and mine kept in the URL; Admin people table on `DataTable` with skeletons; "Download" of the original file from the
+reader (audited by the existing endpoint).
+
+**Not done yet (next passes):** row selection and bulk actions in `DataTable`; Word export of a conversation; search inside
+the PDF itself; the unread parts of `MessageParts`, `ExactView`, `ReviewPanel`; `/impeccable init` (needs a short product
+interview).
