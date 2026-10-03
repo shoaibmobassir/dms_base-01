@@ -11,6 +11,7 @@ import type { DocumentDetail, DocumentOutlineItem, DocVersion } from "@/api/type
 import { Icon, MonoId, SectionLabel } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
 import { PrivacyControl } from "@/components/editor/PrivacyControl";
+import { ArchiveDocument } from "@/components/document-workspace/ArchiveDocument";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -784,6 +785,7 @@ function Toolbar({
         </Button>
       )}
       <PrivacyControl documentId={doc.document_id} />
+      {doc.matter_id && <ArchiveDocument documentId={doc.document_id} matterId={doc.matter_id} title={doc.title} />}
       <Button asChild size="sm" variant="outline" data-testid="document-edit">
         <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>
           <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit

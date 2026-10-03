@@ -231,3 +231,11 @@ export const importFile = (entity: ImportEntity, file: File, dryRun: boolean) =>
   form.append('dry_run', String(dryRun))
   return apiFetch<ImportReport>(`/api/imports/${entity}`, { method: 'POST', body: form })
 }
+
+// ── archiving documents ──────────────────────────────────────────────────────
+
+export type ArchivedDocument = { document_id: string; title: string; matter_id: string; matter_title: string | null; archived_at: string; archive_reason: string | null; archived_by_name: string | null }
+
+export const archiveDocument = (id: string, reason: string) => apiFetch(`/api/documents/${enc(id)}/archive`, json('POST', { reason }))
+export const restoreDocument = (id: string) => apiFetch(`/api/documents/${enc(id)}/restore`, json('POST'))
+export const fetchArchived = () => apiFetch<{ items: ArchivedDocument[] }>('/api/documents/archived').then((r) => r.items)

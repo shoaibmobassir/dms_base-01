@@ -31,6 +31,7 @@ from app.documents import (
     get_version,
     diff_versions,
 )
+from app.documents import archive as archive_svc
 from app.documents.anchor import AnchorTarget, resolve_anchor
 from app.documents.canonical import (
     get_version_blocks,
@@ -118,6 +119,36 @@ def documents_list(
             cur.execute(count_sql, count_params)
             total = cur.fetchone()["n"]
     return {"service": SERVICE, "total": total, "items": items}
+
+
+class ArchiveBody(BaseModel):
+    reason: str
+
+
+def _archive_call(fn, *args):
+    try:
+        with connect() as conn:
+            out = fn(conn, *args)
+    except archive_svc.ArchiveError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+    if isinstance(out, list):
+        return {"service": SERVICE, "items": [{**r, "archived_at": r["archived_at"].isoformat()} for r in out]}
+    return {"service": SERVICE, **out}
+
+
+@router.get("/archived")
+def archived_documents(member_id: str | None = Depends(resolve_member)) -> dict:
+    return _archive_call(archive_svc.list_archived, member_id)
+
+
+@router.post("/{document_id}/archive")
+def archive_document(document_id: str, body: ArchiveBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _archive_call(archive_svc.archive_document, member_id, document_id, body.reason)
+
+
+@router.post("/{document_id}/restore")
+def restore_document(document_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _archive_call(archive_svc.restore_document, member_id, document_id)
 
 
 @router.get("/facets")

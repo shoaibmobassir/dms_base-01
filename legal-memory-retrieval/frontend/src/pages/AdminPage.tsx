@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   can,
   createTeam,
@@ -18,7 +18,7 @@ import {
   type FirmRole,
 } from "@/api/access";
 import { usePeople } from "@/api/resources";
-import { createPerson, firmError, importFile, type ImportEntity, type ImportReport } from "@/api/firm";
+import { createPerson, fetchArchived, firmError, importFile, restoreDocument, type ImportEntity, type ImportReport } from "@/api/firm";
 import { downloadFile } from "@/api/client";
 import { DataTable } from "@/components/common/DataTable";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ import { Field } from "@/components/common/Field";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
-type Section = "users" | "teams" | "walls" | "requests" | "import";
+type Section = "users" | "teams" | "walls" | "requests" | "import" | "archive";
 
 const SECTIONS: { key: Section; label: string; permission: string[] }[] = [
   { key: "users", label: "Users & roles", permission: ["users.manage", "roles.manage", "walls.manage"] },
@@ -37,6 +37,7 @@ const SECTIONS: { key: Section; label: string; permission: string[] }[] = [
   { key: "walls", label: "Ethical walls", permission: ["walls.manage", "audit.read"] },
   { key: "requests", label: "Access requests", permission: ["access_requests.decide", "walls.manage"] },
   { key: "import", label: "Import", permission: ["users.manage", "clients.create", "matters.create"] },
+  { key: "archive", label: "Archive", permission: ["users.manage"] },
 ];
 
 /** Firm administration: people and roles, teams, walls and access requests. */
@@ -73,6 +74,7 @@ export function AdminPage() {
       {active === "walls" && <WallsSection />}
       {active === "requests" && <RequestsSection />}
       {active === "import" && <ImportSection />}
+      {active === "archive" && <ArchiveSection />}
     </div>
   );
 }
@@ -463,5 +465,39 @@ function ImportSection() {
         </div>
       )}
     </section>
+  );
+}
+
+/** Archived documents: hidden everywhere until an administrator restores them. */
+function ArchiveSection() {
+  const queryClient = useQueryClient();
+  const { toast } = useApp();
+  const archived = useQuery({ queryKey: ["archived-documents"], queryFn: fetchArchived });
+  if (archived.isPending) return <TableSkeleton />;
+  const items = archived.data ?? [];
+  if (!items.length) return <EmptyState icon="archive" title="No archived documents" />;
+  const restore = async (id: string) => {
+    try {
+      await restoreDocument(id);
+      toast("Document restored");
+      queryClient.invalidateQueries();
+    } catch (err) {
+      toast(firmError(err));
+    }
+  };
+  return (
+    <ul className="divide-y divide-border rounded-md border border-border" data-testid="admin-archive">
+      {items.map((d) => (
+        <li key={d.document_id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-medium">{d.title}</div>
+            <div className="text-xs text-muted-foreground">
+              {d.matter_title} · archived {d.archived_by_name ? `by ${d.archived_by_name}` : ""}{d.archive_reason ? `: ${d.archive_reason}` : ""}
+            </div>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => restore(d.document_id)} data-testid="archive-restore">Restore</Button>
+        </li>
+      ))}
+    </ul>
   );
 }

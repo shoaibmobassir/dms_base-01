@@ -95,6 +95,37 @@ def create_batch(
     return {"service": SERVICE, **result}
 
 
+@router.get("/batches")
+def my_batches(limit: int = 15, member_id: str | None = Depends(resolve_member)) -> dict:
+    """The caller's recent upload batches (newest first), with each file's outcome, for the Documents page."""
+    limit = max(1, min(limit, 50))
+    with connect() as conn:
+        batches = conn.execute(
+            f"""
+            SELECT b.batch_id, b.matter_id, m.title AS matter_title, b.status, b.total_files, b.created_at
+            FROM upload_batches b
+            JOIN matters m ON m.matter_id = b.matter_id
+            LEFT JOIN permissions p ON p.matter_id = m.matter_id
+            WHERE b.created_by = %(member_id)s AND {ACL_CLAUSE}
+            GROUP BY b.batch_id, m.title
+            ORDER BY b.created_at DESC LIMIT %(limit)s
+            """,
+            {"member_id": member_id, "limit": limit},
+        ).fetchall()
+        out = []
+        for b in batches:
+            files = conn.execute(
+                "SELECT relative_path, status, document_id, error FROM upload_batch_files WHERE batch_id = %s ORDER BY relative_path",
+                (b["batch_id"],),
+            ).fetchall()
+            counts = {k: sum(1 for f in files if f["status"] == k) for k in ("indexed", "skipped", "failed", "quarantined")}
+            out.append({**b, "created_at": b["created_at"].isoformat(), "files": files,
+                        "indexed": counts["indexed"], "duplicates": counts["skipped"],
+                        "failed": counts["failed"] + counts["quarantined"],
+                        "retryable": counts["failed"] > 0})
+    return {"service": SERVICE, "batches": out}
+
+
 @router.get("/batches/{batch_id}")
 def get_batch(batch_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
     return {"service": SERVICE, "batch": _owned_batch(batch_id, member_id)}

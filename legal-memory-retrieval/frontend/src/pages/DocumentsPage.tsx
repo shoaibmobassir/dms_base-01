@@ -10,6 +10,7 @@ import { Action, EmptyState, Icon, MonoId, PageHeader, SearchField } from "@/com
 import { Pager, QueryState } from "@/components/common/QueryState";
 import { MatterPicker } from "@/components/common/MatterPicker";
 import { UploadFlow } from "@/components/documents/UploadFlow";
+import { RecentUploads } from "@/components/documents/RecentUploads";
 import { formatDate } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
 
@@ -212,6 +213,7 @@ export function DocumentsPage() {
           </>
         )}
       </QueryState>
+      <RecentUploads />
       {showUpload && <UploadFlow onClose={() => setShowUpload(false)} />}
     </div>
   );

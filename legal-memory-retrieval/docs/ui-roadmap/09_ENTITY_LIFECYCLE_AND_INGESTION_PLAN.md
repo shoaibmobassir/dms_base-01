@@ -68,4 +68,21 @@ Each item ends with backend tests where there is backend code, a Playwright chec
 
 ## 5. Delivery log
 
-(filled in as each item is completed)
+All nine items are delivered. Each has backend tests where there is backend code and a Playwright check.
+
+| # | Delivered | Where |
+|---|---|---|
+| 1 | Close check, close with outcome, reopen with reason; banner | `app/firm/matters.py`, `tests/test_matter_lifecycle.py`, `MatterEditors.tsx` |
+| 2 | Team editor: search to add, make lead, confirm remove; inactive people refused | `MatterEditors.tsx` |
+| 3 | Folder ingest limited to `integrations.manage`; folder upload keeps folder names | `documents_router.py`, `uploads.ts` |
+| 4 | Client edit, notes, on hold / inactive (blocked by open matters), new matter for client | `app/firm/clients.py`, `tests/test_client_lifecycle.py` |
+| 5 | Admin edits a person; deactivate and reactivate (`members.active`) | `app/firm/people.py`, `tests/test_person_lifecycle.py` |
+| 6 | Record an argument from the bank; edit and delete in the pane | `ArgumentsPage.tsx` |
+| 7 | CSV import for clients, people, matters: template, check first (saves nothing), apply; row reasons; clients with possible conflicts left for the conflict queue; audited `import.apply` | `app/firm/imports.py`, `tests/test_csv_import.py`, Admin "Import" tab |
+| 8 | "Your recent uploads" on Documents with per-file outcome and retry of failed files | `GET /api/uploads/batches`, `tests/test_recent_uploads.py`, `RecentUploads.tsx` |
+| 9 | Archive a document (manage access, reason required); hidden from lists, search, retrieval, Assistant and direct links; administrator restores from Admin "Archive" | migration `20261003d`, `app/documents/archive.py`, `tests/test_document_privacy.py` |
+
+Decisions: archiving compiles an empty visibility list (so every existing read path hides it with no new filter) and
+`document_access` returns "none" for archived documents. Restore and the archive list need `users.manage`. There is still no
+hard delete in the interface.
+

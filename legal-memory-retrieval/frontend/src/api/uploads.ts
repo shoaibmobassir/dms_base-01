@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { apiFetch, authHeaders } from '@/api/client'
 
 /** One file in an upload batch, as the server reports it. */
@@ -85,3 +86,16 @@ export async function uploadToMatter(
     return { file, status: 'failed', documentId: row.document_id, error: row.error || 'The file could not be indexed.' }
   })
 }
+
+export type RecentBatch = {
+  batch_id: string; matter_id: string; matter_title: string; status: string; total_files: number; created_at: string
+  indexed: number; duplicates: number; failed: number; retryable: boolean
+  files: { relative_path: string; status: string; document_id: string | null; error: string | null }[]
+}
+
+export const useRecentUploads = () =>
+  useQuery({ queryKey: ['recent-uploads'], queryFn: () => apiFetch<{ batches: RecentBatch[] }>('/api/uploads/batches?limit=8').then((r) => r.batches) })
+
+/** Process a batch again: files already indexed are skipped, failed ones are tried once more. */
+export const retryBatch = (batchId: string) =>
+  apiFetch(`/api/uploads/batches/${encodeURIComponent(batchId)}/run`, { method: 'POST' })

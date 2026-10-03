@@ -2,6 +2,14 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-03 — Entity lifecycle and ingestion (plan 09)
+
+- Matters: close (with outcome and what is still open) and reopen. Team editor by search with make-lead. Clients: edit,
+  notes, on hold / inactive. People: admin edit, deactivate, reactivate. Arguments recordable from the bank.
+- Ingestion: folder-ingest endpoint limited to administrators, folder upload, CSV import for clients, people and matters
+  (check first, then apply), recent uploads with retry, archive and restore of documents (migration `20261003d`).
+- PDF edits become comments; "What changed" panel per version; Assistant has a free-text ask box.
+
 ## 2026-10-03 — Frontend pass 7: one document page, Notion-style comments, Assistant comments
 
 - Document page = rendered pages + comments (no Edit needed); Pages | Text switch; version switch keeps the page; comment

@@ -14,6 +14,7 @@ test.beforeEach(async ({ page }: { page: Page }) => {
 test("adding documents needs a matter: nothing is filed by default", async ({ page }) => {
   let uploads = 0;
   await page.route("**/api/uploads/batches**", (route) => {
+    if (route.request().method() !== "POST") return route.fallback();
     uploads += 1;
     return route.abort();
   });
@@ -36,6 +37,7 @@ test("adding documents needs a matter: nothing is filed by default", async ({ pa
 test("a document attached in Assistant asks which matter it belongs to", async ({ page }) => {
   let uploads = 0;
   await page.route("**/api/uploads/batches**", (route) => {
+    if (route.request().method() !== "POST") return route.fallback();
     uploads += 1;
     return route.abort();
   });
@@ -594,4 +596,53 @@ test("importing a spreadsheet checks first, saves nothing, then imports the rows
   await page.getByTestId("import-apply").click();
   await expect(report).toContainText("1 imported");
   await expect(report.getByTestId("import-row-created")).toContainText(name);
+});
+
+test("recent uploads show how each file fared and offer a retry for failed ones", async ({ page }) => {
+  let retried = 0;
+  await page.route("**/api/uploads/batches?limit=8", (route) => route.fulfill({ json: { batches: [{
+    batch_id: "B1", matter_id: "M1", matter_title: "Tariff petition", status: "completed", total_files: 2, created_at: "2026-10-01T10:00:00Z",
+    indexed: 1, duplicates: 0, failed: 1, retryable: true,
+    files: [{ relative_path: "a.pdf", status: "indexed", document_id: "D1", error: null }, { relative_path: "b.pdf", status: "failed", document_id: null, error: "no text found" }],
+  }] } }));
+  await page.route("**/api/uploads/batches/B1/run", (route) => { retried += 1; return route.fulfill({ json: {} }); });
+  await page.goto("/ui/documents");
+  const panel = page.getByTestId("recent-uploads");
+  await panel.locator("summary").click();
+  await expect(panel).toContainText("1 added, 1 failed");
+  await expect(panel).toContainText("b.pdf: no text found");
+  await panel.getByTestId("retry-upload").click();
+  await expect.poll(() => retried).toBe(1);
+});
+
+test("archiving a document hides it for everyone and an administrator can restore it", async ({ page, request }) => {
+  const admin = { "X-Member-Id": "MEM-00011" };
+  const matters = (await (await request.get("/api/matters?limit=50", { headers: admin })).json()).items as { matter_id: string; restricted: boolean }[];
+  let lead = "", matterId = "";
+  for (const m of matters.filter((x) => !x.restricted)) {
+    const detail = await (await request.get(`/api/matters/${m.matter_id}`, { headers: admin })).json();
+    const l = (detail.team as { member_id: string; role_on_matter?: string; role?: string }[]).find((t) => /lead/i.test(t.role_on_matter ?? t.role ?? ""));
+    if (l && l.member_id !== "MEM-00011") { lead = l.member_id; matterId = m.matter_id; break; }
+  }
+  test.skip(!lead, "no open matter with a lead");
+  const title = `E2E-TMP archive ${Date.now()}`;
+  const made = await request.post("/api/documents/ingest", { headers: { "X-Member-Id": lead }, data: { title, matter_id: matterId, body: "Archive me.", document_type: "Letter" } });
+  const docId = (await made.json()).document_id as string;
+  await page.addInitScript((id) => localStorage.setItem("precentis.persona", id), lead);
+  await page.goto(`/ui/documents/${docId}`);
+  await page.getByTestId("document-archive").click();
+  await page.getByTestId("archive-reason").fill("Filed in error");
+  await page.getByTestId("archive-confirm").click();
+  await expect(page).toHaveURL(/\/ui\/documents$/);
+  const listed = await (await request.get(`/api/documents?q=${encodeURIComponent(title)}`, { headers: { "X-Member-Id": lead } })).json();
+  expect(listed.items.some((d: { document_id: string }) => d.document_id === docId)).toBe(false);
+
+  await page.addInitScript(() => localStorage.setItem("precentis.persona", "MEM-00011"));
+  await page.goto("/ui/admin");
+  await page.getByTestId("admin-tab-archive").click();
+  await expect(page.getByTestId("admin-archive")).toContainText(title);
+  await page.getByTestId("admin-archive").locator("li", { hasText: title }).getByTestId("archive-restore").click();
+  await expect(page.getByTestId("admin-archive").locator("li", { hasText: title })).toHaveCount(0);
+  // Leave nothing behind: archive it again.
+  await request.post(`/api/documents/${docId}/archive`, { headers: { "X-Member-Id": lead }, data: { reason: "test cleanup" } });
 });
