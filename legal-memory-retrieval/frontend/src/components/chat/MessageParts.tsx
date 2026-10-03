@@ -16,6 +16,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { Icon } from "@/components/common/primitives";
 import { ApiError, authHeaders } from "@/api/client";
 import { decideAllEdits, decideEdit, exportEdits } from "@/api/chat";
 import type { AskInputItem, Attachment, ChatEvent, EditProposal } from "@/api/types";
@@ -526,6 +528,51 @@ export function FileCard({ documentId, filename, onOpen }: { documentId: string;
       >
         <Download className="h-3 w-3" /> Download
       </button>
+    </div>
+  );
+}
+
+// ── comments the Assistant left ───────────────────────────────────────────────
+
+export type CommentsAddedEvent = {
+  document_id: string;
+  filename: string;
+  comments: { comment_id: string; quote: string; body: string; page?: number | null }[];
+};
+
+export function CommentsAddedCard({ event }: { event: CommentsAddedEvent }) {
+  const [open, setOpen] = useState(false);
+  const shown = open ? event.comments : event.comments.slice(0, 3);
+  return (
+    <div className="mb-3 rounded-lg border border-border" data-testid="comments-added">
+      <div className="flex items-center justify-between gap-2 border-b border-border bg-secondary/40 px-3 py-2">
+        <div className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-ink">
+          <Icon name="add_comment" className="text-wine" style={{ fontSize: 16 }} />
+          <span className="truncate">
+            {event.comments.length} comment{event.comments.length === 1 ? "" : "s"} added to {event.filename}
+          </span>
+        </div>
+        <Link
+          to={`/documents/${encodeURIComponent(event.document_id)}?panel=comments&comment=${encodeURIComponent(event.comments[0]?.comment_id ?? "")}`}
+          className="shrink-0 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium hover:bg-secondary"
+          data-testid="comments-added-open"
+        >
+          Open on the document
+        </Link>
+      </div>
+      <ul className="divide-y divide-border">
+        {shown.map((c) => (
+          <li key={c.comment_id} className="px-3 py-2 text-sm">
+            <p className="line-clamp-2 border-l-2 border-warning/60 pl-2 text-xs italic text-muted-foreground">“{c.quote}”</p>
+            <p className="mt-1">{c.body}</p>
+          </li>
+        ))}
+      </ul>
+      {event.comments.length > 3 && (
+        <button type="button" onClick={() => setOpen((v) => !v)} className="w-full border-t border-border py-2 text-xs text-muted-foreground hover:text-foreground">
+          {open ? "Show fewer" : `Show all ${event.comments.length}`}
+        </button>
+      )}
     </div>
   );
 }

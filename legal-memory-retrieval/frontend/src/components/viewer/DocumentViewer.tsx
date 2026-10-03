@@ -117,7 +117,19 @@ export function DocumentViewer({
   onMarkClick,
   onSelectText,
   onMarksLocated,
+  startPage,
+  onPageChange,
+  onDocument,
+  hideNav = false,
 }: {
+  /** Open at this page (e.g. keep the reader's place when the version changes). */
+  startPage?: number;
+  /** Called once the pages are known, with their count. */
+  onDocument?: (pages: number) => void;
+  /** Called when the page in view changes. */
+  onPageChange?: (page: number) => void;
+  /** Hide the page controls and find box when the page around the viewer already has them. */
+  hideNav?: boolean;
   src: string;
   /** OCR word boxes for one page; used when a page is a scanned image. */
   wordsUrl?: (page: number) => string;
@@ -136,8 +148,8 @@ export function DocumentViewer({
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const textCache = useRef(new Map<number, Promise<TextContent>>());
   const anchor = useRef({ page: 1, fraction: 0 });
-  const callbacks = useRef({ onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated });
-  callbacks.current = { onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated };
+  const callbacks = useRef({ onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated, onPageChange, onDocument });
+  callbacks.current = { onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated, onPageChange, onDocument };
 
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [sizes, setSizes] = useState<PageSize[]>([]);
@@ -200,6 +212,7 @@ export function DocumentViewer({
       setCurrent(1);
       setPageInput("1");
       setStatus("ready");
+      callbacks.current.onDocument?.(pdf.numPages);
     })().catch((err: unknown) => {
       if (cancelled) return;
       setError(err instanceof Error ? err.message : "Could not open this document.");
@@ -272,8 +285,18 @@ export function DocumentViewer({
     if (page !== current) {
       setCurrent(page);
       setPageInput(String(page));
+      callbacks.current.onPageChange?.(page);
     }
   };
+
+  // Open where the reader was (a new version keeps their page).
+  const startedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (status !== "ready" || !startPage || startPage < 2 || startedFor.current === src) return;
+    startedFor.current = src;
+    const id = requestAnimationFrame(() => goToPage(Math.min(startPage, pageRefs.current.length || startPage)));
+    return () => cancelAnimationFrame(id);
+  }, [status, startPage, src, goToPage]);
 
   // Jump to a citation: search the cited page first, then its neighbours, then all pages.
   useEffect(() => {
@@ -459,6 +482,7 @@ export function DocumentViewer({
   return (
     <div className="flex h-full min-h-0 flex-col outline-none" tabIndex={0} onKeyDown={onKeyDown} data-testid="document-viewer">
       <div className="flex flex-wrap items-center gap-1 border-b border-border bg-card px-2 py-1.5 text-xs">
+        {!hideNav && (<>
         <ToolButton label="Previous page" disabled={current <= 1} onClick={() => goToPage(current - 1)} testId="viewer-prev">
           <ChevronUp className="h-4 w-4" />
         </ToolButton>
@@ -480,6 +504,7 @@ export function DocumentViewer({
           <span className="font-mono" data-testid="viewer-page-count">/ {pageCount || "–"}</span>
         </label>
         <div className="mx-1 h-4 w-px bg-border" />
+        </>)}
         <ToolButton label="Zoom out" onClick={() => step(-1)} testId="viewer-zoom-out">
           <ZoomOut className="h-4 w-4" />
         </ToolButton>
@@ -495,6 +520,7 @@ export function DocumentViewer({
         <ToolButton label="Fit page" active={zoom.mode === "fit-page"} onClick={() => setZoom({ mode: "fit-page" })} testId="viewer-fit-page">
           <Maximize className="h-4 w-4" />
         </ToolButton>
+        {!hideNav && (<>
         <div className="mx-1 h-4 w-px bg-border" />
         <label className="flex items-center gap-1">
           <span className="sr-only">Find in this document</span>
@@ -528,6 +554,7 @@ export function DocumentViewer({
         <span className="text-muted-foreground" role="status" data-testid="viewer-find-status">
           {findState === "searching" ? "Searching…" : findState === "none" ? "No match" : findState === "found" ? `Page ${findPage.current}${findTotal !== null ? ` · ${findTotal} ${findTotal === 1 ? "match" : "matches"}` : ""}` : ""}
         </span>
+        </>)}
       </div>
 
       <div ref={scrollRef} onScroll={onScroll} onPointerUp={onPointerUp} className="relative min-h-0 flex-1 overflow-auto bg-muted/60" data-testid="viewer-scroll">
@@ -734,7 +761,7 @@ function PdfPage({ doc, number, size, scale, root, getText, highlight, onHighlig
         if (!boxes.length) return null;
         return (
         <div key={m.id}>
-          {boxes.map((b, i) => (
+          {m.active && boxes.map((b, i) => (
             <div
               key={i}
               className={cn("viewer-mark-box", m.active && "is-active", m.muted && "is-muted")}

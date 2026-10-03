@@ -31,6 +31,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { EmptyState, Icon, MonoId } from "@/components/common/primitives";
 import { ExactView } from "@/components/editor/ExactView";
+import { CommentsPanel, useDocComments } from "@/components/comments/DocComments";
 import { PrivacyControl } from "@/components/editor/PrivacyControl";
 import { UploadVersionDialog } from "@/components/editor/UploadVersionDialog";
 import { useApp } from "@/context/AppContext";
@@ -425,6 +426,9 @@ function EditorWorkspace({ model }: { model: EditModel }) {
     }),
   });
 
+  // Colleagues' comments stay beside the text while editing (add new ones on the pages).
+  const dc = useDocComments({ documentId: id, canAdd: false });
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-secondary/40" data-testid="document-editor">
       {/* header */}
@@ -593,6 +597,11 @@ function EditorWorkspace({ model }: { model: EditModel }) {
               </ul>
             )}
           </div>
+          {view === "edit" && (
+            <div className="flex max-h-[50vh] min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card" data-testid="editor-comments-side">
+              <CommentsPanel dc={dc} onViewVersion={() => undefined} note="To add a comment, select text on the document page or in Exact view." />
+            </div>
+          )}
         </aside>
       </div>
 

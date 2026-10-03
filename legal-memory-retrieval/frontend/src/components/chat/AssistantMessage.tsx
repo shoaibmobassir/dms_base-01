@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { AskInputItem, Attachment, ChatEvent, Citation, EditProposal } from "@/api/types";
 import type { PanelSource } from "@/components/chat/CitationDocumentPanel";
 import { ReviewTableCard, type ReviewTableEvent } from "@/components/chat/ReviewTableCard";
-import { AskInputsCard, type EditGroup, EditProposalsCard, FileCard, StepTimeline } from "@/components/chat/MessageParts";
+import { AskInputsCard, CommentsAddedCard, type CommentsAddedEvent, type EditGroup, EditProposalsCard, FileCard, StepTimeline } from "@/components/chat/MessageParts";
 import { Markdown } from "@/components/chat/Markdown";
 import { citationChipClass } from "@/components/common/citation";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,7 @@ export function AssistantMessage({
   const byRef = (n: number) => citations.find((c) => Number(c.ref) === n);
   const askItems = events.filter((e) => e.type === "ask_inputs").flatMap((e) => (e.items ?? []) as AskInputItem[]);
   const editGroups = events.filter((e) => e.type === "edit_proposals") as unknown as EditGroup[];
+  const commentGroups = events.filter((e) => e.type === "comments_added") as unknown as CommentsAddedEvent[];
   const reviewTables = events.filter((e) => e.type === "review_table") as unknown as ReviewTableEvent[];
   const files = [
     ...events
@@ -126,6 +127,10 @@ export function AssistantMessage({
 
           {reviewTables.map((table, ti) => (
             <ReviewTableCard key={`${m.id ?? "live"}-review-${ti}`} table={table} onOpen={onOpenSource} />
+          ))}
+
+          {commentGroups.map((group, gi) => (
+            <CommentsAddedCard key={`${m.id ?? "live"}-comments-${gi}`} event={group} />
           ))}
 
           {editGroups.map((group, gi) => (

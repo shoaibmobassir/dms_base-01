@@ -115,11 +115,11 @@ test("a document hands itself to the Assistant, attached and limited to its matt
   const docs = await request.get("/api/documents?limit=1", { headers: { "X-Member-Id": ME } });
   const doc = ((await docs.json()) as { items: { document_id: string; title: string }[] }).items[0];
   await page.goto(`/ui/documents/${doc.document_id}`);
-  await page.getByRole("button", { name: "AI" }).click();
+  await page.getByRole("button", { name: "Assistant" }).first().click();
   await page.getByTestId("document-ai-task").first().click();
   await expect(page).toHaveURL(/\/ui\/chat/);
   await expect(page.getByTestId("composer-attachments")).toContainText(doc.title.slice(0, 20));
-  await expect(page.getByTestId("chat-input")).toHaveValue(/Summarise this document/);
+  await expect(page.getByTestId("chat-input")).toHaveValue(/add comments on the key risks/);
 });
 
 test("find in document lists matches and jumps to one", async ({ page, request }) => {
@@ -138,6 +138,7 @@ test("find in document lists matches and jumps to one", async ({ page, request }
   test.skip(!found, "no document with searchable blocks");
   await page.goto(`/ui/documents/${found!.id}`);
   await expect(page.getByTestId("document-workspace")).toBeVisible();
+  await page.getByTestId("document-view-text").click();
   await page.getByTestId("document-find").click();
   await page.getByTestId("find-input").fill(found!.word);
   await expect(page.getByTestId("find-count")).toContainText(/match/);
@@ -339,4 +340,25 @@ test("pin several matters at once from the list, then unpin them", async ({ page
   await row.locator('input[type="checkbox"]').check();
   await page.getByTestId("bulk-unpin").click();
   await expect(page.getByTestId("sidebar-pinned").filter({ hasText: title.slice(0, 20) })).toHaveCount(0);
+});
+
+test("switching to another version keeps the page you are on", async ({ page, request }) => {
+  const found = await request.get("/api/documents?q=Share%20Purchase%20Agreement&limit=20", { headers: { "X-Member-Id": ME } });
+  const docs = ((await found.json()) as { items: { document_id: string }[] }).items;
+  let id: string | null = null;
+  for (const d of docs) {
+    const v = await request.get(`/api/documents/${d.document_id}/versions`, { headers: { "X-Member-Id": ME } });
+    if (v.ok() && ((await v.json()) as { versions: unknown[] }).versions.length >= 2) {
+      id = d.document_id;
+      break;
+    }
+  }
+  test.skip(!id, "no document with two versions");
+  await page.goto(`/ui/documents/${id}?page=2`);
+  await page.getByTestId("document-view-text").click();
+  await page.getByRole("button", { name: "Versions" }).first().click();
+  const before = page.url();
+  await page.locator('[data-testid="version-row"]:not([aria-current="true"])').first().click();
+  await expect(page).toHaveURL(/version=/);
+  expect(new URL(page.url()).searchParams.get("page")).toBe(new URL(before).searchParams.get("page")); // not back to page 1
 });
