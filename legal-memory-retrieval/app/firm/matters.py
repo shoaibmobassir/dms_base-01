@@ -263,6 +263,8 @@ def set_staff(conn, actor: str | None, matter_id: str, member_id: str, role: str
             raise FirmError(409, "The matter needs a lead: make someone else lead first")
     if role == "Lead" and ended_at and str(ended_at) < date.today().isoformat():
         raise FirmError(422, "A lead's assignment cannot have ended")
+    if not one(conn, "SELECT 1 AS ok FROM members WHERE member_id = %s AND active", (member_id,)):
+        raise FirmError(409, "This person is deactivated and cannot be staffed on a matter")
     screened = one(conn, "SELECT 1 AS ok FROM matter_screens WHERE matter_id = %s AND member_id = %s", (matter_id, member_id))
     if screened:
         raise FirmError(409, "This person is screened from the matter and cannot be staffed on it")

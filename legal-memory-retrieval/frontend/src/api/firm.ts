@@ -199,3 +199,22 @@ export function useLiveEvents() {
     }
   }, [identityKey, queryClient])
 }
+
+// ── client upkeep ────────────────────────────────────────────────────────────
+export type ClientPatch = {
+  name?: string
+  industry?: string
+  size?: string
+  headquarters?: string
+  aliases?: string[]
+  locations?: string[]
+  subsidiaries?: string[]
+  status?: 'active' | 'on_hold' | 'inactive'
+}
+export const updateClient = (id: string, body: ClientPatch) => apiFetch(`/api/clients/${enc(id)}`, json('PATCH', body))
+export const addClientNote = (id: string, body: { kind: 'prefers' | 'avoid' | 'terms'; text: string; source_matter_id?: string | null }) =>
+  apiFetch(`/api/clients/${enc(id)}/notes`, json('POST', body))
+export const deleteClientNote = (id: string, noteId: string) => apiFetch(`/api/clients/${enc(id)}/notes/${enc(noteId)}`, json('DELETE'))
+
+export const deactivatePerson = (id: string, reason: string) => apiFetch(`/api/people/${enc(id)}/deactivate`, json('POST', { reason }))
+export const reactivatePerson = (id: string) => apiFetch(`/api/people/${enc(id)}/reactivate`, json('POST'))

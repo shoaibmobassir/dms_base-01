@@ -56,7 +56,7 @@ export function ClientsPage() {
                       <div className="text-foreground">
                         {c.name}
                         {c.status && c.status !== "active" && (
-                          <span className="ml-2 rounded bg-warning-soft px-1.5 text-xs text-warning-ink" data-testid="client-status">{c.status}</span>
+                          <span className="ml-2 rounded bg-warning-soft px-1.5 text-xs text-warning-ink" data-testid="client-status">{c.status.replace(/_/g, " ")}</span>
                         )}
                       </div>
                     </div>

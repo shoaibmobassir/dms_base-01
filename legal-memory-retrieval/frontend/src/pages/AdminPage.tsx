@@ -180,7 +180,7 @@ function UsersSection({ canEdit }: { canEdit: boolean }) {
             header: "Person",
             render: (u) => (
               <div>
-                <Link to={`/people/${u.member_id}`} className="hover:text-wine">{u.name}</Link>
+                <Link to={`/people/${u.member_id}`} className="hover:text-wine">{u.name}</Link>{u.active === false && <span className="ml-2 rounded bg-secondary px-1.5 text-xs text-muted-foreground" data-testid="user-deactivated">Deactivated</span>}
                 <div className="text-xs text-muted-foreground">{u.role} · {u.matter_count} matters</div>
               </div>
             ),

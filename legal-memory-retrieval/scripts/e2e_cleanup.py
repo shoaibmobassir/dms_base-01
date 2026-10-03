@@ -33,8 +33,13 @@ def main() -> int:
             "RETURNING client_id", (PREFIX + "%",)).fetchall()
         checks = conn.execute("DELETE FROM conflict_checks WHERE EXISTS (SELECT 1 FROM unnest(names) n WHERE n LIKE %s) RETURNING check_id",
                               (PREFIX + "%",)).fetchall()
+        people = [r["member_id"] for r in conn.execute("SELECT member_id FROM members WHERE name LIKE %s", (PREFIX + "%",))]
+        for pid in people:
+            for t in ("matter_members", "member_roles", "team_members", "api_keys"):
+                conn.execute(f"DELETE FROM {t} WHERE member_id = %s", (pid,))
+            conn.execute("DELETE FROM members WHERE member_id = %s", (pid,))
         conn.commit()
-    print(f"e2e cleanup: {len(matters)} matters, {len(clients)} clients, {len(checks)} conflict checks")
+    print(f"e2e cleanup: {len(matters)} matters, {len(clients)} clients, {len(checks)} conflict checks, {len(people)} people")
     return 0
 
 

@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { PAGE_SIZE, useArguments } from "@/api/resources";
+import { PAGE_SIZE, useArguments, useMatter, useMatterArguments } from "@/api/resources";
 import type { ArgumentItem, ArgumentKind } from "@/api/types";
 import { MatterLink } from "@/components/common/EntityLink";
-import { EmptyState, Icon, PageHeader, SearchField, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { Action, EmptyState, Icon, PageHeader, SearchField, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { MatterPicker, type MatterOption } from "@/components/common/MatterPicker";
+import { useConfirm } from "@/components/common/Confirm";
+import { ArgumentDialog, useDeleteArgument } from "@/components/matter/MatterEditors";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Pager, QueryState } from "@/components/common/QueryState";
 import { formatDate } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
@@ -105,6 +110,8 @@ function ArgumentDetail({ a }: { a: ArgumentItem }) {
         )}
       </div>
 
+      {a.kind === "disputes" && <ArgumentActions a={a} />}
+
       <Link
         to={`/ask?q=${encodeURIComponent(`What did we argue on ${a.issue}?`)}&scope=${encodeURIComponent(a.matter_code)}&scopeType=matter`}
         className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium hover:bg-secondary"
@@ -112,6 +119,73 @@ function ArgumentDetail({ a }: { a: ArgumentItem }) {
         <Icon name="manage_search" style={{ fontSize: 16 }} /> Ask the Firm about this argument
       </Link>
     </article>
+  );
+}
+
+/** Edit or delete a recorded argument (only for people who may edit its matter). */
+function ArgumentActions({ a }: { a: ArgumentItem }) {
+  const matter = useMatter(a.matter_id);
+  const level = matter.data?.my_level;
+  const mayEdit = level === "edit" || level === "manage";
+  const [editing, setEditing] = useState(false);
+  const remove = useDeleteArgument(a.matter_id);
+  const confirm = useConfirm();
+  if (!mayEdit) return null;
+  return (
+    <div className="flex flex-wrap gap-2" data-testid="argument-actions">
+      <Action icon="edit" onClick={() => setEditing(true)} testId="argument-edit">Edit</Action>
+      <Action
+        icon="delete"
+        testId="argument-delete"
+        onClick={async () => {
+          if (await confirm({ title: "Delete this argument?", description: "It is removed from the matter and from the firm's argument bank.", confirmLabel: "Delete argument" }))
+            await remove(a.argument_id);
+        }}
+      >
+        Delete
+      </Action>
+      {editing && <EditArgument a={a} onClose={() => setEditing(false)} />}
+    </div>
+  );
+}
+
+function EditArgument({ a, onClose }: { a: ArgumentItem; onClose: () => void }) {
+  const args = useMatterArguments(a.matter_id);
+  const current = args.data?.find((x) => x.argument_id === a.argument_id);
+  if (!current) return null; // opens once the matter's own copy (with its version) has loaded
+  return <ArgumentDialog matterId={a.matter_id} arg={current} open onClose={onClose} />;
+}
+
+/** Record an argument from the bank: choose the matter first, then write it. */
+function RecordArgument() {
+  const [open, setOpen] = useState(false);
+  const [matter, setMatter] = useState<MatterOption | null>(null);
+  const [writing, setWriting] = useState(false);
+  const close = () => {
+    setOpen(false);
+    setWriting(false);
+    setMatter(null);
+  };
+  return (
+    <>
+      <Action primary icon="add" onClick={() => setOpen(true)} testId="argument-record">Record an argument</Action>
+      {open && !writing && (
+        <Dialog open onOpenChange={(o) => !o && close()}>
+          <DialogContent className="max-w-md" data-testid="argument-matter-dialog">
+            <DialogHeader>
+              <DialogTitle className="font-display text-2xl">Which matter is it from?</DialogTitle>
+              <DialogDescription>Arguments belong to a matter and follow its access rules.</DialogDescription>
+            </DialogHeader>
+            <MatterPicker value={matter?.matter_id ?? null} onChange={setMatter} testId="argument-matter" />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={close}>Cancel</Button>
+              <Button disabled={!matter} onClick={() => setWriting(true)} data-testid="argument-matter-next">Continue</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      {open && writing && matter && <ArgumentDialog matterId={matter.matter_id} open onClose={close} />}
+    </>
   );
 }
 
@@ -146,6 +220,7 @@ export function ArgumentsPage() {
         title="Arguments"
         count={args.data ? `${args.data.total} records` : undefined}
         subtitle="Legal propositions the firm has run, with the forum, outcome and documents behind them."
+        actions={<RecordArgument />}
       />
       <div className="space-y-3">
         <SearchField value={query} onChange={setQuery} placeholder="Search issues, arguments or forums…" testId="arguments-search" />

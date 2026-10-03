@@ -48,6 +48,7 @@ export function useFirmWrite(matterId?: string) {
       const out = await fn();
       if (matterId) await queryClient.invalidateQueries({ queryKey: [identityKey, "matter", matterId] });
       await queryClient.invalidateQueries({ queryKey: [identityKey, "matters"] });
+      await queryClient.invalidateQueries({ queryKey: [identityKey, "arguments"] }); // the argument bank
       if (done) toast(done);
       return out;
     } catch (err) {
@@ -94,11 +95,11 @@ const lines = (text: string) => text.split("\n").map((s) => s.trim()).filter(Boo
 
 // ── new matter ───────────────────────────────────────────────────────────────
 
-export function NewMatterDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+export function NewMatterDialog({ open, onClose, onCreated, defaultClientId }: { open: boolean; onClose: () => void; onCreated: (id: string) => void; defaultClientId?: string }) {
   const { me } = useApp();
   const people = usePeople();
   const { run, busy, error } = useFirmWrite();
-  const [form, setForm] = useState<MatterInput>({ title: "", client_id: "", practice_area: "", access_mode: "team" });
+  const [form, setForm] = useState<MatterInput>({ title: "", client_id: defaultClientId ?? "", practice_area: "", access_mode: "team" });
   const [facts, setFacts] = useState("");
   const [team, setTeam] = useState<string[]>([]);
   const set = (patch: Partial<MatterInput>) => setForm((f) => ({ ...f, ...patch }));

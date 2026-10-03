@@ -40,7 +40,7 @@ def _clean(data: dict, allowed: tuple[str, ...]) -> dict[str, Any]:
 
 
 def get_person(conn, member_id: str) -> dict:
-    row = one(conn, """SELECT member_id, name, role, office, email, is_lawyer, practice_areas, specializations, joined_year
+    row = one(conn, """SELECT member_id, name, role, office, email, is_lawyer, practice_areas, specializations, joined_year, active
                        FROM members WHERE member_id = %s""", (member_id,))
     if row is None:
         raise FirmError(404, "Person not found")
@@ -99,4 +99,60 @@ def create_person(conn, actor: str | None, data: dict) -> dict:
     conn.commit()
     audit.record("person.create", member_id=actor, object_type="member", object_id=member_id, detail={"name": fields["name"]})
     access.set_member_roles(conn, actor, member_id, roles)
+    return get_person(conn, member_id)
+
+
+# ── leaving and returning ────────────────────────────────────────────────────
+
+def _forget(member_id: str) -> None:
+    from app.auth.deps import forget_active
+
+    forget_active(member_id)
+
+
+@guard
+def deactivate_person(conn, actor: str | None, member_id: str, reason: str) -> dict:
+    """Someone has left (or is away): they can no longer sign in or be staffed; their history stays."""
+    access.require_permission(conn, actor, "users.manage")
+    person = get_person(conn, member_id)
+    if not person["active"]:
+        raise FirmError(409, "This person is already deactivated")
+    if actor == member_id:
+        raise FirmError(409, "You cannot deactivate yourself")
+    reason = (reason or "").strip()
+    if not reason or len(reason) > 500:
+        raise FirmError(422, "Say why (at most 500 characters)")
+    if "firm_admin" in person["roles"]:
+        others = one(conn, "SELECT count(*) AS n FROM member_roles r JOIN members m USING (member_id) "
+                           "WHERE r.role_key = 'firm_admin' AND m.active AND r.member_id <> %s", (member_id,))["n"]
+        if not others:
+            raise FirmError(409, "This is the last active firm administrator; assign another first")
+    leads = conn.execute(
+        """SELECT m.matter_code FROM matter_members mm JOIN matters m USING (matter_id)
+           WHERE mm.member_id = %s AND lower(mm.role_on_matter) = 'lead' AND m.status IN ('Open', 'On hold')
+             AND (mm.ended_at IS NULL OR mm.ended_at >= current_date) ORDER BY m.matter_code""", (member_id,)).fetchall()
+    if leads:
+        codes = ", ".join(r["matter_code"] for r in leads[:6])
+        raise FirmError(409, f"Hand over the lead on {len(leads)} open matter(s) first: {codes}", {"lead_on": [r["matter_code"] for r in leads]})
+    conn.execute("UPDATE members SET active = FALSE, deactivated_at = now(), deactivated_by = %s WHERE member_id = %s", (actor, member_id))
+    conn.execute("DELETE FROM api_keys WHERE member_id = %s", (member_id,))
+    conn.execute("DELETE FROM auth_sessions WHERE member_id = %s", (member_id,))
+    emit(conn, "person.updated", "member", member_id, actor=actor, payload={"active": False})
+    conn.commit()
+    audit.record("person.deactivate", member_id=actor, object_type="member", object_id=member_id, detail={"reason": reason})
+    _forget(member_id)
+    return get_person(conn, member_id)
+
+
+@guard
+def reactivate_person(conn, actor: str | None, member_id: str) -> dict:
+    access.require_permission(conn, actor, "users.manage")
+    person = get_person(conn, member_id)
+    if person["active"]:
+        raise FirmError(409, "This person is already active")
+    conn.execute("UPDATE members SET active = TRUE, deactivated_at = NULL, deactivated_by = NULL WHERE member_id = %s", (member_id,))
+    emit(conn, "person.updated", "member", member_id, actor=actor, payload={"active": True})
+    conn.commit()
+    audit.record("person.reactivate", member_id=actor, object_type="member", object_id=member_id, detail={})
+    _forget(member_id)
     return get_person(conn, member_id)

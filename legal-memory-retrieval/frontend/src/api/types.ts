@@ -173,7 +173,7 @@ export type ClientItem = {
   size: string | null
   headquarters: string | null
   /** Intake: prospective until the conflict check is cleared. */
-  status?: 'prospective' | 'active' | 'declined'
+  status?: 'prospective' | 'active' | 'on_hold' | 'inactive' | 'declined'
   /** Counted over the matters the caller can see. */
   open_matters?: number
   total_matters?: number
@@ -201,6 +201,9 @@ export type Person = {
   member_id: string
   name: string
   role: string
+  /** False for someone who has left or is away (only administrators see them). */
+  active?: boolean
+  email?: string | null
   practice_areas: string[]
   specializations: string[]
   office: string | null

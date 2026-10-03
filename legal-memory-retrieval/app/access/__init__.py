@@ -651,7 +651,7 @@ def list_users(conn, actor: str | None) -> list[dict]:
     return _rows(
         conn,
         """
-        SELECT mb.member_id, mb.name, mb.role, mb.office, mb.email, mb.practice_areas, mb.is_lawyer,
+        SELECT mb.member_id, mb.name, mb.role, mb.office, mb.email, mb.practice_areas, mb.is_lawyer, mb.active,
                coalesce((SELECT array_agg(role_key ORDER BY role_key) FROM member_roles r WHERE r.member_id = mb.member_id), '{}') AS roles,
                coalesce((SELECT array_agg(t.name ORDER BY t.name) FROM team_members tm JOIN teams t USING (team_id)
                          WHERE tm.member_id = mb.member_id), '{}') AS teams,

@@ -496,3 +496,84 @@ test("a whole folder can be added and keeps its folder names", async ({ page }) 
   await expect(list).toContainText("Only PDF, Word (.docx) and text files are supported."); // the picture is refused with a reason
   await expect(page.getByTestId("upload-submit")).toBeDisabled(); // still no matter chosen
 });
+
+test("keep a client up to date: edit it, add a note, put it on hold, start a matter for it", async ({ page, request }) => {
+  const headers = { "X-Member-Id": ME };
+  const name = `E2E-TMP Client ${Date.now()}`;
+  const check = await request.post("/api/conflicts/check", { headers, data: { names: [name], purpose: "e2e" } });
+  const made = await request.post("/api/clients", { headers, data: { name, check_id: ((await check.json()) as { check_id: string }).check_id, industry: "Energy" } });
+  expect(made.ok(), await made.text()).toBeTruthy();
+  const id = ((await made.json()) as { client_id: string }).client_id;
+
+  await page.goto(`/ui/clients/${id}`);
+  await page.getByTestId("client-edit").click();
+  await page.getByTestId("edit-client-status").selectOption("on_hold");
+  await page.getByTestId("edit-client-save").click();
+  await expect(page.getByTestId("client-standing")).toHaveText("on hold");
+  await expect(page.getByTestId("client-new-matter")).toBeVisible();
+
+  await page.getByTestId("client-add-note").click();
+  await page.getByTestId("note-kind").selectOption("avoid");
+  await page.getByTestId("note-text").fill("Do not copy the finance team on drafts.");
+  await page.getByTestId("note-save").click();
+  await expect(page.getByTestId("client-notes")).toContainText("Do not copy the finance team on drafts.");
+
+  await page.getByTestId("client-new-matter").click();
+  await expect(page.getByTestId("new-matter-client")).toContainText(name); // the client is already chosen
+});
+
+test("an administrator edits a person, deactivates them with a reason, and reactivates them", async ({ page, request }) => {
+  const admin = "MEM-00011";
+  await page.addInitScript((id) => localStorage.setItem("precentis.persona", id), admin);
+  const made = await request.post("/api/people", { headers: { "X-Member-Id": admin }, data: { name: `E2E-TMP Person ${Date.now()}`, role: "Associate", roles: ["fee_earner"] } });
+  expect(made.ok(), await made.text()).toBeTruthy();
+  const id = ((await made.json()) as { member_id: string }).member_id;
+
+  await page.goto(`/ui/people/${id}`);
+  await page.getByTestId("person-edit").click();
+  await page.getByLabel("Title").fill("Senior Associate");
+  await page.getByTestId("edit-person-save").click();
+  await expect(page.getByText("Senior Associate").first()).toBeVisible();
+
+  await page.getByTestId("person-deactivate").click();
+  await expect(page.getByTestId("deactivate-confirm")).toBeDisabled(); // a reason is required
+  await page.getByTestId("deactivate-reason").fill("Left the firm");
+  await page.getByTestId("deactivate-confirm").click();
+  await expect(page.getByText("(deactivated)")).toBeVisible();
+  await expect(page.getByTestId("person-reactivate")).toBeVisible();
+
+  await page.getByTestId("person-reactivate").click();
+  await expect(page.getByTestId("person-deactivate")).toBeVisible();
+});
+
+test("record an argument from the bank, edit it, and delete it after a confirmation", async ({ page, request }) => {
+  const headers = { "X-Member-Id": ME };
+  const clients = (await (await request.get("/api/clients?limit=3", { headers })).json()) as { items: { client_id: string }[] };
+  const title = `E2E-TMP args ${Date.now()}`;
+  const made = await request.post("/api/matters", { headers, data: { title, client_id: clients.items[0].client_id, practice_area: "Corporate", access_mode: "team" } });
+  expect(made.ok(), await made.text()).toBeTruthy();
+  const issue = `Maintainability of the petition ${Date.now()}`;
+
+  await page.goto("/ui/arguments");
+  await page.getByTestId("argument-record").click();
+  await page.getByTestId("argument-matter").click();
+  await page.getByTestId("argument-matter-search").fill(title);
+  await page.getByTestId("argument-matter-option").first().click();
+  await page.getByTestId("argument-matter-next").click();
+  await page.getByTestId("argument-issue").fill(issue);
+  await page.getByTestId("argument-text").fill("The petition is maintainable because the Commission has jurisdiction.");
+  await page.getByTestId("argument-save").click();
+
+  await page.getByTestId("arguments-search").fill(issue);
+  await expect(page.getByTestId("arguments-list")).toContainText(issue);
+  await expect(page.getByTestId("argument-detail")).toContainText("Commission has jurisdiction");
+
+  await page.getByTestId("argument-edit").click();
+  await page.getByTestId("argument-text").fill("Revised: maintainable under section 79.");
+  await page.getByTestId("argument-save").click();
+  await expect(page.getByTestId("argument-detail")).toContainText("Revised: maintainable under section 79.");
+
+  await page.getByTestId("argument-delete").click();
+  await page.getByTestId("confirm-accept").click();
+  await expect(page.getByTestId("arguments-list")).toHaveCount(0); // nothing else matches this search
+});

@@ -229,6 +229,38 @@ def create_client(body: ClientCreate, member_id: str | None = Depends(resolve_me
     return _run(client_svc.create_client, member_id, body.model_dump())
 
 
+class ClientPatch(BaseModel):
+    name: str | None = Field(default=None, max_length=300)
+    industry: str | None = None
+    size: str | None = None
+    headquarters: str | None = None
+    aliases: list[str] | None = Field(default=None, max_length=30)
+    locations: list[str] | None = Field(default=None, max_length=30)
+    subsidiaries: list[str] | None = Field(default=None, max_length=30)
+    status: Literal["active", "on_hold", "inactive"] | None = None
+
+
+class NoteBody(BaseModel):
+    kind: Literal["prefers", "avoid", "terms"]
+    text: str = Field(min_length=1, max_length=2000)
+    source_matter_id: str | None = None
+
+
+@clients_router.patch("/{client_id}")
+def patch_client(client_id: str, body: ClientPatch, member_id: str | None = Depends(resolve_member)) -> dict:
+    return jsonable_encoder(_run(client_svc.update_client, member_id, client_id, _set(body)))
+
+
+@clients_router.post("/{client_id}/notes", status_code=201)
+def post_client_note(client_id: str, body: NoteBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    return jsonable_encoder(_run(client_svc.add_client_note, member_id, client_id, body.kind, body.text, body.source_matter_id))
+
+
+@clients_router.delete("/{client_id}/notes/{note_id}", status_code=204)
+def delete_client_note(client_id: str, note_id: str, member_id: str | None = Depends(resolve_member)) -> None:
+    _run(client_svc.delete_client_note, member_id, client_id, note_id)
+
+
 @conflicts_router.post("/check", status_code=201)
 def post_check(body: CheckBody, member_id: str | None = Depends(resolve_member)) -> dict:
     return _run(client_svc.run_check, member_id, body.names, body.purpose)
@@ -271,6 +303,20 @@ def patch_me(body: PersonBody, member_id: str | None = Depends(resolve_member)) 
 @people_router.post("", status_code=201)
 def post_person(body: PersonBody, member_id: str | None = Depends(resolve_member)) -> dict:
     return _run(people_svc.create_person, member_id, body.model_dump(exclude_unset=True))
+
+
+class DeactivateBody(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+
+
+@people_router.post("/{person_id}/deactivate")
+def post_deactivate(person_id: str, body: DeactivateBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    return jsonable_encoder(_run(people_svc.deactivate_person, member_id, person_id, body.reason))
+
+
+@people_router.post("/{person_id}/reactivate")
+def post_reactivate(person_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return jsonable_encoder(_run(people_svc.reactivate_person, member_id, person_id))
 
 
 @people_router.patch("/{person_id}")
