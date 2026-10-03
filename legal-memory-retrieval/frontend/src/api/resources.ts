@@ -259,3 +259,17 @@ export function useDocumentSearch(documentId: string, versionId: string | undefi
 export function downloadDocument(documentId: string, versionId?: string): Promise<void> {
   return downloadFile(`/api/documents/${encodeURIComponent(documentId)}/download${qs({ version_id: versionId })}`, documentId)
 }
+
+// ── What changed between two versions ─────────────────────────────────────
+export type VersionDiff = { added_lines: number; removed_lines: number; diff: string[] }
+
+export function useVersionDiff(documentId: string, versionId: string, previousId: string | undefined, enabled: boolean) {
+  return useScopedQuery(
+    ['document', documentId, 'diff', versionId, previousId],
+    () =>
+      apiFetch<VersionDiff>(
+        `/api/documents/${encodeURIComponent(documentId)}/versions/${encodeURIComponent(versionId)}/diff${qs({ compare_with: previousId })}`,
+      ),
+    enabled && Boolean(previousId),
+  )
+}

@@ -362,3 +362,58 @@ test("switching to another version keeps the page you are on", async ({ page, re
   await expect(page).toHaveURL(/version=/);
   expect(new URL(page.url()).searchParams.get("page")).toBe(new URL(before).searchParams.get("page")); // not back to page 1
 });
+
+test("a question typed on the document page is sent to the Assistant with that document attached", async ({ page, request }) => {
+  const docs = await request.get("/api/documents?limit=1", { headers: { "X-Member-Id": ME } });
+  const doc = ((await docs.json()) as { items: { document_id: string }[] }).items[0];
+  let posted: { content?: string; files?: { document_id: string }[] } | null = null;
+  await page.route("**/api/chat/sessions/*/messages", async (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    posted = route.request().postDataJSON();
+    return route.fulfill({ contentType: "text/event-stream", body: `data: ${JSON.stringify({ type: "text_final", text: "Done." })}\n\ndata: [DONE]\n\n` });
+  });
+  await page.goto(`/ui/documents/${doc.document_id}`);
+  await page.getByRole("button", { name: "Assistant" }).first().click();
+  await page.getByTestId("document-ai-input").fill("Is the notice period reasonable?");
+  await page.getByTestId("document-ai-send").click();
+  await expect(page).toHaveURL(/\/ui\/chat/);
+  await expect.poll(() => posted?.content).toBe("Is the notice period reasonable?");
+  expect(posted?.files?.map((f) => f.document_id)).toContain(doc.document_id);
+  const id = new URL(page.url()).pathname.split("/").pop();
+  if (id && id !== "chat") await request.delete(`/api/chat/sessions/${id}`, { headers: { "X-Member-Id": ME } });
+});
+
+test("each version shows what it changed", async ({ page, request }) => {
+  const found = await request.get("/api/documents?q=Share%20Purchase%20Agreement&limit=20", { headers: { "X-Member-Id": ME } });
+  let id: string | null = null;
+  for (const d of ((await found.json()) as { items: { document_id: string }[] }).items) {
+    const v = await request.get(`/api/documents/${d.document_id}/versions`, { headers: { "X-Member-Id": ME } });
+    if (v.ok() && ((await v.json()) as { versions: unknown[] }).versions.length >= 2) {
+      id = d.document_id;
+      break;
+    }
+  }
+  test.skip(!id, "no document with two versions");
+  await page.goto(`/ui/documents/${id}?panel=versions`);
+  await page.getByTestId("version-changes-toggle").first().click();
+  await expect(page.getByTestId("version-changes")).toContainText(/lines/);
+});
+
+test("suggested edits to a PDF say they cannot be applied and offer comments instead", async ({ page }) => {
+  const now = new Date().toISOString();
+  const session = { id: "mock-pdf", title: "PDF edits", matter_id: null, pinned: false, created_at: now, updated_at: now, status: "active" };
+  const messages = [
+    { id: "u1", role: "user", content: "Fix the typos", created_at: now, files: [] },
+    {
+      id: "a1", role: "assistant", created_at: now, content: "Here are the changes.", citations: [],
+      events: [{ type: "edit_proposals", document_id: "DOC-PDF", filename: "Rejoinder.pdf", anchoring: "text",
+        edits: [{ id: "e1", original: "aged about 51years", proposed: "aged about 51 years", reason: "Adds a space", page: 15, located: true, status: "pending" }] }],
+    },
+  ];
+  await page.route("**/api/chat/sessions/mock-pdf", (route) => route.fulfill({ json: { session, messages } }));
+  await page.goto("/ui/chat/mock-pdf");
+  await expect(page.getByTestId("edits-pdf-note")).toContainText("PDF");
+  await expect(page.getByTestId("edits-as-comments")).toBeVisible();
+  await expect(page.getByTestId("edit-accept")).toHaveCount(0);
+  await expect(page.getByTestId("edits-export")).toHaveCount(0);
+});

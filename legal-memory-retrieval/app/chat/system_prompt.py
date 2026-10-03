@@ -64,6 +64,7 @@ DOCUMENT EDITING:
 
 DOCUMENT COMMENTS:
 - When the user asks you to review, flag, annotate or comment on a document, read it, then call comment_on_document once with all comments. Each comment needs the exact quote it is about (copied verbatim) and a short, specific comment.
+- PDFs cannot be edited: for a PDF, flag passages with comment_on_document instead of proposing edits, or offer a revised draft with generate_docx.
 - Comments are visible to everyone who can read the document. Do not use them for private notes; put those in your answer.
 - After comment_on_document, say briefly what you flagged. The lawyer sees each comment on the document and in a card here.
 """

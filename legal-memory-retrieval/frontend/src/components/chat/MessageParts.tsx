@@ -20,6 +20,7 @@ import { Link } from "react-router-dom";
 import { Icon } from "@/components/common/primitives";
 import { ApiError, authHeaders } from "@/api/client";
 import { decideAllEdits, decideEdit, exportEdits } from "@/api/chat";
+import { addComment } from "@/api/editor";
 import type { AskInputItem, Attachment, ChatEvent, EditProposal } from "@/api/types";
 import { cn } from "@/lib/utils";
 
@@ -334,6 +335,33 @@ export function EditProposalsCard({
   const [shown, setShown] = useState(EDITS_PAGE);
   const canSave = Boolean(sessionId && messageId);
   const accepted = edits.filter((e) => e.status === "accepted").length;
+  // A PDF cannot be changed in place, so accepting an edit would change nothing: offer comments instead.
+  const isPdf = group.filename.toLowerCase().endsWith(".pdf");
+  const [commenting, setCommenting] = useState(false);
+  const [commented, setCommented] = useState(0);
+  const addAsComments = async () => {
+    setCommenting(true);
+    let done = 0;
+    try {
+      for (const edit of edits) {
+        if (!edit.original) continue;
+        const what = edit.proposed ? `Suggested wording: ${edit.proposed}` : "Suggest deleting this passage.";
+        await addComment(group.document_id, {
+          body: `${what}${edit.reason ? `\n${edit.reason}` : ""}`,
+          page: edit.page ?? 1,
+          rects: [],
+          quote: edit.original,
+        });
+        done += 1;
+      }
+      setCommented(done);
+      toast.success(`${done} comment${done === 1 ? "" : "s"} added to ${group.filename}`);
+    } catch (err) {
+      toast.error(errorText(err, "Could not add the comments."));
+    } finally {
+      setCommenting(false);
+    }
+  };
 
   const decideAll = async (status: EditProposal["status"]) => {
     if (!canSave) {
@@ -397,7 +425,7 @@ export function EditProposalsCard({
           <span className="truncate">Suggested edits · {group.filename}</span>
           <span className="shrink-0 font-normal text-muted-foreground">({edits.length})</span>
         </div>
-        {edits.length > 1 && (
+        {edits.length > 1 && !isPdf && (
           <div className="ml-auto flex shrink-0 items-center gap-1">
             <button type="button" disabled={busy === "all"} onClick={() => void decideAll("accepted")}
               className="rounded-md border border-border px-2 py-0.5 text-xs hover:bg-secondary" data-testid="edits-accept-all">
@@ -409,7 +437,7 @@ export function EditProposalsCard({
             </button>
           </div>
         )}
-        <button
+        {!isPdf && <button
           type="button"
           disabled={!canSave || accepted === 0 || exporting}
           onClick={() => void exportDocx()}
@@ -418,8 +446,31 @@ export function EditProposalsCard({
         >
           {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
           Apply to Word ({accepted})
-        </button>
+        </button>}
       </div>
+      {isPdf && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-warning-soft px-3 py-2 text-xs text-warning-ink" data-testid="edits-pdf-note">
+          <span className="min-w-0 flex-1">This is a PDF. It cannot be changed in place, so accepting these edits would change nothing.</span>
+          {commented > 0 ? (
+            <Link
+              to={`/documents/${encodeURIComponent(group.document_id)}?panel=comments`}
+              className="shrink-0 rounded-md border border-border bg-card px-2 py-1 font-medium text-foreground hover:bg-secondary"
+            >
+              {commented} comments added. Open
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled={commenting}
+              onClick={() => void addAsComments()}
+              data-testid="edits-as-comments"
+              className="shrink-0 rounded-md bg-primary px-2 py-1 font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {commenting ? "Adding…" : "Add as comments"}
+            </button>
+          )}
+        </div>
+      )}
       <ul className="divide-y divide-border">
         {edits.slice(0, shown).map((edit, i) => (
           <li key={edit.id} className="space-y-1.5 px-3 py-2.5" data-testid="edit-card" data-status={edit.status}>
@@ -447,6 +498,8 @@ export function EditProposalsCard({
             )}
             {edit.reason && <p className="text-[12px] text-muted-foreground">{edit.reason}</p>}
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+              {!isPdf && (
+              <>
               <button
                 type="button"
                 disabled={busy === edit.id}
@@ -473,6 +526,8 @@ export function EditProposalsCard({
               >
                 <X className="h-3 w-3" /> Reject
               </button>
+              </>
+              )}
               {edit.located && (
                 <button
                   type="button"

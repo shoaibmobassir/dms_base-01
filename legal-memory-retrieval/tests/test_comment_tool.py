@@ -61,3 +61,29 @@ def test_nothing_is_added_without_a_known_document_or_comments(client, seeded):
         assert "error" in comment_on_document_tool({"doc_id": "nope", "comments": [{"quote": "x" * 20, "comment": "y"}]}, {}, conn, ME)[0]
         entry = DocEntry("doc-0", "DOC-X", "x.docx", version_id="V")
         assert "error" in comment_on_document_tool({"doc_id": "doc-0", "comments": []}, {"doc-0": entry}, conn, ME)[0]
+
+
+def test_a_pdf_cannot_be_edited_by_the_assistant(client, seeded):
+    from app.chat.tools.edit_tools import edit_document_tool
+    from app.chat.tools.review_tools import propose_edits
+
+    entry = DocEntry("doc-0", "DOC-X", "Rejoinder to reply.PDF", version_id="V")
+    with connect() as conn:
+        out = propose_edits("doc-0", [{"original": "a b c d e f", "proposed": "x"}], {"doc-0": entry}, {}, conn, ME)
+        assert "PDF" in out["error"] and "comment_on_document" in out["error"]
+        res, events = edit_document_tool({"doc_id": "doc-0", "instruction": "fix typos"}, {"doc-0": entry}, conn, ME)
+        assert "PDF" in res["error"] and events == []
+
+
+def test_a_version_diff_needs_both_versions_to_belong_to_the_document(client, seeded):
+    headers = as_member(ME)
+    found = {}
+    for d in client.get("/api/documents?limit=80", headers=headers).json()["items"]:
+        vs = client.get(f"/api/documents/{d['document_id']}/versions", headers=headers).json().get("versions", [])
+        if vs:
+            found[d["document_id"]] = vs[0]["version_id"]
+        if len(found) == 2:
+            break
+    (doc_a, ver_a), (_doc_b, ver_b) = list(found.items())
+    res = client.get(f"/api/documents/{doc_a}/versions/{ver_a}/diff", params={"compare_with": ver_b}, headers=headers)
+    assert res.status_code == 404

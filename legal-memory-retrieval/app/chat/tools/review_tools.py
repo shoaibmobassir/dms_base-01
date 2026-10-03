@@ -14,8 +14,10 @@ from typing import Any
 
 from app.chat.tools.document_tools import (
     PAGE_MARKER_RE,
+    PDF_NOT_EDITABLE,
     DocIndex,
     DocStore,
+    is_pdf,
     page_at,
     resolve_document_text,
 )
@@ -37,6 +39,8 @@ def propose_edits(
     entry = doc_index.get(doc_id)
     if not entry:
         return {"error": f"Document '{doc_id}' not found."}
+    if is_pdf(entry):
+        return {"error": PDF_NOT_EDITABLE}
     if not isinstance(edits, list) or not edits:
         return {"error": "No edits were provided."}
 

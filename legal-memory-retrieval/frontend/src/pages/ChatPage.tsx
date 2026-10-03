@@ -272,12 +272,31 @@ export function ChatPage() {
   const nonceRef = useRef(0);
   // Ask the Firm hands a question over with ?q= (and usually ?matter=): pre-fill it, never auto-send.
   const handedQuestion = searchParams.get("q");
+  const handedSend = searchParams.get("send") === "1";
   // A document page hands over the document to work on (?doc=&docTitle=): it arrives attached.
   const handedDocs = searchParams.getAll("doc");
   const handedDocTitles = searchParams.getAll("docTitle");
   const handedKey = handedDocs.join(",");
+  // A question typed on a document page (?send=1) is sent at once, with that document attached and the
+  // conversation limited to its matter. The values are read once: opening the matter clears the URL.
+  const handed = useRef({
+    q: searchParams.get("q"),
+    send: searchParams.get("send") === "1",
+    matter: searchParams.get("matter"),
+    files: searchParams.getAll("doc").map((id, i) => ({ document_id: id, filename: searchParams.getAll("docTitle")[i] || id })),
+  });
+  const sentHanded = useRef(false);
   useEffect(() => {
-    if (!handedQuestion) return;
+    const h = handed.current;
+    if (!h.send || !h.q || sentHanded.current || sessionId) return;
+    if (h.matter && !pendingMatter) return; // wait for the matter to load
+    sentHanded.current = true;
+    void send(h.q, h.files);
+    setAttachments([]); // they travel with the message; the box starts empty
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingMatter, sessionId]);
+  useEffect(() => {
+    if (!handedQuestion || handedSend) return;
     setDraft({ text: handedQuestion, nonce: Date.now() });
     if (!matterParam) setSearchParams({}, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps

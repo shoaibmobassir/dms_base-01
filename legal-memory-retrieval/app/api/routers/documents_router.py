@@ -306,6 +306,9 @@ def document_version_diff(
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
     _check_doc_access(document_id, member_id)
+    # Both versions must belong to the document that was access-checked.
+    if get_version(document_id.upper(), version_id) is None or get_version(document_id.upper(), compare_with) is None:
+        raise HTTPException(status_code=404, detail="Version not found")
     result = diff_versions(version_id, compare_with)
     result["service"] = SERVICE
     return result

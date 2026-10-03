@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useDocument,
   useDocumentBlocks,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { downloadDocument } from "@/api/resources";
+import { downloadDocument, useVersionDiff } from "@/api/resources";
 import { useApp } from "@/context/AppContext";
 import { FindInDocument } from "@/components/document-workspace/FindInDocument";
 import { CommentsPanel, SelectionComment, useDocComments } from "@/components/comments/DocComments";
@@ -349,6 +349,7 @@ function WorkspaceFrame({
         )}
         {rightTab === "versions" && (
           <VersionsList
+            documentId={doc.document_id}
             versions={versionRows}
             currentVersionId={currentVersionId}
             openVersionId={openVersionId}
@@ -364,6 +365,7 @@ function WorkspaceFrame({
             <p className="text-muted-foreground">
               The Assistant reads this document and can add comments, suggest edits and draft changes. It opens with the document attached.
             </p>
+            <AssistantAsk doc={doc} />
             <div className="flex flex-col gap-1.5">
               {AI_TASKS.map((t) => (
                 <Link
@@ -525,6 +527,48 @@ function WorkspaceFrame({
   );
 }
 
+/** Ask the Assistant anything about this document: it opens with the document attached and answers at once. */
+function AssistantAsk({ doc }: { doc: DocumentDetail }) {
+  const navigate = useNavigate();
+  const [text, setText] = useState("");
+  const go = () => {
+    const q = text.trim();
+    if (!q) return;
+    navigate(assistantLink(doc, q, true));
+  };
+  return (
+    <div className="rounded-2xl border border-border bg-card p-2 focus-within:border-wine/50 focus-within:ring-2 focus-within:ring-wine/10" data-testid="document-ai-ask">
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            go();
+          }
+        }}
+        rows={2}
+        placeholder="Ask about this document, or tell the Assistant what to change…"
+        aria-label="Ask the Assistant about this document"
+        data-testid="document-ai-input"
+        className="w-full resize-none bg-transparent px-2 py-1 text-sm focus:outline-none"
+      />
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={go}
+          disabled={!text.trim()}
+          aria-label="Send to the Assistant"
+          data-testid="document-ai-send"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:bg-secondary disabled:text-muted-foreground"
+        >
+          <Icon name="arrow_upward" style={{ fontSize: 18 }} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const AI_TASKS = [
   { label: "Review and add comments", icon: "add_comment", prompt: "Review this document and add comments on the key risks, ambiguities and anything I should confirm. Quote the exact wording each comment is about." },
   { label: "Suggest edits", icon: "edit_note", prompt: "Suggest edits that improve this document. Show them as tracked changes I can accept or reject." },
@@ -533,8 +577,9 @@ const AI_TASKS = [
 ];
 
 /** An Assistant conversation limited to the document's matter, with the document attached and a starting prompt. */
-function assistantLink(doc: DocumentDetail, prompt: string) {
+function assistantLink(doc: DocumentDetail, prompt: string, send = false) {
   const q = new URLSearchParams({ doc: doc.document_id, docTitle: doc.title, q: prompt });
+  if (send) q.set("send", "1"); // a question typed here is sent at once; a starter prompt only fills the box
   if (doc.matter_id) q.set("matter", doc.matter_id);
   return `/chat?${q.toString()}`;
 }
@@ -973,12 +1018,14 @@ function ThumbnailList({
 }
 
 function VersionsList({
+  documentId,
   versions,
   currentVersionId,
   openVersionId,
   loading,
   onOpen,
 }: {
+  documentId: string;
   versions: DocVersion[];
   currentVersionId?: string | null;
   openVersionId?: string;
@@ -1023,10 +1070,79 @@ function VersionsList({
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{v.change_summary}</p>
                 )}
               </button>
+              <VersionChanges documentId={documentId} version={v} previous={previousOf(versions, v)} />
             </li>
           );
         })}
       </ol>
+    </div>
+  );
+}
+
+/** The version just before this one, by version number. */
+function previousOf(versions: DocVersion[], v: DocVersion): DocVersion | undefined {
+  const n = v.version_number ?? 0;
+  return versions
+    .filter((x) => (x.version_number ?? 0) < n)
+    .sort((a, b) => (b.version_number ?? 0) - (a.version_number ?? 0))[0];
+}
+
+/** What this version changed against the one before it: lines added and removed, in the text. */
+function VersionChanges({ documentId, version, previous }: { documentId: string; version: DocVersion; previous?: DocVersion }) {
+  const [open, setOpen] = useState(false);
+  const [all, setAll] = useState(false);
+  const diff = useVersionDiff(documentId, version.version_id, previous?.version_id, open);
+  if (!previous) return null;
+  const lines = (diff.data?.diff ?? []).filter((l) => !l.startsWith("+++") && !l.startsWith("---") && !l.startsWith("@@"));
+  const shown = all ? lines : lines.slice(0, 24);
+  return (
+    <div className="px-3 pb-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        data-testid="version-changes-toggle"
+        className="text-xs font-medium text-wine hover:underline"
+      >
+        {open ? "Hide changes" : `What changed since v${previous.version_number ?? "?"}`}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-md border border-border bg-card text-xs" data-testid="version-changes">
+          {diff.isPending && <p className="p-2 text-muted-foreground">Comparing…</p>}
+          {diff.isError && <p className="p-2 text-destructive">The comparison could not be made.</p>}
+          {diff.data && (
+            <>
+              <p className="border-b border-border px-2 py-1.5 text-muted-foreground">
+                <span className="font-medium text-success-ink">+{diff.data.added_lines}</span>{" "}
+                <span className="font-medium text-destructive">−{diff.data.removed_lines}</span> lines
+              </p>
+              {lines.length === 0 ? (
+                <p className="p-2 text-muted-foreground">No change in the text.</p>
+              ) : (
+                <ul className="max-h-72 overflow-y-auto font-mono-id leading-relaxed">
+                  {shown.map((l, i) => (
+                    <li
+                      key={i}
+                      className={cn(
+                        "whitespace-pre-wrap break-words px-2 py-0.5",
+                        l.startsWith("+") && "bg-success-soft text-success-ink",
+                        l.startsWith("-") && "bg-destructive/10 text-destructive",
+                      )}
+                    >
+                      {l}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {lines.length > shown.length && (
+                <button type="button" onClick={() => setAll(true)} className="w-full border-t border-border py-1.5 text-muted-foreground hover:text-foreground">
+                  Show all {lines.length} lines
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
