@@ -1,6 +1,6 @@
 # Ask the Firm: docket pin, then store the answer
 
-**Status:** plan only. Do not implement until this is accepted.  
+**Status:** implemented. Validated with `tests/test_ask_docket_and_saved.py` and the Ask suite.  
 **Question that exposed it:** `APPEAL NO. 163 OF 2018 , have we prepared brief note of arguments in this appeal ?`  
 **Page:** `/ui/ask?q=…`
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass, field
 
+from app.km.docket import parse_docket
 from app.retrieval.route import MATTER_CODE_RE, MATTER_ID_RE
 
 DOC_ID_RE = re.compile(r"\bDOC-(?:\d+|[0-9A-F]{8,})\b", re.I)
@@ -81,6 +82,8 @@ class ParsedQuery:
     skip_vector: bool = False
     skip_rerank: bool = False
     dedupe_matters: bool = False
+    # Proceeding phrase when the question names an appeal / petition (Ask pin).
+    docket: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -185,6 +188,7 @@ def understand(query: str | None) -> ParsedQuery:
     dedupe_matters = intent == "experience_search"
     if intent == "experience_search" and practice_area:
         search_text = practice_area
+    docket_ref = parse_docket(raw) if raw else None
     return ParsedQuery(
         raw=raw,
         intent=intent,
@@ -198,4 +202,5 @@ def understand(query: str | None) -> ParsedQuery:
         skip_vector=skip_vector,
         skip_rerank=skip_rerank,
         dedupe_matters=dedupe_matters,
+        docket=docket_ref.label if docket_ref else None,
     )

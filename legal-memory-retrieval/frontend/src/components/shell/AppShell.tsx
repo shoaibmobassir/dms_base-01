@@ -118,7 +118,7 @@ function Shell({ children }: { children: ReactNode }) {
   // Full-bleed workspaces: document viewer and chat (history + thread need the width).
   // Ask the Firm too: its document panel sits beside the answer and needs the full height.
   const fillFrame =
-    /^\/documents\/[^/]+/.test(pathname) || pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/ask";
+    /^\/documents\/[^/]+/.test(pathname) || pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/ask" || pathname.startsWith("/ask/");
 
   return (
     <InspectorProvider>

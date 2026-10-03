@@ -19,6 +19,8 @@ class AskRequest(BaseModel):
     query: str
     k: int = 10
     scope: AskScope | None = None
+    # When true, discard any stored answer and re-run retrieval + the model.
+    refresh: bool = False
 
 
 class ProjectCreate(BaseModel):

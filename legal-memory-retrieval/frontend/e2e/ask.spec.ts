@@ -200,8 +200,24 @@ test("recent questions come from the server and can be removed", async ({ page }
   await list.getByRole("button", { name: /Remove “Who is on the Acme deal team\?”/ }).click();
   await expect(list.getByTestId("ask-history-item")).toHaveCount(1);
   await page.route("**/api/answers/stream", (route) => route.fulfill(sse({ status: "answered", abstained: false, answer: "ok" })));
+  await page.route("**/api/answers/saved/h2", (route) =>
+    route.fulfill({
+      json: {
+        query: "What relief was sought?",
+        answer: "ok",
+        key_finding: "ok",
+        abstained: false,
+        saved: true,
+        saved_id: "h2",
+        scope: "CI-OPEN-001",
+        sources: [],
+        panel: { matters: [], documents: [], people: [] },
+      },
+    }),
+  );
   await list.getByText("What relief was sought?").click();
-  await expect(page).toHaveURL(/q=What\+relief\+was\+sought%3F.*scope=CI-OPEN-001/);
+  await expect(page).toHaveURL(/\/ui\/ask\/h2/);
+  await expect(page.getByTestId("ask-from-cache")).toBeVisible();
 });
 
 test("verified answers cite exact spans and report removed statements", async ({ page }) => {
@@ -232,6 +248,41 @@ test("verified answers cite exact spans and report removed statements", async ({
   await expect(page.getByTestId("panel-quote-switcher")).toContainText("1/2");
   await page.getByTestId("panel-quote-switcher").getByLabel("Next quote").click();
   await expect(page.getByTestId("panel-quote")).toContainText("accorded to the transfer");
+});
+
+test("saved answer opens by id and does not POST the stream", async ({ page }) => {
+  const answerId = `ask-${Date.now()}`;
+  let streamPosts = 0;
+  await page.route(`**/api/answers/saved/${answerId}`, (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        query: "Have we prepared a brief note?",
+        answer: "Stored answer body.",
+        key_finding: "Stored key finding.",
+        abstained: false,
+        provider: "bedrock",
+        status: "answered",
+        saved: true,
+        saved_id: answerId,
+        sources: [],
+        matter_cards: [],
+        panel: { matters: [], documents: [], people: [] },
+      }),
+    });
+  });
+  await page.route("**/api/answers/stream", (route) => {
+    streamPosts += 1;
+    return route.fulfill(sse({ answer: "Should not stream.", key_finding: "no", abstained: false, provider: "bedrock", sources: [] }));
+  });
+  await page.goto(`/ui/ask/${answerId}`);
+  await expect(page.getByTestId("ai-answer")).toBeVisible();
+  await expect(page.getByTestId("ask-from-cache")).toBeVisible();
+  await expect(page.getByTestId("ask-question")).toContainText("Have we prepared a brief note?");
+  await expect(page.getByText("Stored key finding.")).toBeVisible();
+  expect(streamPosts).toBe(0);
 });
 
 test.describe("Ask the Firm with the language model", () => {

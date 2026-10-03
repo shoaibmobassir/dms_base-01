@@ -2,6 +2,27 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-02 — Ask the Firm: answer ids like Assistant sessions
+
+- URL is now ``/ask/{saved_id}`` after the first answer (same pattern as ``/chat/{sessionId}``).
+  Reopen loads ``GET /api/answers/saved/{id}`` only — no query string, no model re-run.
+- Recent questions list ids from ``ask_answers``; clicking one opens ``/ask/{id}``.
+- Root cause of “always hits the API with q=”: saved rows include scope, but reopen used
+  ``?q=`` alone, so the lookup missed and streamed again.
+
+## 2026-10-02 — Ask the Firm: docket pin + stored answers (plan 19)
+
+- Docket parse pins questions that name an appeal/petition (`Appeal No. 163 of 2018`, `APL. 163 of 2018`,
+  `Civil Appeal …`, `Petition 310/MP/2026`) to the matter whose **title** contains that phrase before the stem
+  resolver runs. Document-title copies on other matters (e.g. uploads on `CI-OPEN-001`) are noted, not cited as
+  the appeal. `understand()` records `docket` on `ParsedQuery`; fusion weights unchanged.
+- Stored answers: `ask_answers` table + `GET /api/answers/saved`; `POST /api/answers` and `/stream` return the
+  saved payload unless `refresh=true`. ACL re-checked on read. Ask UI loads saved answers first; Refresh forces
+  a re-run.
+- Tests: `tests/test_ask_docket_and_saved.py` (10) + Ask e2e saved-answer case. Full suite: 868 passed; 11
+  pre-existing failures in `test_calendar` / `test_firm_writes` (ACL/event feed), confirmed present without this
+  change.
+
 ## 2026-09-28 — Write layer and calendar (plan 17: P2, P3)
 
 - Matters: open (with lead, team and access mode), edit and close with optimistic concurrency; team with start/end

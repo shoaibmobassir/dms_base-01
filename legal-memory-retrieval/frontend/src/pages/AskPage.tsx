@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteAskHistory, listAskHistory, useAskStream } from "@/api/ask";
 import type { AskScopeType } from "@/api/resources";
@@ -36,13 +36,13 @@ function askedWhen(iso: string) {
     : d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
-/** The member's saved questions (server-side, so they survive a reload). */
+/** The member's saved answers (id is the reopen key, like a chat session). */
 function RecentQuestions({
-  current,
+  currentId,
   onPick,
   limit,
 }: {
-  current?: { q: string; scope: string | null };
+  currentId?: string | null;
   onPick: (item: AskHistoryItem) => void;
   limit?: number;
 }) {
@@ -69,7 +69,7 @@ function RecentQuestions({
       </div>
       <ul className="space-y-0.5">
         {items.map((h) => {
-          const active = current && h.query === current.q && (h.scope ?? null) === (current.scope ?? null);
+          const active = !!currentId && h.id === currentId;
           return (
             <li
               key={h.id}
@@ -105,18 +105,37 @@ function RecentQuestions({
 }
 
 function AskView() {
-  const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { answerId } = useParams<{ answerId?: string }>();
+  const [params] = useSearchParams();
   const q = params.get("q");
   const scope = params.get("scope");
   const rawType = params.get("scopeType");
   const scopeType: AskScopeType = rawType === "matter" || rawType === "client" ? rawType : "auto";
   const [runKey, setRunKey] = useState(0);
-  const ask = useAskStream(q, scope ? { type: scopeType, value: scope } : null, runKey);
   const panel = useDocumentPanel();
   const { identityKey } = useApp();
   const queryClient = useQueryClient();
 
-  // Until the final answer arrives, the page shows what was gathered.
+  // After a fresh ask, replace ``?q=`` with ``/ask/{saved_id}`` so reloads open the store.
+  const onSaved = useCallback(
+    (savedId: string) => {
+      if (answerId === savedId) return;
+      navigate(`/ask/${savedId}`, { replace: true });
+    },
+    [answerId, navigate],
+  );
+
+  const ask = useAskStream({
+    answerId: answerId ?? null,
+    // Only stream from ``?q=`` when there is no answer id yet.
+    query: answerId ? null : q,
+    scope: scope ? { type: scopeType, value: scope } : null,
+    runKey,
+    onSaved,
+  });
+
+  const questionText = String(ask.result?.query ?? q ?? "");
   const context: AskResult | null =
     ask.result ??
     (ask.evidence
@@ -129,20 +148,17 @@ function AskView() {
         }
       : null);
 
-  // The server saves each question before it gathers evidence; refresh the list once evidence arrives.
   const gathered = !!ask.evidence || ask.phase === "done";
   useEffect(() => {
-    if (q && gathered) void queryClient.invalidateQueries({ queryKey: [identityKey, "ask-history"] });
-  }, [q, gathered, identityKey, queryClient]);
+    if ((answerId || q) && gathered) void queryClient.invalidateQueries({ queryKey: [identityKey, "ask-history"] });
+  }, [answerId, q, gathered, identityKey, queryClient]);
 
-  // A new question starts with the document panel closed.
   const closePanel = panel?.close;
-  useEffect(() => closePanel?.(), [q, closePanel]);
+  useEffect(() => closePanel?.(), [answerId, q, closePanel]);
 
-  const pick = (h: AskHistoryItem) =>
-    setParams({ q: h.query, ...(h.scope ? { scope: h.scope, scopeType: h.scope_type ?? "auto" } : {}) });
+  const pick = (h: AskHistoryItem) => navigate(`/ask/${h.id}`);
 
-  if (!q) {
+  if (!answerId && !q) {
     return (
       <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col justify-center px-6 py-8">
         <div className="mb-8 text-center">
@@ -160,31 +176,31 @@ function AskView() {
     );
   }
 
-  // With a document open the page narrows to the answer, as in the Assistant.
   const split = !!panel?.isOpen;
   const cards = context?.matter_cards ?? [];
   const km = context?.panel;
   const abstainedOnRecords = !!ask.result?.abstained && ask.result.status !== "not_found";
+  const scopeLabel = scope ?? (typeof ask.result?.scope === "string" ? ask.result.scope : null);
 
   return (
     <div className={cn("mx-auto w-full px-6 py-8 lg:px-10 lg:py-10", split ? "max-w-3xl" : "max-w-[1180px]")}>
       <div className={cn("grid gap-8", !split && "lg:grid-cols-[200px_minmax(0,1fr)_260px]")}>
         {!split && (
           <aside className="order-2 lg:order-1">
-            <RecentQuestions current={{ q, scope }} onPick={pick} />
+            <RecentQuestions currentId={answerId} onPick={pick} />
           </aside>
         )}
 
         <div className="order-1 min-w-0 lg:order-2">
-          {scope && (
+          {scopeLabel && (
             <div className="mb-4 inline-flex items-center gap-1.5 rounded-md bg-wine-soft px-2.5 py-1 text-xs font-semibold text-wine">
-              <Icon name="target" style={{ fontSize: 15 }} /> Scope: {scope}
+              <Icon name="target" style={{ fontSize: 15 }} /> Scope: {scopeLabel}
             </div>
           )}
           <header className="mb-8 animate-rise">
             <Eyebrow className="mb-3">Ask the Firm</Eyebrow>
             <h1 className="max-w-2xl text-balance font-display text-2xl leading-tight text-ink sm:text-[32px]" data-testid="ask-question">
-              {q}
+              {questionText || "…"}
             </h1>
           </header>
           {ask.phase === "gathering" && <AIAssembling />}
@@ -198,11 +214,32 @@ function AskView() {
               onRetry={() => setRunKey((k) => k + 1)}
             />
           )}
-          {ask.phase === "done" && ask.result && <AIAnswer result={ask.result} />}
+          {ask.phase === "done" && ask.result && (
+            <div>
+              {ask.fromCache && (
+                <div className="mb-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <span data-testid="ask-from-cache">Saved answer — not re-run against the model.</span>
+                  <button
+                    type="button"
+                    className="font-medium text-wine hover:underline"
+                    data-testid="ask-refresh"
+                    onClick={() => setRunKey((k) => k + 1)}
+                  >
+                    Refresh
+                  </button>
+                </div>
+              )}
+              <AIAnswer result={ask.result} />
+            </div>
+          )}
           {km && (km.matters.length > 0 || km.people.length > 0) && ask.phase !== "error" && (
             <div className="mt-10">
               {abstainedOnRecords && <p className="mb-2 text-xs text-muted-foreground">Closest records found:</p>}
-              <KmPanel panel={km} question={q} onOpenDocument={(id, title) => panel?.openDocument(id, { title })} />
+              <KmPanel
+                panel={km}
+                question={questionText}
+                onOpenDocument={(id, title) => panel?.openDocument(id, { title })}
+              />
             </div>
           )}
           {cards.length === 1 && !abstainedOnRecords && (
@@ -212,7 +249,7 @@ function AskView() {
           )}
           <div className="mt-10">
             <SectionLabel>Ask a follow-up</SectionLabel>
-            <AskComposer scopeLabel={scope ?? undefined} scopeType={scopeType} placeholder="Ask a follow-up question…" />
+            <AskComposer scopeLabel={scopeLabel ?? undefined} scopeType={scopeType} placeholder="Ask a follow-up question…" />
           </div>
         </div>
 

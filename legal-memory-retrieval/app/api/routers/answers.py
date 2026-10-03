@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse
 from app.api.schemas import AskRequest
 from app.api.hits import hit_payload_highlighted
 from app.answers.format import format_dms_response
-from app.km import ask_history
+from app.km import ask_answers, ask_history
 from app.km.answer import ask_the_firm, ask_the_firm_stream
 from app.audit import events as audit
 from app.auth.deps import resolve_member
@@ -37,6 +37,12 @@ def ask_endpoint(
     t0 = time.perf_counter()
     scope = body.scope.model_dump() if body.scope else None
     _remember(body.query, scope, member_id)
+    if not body.refresh:
+        saved = _load_saved(body.query, scope, member_id)
+        if saved is not None:
+            return _publish_saved(saved, body, scope, member_id, time.perf_counter() - t0)
+    elif body.refresh:
+        _drop_saved(body.query, scope, member_id)
     with span("ask", {"query": body.query[:120], "member_id": member_id or ""}):
         with connect() as conn:
             result = ask_the_firm(conn, body.query, member_id, scope)
@@ -51,13 +57,25 @@ def ask_stream_endpoint(
     """Server-sent events: ``evidence``, ``key_finding``, ``delta``*, then ``final``.
 
     ``final.result`` has exactly the shape of ``POST /api/answers``.
+    When a stored answer exists and ``refresh`` is false, the stream returns that
+    payload without calling the model.
     """
     _limit(member_id)
     scope = body.scope.model_dump() if body.scope else None
     _remember(body.query, scope, member_id)
+    if body.refresh:
+        _drop_saved(body.query, scope, member_id)
 
     def events():
         t0 = time.perf_counter()
+        if not body.refresh:
+            saved = _load_saved(body.query, scope, member_id)
+            if saved is not None:
+                yield f"data: {json.dumps(_saved_evidence(saved), default=str)}\n\n"
+                published = _publish_saved(saved, body, scope, member_id, time.perf_counter() - t0)
+                yield f"data: {json.dumps({'type': 'final', 'result': published, 'replaced': False, 'saved': True}, default=str)}\n\n"
+                yield "data: [DONE]\n\n"
+                return
         try:
             with connect() as conn:
                 for ev in ask_the_firm_stream(conn, body.query, member_id, scope):
@@ -84,27 +102,94 @@ def _remember(query: str, scope: dict | None, member_id: str | None) -> None:
         logger.warning("[ask] could not save question history: %s", type(exc).__name__)
 
 
+def _load_saved(query: str, scope: dict | None, member_id: str | None) -> dict | None:
+    try:
+        with connect() as conn:
+            return ask_answers.load(conn, member_id, query, scope)
+    except Exception as exc:
+        logger.warning("[ask] could not load saved answer: %s", type(exc).__name__)
+        return None
+
+
+def _drop_saved(query: str, scope: dict | None, member_id: str | None) -> None:
+    try:
+        with connect() as conn:
+            ask_answers.drop(conn, member_id, query, scope)
+    except Exception as exc:
+        logger.warning("[ask] could not drop saved answer: %s", type(exc).__name__)
+
+
+def _saved_evidence(saved: dict) -> dict:
+    return {
+        "type": "evidence",
+        "resolved_scope": saved.get("resolved_scope"),
+        "people": saved.get("people"),
+        "matter_cards": saved.get("matter_cards"),
+        "panel": saved.get("panel"),
+        "sources": saved.get("sources") or [],
+        "saved": True,
+    }
+
+
+@router.get("/saved/{answer_id}")
+def ask_saved_by_id(
+    answer_id: str,
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Reopen one Ask answer by id — same idea as loading a chat session."""
+    with connect() as conn:
+        saved = ask_answers.load_by_id(conn, member_id, answer_id)
+    if saved is None:
+        raise HTTPException(status_code=404, detail="No saved answer")
+    return saved
+
+
+@router.get("/saved")
+def ask_saved_get(
+    q: str = Query(..., min_length=1, max_length=2000),
+    scope: str | None = Query(None, max_length=200),
+    scopeType: str | None = Query(None, pattern="^(matter|client|auto)$"),
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Return a previously grounded Ask answer when the member still has ACL access."""
+    scope_arg = {"type": scopeType or "auto", "value": scope} if scope else None
+    with connect() as conn:
+        saved = ask_answers.load(conn, member_id, q, scope_arg)
+    if saved is None:
+        raise HTTPException(status_code=404, detail="No saved answer")
+    return saved
+
+
 @router.get("/history")
 def ask_history_list(
     limit: int = Query(30, ge=1, le=100),
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
-    """The caller's recent Ask the Firm questions, newest first."""
+    """Recent Ask answers for this member. ``id`` is the reopen key (``/ask/{id}``)."""
     with connect() as conn:
-        items = ask_history.recent(conn, member_id, limit)
+        items = ask_answers.recent(conn, member_id, limit)
+        if not items:
+            # Fallback for older question-only history until every ask has a saved row.
+            items = ask_history.recent(conn, member_id, limit)
     return {"items": items}
 
 
 @router.delete("/history/{entry_id}", status_code=204)
 def ask_history_delete(entry_id: str, member_id: str | None = Depends(resolve_member)) -> None:
     with connect() as conn:
-        if not ask_history.remove(conn, member_id, entry_id):
+        removed = ask_answers.drop_by_id(conn, member_id, entry_id)
+        if not removed:
+            removed = ask_history.remove(conn, member_id, entry_id)
+        if not removed:
             raise HTTPException(status_code=404, detail="Question not found")
 
 
 @router.delete("/history", status_code=204)
 def ask_history_clear(member_id: str | None = Depends(resolve_member)) -> None:
     with connect() as conn:
+        if member_id:
+            conn.execute("DELETE FROM ask_answers WHERE member_id = %s", (member_id,))
+            conn.commit()
         ask_history.remove(conn, member_id)
 
 
@@ -115,6 +200,15 @@ def _limit(member_id: str | None) -> None:
         window_seconds=60.0,
     )
     REQUEST_TOTAL.labels(endpoint="ask").inc()
+
+
+def _store(result: dict, query: str, scope: dict | None, member_id: str | None) -> str | None:
+    try:
+        with connect() as conn:
+            return ask_answers.save(conn, member_id, query, scope, result)
+    except Exception as exc:
+        logger.warning("[ask] could not store answer: %s", type(exc).__name__)
+        return None
 
 
 def _publish(result: dict, body: AskRequest, scope: dict | None, member_id: str | None, elapsed: float) -> dict:
@@ -128,7 +222,7 @@ def _publish(result: dict, body: AskRequest, scope: dict | None, member_id: str 
     )
     if result.get("abstained"):
         ABSTENTIONS.labels(reason=result.get("reason", "unknown")).inc()
-    hits = result.pop("hits")
+    hits = result.pop("hits", None) or []
     result["hits"] = [hit_payload_highlighted(h, body.query, max_chars=380) for h in hits]
 
     # ── DMS portal format: add structured fields ─────────────────────
@@ -147,6 +241,26 @@ def _publish(result: dict, body: AskRequest, scope: dict | None, member_id: str 
     audit.record("ask", member_id=member_id, object_type="question", detail={
         "prompt": body.query, "scope": scope, "abstained": bool(result.get("abstained")),
         "cited_documents": cited, "provider": result.get("provider"),
+    })
+    saved_id = _store(result, body.query, scope, member_id)
+    if saved_id:
+        result["saved_id"] = saved_id
+    return result
+
+
+def _publish_saved(saved: dict, body: AskRequest, scope: dict | None, member_id: str | None, elapsed: float) -> dict:
+    """Return a stored answer without re-grounding or calling the model."""
+    RETRIEVAL_LATENCY.labels(endpoint="ask").observe(elapsed)
+    result = dict(saved)
+    result["hits"] = result.get("hits") or []
+    result["service"] = "answers"
+    result["saved"] = True
+    if result.get("saved_id"):
+        result["saved_id"] = result["saved_id"]
+    audit.record("ask", member_id=member_id, object_type="question", detail={
+        "prompt": body.query, "scope": scope, "abstained": bool(result.get("abstained")),
+        "cited_documents": sorted({str(c.get("document_id")) for c in result.get("sources") or [] if c.get("document_id")}),
+        "provider": result.get("provider"), "saved": True,
     })
     return result
 
@@ -172,4 +286,3 @@ def _matched_matters(result: dict) -> list[dict]:
 @router.get("/health")
 def answers_health() -> dict:
     return {"service": "answers", "status": "ok"}
-

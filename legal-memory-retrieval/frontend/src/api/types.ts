@@ -457,5 +457,11 @@ export type AskResult = {
   span_citations?: Citation[]
   grounding?: GroundingReport
   provider?: string
+  /** Stable reopen id — URL becomes ``/ask/{saved_id}``. */
+  saved_id?: string
+  saved?: boolean
+  query?: string
+  scope?: string | null
+  scope_type?: string | null
   [key: string]: unknown
 }

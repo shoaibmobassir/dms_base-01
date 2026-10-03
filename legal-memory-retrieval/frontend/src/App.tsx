@@ -22,7 +22,7 @@ function App() {
     <AppShell>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/ask" element={<AskPage />} />
+        <Route path="/ask/:answerId?" element={<AskPage />} />
         {/* One route so opening a new conversation's URL mid-answer doesn't remount the page. */}
         <Route path="/chat/:sessionId?" element={<ChatPage />} />
         <Route path="/assistant" element={<Navigate to="/chat" replace />} />
