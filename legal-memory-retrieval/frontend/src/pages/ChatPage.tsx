@@ -191,6 +191,15 @@ export function ChatPage() {
     void send(prompt, files);
   };
 
+  // Editing the last message: the answer to it is dropped and the new wording is sent.
+  const [editingAt, setEditingAt] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
+  const resend = (text: string, files: Attachment[]) => {
+    setEditingAt(null);
+    setMessages((prev) => prev.slice(0, -2));
+    void send(text, files);
+  };
+
   const sessionList = sessions.data ?? [];
   // The history list can lag behind a conversation opened elsewhere (e.g. from a matter page).
   const active = sessionList.find((s) => s.id === sessionId) ?? (loadedSession?.id === sessionId ? loadedSession : undefined);
@@ -446,6 +455,50 @@ export function ChatPage() {
     />
   );
 
+  const empty = !loadingThread && messages.length === 0;
+  const composerEl = (
+    <Composer
+          hero={empty}
+          leading={
+            <>
+              <MatterScopePicker
+                matterId={active?.matter_id}
+                pending={sessionId ? null : pendingMatter}
+                onChange={(choice) => void changeScope(choice)}
+                disabled={streaming}
+              />
+              {modelOptions.length > 1 && !sessionId && (
+                <select
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  aria-label="Model"
+                  className="h-9 cursor-pointer rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground focus:outline-none"
+                >
+                  {modelOptions.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
+          }
+          streaming={streaming}
+          disabled={models.data ? !models.data.configured : false}
+          mode={workMode}
+          onMode={setWorkMode}
+          uploading={uploading}
+          attachments={attachments}
+          draft={draft}
+          onRemoveAttachment={(id) => setAttachments((list) => list.filter((a) => a.document_id !== id))}
+          onOpenAttachment={(a) => openSource({ documentId: a.document_id, title: a.filename, label: "Attached document", quotes: [] })}
+          onUpload={(file) => void uploadDocument(file).then((att) => att && attach(att))}
+          onPickDocuments={() => setPickerOpen(true)}
+          onSend={(t) => void send(t)}
+          onStop={() => abortRef.current?.abort()}
+        />
+  );
+
   return (
     <div className="flex h-full min-h-0 bg-background">
       {/* History: docked beside the thread on wide screens, a sheet on small ones. */}
@@ -464,7 +517,7 @@ export function ChatPage() {
       )}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <header className="relative z-20 flex items-center justify-between gap-3 border-b border-border/80 bg-card/50 px-3 py-2 backdrop-blur-xs lg:px-4">
+      <header className="relative z-20 flex items-center justify-between gap-3 bg-background/80 px-3 py-2 backdrop-blur-xs lg:px-4">
         <div className="flex min-w-0 items-center gap-1.5">
           {!(isWide && historyOpen) && (
             <button
@@ -495,26 +548,6 @@ export function ChatPage() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {modelOptions.length > 1 && !sessionId && (
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              aria-label="Model"
-              className="cursor-pointer rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-foreground focus:outline-none"
-            >
-              {modelOptions.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          )}
-          <MatterScopePicker
-            matterId={active?.matter_id}
-            pending={sessionId ? null : pendingMatter}
-            onChange={(choice) => void changeScope(choice)}
-            disabled={streaming}
-          />
           {sessionId && messages.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -577,7 +610,7 @@ export function ChatPage() {
 
         {/* Chat Thread Messages Area */}
         <div ref={scrollRef} onScroll={onThreadScroll} className="flex-1 overflow-y-auto px-4 py-5 lg:px-6" data-testid="chat-thread">
-          <div className="mx-auto max-w-3xl space-y-5">
+          <div className={cn("mx-auto max-w-3xl", empty ? "flex min-h-full flex-col justify-center" : "space-y-7")}>
             {loadingThread && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-10 justify-center">
                 <Sparkles className="w-4 h-4 animate-spin text-primary" />
@@ -585,8 +618,9 @@ export function ChatPage() {
               </div>
             )}
 
-            {!loadingThread && messages.length === 0 && (
+            {empty && (
               <EmptyThread
+                composer={composerEl}
                 suggestions={suggestions.data ?? []}
                 matterId={active?.matter_id ?? pendingMatter?.matter_id}
                 onPick={(s) => void send(s)}
@@ -618,14 +652,63 @@ export function ChatPage() {
                       ))}
                     </div>
                   )}
-                  <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tr-xs bg-primary text-primary-foreground px-4 py-2.5 text-[14.5px] leading-relaxed shadow-2xs">
-                    {m.content}
-                  </div>
-                  {m.created_at && (
-                    <time className="px-1 text-xs text-muted-foreground" dateTime={m.created_at}>
-                      {new Date(m.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-                    </time>
+                  {editingAt === i ? (
+                    <div className="w-full max-w-[85%] space-y-2" data-testid="message-edit">
+                      <textarea
+                        autoFocus
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && editText.trim()) {
+                            e.preventDefault();
+                            resend(editText, m.files ?? []);
+                          }
+                          if (e.key === "Escape") setEditingAt(null);
+                        }}
+                        rows={3}
+                        aria-label="Edit your message"
+                        className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-[15px] leading-relaxed focus:outline-none focus-visible:border-wine/50"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => setEditingAt(null)} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary">
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!editText.trim()}
+                          onClick={() => resend(editText, m.files ?? [])}
+                          data-testid="message-edit-send"
+                          className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                        >
+                          Send
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="max-w-[85%] whitespace-pre-wrap rounded-3xl bg-secondary px-4 py-2.5 text-[15.5px] leading-relaxed text-foreground">
+                      {m.content}
+                    </div>
                   )}
+                  <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+                    {m.created_at && (
+                      <time dateTime={m.created_at}>
+                        {new Date(m.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                      </time>
+                    )}
+                    {i === messages.length - 2 && !streaming && editingAt !== i && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditText(m.content);
+                          setEditingAt(i);
+                        }}
+                        data-testid="message-edit-open"
+                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-secondary hover:text-foreground"
+                      >
+                        <Icon name="edit" style={{ fontSize: 14 }} /> Edit
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <AssistantMessage
@@ -655,22 +738,7 @@ export function ChatPage() {
           </button>
         )}
 
-        {/* Large Professional Composer */}
-        <Composer
-          streaming={streaming}
-          disabled={models.data ? !models.data.configured : false}
-          mode={workMode}
-          onMode={setWorkMode}
-          uploading={uploading}
-          attachments={attachments}
-          draft={draft}
-          onRemoveAttachment={(id) => setAttachments((list) => list.filter((a) => a.document_id !== id))}
-          onOpenAttachment={(a) => openSource({ documentId: a.document_id, title: a.filename, label: "Attached document", quotes: [] })}
-          onUpload={(file) => void uploadDocument(file).then((att) => att && attach(att))}
-          onPickDocuments={() => setPickerOpen(true)}
-          onSend={(t) => void send(t)}
-          onStop={() => abortRef.current?.abort()}
-        />
+        {!empty && composerEl}
 
       </section>
 

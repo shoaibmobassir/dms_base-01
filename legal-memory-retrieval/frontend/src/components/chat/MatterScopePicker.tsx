@@ -69,18 +69,18 @@ export function MatterScopePicker({
         data-testid="chat-scope"
         title={current ? `Searching only ${current.title || current.matter_code}` : "Searching every matter you can access"}
         className={cn(
-          "inline-flex max-w-[240px] items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors disabled:opacity-50",
+          "inline-flex h-9 max-w-[260px] items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors disabled:opacity-50",
           current ? "border-wine/40 bg-wine-soft text-wine" : "border-border bg-card text-foreground hover:bg-secondary",
         )}
       >
         <Crosshair className="h-3.5 w-3.5 shrink-0" />
-        <span className="hidden truncate sm:inline">{current ? current.matter_code : "All matters"}</span>
+        <span className="truncate">{current ? current.matter_code : "All matters"}</span>
         <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-70" />
       </button>
 
       {open && (
         <div
-          className="absolute right-0 top-full z-50 mt-1 w-[340px] max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-xl"
+          className="absolute bottom-full left-0 z-50 mb-1 w-[340px] max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-xl"
           data-testid="chat-scope-menu"
         >
           <p className="px-2 pb-1.5 pt-1 text-[12px] text-muted-foreground">Search in</p>

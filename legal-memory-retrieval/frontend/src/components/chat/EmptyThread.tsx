@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Attachment, DocumentItem } from "@/api/types";
 import { useDocuments, useMatter } from "@/api/resources";
 import { Icon } from "@/components/common/primitives";
@@ -11,7 +12,7 @@ function matterCards(matter: { title: string }, docs: DocumentItem[]) {
     {
       title: "Where the matter stands",
       query: `Summarise where ${matter.title} stands: the parties, the issues, and what is due next.`,
-      icon: <Scale className="w-4 h-4 text-success-ink" />,
+      icon: <Scale className="w-4 h-4 text-muted-foreground" />,
     },
     {
       title: "Draft a status note",
@@ -28,11 +29,14 @@ function matterCards(matter: { title: string }, docs: DocumentItem[]) {
 }
 
 export function EmptyThread({
+  composer,
   suggestions,
   matterId,
   onPick,
   onInsert,
 }: {
+  /** The message box, shown under the greeting. */
+  composer: ReactNode;
   suggestions: string[];
   matterId?: string | null;
   onPick: (s: string) => void;
@@ -60,7 +64,7 @@ export function EmptyThread({
     {
       title: "Legal research",
       query: "What Indian cases discuss specific performance in similar circumstances?",
-      icon: <Scale className="w-4 h-4 text-success-ink" />,
+      icon: <Scale className="w-4 h-4 text-muted-foreground" />,
     },
     {
       title: "Draft",
@@ -74,60 +78,60 @@ export function EmptyThread({
     },
   ];
 
+  const cards = scoped ?? generic;
   return (
-    <div className="select-none py-6 animate-in fade-in-50 duration-300">
-      <div className="mx-auto mb-6 max-w-lg text-center">
-        <h2 className="font-display text-2xl font-normal tracking-tight text-ink">
-          What would you like to work on?
+    <div className="flex w-full flex-col items-center py-6 animate-in fade-in-50 duration-300">
+      <div className="mb-6 max-w-lg text-center">
+        <h2 className="font-display text-3xl font-normal tracking-tight text-ink">
+          {scoped && matter.data ? `Working on ${matter.data.matter.matter_code}` : "What would you like to work on?"}
         </h2>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Ask questions, analyze documents, research authorities, or draft.
+        <p className="mt-2 text-sm text-muted-foreground">
+          {scoped && matter.data ? matter.data.matter.title : "Ask the firm's records, review documents, research authorities or draft."}
         </p>
       </div>
 
-      {!scoped && suggestions.length > 0 && (
-        <div className="mb-6">
-          <div className="meta-label mb-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-            From your open matters
-          </div>
-          <div className="space-y-0.5">
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => onPick(s)}
-                data-testid="chat-suggestion"
-                className="group flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-secondary"
-              >
-                <Icon name="chevron_right" className="text-muted-foreground group-hover:text-wine" style={{ fontSize: 14 }} />
-                <span className="text-ink group-hover:text-wine">{s}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      <div className="meta-label mb-1.5 text-xs uppercase tracking-wider text-muted-foreground" data-testid="chat-starters-label">
-        {scoped && matter.data ? `Start on ${matter.data.matter.matter_code}` : "Start from a task"}
-      </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
-        {(scoped ?? generic).map((card, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => onInsert(card.query, "file" in card ? card.file : undefined)}
-            title="Put this prompt in the message box"
-            data-testid="chat-starter"
-            className="group flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-wine/30 hover:bg-secondary/50"
-          >
-            <div className="mb-1.5 flex items-center gap-2">
-              <span className="rounded-md bg-secondary p-1">{card.icon}</span>
-              <h3 className="text-[13px] font-semibold text-ink group-hover:text-primary">{card.title}</h3>
-            </div>
-            <p className="line-clamp-2 text-[12px] leading-snug text-muted-foreground">&ldquo;{card.query}&rdquo;</p>
-          </button>
-        ))}
-      </div>
+      {composer}
 
+      <div className="mt-6 w-full max-w-3xl px-4">
+        <div className="sr-only" data-testid="chat-starters-label">
+          {scoped && matter.data ? `Start on ${matter.data.matter.matter_code}` : "Start from a task"}
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          {cards.map((card, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => onInsert(card.query, "file" in card ? card.file : undefined)}
+              title={card.query}
+              data-testid="chat-starter"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-[13px] text-foreground transition-colors hover:border-wine/40 hover:bg-wine-soft"
+            >
+              {card.icon}
+              <span>{card.title}</span>
+            </button>
+          ))}
+        </div>
+
+        {!scoped && suggestions.length > 0 && (
+          <div className="mx-auto mt-6 max-w-2xl">
+            <div className="mb-1.5 text-xs font-medium text-muted-foreground">From your open matters</div>
+            <div className="divide-y divide-border border-y border-border">
+              {suggestions.slice(0, 3).map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => onPick(q)}
+                  data-testid="chat-suggestion"
+                  className="group flex w-full cursor-pointer items-center gap-2 px-1 py-2.5 text-left text-[13.5px] transition-colors hover:bg-secondary/50"
+                >
+                  <Icon name="north_east" className="text-muted-foreground group-hover:text-wine" style={{ fontSize: 15 }} />
+                  <span className="text-ink group-hover:text-wine">{q}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

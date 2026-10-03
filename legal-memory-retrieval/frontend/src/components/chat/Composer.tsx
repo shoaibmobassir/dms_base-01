@@ -1,9 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { WorkMode } from "@/api/chat";
 import type { Attachment } from "@/api/types";
 import { Icon } from "@/components/common/primitives";
 import { cn } from "@/lib/utils";
-import { Check, FileText, Paperclip, Search, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Check, FileText, Paperclip, Plus, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // What each work mode changes about the answer (see app/chat/system_prompt.py).
@@ -28,7 +28,13 @@ export function Composer({
   onPickDocuments,
   onSend,
   onStop,
+  leading,
+  hero = false,
 }: {
+  /** Chips beside the mode (the matter the conversation works in, the model). */
+  leading?: ReactNode;
+  /** The empty conversation: the composer sits in the middle of the page, without a rule above it. */
+  hero?: boolean;
   streaming: boolean;
   disabled: boolean;
   mode: WorkMode;
@@ -72,8 +78,9 @@ export function Composer({
     setText("");
   };
 
+  const canSend = Boolean(text.trim()) && !disabled;
   return (
-    <div className="border-t border-border/80 bg-background/90 px-4 pb-2 pt-3 lg:px-8">
+    <div className={cn(hero ? "w-full px-4" : "bg-background px-4 pb-3 pt-2 lg:px-8")}>
       <div className="mx-auto max-w-3xl">
         <div
           onDragOver={(e) => e.preventDefault()}
@@ -81,30 +88,30 @@ export function Composer({
             e.preventDefault();
             for (const file of Array.from(e.dataTransfer.files)) onUpload(file);
           }}
-          className="flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all focus-within:border-wine/60 focus-within:ring-2 focus-within:ring-wine/10"
+          className="flex flex-col rounded-3xl border border-border bg-card shadow-md transition-all focus-within:border-wine/50 focus-within:ring-2 focus-within:ring-wine/10"
         >
           {(attachments.length > 0 || uploading) && (
-            <div className="flex flex-wrap gap-1.5 px-3 pt-2.5" data-testid="composer-attachments">
+            <div className="flex flex-wrap gap-1.5 px-4 pt-3" data-testid="composer-attachments">
               {attachments.map((a) => (
                 <span
                   key={a.document_id}
-                  className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 py-0.5 pl-1.5 pr-0.5 text-xs text-foreground"
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 py-1 pl-2.5 pr-1 text-xs text-foreground"
                 >
                   <button
                     type="button"
                     onClick={() => onOpenAttachment(a)}
                     title="Preview"
                     data-testid="composer-attachment-open"
-                    className="inline-flex items-center gap-1 hover:underline"
+                    className="inline-flex items-center gap-1.5 hover:underline"
                   >
-                    <FileText className="h-3 w-3 text-muted-foreground" />
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="max-w-[200px] truncate">{a.filename}</span>
                   </button>
                   <button
                     type="button"
                     aria-label={`Remove ${a.filename}`}
                     onClick={() => onRemoveAttachment(a.document_id)}
-                    className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    className="rounded-full p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -119,7 +126,7 @@ export function Composer({
           )}
           <textarea
             ref={ref}
-            rows={1}
+            rows={hero ? 2 : 1}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
@@ -128,15 +135,15 @@ export function Composer({
                 submit();
               }
             }}
-            placeholder={disabled ? "The assistant is not available: no language model is set up." : "Ask about your matters or attached documents…"}
+            placeholder={disabled ? "The assistant is not available: no language model is set up." : "Ask, draft or review…"}
             disabled={disabled}
             aria-label="Message"
             data-testid="chat-input"
-            className="max-h-[180px] w-full resize-none bg-transparent p-3.5 text-[14.5px] leading-relaxed text-ink placeholder:text-muted-foreground focus:outline-none"
+            className="max-h-[220px] w-full resize-none bg-transparent px-5 pb-1 pt-4 text-[15.5px] leading-relaxed text-ink placeholder:text-muted-foreground focus:outline-none"
           />
 
-          <div className="flex items-center justify-between gap-2 rounded-b-2xl border-t border-border/60 bg-muted/30 px-2 py-1.5 text-xs">
-            <div className="flex min-w-0 items-center gap-1">
+          <div className="flex items-center justify-between gap-2 px-3 pb-3 pt-1 text-xs">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
               <input
                 ref={fileRef}
                 type="file"
@@ -153,17 +160,18 @@ export function Composer({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    title="Attach"
-                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    title="Add documents"
+                    aria-label="Add documents"
+                    data-testid="composer-add"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   >
-                    <Paperclip className="h-4 w-4" />
-                    <span className="text-xs font-medium">Attach</span>
+                    <Plus className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" side="top" className="w-56">
                   <DropdownMenuItem disabled={uploading} onSelect={() => fileRef.current?.click()}>
-                    <FileText className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                    {uploading ? "Filing document…" : "Upload a file"}
+                    <Paperclip className="mr-2 h-3.5 w-3.5" />
+                    {uploading ? "Filing document…" : "Upload files"}
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={onPickDocuments}>
                     <Search className="mr-2 h-3.5 w-3.5" />
@@ -178,10 +186,9 @@ export function Composer({
                     type="button"
                     data-testid="chat-mode"
                     title="How the answer is written"
-                    className="flex min-w-0 items-center gap-1 rounded-lg px-2 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="flex h-9 min-w-0 items-center gap-1 rounded-full border border-border px-3 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   >
-                    <span className="text-xs">Mode:</span>
-                    <span className="truncate text-xs font-semibold text-foreground">{current.label}</span>
+                    <span className="truncate text-xs font-medium text-foreground">{current.label}</span>
                     <Icon name="expand_more" style={{ fontSize: 16 }} />
                   </button>
                 </DropdownMenuTrigger>
@@ -196,12 +203,13 @@ export function Composer({
                       <Check className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", m.id === mode ? "text-wine" : "invisible")} />
                       <span>
                         <span className="block text-[13px] font-semibold text-foreground">{m.label}</span>
-                        <span className="block text-[12px] text-muted-foreground">{m.description}</span>
+                        <span className="block text-xs text-muted-foreground">{m.description}</span>
                       </span>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+              {leading}
             </div>
 
             {streaming ? (
@@ -209,30 +217,32 @@ export function Composer({
                 type="button"
                 onClick={onStop}
                 data-testid="chat-stop"
-                className="inline-flex items-center gap-1 rounded-xl bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground shadow-2xs hover:opacity-90"
+                title="Stop"
+                aria-label="Stop"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-background transition-opacity hover:opacity-90"
               >
-                <Icon name="stop" style={{ fontSize: 16 }} />
-                <span>Stop</span>
+                <Icon name="stop" style={{ fontSize: 18 }} />
               </button>
             ) : (
               <button
                 type="button"
                 onClick={submit}
-                disabled={!text.trim() || disabled}
+                disabled={!canSend}
                 data-testid="chat-send"
-                className="inline-flex items-center gap-1 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-2xs transition-colors hover:bg-primary/90 disabled:bg-secondary disabled:text-muted-foreground disabled:shadow-none"
+                title="Send"
+                aria-label="Send"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all hover:opacity-90 active:scale-95 disabled:bg-secondary disabled:text-muted-foreground"
               >
-                <span>Send</span>
-                <Icon name="arrow_upward" style={{ fontSize: 16 }} />
+                <Icon name="arrow_upward" style={{ fontSize: 20 }} />
               </button>
             )}
           </div>
         </div>
-        <p className="mt-1.5 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground" data-testid="chat-review-note">
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground" data-testid="chat-review-note">
           <ShieldCheck className="h-3 w-3 shrink-0" />
           <span>
-            Answers are AI-generated; check the cited sources before relying on them.
-            <span className="hidden sm:inline"> Shift+Enter adds a new line.</span>
+            AI can make mistakes. Check the cited sources before relying on an answer.
+            <span className="hidden sm:inline"> Shift+Enter adds a line.</span>
           </span>
         </p>
       </div>

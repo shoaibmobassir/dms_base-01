@@ -267,3 +267,50 @@ test("find a phrase inside a PDF and jump to its page", async ({ page, request }
   await find.press("Enter");
   await expect(page.getByTestId("viewer-find-status")).toHaveText(/Page \d+|No match/, { timeout: 100_000 });
 });
+
+// The Assistant: a flat answer with its sources as chips, actions under it, and the last message editable.
+test.describe("Assistant conversation layout", () => {
+  const now = new Date().toISOString();
+  const session = { id: "mock-1", title: "Termination rights", matter_id: null, pinned: false, created_at: now, updated_at: now, status: "active" };
+  const messages = [
+    { id: "m1", role: "user", content: "Can the buyer terminate before closing?", created_at: now, files: [] },
+    {
+      id: "m2", role: "assistant", created_at: now, events: [],
+      content: "Yes, on thirty days' notice [1].",
+      citations: [{ ref: 1, document_id: "DOC-1", title: "Share Purchase Agreement.docx", page: 14, quote: "thirty (30) days", verified: true }],
+    },
+  ];
+
+  test("shows sources as chips, actions under the answer, and lets the last question be edited", async ({ page }) => {
+    await page.route("**/api/chat/sessions/mock-1", (route) => route.fulfill({ json: { session, messages } }));
+    await page.goto("/ui/chat/mock-1");
+    const answer = page.getByTestId("assistant-message");
+    await expect(answer).toContainText("thirty days' notice");
+    await expect(answer.getByTestId("source-chip")).toHaveCount(1);
+    await expect(answer.getByTestId("message-copy")).toBeVisible();
+    await expect(answer.getByTestId("message-regenerate")).toHaveCount(0); // no stored prompt on a reloaded answer
+    // Passages are one click away, not shown by default.
+    await expect(answer.getByTestId("citation-partial")).toHaveCount(0);
+    await answer.getByTestId("sources-toggle").click();
+    await expect(answer).toContainText("thirty (30) days");
+
+    await page.getByTestId("message-edit-open").click();
+    await expect(page.getByTestId("message-edit")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("message-edit")).toHaveCount(0);
+  });
+
+  test("an empty conversation centres the message box; a started one docks it", async ({ page }) => {
+    await page.route("**/api/chat/sessions/mock-1", (route) => route.fulfill({ json: { session, messages } }));
+    await page.goto("/ui/chat");
+    const box = page.getByTestId("chat-input");
+    await expect(box).toBeVisible();
+    const empty = await box.boundingBox();
+    expect(empty!.y).toBeLessThan(500); // in the middle of the page, under the greeting
+    await expect(page.getByTestId("chat-scope")).toBeVisible(); // the matter chip sits in the box
+    await page.goto("/ui/chat/mock-1");
+    await expect(page.getByTestId("assistant-message")).toBeVisible();
+    const docked = await page.getByTestId("chat-input").boundingBox();
+    expect(docked!.y).toBeGreaterThan(500); // at the bottom
+  });
+});
