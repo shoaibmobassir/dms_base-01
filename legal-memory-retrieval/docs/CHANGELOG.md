@@ -2,6 +2,13 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-03 — Frontend pass 7: one document page, Notion-style comments, Assistant comments
+
+- Document page = rendered pages + comments (no Edit needed); Pages | Text switch; version switch keeps the page; comment
+  highlight only for the open thread; select, press Comment, write.
+- `comment_on_document` Assistant tool (`app/chat/tools/comment_tools.py`, `tests/test_comment_tool.py`, 3) and a
+  "comments added" card. Playwright 83 passed (4 skipped).
+
 ## 2026-10-03 — Frontend pass 6: the Assistant conversation
 
 - Centred hero composer when empty, rounded composer with chips and a round send button, flat answers with source

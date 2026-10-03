@@ -344,6 +344,18 @@ regenerate, link, time) and source chips with "Show passages"; subtle user bubbl
 Also: bulk pin and unpin of matters; match count in the PDF find; flat buttons with a 2px focus ring; the locked-paragraph
 style in the editor uses theme tokens.
 
-**Not done yet:** a thumbs up or down on answers (needs a place to store it); branching of edited messages (editing drops
-the answer and resends; the server transcript keeps the earlier turn); `.eyebrow` and the uppercase `meta-label` styles are
-still used in places that `DESIGN.md` does not canonise.
+**Pass 7 (document page and comments):**
+- The document page now shows the document as filed (the same rendered pages as the editor's exact view), with the
+  comments beside it, without pressing Edit. A Pages | Text switch keeps the plain reader. Comments are the first right-hand
+  tab and the tab that used to be "AI" is now "Assistant".
+- Comments work like a notes app: select text, press Comment, write. A thread's text is marked on the page only while that
+  thread is open; others are a numbered margin badge. Shared by the document page, the editor's exact view and the edit view's
+  side list (`components/comments/DocComments.tsx`).
+- Switching versions keeps the page you are on (pages view and text view).
+- The Assistant has a new tool, `comment_on_document`: it leaves comments anchored to exact quotes, shown to colleagues like any
+  other comment, with a "comments added" card and a link that opens the thread. The Assistant tab offers "Review and add
+  comments" and "Suggest edits". The "Ask the Firm about this matter" link is gone from the document.
+
+**Not done yet:** editing the text in place on the document page (editing is still the separate Edit page, which now shows
+the comments beside the text); a thumbs up or down on answers; branching of edited messages; `.eyebrow` and `meta-label`
+styles that `DESIGN.md` does not canonise.
