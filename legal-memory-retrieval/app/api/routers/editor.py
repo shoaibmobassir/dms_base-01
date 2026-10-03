@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.auth.deps import resolve_member
 from app.db.connection import connect
-from app.documents import comments, editing, privacy
+from app.documents import comments, editing, privacy, review
 
 router = APIRouter(tags=["editor"])
 
@@ -220,3 +220,44 @@ def put_privacy(document_id: str, body: PrivacyBody, member_id: str | None = Dep
 @router.get("/documents/{document_id}/share-targets")
 def get_share_targets(document_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
     return jsonable_encoder(_run(privacy.share_targets, document_id.upper(), member_id))
+
+
+# ── Word review: who changed what, accept / reject (plan 18) ──────────────────
+
+class ReviewBody(BaseModel):
+    base_version_id: str
+    action: Literal["accept", "reject"]
+    keys: list[str] | None = Field(default=None, max_length=20000)
+    authors: list[str] | None = Field(default=None, max_length=50)
+    all: bool = False
+    note: str = Field(default="", max_length=1000)
+
+
+@router.get("/documents/{document_id}/review")
+def get_review(document_id: str, version_id: str | None = Query(default=None),
+               member_id: str | None = Depends(resolve_member)) -> JSONResponse:
+    out = _run(review.get_review, document_id.upper(), member_id, version_id)
+    return JSONResponse(jsonable_encoder(out), headers={"Cache-Control": "no-store"})
+
+
+@router.post("/documents/{document_id}/review", status_code=201)
+def post_review(document_id: str, body: ReviewBody, token: str | None = LockToken,
+                member_id: str | None = Depends(resolve_member)) -> dict:
+    return jsonable_encoder(_run(review.apply_review, document_id.upper(), member_id, base_version_id=body.base_version_id,
+                                 action=body.action, keys=body.keys, authors=body.authors, everything=body.all,
+                                 note=body.note, token=token))
+
+
+@router.get("/documents/{document_id}/contributors")
+def get_contributors(document_id: str, member_id: str | None = Depends(resolve_member)) -> JSONResponse:
+    out = _run(review.contributors, document_id.upper(), member_id)
+    return JSONResponse(jsonable_encoder(out), headers={"Cache-Control": "no-store"})
+
+
+@router.get("/documents/{document_id}/download-with-comments")
+def get_download_with_comments(document_id: str, version_id: str | None = Query(default=None),
+                               member_id: str | None = Depends(resolve_member)) -> Response:
+    """The Word file with every Precentis comment, reply and resolution written into it."""
+    data, name = _run(review.download_with_comments, document_id.upper(), member_id, version_id)
+    return Response(content=data, media_type=editing.DOCX_MIME,
+                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"})

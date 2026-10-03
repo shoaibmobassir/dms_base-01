@@ -4,8 +4,10 @@ The browser edits *paragraphs* of the current version; the server writes those e
 into the version's own file, so everything the editor did not touch keeps its exact
 Word formatting:
 
-    edit model   Document(accept_all(file)).paragraphs → [{pid, style, text, runs}]
-    save         accept_all(file) + ops → Word tracked changes by the signed-in member
+    edit model   the file's body paragraphs as they read with every change accepted →
+                 [{pid, style, text, runs, pending?, locked?}]; pending changes of other
+                 reviewers stay in the file and lock their paragraph (plan 18)
+    save         file + ops → Word tracked changes by the signed-in member
                  (text: ``app/drafting/docx_tracked.py``; bold/italic/underline and
                  paragraph style: ``app/documents/docx_format.py``) → stored as the next
                  version; the accepted text is what gets indexed for search
@@ -118,24 +120,113 @@ def _file_of(doc: dict, ver: dict | None) -> tuple[bytes | None, str]:
 
 
 def _zip_has_revisions(data: bytes) -> bool:
-    import zipfile
+    from app.documents.docx_review import has_revisions
 
-    try:
-        with zipfile.ZipFile(io.BytesIO(data)) as z:
-            xml = z.read("word/document.xml")
-    except Exception:
-        return False
-    from app.documents.docx_format import has_format_revisions
-
-    return b"<w:ins " in xml or b"<w:del " in xml or has_format_revisions(xml)
+    return has_revisions(data)
 
 
 def _accepted(data: bytes) -> bytes:
-    """The file with every revision accepted: text (docx_tracked) and formatting (docx_format)."""
-    from app.documents.docx_format import accept_formatting
-    from app.drafting.docx_tracked import accept_all
+    """The file with every tracked change accepted — text, moves, formatting, paragraph marks."""
+    from app.documents.docx_review import accept_everything
 
-    return accept_formatting(accept_all(data)) if _zip_has_revisions(data) else data
+    return accept_everything(data)
+
+
+# Private marker on body paragraphs while a save runs (removed before the file is written):
+# lets later passes tell a paragraph that was there from copies this save inserted after it.
+PCT_PID = "{urn:precentis:edit}pid"
+
+
+def _tag_paragraphs(data: bytes) -> bytes:
+    from app.documents.docx_review import Package, q
+
+    pkg = Package(data)
+    for i, p in enumerate(pkg.document.find(q("body")).findall(q("p"))):
+        p.set(PCT_PID, str(i))
+    pkg.set_xml("word/document.xml", pkg.document)
+    return pkg.save()
+
+
+def _finish_tagged(data: bytes, drop: set[int]) -> bytes:
+    """After a save: remove own inserted paragraphs the editor deleted; on paragraphs this save
+    inserted, drop identity and revision marks copied from the paragraph they follow; untag."""
+    from app.documents.docx_review import W14, Package, q
+
+    pkg = Package(data)
+    body = pkg.document.find(q("body"))
+    seen: set[str] = set()
+    for p in list(body.findall(q("p"))):
+        tag = p.get(PCT_PID)
+        if tag is None:
+            continue
+        del p.attrib[PCT_PID]
+        if tag not in seen:
+            seen.add(tag)
+            if int(tag) in drop:
+                body.remove(p)
+            continue
+        for name in ("paraId", "textId"):
+            p.attrib.pop(f"{{{W14}}}{name}", None)
+        for change in list(p.iter(q("pPrChange"), q("rPrChange"))):
+            change.getparent().remove(change)
+    pkg.set_xml("word/document.xml", pkg.document)
+    return pkg.save()
+
+
+def _final_runs(p) -> list[dict]:
+    """A paragraph's runs as they read with every change accepted (for paragraphs with pending changes)."""
+    from docx.text.run import Run
+
+    from app.documents.docx_review import q
+
+    out: list[dict] = []
+    for r in p._p.iter(q("r")):
+        if any(a.tag in (q("del"), q("moveFrom")) for a in r.iterancestors()):
+            continue
+        run = Run(r, p)
+        text = run.text
+        if not text:
+            continue
+        flags = (bool(run.bold), bool(run.italic), bool(run.underline))
+        if out and (out[-1]["bold"], out[-1]["italic"], out[-1]["underline"]) == flags:
+            out[-1]["text"] += text
+        else:
+            out.append({"text": text, "bold": flags[0], "italic": flags[1], "underline": flags[2]})
+    return out
+
+
+LOCKING_TYPES = ("paragraph_delete", "move_from")
+
+
+def _review_paragraphs(data: bytes, me: str | None) -> tuple[list[dict], dict]:
+    """The edit model of a Word file *with* its pending changes: each body paragraph as it reads
+    in the Final view, the changes still pending in it, and whether it is locked for this
+    member (someone else's pending changes, or a pending deletion)."""
+    from docx import Document
+
+    from app.documents.docx_review import paragraph_pending, read_revisions
+    from app.ingest.extractors.docx import style_namer
+
+    document = Document(io.BytesIO(data))
+    style_of = style_namer(document)
+    revs = read_revisions(data)
+    pending = paragraph_pending(data, revs)
+    summary = {"total": len(revs), "people": sorted({r.author for r in revs})}  # tables included
+    out = []
+    for i, p in enumerate(document.paragraphs):
+        pend = pending.get(i)
+        if not pend:
+            runs = [{"text": r.text, "bold": bool(r.bold), "italic": bool(r.italic), "underline": bool(r.underline)}
+                    for r in p.runs if r.text]
+            out.append({"pid": i, "style": style_of(p) or "Normal", "text": p.text, "runs": runs})
+            continue
+        runs = _final_runs(p)
+        others = sorted({x["author"] for x in pend if x["author"] != me})
+        deleting = any(t in LOCKING_TYPES for x in pend for t in x["types"])
+        out.append({"pid": i, "style": style_of(p) or "Normal", "text": "".join(r["text"] for r in runs), "runs": runs,
+                    "pending": pend, "locked": bool(others) or deleting,
+                    "locked_reason": "others" if others else ("deleted" if deleting else None)})
+    return out, summary
 
 
 def _docx_paragraphs(data: bytes) -> list[dict]:
@@ -296,14 +387,14 @@ def edit_model(conn, document_id: str, member_id: str | None) -> dict:
     ver = _version(conn, document_id, doc["current_version_id"])
     data, kind = _file_of(doc, ver)
     styles: list[str] = []
+    summary: dict = {}
     if kind == "docx":
         from docx import Document
 
         from app.documents.docx_format import paragraph_styles
 
-        accepted = _accepted(data)
-        paragraphs = _docx_paragraphs(accepted)
-        defined = paragraph_styles(Document(io.BytesIO(accepted)))
+        paragraphs, summary = _review_paragraphs(data, _member_name(conn, member_id) if member_id else None)
+        defined = paragraph_styles(Document(io.BytesIO(data)))
         styles = [name for name in EDITOR_STYLES if name in defined]
         mode = "docx"
     elif kind == "pdf":
@@ -322,6 +413,9 @@ def edit_model(conn, document_id: str, member_id: str | None) -> dict:
         "base_version_id": doc["current_version_id"],
         "version_number": (ver or {}).get("version_number"),
         "has_revisions": bool(data) and kind == "docx" and _zip_has_revisions(data),
+        # Tracked changes still pending in the file (accept/reject them in the Review panel).
+        "pending_changes": summary.get("total", 0),
+        "pending_people": summary.get("people", []),
         "paragraphs": paragraphs,
         "styles": styles,                  # paragraph styles the editor may apply (docx only)
         "lock": lock_status(conn, document_id),
@@ -523,10 +617,63 @@ def wait_for_indexing(timeout: float = 120.0) -> None:
     _embedder_pool.submit(lambda: None).result(timeout=timeout)
 
 
+def _edit_docx(data: bytes, ops: list[dict], author: str, mode: str = "tracked") -> tuple[bytes, dict]:
+    """The editor's ops written into a Word file as tracked changes by ``author`` (no database):
+    other reviewers' pending changes stay; paragraphs holding them cannot be edited."""
+    from docx import Document
+
+    from app.documents import docx_review
+    from app.documents.docx_format import apply_formatting, paragraph_styles, wants_formatting
+    from app.drafting.docx_tracked import apply_tracked_changes
+
+    # Work on the file as it is: other reviewers' pending changes stay exactly where they are.
+    base = data
+    revs = docx_review.read_revisions(base)
+    pending = docx_review.paragraph_pending(base, revs)
+    touched = {op["pid"] for op in ops if op["op"] in ("replace", "delete", "format")}
+    locked = sorted(pid for pid in touched if pid in pending and (
+        any(x["author"] != author for x in pending[pid])
+        or any(t in LOCKING_TYPES for x in pending[pid] for t in x["types"])))
+    if locked:
+        names = sorted({x["author"] for pid in locked for x in pending[pid] if x["author"] != author})
+        raise EditError(422, "Accept or reject the pending changes in these paragraphs first"
+                        + (f" (by {', '.join(names)})" if names else ""), {"locked_pids": locked})
+    own = sorted(pid for pid in touched if pid in pending)
+    own_inserted = {pid for pid in own if any("paragraph_insert" in x["types"] for x in pending[pid])}
+    if own:
+        # Your own earlier changes in a paragraph you edit again are redone against its original text.
+        keys = [r.key for r in revs if r.pid in set(own) and r.author == author
+                and r.type not in ("paragraph_insert", "paragraph_delete")]
+        # A paragraph only restyled keeps its text: its final text is written back as it read.
+        texted = {op["pid"] for op in ops if op["op"] in TEXT_OPS}
+        restyled = [pid for pid in own if pid not in texted]
+        if restyled:
+            paras = docx_review._body(docx_review.Package(base)).findall(docx_review.q("p"))
+            ops = [{"op": "replace", "pid": pid, "text": docx_review._final_text(paras[pid])} for pid in restyled] + ops
+        base, _ = docx_review.resolve(base, keys, accept=False)
+    base = _tag_paragraphs(base)
+    base_doc = Document(io.BytesIO(base))
+    n_paras = len(base_doc.paragraphs)
+    if any(op["pid"] >= n_paras for op in ops):
+        raise EditError(422, "An edit refers to a paragraph that does not exist")
+    styles = paragraph_styles(base_doc)
+    unknown = {op["style"] for op in ops if op.get("style") is not None and op["style"] not in styles}
+    if unknown:
+        raise EditError(422, f"This document has no paragraph style {', '.join(sorted(unknown))}")
+    tracked, stats = apply_tracked_changes(base, [op for op in ops if op["op"] in TEXT_OPS], author=author)
+    if any(wants_formatting(op) for op in ops):
+        tracked, fstats = apply_formatting(tracked, ops, author=author)
+        stats = {**stats, **fstats}
+    # A paragraph you inserted earlier and now delete simply goes (it never existed for others).
+    out = _finish_tagged(tracked, {op["pid"] for op in ops if op["op"] == "delete" and op["pid"] in own_inserted})
+    if mode == "clean":  # untracked: accept your own changes only, never other reviewers'
+        out, _ = docx_review.resolve(out, docx_review.keys_by(out, authors=[author]), accept=True)
+    return out, stats
+
+
 def save_edits(conn, document_id: str, member_id: str | None, base_version_id: str, ops: list[dict],
                note: str = "", mode: str = "tracked", token: str | None = None) -> dict:
     """Write the editor's paragraph edits as the next version (see module docstring)."""
-    from app.drafting.docx_tracked import accept_all, apply_tracked_changes
     from app.ingest.extractors.dispatch import extract_from_bytes
 
     doc = _document(conn, document_id)
@@ -548,29 +695,18 @@ def save_edits(conn, document_id: str, member_id: str | None, base_version_id: s
     author = _member_name(conn, member_id)
     number = _next_number(conn, document_id)
     if kind == "docx":
-        base = _accepted(data)
-        from docx import Document
+        from app.documents import docx_review
+        from app.documents.review import index_version, sync_comments
 
-        from app.documents.docx_format import accept_formatting, apply_formatting, paragraph_styles, wants_formatting
+        out, stats = _edit_docx(data, ops, author, mode)
 
-        base_doc = Document(io.BytesIO(base))
-        n_paras = len(base_doc.paragraphs)
-        if any(op["pid"] >= n_paras for op in ops):
-            raise EditError(422, "An edit refers to a paragraph that does not exist")
-        styles = paragraph_styles(base_doc)
-        unknown = {op["style"] for op in ops if op.get("style") is not None and op["style"] not in styles}
-        if unknown:
-            raise EditError(422, f"This document has no paragraph style {', '.join(sorted(unknown))}")
-        tracked, stats = apply_tracked_changes(base, [op for op in ops if op["op"] in TEXT_OPS], author=author)
-        if any(wants_formatting(op) for op in ops):
-            tracked, fstats = apply_formatting(tracked, ops, author=author)
-            stats = {**stats, **fstats}
-        out = tracked if mode == "tracked" else accept_formatting(accept_all(tracked))
+        out = sync_comments(conn, doc, out)
         name = Path(doc["title"]).stem + ".docx"
         uri = _store_version_file(doc, number, name, out, DOCX_MIME)
-        extracted = extract_from_bytes(name, accept_all(out))
+        extracted = extract_from_bytes(name, docx_review.accept_everything(out))
         version = _create(conn, doc, member_id, text=extracted.text, note=note, origin="editor", label=None,
                           storage_uri=uri, mime=DOCX_MIME, size=len(out), page_spans=extracted.pages)
+        index_version(conn, doc, version["version_id"], out)
     elif kind == "pdf":
         raise EditError(422, "PDFs cannot be edited in the browser; upload a Word version to edit the text")
     else:
@@ -622,6 +758,10 @@ def upload_version(conn, document_id: str, member_id: str | None, filename: str,
     uri = _store_version_file(doc, number, filename, data, mime)
     version = _create(conn, doc, member_id, text=extracted.text, note=note, origin="upload", label=label,
                       storage_uri=uri, mime=mime, size=len(data), page_spans=extracted.pages)
+    if suffix == ".docx":  # who changed what in the file, and its Word comments
+        from app.documents.review import index_version
+
+        index_version(conn, doc, version["version_id"], data)
     record_event(conn, document_id, member_id, "version.upload", version["version_id"], {"filename": filename, "note": note})
     conn.commit()
     audit.record("document.version.upload", member_id=member_id, object_type="document", object_id=document_id,

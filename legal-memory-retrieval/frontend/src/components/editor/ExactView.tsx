@@ -13,6 +13,7 @@ import { Icon } from "@/components/common/primitives";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import type { MarksLocated, ViewerMark, ViewerSelection, ViewerTarget } from "@/components/viewer/DocumentViewer";
+import { ReviewPanel } from "@/components/editor/ReviewPanel";
 
 const DocumentViewer = lazy(() => import("@/components/viewer/DocumentViewer").then((m) => ({ default: m.DocumentViewer })));
 
@@ -22,7 +23,22 @@ const when = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyl
  * The document exactly as filed (rendered pages) with comments: select text on a page to
  * comment on it; threads are listed beside the pages and marked on them.
  */
-export function ExactView({ documentId, currentVersionId }: { documentId: string; currentVersionId: string }) {
+/** What the sidebar shows: the comment threads, or Word's reviewing pane. */
+export type ExactSide = { kind: "comments" } | {
+  kind: "review";
+  baseVersionId: string;
+  canWrite: boolean;
+  onNewVersion: (versionNumber: number, note: string) => void;
+};
+
+export function ExactView({ documentId, currentVersionId, side = { kind: "comments" }, showViews = false }: {
+  documentId: string;
+  currentVersionId: string;
+  side?: ExactSide;
+  /** Offer Markup / Final / Original (Word files with tracked changes). */
+  showViews?: boolean;
+}) {
+  const [renderView, setRenderView] = useState<"markup" | "final" | "original">("markup");
   const { identityKey, me, toast } = useApp();
   const queryClient = useQueryClient();
   // null = the current version; otherwise an earlier version opened from a detached thread.
@@ -50,8 +66,10 @@ export function ExactView({ documentId, currentVersionId }: { documentId: string
   const marks: ViewerMark[] = visible.map((t) => ({
     id: t.comment_id,
     page: t.page,
-    boxes: t.carried ? [] : t.rects,
-    quote: t.carried ? t.quote : undefined,
+    // Threads from earlier versions, and comments that came from Word (no page boxes), are
+    // found again by their quote.
+    boxes: t.carried || !t.rects.length ? [] : t.rects,
+    quote: t.carried || !t.rects.length ? t.quote : undefined,
     label: labels.get(t.comment_id) ?? "",
     active: t.comment_id === active,
     muted: t.status === "resolved",
@@ -63,7 +81,8 @@ export function ExactView({ documentId, currentVersionId }: { documentId: string
     const page = t.carried ? located[t.comment_id] : t.page;
     if (page) setTarget({ page, quote: "", nonce: Date.now() });
   };
-  const readOnlyVersion = Boolean(viewing);
+  // Comments are placed on the pages as filed; the Final / Original renditions lay out differently.
+  const readOnlyVersion = Boolean(viewing) || renderView !== "markup";
 
   const run = async (fn: () => Promise<unknown>, done?: string) => {
     setBusy(true);
@@ -107,11 +126,25 @@ export function ExactView({ documentId, currentVersionId }: { documentId: string
         </div>
       )}
       {/* contain: fit-width pages must not widen the layout that sizes them */}
-      <div className="h-[calc(100vh-14rem)] min-w-0 overflow-hidden rounded-md border border-border bg-card [contain:inline-size]" data-testid="editor-exact">
+      <div className="flex h-[calc(100vh-14rem)] min-w-0 flex-col overflow-hidden rounded-md border border-border bg-card [contain:inline-size]" data-testid="editor-exact">
+        {showViews && (
+          <div className="flex items-center gap-1 border-b border-border px-2 py-1 text-xs" role="tablist" aria-label="Show">
+            {([["markup", "All markup"], ["final", "Final"], ["original", "Original"]] as const).map(([k, label]) => (
+              <button key={k} type="button" role="tab" aria-selected={renderView === k} onClick={() => setRenderView(k)} data-testid={`exact-view-${k}`}
+                className={cn("rounded px-2 py-0.5", renderView === k ? "bg-secondary font-medium text-foreground" : "text-muted-foreground hover:bg-secondary")}>
+                {label}
+              </button>
+            ))}
+            <span className="ml-2 text-muted-foreground">
+              {renderView === "markup" ? "As filed, with tracked changes" : renderView === "final" ? "Every change accepted" : "Every change rejected"}
+            </span>
+          </div>
+        )}
+        <div className="min-h-0 flex-1">
         <Suspense fallback={<p className="p-6 text-sm text-muted-foreground">Loading pages…</p>}>
           <DocumentViewer
-            key={viewing?.versionId ?? currentVersionId}
-            src={`/api/documents/${encodeURIComponent(documentId)}/render?version_id=${encodeURIComponent(viewing?.versionId ?? currentVersionId)}`}
+            key={`${viewing?.versionId ?? currentVersionId}-${renderView}`}
+            src={`/api/documents/${encodeURIComponent(documentId)}/render?version_id=${encodeURIComponent(viewing?.versionId ?? currentVersionId)}${renderView !== "markup" ? `&view=${renderView}` : ""}`}
             target={target}
             marks={marks}
             onMarkClick={(cid) => {
@@ -125,12 +158,19 @@ export function ExactView({ documentId, currentVersionId }: { documentId: string
             }}
           />
         </Suspense>
+        </div>
       </div>
 
+      {side.kind === "review" ? (
+        <aside className="flex max-h-[calc(100vh-14rem)] min-h-0 flex-col">
+          <ReviewPanel documentId={documentId} baseVersionId={side.baseVersionId} canWrite={side.canWrite}
+            onNewVersion={side.onNewVersion} onJump={(quote) => setTarget({ page: null, quote, nonce: Date.now() })} />
+        </aside>
+      ) : (
       <aside className="flex max-h-[calc(100vh-14rem)] min-h-0 flex-col gap-3" data-testid="editor-comments">
         <div className="rounded-lg border border-border bg-card p-4">
           {readOnlyVersion ? (
-            <p className="text-xs text-muted-foreground">Comments are added on the current version.</p>
+            <p className="text-xs text-muted-foreground">{viewing ? "Comments are added on the current version." : "Switch to All markup to add comments."}</p>
           ) : composing && selection ? (
             <div className="space-y-2" data-testid="comment-composer">
               <p className="line-clamp-3 border-l-2 border-amber-400 pl-2 text-xs italic text-muted-foreground">“{selection.quote}”</p>
@@ -202,6 +242,7 @@ export function ExactView({ documentId, currentVersionId }: { documentId: string
           </ul>
         </div>
       </aside>
+      )}
     </div>
   );
 }
@@ -248,6 +289,7 @@ function Thread({
           <span>p. {thread.page}</span>
           {resolved && <span className="rounded bg-secondary px-1.5">Resolved{thread.resolved_by ? ` by ${thread.resolved_by}` : ""}</span>}
           {thread.carried && <span className="rounded bg-secondary px-1.5" data-testid="comment-carried">from v{thread.version_number ?? "?"}</span>}
+          {thread.source === "word" && <span className="rounded bg-sky-100 px-1.5 text-sky-900" data-testid="comment-from-word">Word</span>}
         </div>
         {thread.quote && (
           <p className={cn("mb-1.5 line-clamp-2 border-l-2 pl-2 text-xs italic text-muted-foreground", detached ? "border-muted-foreground/40 line-through" : "border-amber-400")}>

@@ -6,7 +6,8 @@ tracked version → download the stored file, and check:
 
   read_ok        the edit model's paragraphs are exactly the file's body paragraphs
   accept_ok      the file with all changes accepted equals the expected edited text
-  reject_ok      the file with all changes rejected equals the text before the edit
+  reject_ok      the file with every change rejected reads as the document first uploaded
+                 (saves keep earlier pending changes, including the editor's own)
   untouched_ok   every paragraph not edited keeps its style and run formatting (100%)
   tables_ok      tables (view-only in the editor) survive unchanged
   next_ok        the next edit model starts from the accepted text (a second round runs on it)
@@ -46,8 +47,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from app.db.connection import connect  # noqa: E402
-from app.documents.docx_format import accept_formatting, reject_formatting  # noqa: E402
-from app.drafting.docx_tracked import accept_all, formatting_signature, view  # noqa: E402
+from app.documents.docx_review import accept_everything, read_revisions, resolve, text_view  # noqa: E402
+from app.drafting.docx_tracked import formatting_signature  # noqa: E402
 from evals.long_doc.generate import build_document, to_docx  # noqa: E402
 
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -114,7 +115,14 @@ def _make_ops(texts: list[str], rng: random.Random, n_replace: int, n_delete: in
 
 
 def _accept(data: bytes) -> bytes:
-    return accept_formatting(accept_all(data))
+    return accept_everything(data)
+
+
+def _formatting_rejected(data: bytes) -> bytes:
+    """Formatting revisions rejected, every other change accepted."""
+    fmt = [r.key for r in read_revisions(data) if r.type in ("format", "paragraph_format")]
+    out, _ = resolve(data, fmt, accept=False)
+    return accept_everything(out)
 
 
 def _format_ops(paragraphs: list[dict], used: set[int], rng: random.Random, n: int) -> list[dict]:
@@ -148,7 +156,8 @@ def _char_flags(p_el) -> list[tuple[bool, bool, bool]]:
     return [(bool(r.bold), bool(r.italic), bool(r.underline)) for r in Paragraph(p_el, None).runs for _ in r.text]
 
 
-def _format_checks(base: bytes, out: bytes, ops: list[dict], origin: list[int | None]) -> tuple[bool, bool, int]:
+def _format_checks(base: bytes, out: bytes, ops: list[dict], origin: list[int | None],
+                   base_idx: dict[int, int]) -> tuple[bool, bool, int]:
     """(accepted formatting as asked, rejected formatting as before, formatting ops checked)."""
     fmt = [o for o in ops if o["op"] == "format"]
     if not fmt:
@@ -166,10 +175,10 @@ def _format_checks(base: bytes, out: bytes, ops: list[dict], origin: list[int | 
             want = [(bool(r["bold"]), bool(r["italic"]), bool(r["underline"])) for r in o["runs"] for _ in r["text"]]
             accept_ok &= _char_flags(el) == want
     old = _body_paragraphs(base)
-    rejected = _body_paragraphs(reject_formatting(accept_all(out)))
+    rejected = _body_paragraphs(_formatting_rejected(out))
     # With text changes accepted and formatting rejected, paragraphs line up with ``origin``.
     reject_ok = len(rejected) == len(origin) and all(
-        formatting_signature(rejected[position[o["pid"]]]) == formatting_signature(old[o["pid"]]) for o in fmt)
+        formatting_signature(rejected[position[o["pid"]]]) == formatting_signature(old[base_idx[o["pid"]]]) for o in fmt)
     return bool(accept_ok), reject_ok, len(fmt)
 
 
@@ -266,6 +275,7 @@ def run(base_url: str, pages_list: list[int], rounds: int, seed: int) -> dict:
                 row = {"pages": pages, "paragraphs": 0, "upload_s": round(upload_s, 2),
                        "render_s": round(render_s, 2), "render_ok": render_ok, "rounds": []}
                 current = original
+                first_original = text_view(original, "original")
                 for rnd in range(rounds):
                     t0 = time.perf_counter()
                     r = http.get(f"/api/editor/documents/{doc_id}")
@@ -275,7 +285,12 @@ def run(base_url: str, pages_list: list[int], rounds: int, seed: int) -> dict:
                     texts = [p["text"] for p in model["paragraphs"]]
                     row["paragraphs"] = row["paragraphs"] or len(texts)
                     base_accepted = _accept(current)
-                    read_ok = texts == [p_text for p_text in view(base_accepted, accept=True)]
+                    # Paragraphs deleted in an earlier round stay in the file (pending) and in the model
+                    # (locked, empty) — they are gone from the Final view.
+                    gone = {p["pid"] for p in model["paragraphs"] if p.get("locked_reason") == "deleted"}
+                    live_pids = [p["pid"] for p in model["paragraphs"] if p["pid"] not in gone]
+                    base_idx = {pid: i for i, pid in enumerate(live_pids)}
+                    read_ok = [texts[pid] for pid in live_pids] == text_view(current, "final")
 
                     n = len(texts)
                     ops = _make_ops(texts, rng, n_replace=max(3, n // 40), n_delete=max(1, n // 200), n_insert=max(1, n // 200))
@@ -294,13 +309,15 @@ def run(base_url: str, pages_list: list[int], rounds: int, seed: int) -> dict:
                     stored = http.get(f"/api/documents/{doc_id}/download")
                     stored.raise_for_status()
                     out = stored.content
-                    want, origin = _expected(texts, ops)
+                    want_all, origin_all = _expected(texts, ops)
+                    kept = [(t, o) for t, o in zip(want_all, origin_all) if o is None or o not in gone]
+                    want, origin = [t for t, _ in kept], [o for _, o in kept]
                     accepted = _accept(out)
-                    accept_ok = view(out, accept=True) == want
-                    reject_ok = view(out, accept=False) == texts
+                    accept_ok = text_view(out, "final") == want
+                    reject_ok = text_view(out, "original") == first_original
 
                     touched = {o["pid"] for o in ops if o["op"] in ("replace", "delete", "format")}
-                    format_accept_ok, format_reject_ok, format_checked = _format_checks(base_accepted, out, ops, origin)
+                    format_accept_ok, format_reject_ok, format_checked = _format_checks(base_accepted, out, ops, origin, base_idx)
                     tracked_render_ok = _renders(out) if rnd == 0 else True
                     old_p = _body_paragraphs(base_accepted)
                     new_p = _body_paragraphs(accepted)
@@ -310,12 +327,12 @@ def run(base_url: str, pages_list: list[int], rounds: int, seed: int) -> dict:
                             if pid is None or pid in touched:
                                 continue
                             checked += 1
-                            kept += formatting_signature(el) == formatting_signature(old_p[pid])
+                            kept += formatting_signature(el) == formatting_signature(old_p[base_idx[pid]])
                     untouched_ok = checked > 0 and kept == checked
                     tables_ok = _tables(accepted) == _tables(base_accepted)
 
                     after = http.get(f"/api/editor/documents/{doc_id}").json()
-                    next_ok = [p["text"] for p in after["paragraphs"]] == want and not after["draft"]
+                    next_ok = [p["text"] for p in after["paragraphs"] if p.get("locked_reason") != "deleted"] == want and not after["draft"]
                     row["rounds"].append({
                         "ops": len(ops), "stats": r.json()["stats"], "save_s": round(save_s, 3), "model_s": round(model_s, 3),
                         "read_ok": read_ok, "accept_ok": accept_ok, "reject_ok": reject_ok,

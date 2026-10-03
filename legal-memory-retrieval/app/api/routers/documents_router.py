@@ -721,6 +721,8 @@ def document_download(
 def document_render(
     document_id: str,
     version_id: str | None = Query(default=None, description="defaults to the current version"),
+    view: str = Query(default="markup", pattern="^(markup|final|original)$",
+                      description="Word files with tracked changes: as filed (markup), all accepted, or all rejected"),
     member_id: str | None = Depends(resolve_member),
 ):
     """Return the document as a PDF for the in-app viewer.
@@ -733,6 +735,10 @@ def document_render(
     from app.documents.pdf_render import RenderUnavailable, to_pdf
 
     data, mime, filename, _kind, _vid = _original_file(document_id, version_id, member_id)
+    if view != "markup" and filename.lower().endswith(".docx"):
+        from app.documents.docx_review import accept_everything, reject_everything
+
+        data = accept_everything(data) if view == "final" else reject_everything(data)
     try:
         pdf = to_pdf(data, mime, filename)
     except RenderUnavailable as exc:
