@@ -2,6 +2,55 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-03 — Review fixes (code-review, high)
+
+- **Security:** `/documents/{id}/versions/{vid}/search`, `/blocks` and `/outline` now require the version to belong to the
+  document that was access-checked (the search could read another document's blocks by version id).
+- Follow-ups are stored apart from stand-alone answers: migration `20261003a_ask_follow_up.sql` adds
+  `ask_answers.follow_up_of` to the unique key; `load`/`drop` only touch stand-alone rows, so the cache can neither serve
+  nor be overwritten by a follow-up. A follow-up of a follow-up keeps the thread's topic (`retrieval_query`).
+- Find in document: whitespace-insensitive phrases, no stale matches while typing. Matter Overview shows the real count of
+  open deadlines. Ask answers keep single line breaks. A mangled colour class on the Open pill and proposed edits fixed.
+  Escape closes a picker list, not the dialog around it.
+- Tests: backend 159 document tests + 59 Ask tests pass; Playwright 73 passed (4 skipped).
+
+## 2026-10-03 — Frontend audit pass 3
+
+- Form primitives (`Field`, `SearchPicker`, `MatterPicker`, `ClientPicker`); labelled dialogs; a new matter requires a
+  chosen client (it used the first active client when none was picked).
+- Notifications bell; conversation download and message times; `ChatPage.tsx` split into modules (1,567 to 704 lines).
+- Playwright 72 passed (4 skipped).
+
+## 2026-10-03 — Frontend audit pass 2
+
+- Ask answers use the Assistant's Markdown renderer and one shared citation chip; answer actions (copy with sources,
+  copy link, continue in the Assistant).
+- Find in document: `GET /api/documents/{id}/versions/{version_id}/search?q=` (`app/documents/block_search.py`,
+  `tests/test_block_search.py`, 5) and a search bar in the reader (`/`).
+- Arguments detail is a sheet on phones; Calendar month is an agenda on phones; matter Overview rebuilt; Home first-run.
+- Playwright 70 (4 skipped). One editor test failed once in the full run and passes alone; the shared database is used
+  by other sessions.
+
+## 2026-10-03 — Frontend audit pass 1: safety, foundation, follow-ups (docs/ui-roadmap/08)
+
+- **Ask follow-ups are real.** `POST /api/answers` and `/stream` accept `follow_up_of` (a saved answer id).
+  The earlier question is folded into retrieval, the earlier scope is inherited, the answer is never served from
+  the cache, and the stored row keeps the member's own wording plus `follow_up_of` / `follow_up_query`. A stored
+  follow-up is never returned for the same words asked on their own. `app/km/follow_up.py`,
+  `tests/test_ask_follow_up.py` (6). No retrieval or fusion change.
+- **No silent filing.** Documents page: multi-file upload (PDF, Word, text) with per-file results; a matter must be
+  chosen. Assistant uploads use the conversation's matter or ask which one (they used "the first open matter").
+- Searchable `MatterPicker` replaces 200-item dropdowns (Documents, Calendar). Confirm dialog before deleting
+  arguments, timeline entries, links and teams; Ask "Clear all" asks first.
+- Chat no longer yanks the scroll while an answer streams ("Jump to latest"); IME-safe Enter; Assistant attaches the
+  document handed over from the reader (`/chat?doc=`).
+- Document reader: side panels are drawers below `lg`; real AI tab (summarise, obligations, risks).
+- Foundation: Tailwind v4-only classes fixed for the v3 build; semantic colour tokens replace raw amber/emerald/sky;
+  12px type floor; fonts and icon font self-hosted; routes lazy-loaded (main chunk 1.2 MB to 355 KB); tab titles,
+  breadcrumbs, `?` shortcut list, palette actions, keyboard and link rows in tables, matter tab in the URL,
+  add document / add court date inside a matter, System info for administrators only.
+- Tests: Playwright 66 passed (4 skipped); backend 60 passed across the Ask suites.
+
 ## 2026-10-02 — Ask the Firm: answer ids like Assistant sessions
 
 - URL is now ``/ask/{saved_id}`` after the first answer (same pattern as ``/chat/{sessionId}``).
