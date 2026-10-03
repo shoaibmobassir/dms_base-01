@@ -402,6 +402,22 @@ def get_chunk_context_envelope(
 # ── Canonical AST Blocks & Intelligence ──────────────────────────────────────
 
 
+def _blocks_of_version(document_id: str, version_id: str) -> list[dict]:
+    """Blocks of one version of this document (404 when the version belongs to another document).
+
+    Access is decided by the document, so the version must be one of its own.
+    """
+    ver = get_version(document_id.upper(), version_id)
+    if ver is None:
+        raise HTTPException(status_code=404, detail="Version not found")
+    blocks = get_version_blocks(version_id)
+    if not blocks and ver.get("body"):
+        parsed = parse_canonical_blocks(ver["body"], document_id.upper(), version_id)
+        save_canonical_blocks(parsed)
+        blocks = [b.to_dict() for b in parsed]
+    return blocks
+
+
 @router.get("/{document_id}/versions/{version_id}/blocks")
 def get_version_blocks_endpoint(
     document_id: str,
@@ -412,14 +428,7 @@ def get_version_blocks_endpoint(
 ) -> dict:
     """Canonical AST blocks. Pass from+limit to page; omit limit for the full set."""
     _check_doc_access(document_id, member_id)
-
-    blocks = get_version_blocks(version_id)
-    if not blocks:
-        ver = get_version(document_id.upper(), version_id)
-        if ver and ver.get("body"):
-            parsed = parse_canonical_blocks(ver["body"], document_id.upper(), version_id)
-            save_canonical_blocks(parsed)
-            blocks = [b.to_dict() for b in parsed]
+    blocks = _blocks_of_version(document_id, version_id)
 
     total = len(blocks)
     if limit is not None:
@@ -437,6 +446,21 @@ def get_version_blocks_endpoint(
     }
 
 
+@router.get("/{document_id}/versions/{version_id}/search")
+def search_version_blocks_endpoint(
+    document_id: str,
+    version_id: str,
+    q: str = Query(..., min_length=1, max_length=200),
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Find a phrase in this version of the document (access checked like the blocks)."""
+    from app.documents.block_search import search_blocks
+
+    _check_doc_access(document_id, member_id)
+    blocks = _blocks_of_version(document_id, version_id)
+    return {"service": SERVICE, "document_id": document_id, "version_id": version_id, **search_blocks(blocks, q)}
+
+
 @router.get("/{document_id}/versions/{version_id}/outline")
 def get_version_outline_endpoint(
     document_id: str,
@@ -445,6 +469,8 @@ def get_version_outline_endpoint(
 ) -> dict:
     """Heading tree for the left outline. Native headings only."""
     _check_doc_access(document_id, member_id)
+    if get_version(document_id.upper(), version_id) is None:
+        raise HTTPException(status_code=404, detail="Version not found")
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(

@@ -21,6 +21,9 @@ class AskRequest(BaseModel):
     scope: AskScope | None = None
     # When true, discard any stored answer and re-run retrieval + the model.
     refresh: bool = False
+    # Id of the saved answer this question follows up on (the earlier question and its
+    # scope are carried into retrieval; the answer is never served from the cache).
+    follow_up_of: str | None = None
 
 
 class ProjectCreate(BaseModel):

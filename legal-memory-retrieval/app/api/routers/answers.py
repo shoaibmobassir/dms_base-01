@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse
 from app.api.schemas import AskRequest
 from app.api.hits import hit_payload_highlighted
 from app.answers.format import format_dms_response
-from app.km import ask_answers, ask_history
+from app.km import ask_answers, ask_history, follow_up
 from app.km.answer import ask_the_firm, ask_the_firm_stream
 from app.audit import events as audit
 from app.auth.deps import resolve_member
@@ -36,16 +36,19 @@ def ask_endpoint(
     _limit(member_id)
     t0 = time.perf_counter()
     scope = body.scope.model_dump() if body.scope else None
+    question, scope, previous = _follow_up(body, scope, member_id)
     _remember(body.query, scope, member_id)
-    if not body.refresh:
-        saved = _load_saved(body.query, scope, member_id)
-        if saved is not None:
-            return _publish_saved(saved, body, scope, member_id, time.perf_counter() - t0)
-    elif body.refresh:
-        _drop_saved(body.query, scope, member_id)
+    if previous is None:
+        if not body.refresh:
+            saved = _load_saved(body.query, scope, member_id)
+            if saved is not None:
+                return _publish_saved(saved, body, scope, member_id, time.perf_counter() - t0)
+        else:
+            _drop_saved(body.query, scope, member_id)
     with span("ask", {"query": body.query[:120], "member_id": member_id or ""}):
         with connect() as conn:
-            result = ask_the_firm(conn, body.query, member_id, scope)
+            result = ask_the_firm(conn, question, member_id, scope)
+    _mark_follow_up(result, body, previous)
     return _publish(result, body, scope, member_id, time.perf_counter() - t0)
 
 
@@ -62,13 +65,14 @@ def ask_stream_endpoint(
     """
     _limit(member_id)
     scope = body.scope.model_dump() if body.scope else None
+    question, scope, previous = _follow_up(body, scope, member_id)
     _remember(body.query, scope, member_id)
-    if body.refresh:
+    if body.refresh and previous is None:
         _drop_saved(body.query, scope, member_id)
 
     def events():
         t0 = time.perf_counter()
-        if not body.refresh:
+        if not body.refresh and previous is None:
             saved = _load_saved(body.query, scope, member_id)
             if saved is not None:
                 yield f"data: {json.dumps(_saved_evidence(saved), default=str)}\n\n"
@@ -78,11 +82,12 @@ def ask_stream_endpoint(
                 return
         try:
             with connect() as conn:
-                for ev in ask_the_firm_stream(conn, body.query, member_id, scope):
+                for ev in ask_the_firm_stream(conn, question, member_id, scope):
                     if ev["type"] == "evidence":
                         hits = ev.pop("hits") or []
                         ev["sources"] = [hit_payload_highlighted(h, body.query, max_chars=380) for h in hits[:8]]
                     elif ev["type"] == "final":
+                        _mark_follow_up(ev["result"], body, previous)
                         ev["result"] = _publish(ev["result"], body, scope, member_id, time.perf_counter() - t0)
                     yield f"data: {json.dumps(ev, default=str)}\n\n"
         except Exception as exc:  # the stream must end with a parseable event
@@ -91,6 +96,32 @@ def ask_stream_endpoint(
 
     return StreamingResponse(events(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+def _follow_up(body: AskRequest, scope: dict | None, member_id: str | None) -> tuple[str, dict | None, dict | None]:
+    """The question to retrieve for, the scope to use and the earlier answer (None unless a follow-up)."""
+    if not body.follow_up_of:
+        return body.query, scope, None
+    with connect() as conn:
+        previous = follow_up.load_previous(conn, member_id, body.follow_up_of)
+    if previous is None:
+        raise HTTPException(status_code=404, detail="The answer this question follows is no longer available")
+    # A follow-up of a follow-up keeps the whole thread's topic, not just the last question.
+    earlier = str(previous.get("retrieval_query") or previous.get("query") or "")
+    question = follow_up.standalone_question(earlier, body.query)
+    return question, follow_up.inherited_scope(previous, scope), previous
+
+
+def _mark_follow_up(result: dict, body: AskRequest, previous: dict | None) -> None:
+    """Keep the member's own wording on a follow-up and record what it follows."""
+    if previous is None:
+        return
+    result["query"] = body.query
+    result["follow_up_of"] = body.follow_up_of
+    result["follow_up_query"] = previous.get("query")
+    result["retrieval_query"] = follow_up.standalone_question(
+        str(previous.get("retrieval_query") or previous.get("query") or ""), body.query,
+    )
 
 
 def _remember(query: str, scope: dict | None, member_id: str | None) -> None:
