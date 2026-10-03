@@ -8,6 +8,7 @@ Clean-room independent implementation for FirmOS legal assistant chatbot.
 
 from __future__ import annotations
 
+import re
 import uuid
 
 import json
@@ -215,6 +216,30 @@ def get_chat_session(session_id: str, member_id: str | None = Depends(resolve_me
         session = _owned_session(conn, session_id, member_id)
         messages = get_messages(conn, session_id)
     return {"session": session, "messages": messages}
+
+
+@router.get("/sessions/{session_id}/export.docx")
+def export_chat_session(session_id: str, member_id: str | None = Depends(resolve_member)):
+    """The conversation as a Word document (owner only)."""
+    from urllib.parse import quote
+
+    from fastapi.responses import Response
+
+    from app.chat.export import conversation_to_docx
+
+    with connect() as conn:
+        session = _owned_session(conn, session_id, member_id)
+        messages = get_messages(conn, session_id)
+    title = (session.title or "Conversation").strip() or "Conversation"
+    data = conversation_to_docx(title, list(messages))
+    audit.record("chat.export", member_id=member_id, object_type="chat_session", object_id=session_id,
+                 matter_id=getattr(session, "matter_id", None), detail={"format": "docx"})
+    filename = re.sub(r"[^\w\s.-]", "", title).strip().replace(" ", "-")[:60] or "conversation"
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}.docx"},
+    )
 
 
 @router.patch("/sessions/{session_id}", response_model=ChatSession)
