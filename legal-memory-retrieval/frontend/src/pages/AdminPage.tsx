@@ -19,9 +19,10 @@ import {
 } from "@/api/access";
 import { usePeople } from "@/api/resources";
 import { createPerson, firmError } from "@/api/firm";
+import { DataTable } from "@/components/common/DataTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EmptyState, MonoId, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { EmptyState, MonoId, PageHeader, SectionLabel, StatusLabel, TableSkeleton } from "@/components/common/primitives";
 import { useConfirm } from "@/components/common/Confirm";
 import { Field } from "@/components/common/Field";
 import { useApp } from "@/context/AppContext";
@@ -159,35 +160,41 @@ function UsersSection({ canEdit }: { canEdit: boolean }) {
   const users = useAdminUsers();
   const roles = useFirmRoles();
   const [q, setQ] = useState("");
-  if (users.isPending || roles.isPending) return <p className="text-sm text-muted-foreground">Loading people…</p>;
+  if (users.isPending || roles.isPending) return <TableSkeleton />;
   if (users.isError) return <EmptyState icon="lock" title="You cannot view firm users" />;
   const list = (users.data ?? []).filter((u) => !q || `${u.name} ${u.role} ${u.office ?? ""}`.toLowerCase().includes(q.toLowerCase()));
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <SectionLabel>{list.length} people</SectionLabel>
-        <Input className="w-64" placeholder="Filter people" value={q} onChange={(e) => setQ(e.target.value)} />
+        <Input className="w-64" placeholder="Filter people" aria-label="Filter people" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
-      <table className="w-full text-sm" data-testid="admin-users">
-        <thead className="text-left text-xs text-muted-foreground">
-          <tr>
-            <th className="py-2">Person</th>
-            <th>Office</th>
-            <th>Teams</th>
-            <th>Firm roles</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {list.map((u) => (
-            <UserRow key={u.member_id} user={u} roles={roles.data ?? []} canEdit={canEdit} />
-          ))}
-        </tbody>
-      </table>
+      <DataTable
+        testId="admin-users"
+        rows={list}
+        getRowKey={(u) => u.member_id}
+        empty={<EmptyState title="No people match" />}
+        columns={[
+          {
+            key: "person",
+            header: "Person",
+            render: (u) => (
+              <div>
+                <Link to={`/people/${u.member_id}`} className="hover:text-wine">{u.name}</Link>
+                <div className="text-xs text-muted-foreground">{u.role} · {u.matter_count} matters</div>
+              </div>
+            ),
+          },
+          { key: "office", secondary: true, header: "Office", render: (u) => <span className="text-muted-foreground">{u.office ?? "—"}</span> },
+          { key: "teams", secondary: true, header: "Teams", render: (u) => <span className="text-xs text-muted-foreground">{u.teams.join(", ") || "—"}</span> },
+          { key: "roles", header: "Firm roles", render: (u) => <RoleChips user={u} roles={roles.data ?? []} canEdit={canEdit} /> },
+        ]}
+      />
     </section>
   );
 }
 
-function UserRow({ user, roles, canEdit }: { user: AdminUser; roles: FirmRole[]; canEdit: boolean }) {
+function RoleChips({ user, roles, canEdit }: { user: AdminUser; roles: FirmRole[]; canEdit: boolean }) {
   const { identityKey } = useApp();
   const queryClient = useQueryClient();
   const { busy, run } = useRun();
@@ -198,38 +205,29 @@ function UserRow({ user, roles, canEdit }: { user: AdminUser; roles: FirmRole[];
     );
   };
   return (
-    <tr>
-      <td className="py-2">
-        <Link to={`/people/${user.member_id}`} className="hover:text-wine">{user.name}</Link>
-        <div className="text-xs text-muted-foreground">{user.role} · {user.matter_count} matters</div>
-      </td>
-      <td className="text-muted-foreground">{user.office ?? "—"}</td>
-      <td className="max-w-[16rem] text-xs text-muted-foreground">{user.teams.join(", ") || "—"}</td>
-      <td>
-        <div className="flex flex-wrap gap-1">
-          {roles.map((r) => {
-            const on = user.roles.includes(r.role_key);
-            return (
-              <button
-                key={r.role_key}
-                type="button"
-                title={r.description}
-                disabled={!canEdit || busy}
-                onClick={() => toggle(r.role_key)}
-                data-testid={`role-${user.member_id}-${r.role_key}`}
-                className={cn(
-                  "rounded-full border px-2 py-0.5 text-xs",
-                  on ? "border-wine bg-wine-soft text-wine" : "border-border text-muted-foreground",
-                  canEdit && "hover:border-wine/50",
-                )}
-              >
-                {r.name}
-              </button>
-            );
-          })}
-        </div>
-      </td>
-    </tr>
+    <div className="flex flex-wrap gap-1">
+      {roles.map((r) => {
+        const on = user.roles.includes(r.role_key);
+        return (
+          <button
+            key={r.role_key}
+            type="button"
+            title={r.description}
+            aria-pressed={on}
+            disabled={!canEdit || busy}
+            onClick={() => toggle(r.role_key)}
+            data-testid={`role-${user.member_id}-${r.role_key}`}
+            className={cn(
+              "rounded-full border px-2 py-0.5 text-xs",
+              on ? "border-wine bg-wine-soft text-wine" : "border-border text-muted-foreground",
+              canEdit && "hover:border-wine/50",
+            )}
+          >
+            {r.name}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -243,7 +241,7 @@ function TeamsSection() {
   const [name, setName] = useState("");
   const refresh = () => queryClient.invalidateQueries({ queryKey: [identityKey, "admin-teams"] });
 
-  if (teams.isPending) return <p className="text-sm text-muted-foreground">Loading teams…</p>;
+  if (teams.isPending) return <TableSkeleton />;
   return (
     <section className="space-y-6">
       <div className="flex items-end gap-2">
@@ -305,7 +303,7 @@ function TeamsSection() {
 
 function WallsSection() {
   const walls = useWalls();
-  if (walls.isPending) return <p className="text-sm text-muted-foreground">Loading walls…</p>;
+  if (walls.isPending) return <TableSkeleton />;
   if (walls.isError) return <EmptyState icon="lock" title="You cannot view ethical walls" />;
   if (!walls.data?.length) return <EmptyState icon="shield" title="No restricted or team-only matters, and no screens" />;
   return (
@@ -347,7 +345,7 @@ function RequestsSection() {
   const { identityKey } = useApp();
   const queryClient = useQueryClient();
   const { busy, run } = useRun();
-  if (requests.isPending) return <p className="text-sm text-muted-foreground">Loading requests…</p>;
+  if (requests.isPending) return <TableSkeleton />;
   if (!requests.data?.length) return <EmptyState icon="inbox" title="No pending access requests" />;
   const decide = (id: string, approve: boolean) =>
     void run(() => decideRequest(id, { approve }), approve ? "Access granted" : "Request declined").then(() =>

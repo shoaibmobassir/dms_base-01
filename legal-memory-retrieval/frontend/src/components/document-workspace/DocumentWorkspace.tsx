@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { downloadDocument } from "@/api/resources";
+import { useApp } from "@/context/AppContext";
 import { FindInDocument } from "@/components/document-workspace/FindInDocument";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -493,6 +495,7 @@ function Toolbar({
   leftOpen: boolean;
   rightOpen: boolean;
 }) {
+  const { toast } = useApp();
   const [draft, setDraft] = useState(String(part));
   useEffect(() => setDraft(String(part)), [part]);
 
@@ -615,6 +618,21 @@ function Toolbar({
         </Button>
       </div>
 
+      {doc.has_original && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            void downloadDocument(doc.document_id, openVersionId).catch((err) =>
+              toast(err instanceof Error ? err.message : "The download failed"),
+            )
+          }
+          data-testid="document-download"
+        >
+          <Icon name="download" style={{ fontSize: 16 }} /> Download
+        </Button>
+      )}
       <PrivacyControl documentId={doc.document_id} />
       <Button asChild size="sm" variant="outline" data-testid="document-edit">
         <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>

@@ -10,7 +10,11 @@ export type DataTableColumn<T> = {
   width?: string | number;
   /** Hidden below the tablet breakpoint to keep phone tables readable. */
   secondary?: boolean;
+  /** The name the server sorts this column by; the header becomes a sort button. */
+  sortKey?: string;
 };
+
+export type TableSort = { key: string; dir: "asc" | "desc" };
 
 export function DataTable<T extends object = Record<string, unknown>>({
   columns,
@@ -18,6 +22,8 @@ export function DataTable<T extends object = Record<string, unknown>>({
   onRowClick,
   getRowKey,
   getRowHref,
+  sort,
+  onSort,
   empty,
   testId,
 }: {
@@ -27,6 +33,9 @@ export function DataTable<T extends object = Record<string, unknown>>({
   getRowKey?: (row: T) => string | number;
   /** Where the row leads. The first cell becomes a real link (open in a new tab, copy link). */
   getRowHref?: (row: T) => string;
+  /** The current sort, and what to do when a sortable header is pressed. */
+  sort?: TableSort;
+  onSort?: (sort: TableSort) => void;
   empty?: ReactNode;
   testId?: string;
 }) {
@@ -47,8 +56,23 @@ export function DataTable<T extends object = Record<string, unknown>>({
                   c.secondary && "hidden md:table-cell",
                 )}
                 style={c.width ? { width: c.width } : undefined}
+                aria-sort={c.sortKey && sort?.key === c.sortKey ? (sort?.dir === "asc" ? "ascending" : "descending") : undefined}
               >
-                {c.header}
+                {c.sortKey && onSort ? (
+                  <button
+                    type="button"
+                    onClick={() => onSort({ key: c.sortKey!, dir: sort?.key === c.sortKey && sort?.dir === "asc" ? "desc" : "asc" })}
+                    className={cn("inline-flex items-center gap-1 hover:text-foreground", sort?.key === c.sortKey && "text-foreground")}
+                    data-testid={`sort-${c.sortKey}`}
+                  >
+                    {c.header}
+                    <span className="material-symbols-outlined" style={{ fontSize: 14 }} aria-hidden="true">
+                      {sort?.key === c.sortKey ? (sort?.dir === "asc" ? "arrow_upward" : "arrow_downward") : "unfold_more"}
+                    </span>
+                  </button>
+                ) : (
+                  c.header
+                )}
               </th>
             ))}
           </tr>

@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useApp } from '@/context/AppContext'
-import { apiFetch, qs } from './client'
+import { ApiError, apiFetch, authHeaders, qs } from './client'
 import type {
   ArgumentItem,
   ArgumentKind,
@@ -57,11 +57,15 @@ function useScopedQuery<T>(
 export const useHomeStats = () => useScopedQuery(['home'], () => apiFetch<HomeStats>('/api/home/stats'))
 
 // ── Matters ───────────────────────────────────────────────────────────────
-export function useMatters(p: { q?: string; status?: string; page?: number; limit?: number }) {
+export type Sort = { key: string; dir: 'asc' | 'desc' }
+
+export function useMatters(p: { q?: string; status?: string; mine?: boolean; sort?: Sort; page?: number; limit?: number }) {
   const limit = p.limit ?? PAGE_SIZE
   const offset = (p.page ?? 0) * limit
-  return useScopedQuery(['matters', p.q, p.status, offset, limit], () =>
-    apiFetch<Paged<Matter>>(`/api/matters${qs({ q: p.q, status: p.status, limit, offset })}`),
+  return useScopedQuery(['matters', p.q, p.status, p.mine, p.sort?.key, p.sort?.dir, offset, limit], () =>
+    apiFetch<Paged<Matter>>(
+      `/api/matters${qs({ q: p.q, status: p.status, mine: p.mine ? 'true' : undefined, sort: p.sort?.key, dir: p.sort?.dir, limit, offset })}`,
+    ),
   )
 }
 
@@ -84,12 +88,12 @@ export const useMatterRelated = (id: string) =>
   )
 
 // ── Documents ─────────────────────────────────────────────────────────────
-export function useDocuments(p: { q?: string; matter_id?: string; doc_type?: string; page?: number; limit?: number; enabled?: boolean }) {
+export function useDocuments(p: { q?: string; matter_id?: string; doc_type?: string; sort?: Sort; page?: number; limit?: number; enabled?: boolean }) {
   const limit = p.limit ?? PAGE_SIZE
   const offset = (p.page ?? 0) * limit
-  return useScopedQuery(['documents', p.q, p.matter_id, p.doc_type, offset, limit], () =>
+  return useScopedQuery(['documents', p.q, p.matter_id, p.doc_type, p.sort?.key, p.sort?.dir, offset, limit], () =>
     apiFetch<Paged<DocumentItem>>(
-      `/api/documents${qs({ q: p.q, matter_id: p.matter_id, doc_type: p.doc_type, limit, offset })}`,
+      `/api/documents${qs({ q: p.q, matter_id: p.matter_id, doc_type: p.doc_type, sort: p.sort?.key, dir: p.sort?.dir, limit, offset })}`,
     ),
     p.enabled ?? true,
   )
@@ -248,4 +252,23 @@ export function useDocumentSearch(documentId: string, versionId: string | undefi
     // Never show the previous phrase's matches while a new phrase loads.
     { fresh: true },
   )
+}
+
+// ── Download the original file ────────────────────────────────────────────
+/** Save the original file of a document version (the server records the download). */
+export async function downloadDocument(documentId: string, versionId?: string): Promise<void> {
+  const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/download${qs({ version_id: versionId })}`, {
+    headers: authHeaders(),
+    credentials: 'same-origin',
+  })
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  const disposition = res.headers.get('Content-Disposition') ?? ''
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1]
+  const filename = encoded ? decodeURIComponent(encoded) : `${documentId}`
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
 }

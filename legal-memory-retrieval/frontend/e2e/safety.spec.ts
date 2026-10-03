@@ -197,3 +197,39 @@ test("Escape closes the matter list inside a dialog, not the dialog", async ({ p
   await expect(page.getByTestId("upload-matter-menu")).toHaveCount(0);
   await expect(page.getByTestId("upload-flow")).toBeVisible();
 });
+
+test("matters sort from the header and filter to mine; the choice is in the URL", async ({ page }) => {
+  await page.goto("/ui/matters");
+  await page.getByTestId("sort-title").click();
+  await expect(page).toHaveURL(/sort=title&dir=asc/);
+  await page.getByTestId("sort-title").click();
+  await expect(page).toHaveURL(/dir=desc/);
+  await expect(page.getByTestId("sort-title").locator("xpath=ancestor::th")).toHaveAttribute("aria-sort", "descending");
+  await page.getByTestId("matters-mine").click();
+  await expect(page).toHaveURL(/mine=1/);
+  await page.reload();
+  await expect(page.getByTestId("matters-mine")).toHaveAttribute("aria-pressed", "true");
+});
+
+test("documents sort by title from the header", async ({ page }) => {
+  await page.goto("/ui/documents");
+  await page.getByTestId("sort-title").click();
+  await expect(page).toHaveURL(/sort=title&dir=asc/);
+  await expect(page.getByTestId("documents-table")).toBeVisible();
+});
+
+test("the reader offers the original file as a download", async ({ page, request }) => {
+  const list = await request.get("/api/documents?limit=60", { headers: { "X-Member-Id": ME } });
+  let id: string | null = null;
+  for (const d of ((await list.json()) as { items: { document_id: string }[] }).items) {
+    const detail = (await (await request.get(`/api/documents/${d.document_id}?lean=true`, { headers: { "X-Member-Id": ME } })).json()) as { has_original?: boolean };
+    if (detail.has_original) {
+      id = d.document_id;
+      break;
+    }
+  }
+  test.skip(!id, "no document with an original file");
+  await page.goto(`/ui/documents/${id}`);
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("document-download").click()]);
+  expect(download.suggestedFilename().length).toBeGreaterThan(0);
+});

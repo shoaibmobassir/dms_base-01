@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PAGE_SIZE, useDocumentFacets, useDocuments } from "@/api/resources";
-import { DataTable } from "@/components/common/DataTable";
+import { DataTable, type TableSort } from "@/components/common/DataTable";
 import { Action, EmptyState, Icon, MonoId, PageHeader, SearchField } from "@/components/common/primitives";
 import { Pager, QueryState } from "@/components/common/QueryState";
 import { MatterPicker } from "@/components/common/MatterPicker";
@@ -31,13 +31,21 @@ export function DocumentsPage() {
   const [params, setParams] = useSearchParams();
   const [showUpload, setShowUpload] = useState(params.get("add") === "1");
   useEffect(() => {
-    if (params.get("add") === "1") setParams({}, { replace: true });
+    if (params.get("add") === "1")
+      setParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("add");
+        return next;
+      }, { replace: true });
   }, [params, setParams]);
   const q = useDebounced(query.trim());
-  const documents = useDocuments({ q, page, doc_type: docType || undefined, matter_id: matterId || undefined });
+  const sort: TableSort | undefined = params.get("sort")
+    ? { key: params.get("sort")!, dir: params.get("dir") === "asc" ? "asc" : "desc" }
+    : undefined;
+  const documents = useDocuments({ q, page, sort, doc_type: docType || undefined, matter_id: matterId || undefined });
   const facets = useDocumentFacets();
 
-  useEffect(() => setPage(0), [q, docType, matterId]);
+  useEffect(() => setPage(0), [q, docType, matterId, params.get("sort"), params.get("dir")]);
 
   const selectClass = "rounded-md border border-border bg-card px-2.5 py-2 text-sm text-foreground focus:border-wine/50 focus:outline-none";
 
@@ -88,10 +96,20 @@ export function DocumentsPage() {
               getRowHref={(doc) => `/documents/${doc.document_id}`}
               onRowClick={(doc) => navigate(`/documents/${doc.document_id}`)}
               rows={d.items}
+              sort={sort}
+              onSort={(next) =>
+                setParams((prev) => {
+                  const out = new URLSearchParams(prev);
+                  out.set("sort", next.key);
+                  out.set("dir", next.dir);
+                  return out;
+                }, { replace: true })
+              }
               columns={[
                 {
                   key: "name",
                   header: "Name",
+                  sortKey: "title",
                   render: (doc) => (
                     <span className="flex items-center gap-2">
                       <Icon name="description" className="text-muted-foreground" style={{ fontSize: 16 }} />
@@ -103,12 +121,13 @@ export function DocumentsPage() {
                     </span>
                   ),
                 },
-                { key: "type", secondary: true, header: "Type", render: (doc) => <span className="text-sm text-muted-foreground">{documentKind(doc)}</span> },
-                { key: "author", secondary: true, header: "Author", render: (doc) => <span className="text-sm text-muted-foreground">{doc.author_name || "—"}</span> },
+                { key: "type", secondary: true, header: "Type", sortKey: "type", render: (doc) => <span className="text-sm text-muted-foreground">{documentKind(doc)}</span> },
+                { key: "author", secondary: true, header: "Author", sortKey: "author", render: (doc) => <span className="text-sm text-muted-foreground">{doc.author_name || "—"}</span> },
                 {
                   key: "matter",
                   secondary: true,
                   header: "Matter",
+                  sortKey: "matter",
                   render: (doc) => (
                     <div className="max-w-[280px]">
                       <div className="truncate text-sm">{doc.matter_title || "—"}</div>
@@ -116,7 +135,7 @@ export function DocumentsPage() {
                     </div>
                   ),
                 },
-                { key: "date", header: "Date", align: "right", render: (doc) => <span className="whitespace-nowrap tabular-nums">{formatDate(doc.doc_date)}</span> },
+                { key: "date", header: "Date", sortKey: "date", align: "right", render: (doc) => <span className="whitespace-nowrap tabular-nums">{formatDate(doc.doc_date)}</span> },
               ]}
             />
             <Pager page={page} total={d.total} pageSize={PAGE_SIZE} onPage={setPage} />
