@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from psycopg.rows import dict_row
 
+from app.api.sorting import order_by
 from app.api.acl import ACL_CLAUSE, doc_acl
 from app.api.documents import (
     document_detail_enriched,
@@ -39,6 +40,15 @@ from app.documents.canonical import (
 
 router = APIRouter(tags=["documents"])
 
+# What the documents list can be sorted by.
+DOCUMENT_SORT = {
+    "date": "d.doc_date",
+    "title": "lower(d.title)",
+    "type": "lower(d.document_type)",
+    "author": "lower(d.author_name)",
+    "matter": "lower(m.title)",
+}
+
 SERVICE = "documents"
 
 
@@ -54,6 +64,8 @@ def documents_list(
     client_id: str | None = Query(default=None),
     doc_type: str | None = Query(default=None),
     author: str | None = Query(default=None),
+    sort: str | None = Query(default=None, description="date, title, type, author or matter"),
+    dir: str | None = Query(default=None, pattern="^(asc|desc)$"),
     member_id: str | None = Depends(resolve_member),
     limit: int = Query(default=50, le=200),
     offset: int = Query(default=0, ge=0),
@@ -90,7 +102,7 @@ def documents_list(
         LEFT JOIN matters m ON m.matter_id = d.matter_id
         LEFT JOIN document_access da ON da.document_id = d.document_id
         WHERE {where}
-        ORDER BY d.doc_date DESC NULLS LAST, d.document_id DESC
+        {order_by(sort, dir, DOCUMENT_SORT, 'date', 'd.document_id')}
         LIMIT %(limit)s OFFSET %(offset)s
     """
     count_sql = f"""

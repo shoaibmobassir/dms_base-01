@@ -2,10 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg.rows import dict_row
 
 from app.api.acl import ACL_CLAUSE, doc_acl
+from app.api.sorting import order_by
 from app.auth.deps import resolve_member
 from app.db.connection import connect
 
 router = APIRouter(tags=["matters"])
+
+# What the matters list can be sorted by.
+MATTER_SORT = {
+    "opened": "m.opened_date",
+    "title": "lower(m.title)",
+    "client": "lower(m.client_name)",
+    "deadline": "nd.due_date",
+    "status": "lower(m.status)",
+    "documents": "document_count",
+}
 
 SERVICE = "matters"
 
@@ -20,12 +31,19 @@ def matters_list(
     q: str | None = Query(default=None),
     practice: str | None = Query(default=None),
     status: str | None = Query(default=None),
+    mine: bool = Query(default=False, description="Only matters the caller is staffed on"),
+    sort: str | None = Query(default=None, description="opened, title, client, deadline, status or documents"),
+    dir: str | None = Query(default=None, pattern="^(asc|desc)$"),
     member_id: str | None = Depends(resolve_member),
     limit: int = Query(default=50, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> dict:
     params: dict = {"member_id": member_id, "limit": limit, "offset": offset}
     wheres = [ACL_CLAUSE]
+    if mine:
+        wheres.append(
+            "EXISTS (SELECT 1 FROM matter_members mx WHERE mx.matter_id = m.matter_id AND mx.member_id = %(member_id)s)"
+        )
     if q:
         wheres.append(
             "(m.title ILIKE %(q_like)s"
@@ -62,7 +80,7 @@ def matters_list(
             ORDER BY cd.due_date LIMIT 1
         ) nd ON TRUE
         WHERE {where}
-        ORDER BY m.opened_date DESC NULLS LAST, m.matter_id DESC
+        {order_by(sort, dir, MATTER_SORT, 'opened', 'm.matter_id')}
         LIMIT %(limit)s OFFSET %(offset)s
     """
     count_sql = f"""
