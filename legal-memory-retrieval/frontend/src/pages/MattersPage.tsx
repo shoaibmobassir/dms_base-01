@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DataTable, type TableSort } from "@/components/common/DataTable";
+import { BulkBar } from "@/components/common/BulkBar";
+import { useQueryClient } from "@tanstack/react-query";
+import { useApp } from "@/context/AppContext";
 import { Action, EmptyState, PageHeader, SearchField, StatusLabel } from "@/components/common/primitives";
 import { can, useMyAccess } from "@/api/access";
 import { NewMatterDialog } from "@/components/matter/MatterEditors";
 import { Pager, QueryState } from "@/components/common/QueryState";
-import { PAGE_SIZE, useMatters } from "@/api/resources";
+import { PAGE_SIZE, setPinned, useMatters } from "@/api/resources";
+import type { Matter } from "@/api/types";
 import { formatDate } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
 import { cn } from "@/lib/utils";
@@ -40,6 +44,25 @@ export function MattersPage() {
   const matters = useMatters({ q, status: status === "All" ? undefined : status, mine, sort, page });
   const myAccess = useMyAccess();
   // "New matter" in the command palette arrives as ?new=1.
+  const { identityKey, toast } = useApp();
+  const queryClient = useQueryClient();
+  const [chosen, setChosen] = useState<Map<string, Matter>>(new Map());
+  const [busy, setBusy] = useState(false);
+  const pinAll = async (pinned: boolean) => {
+    setBusy(true);
+    let failed = 0;
+    for (const m of chosen.values()) {
+      try {
+        await setPinned(m.matter_id, pinned);
+      } catch {
+        failed += 1;
+      }
+    }
+    await queryClient.invalidateQueries({ queryKey: [identityKey, "pinned-matters"] });
+    setBusy(false);
+    toast(failed ? `${failed} could not be ${pinned ? "pinned" : "unpinned"}` : `${chosen.size} ${pinned ? "pinned" : "unpinned"}`);
+    setChosen(new Map());
+  };
   const [creating, setCreating] = useState(params.get("new") === "1");
   useEffect(() => {
     if (params.get("new") === "1")
@@ -50,7 +73,11 @@ export function MattersPage() {
       }, { replace: true });
   }, [params, setParams]);
 
-  useEffect(() => setPage(0), [q, status, mine, params.get("sort"), params.get("dir")]);
+  useEffect(() => {
+    setPage(0);
+    setChosen(new Map());
+  }, [q, status, mine]);
+  useEffect(() => setPage(0), [params.get("sort"), params.get("dir")]);
 
   return (
     <div className="space-y-8">
@@ -104,6 +131,14 @@ export function MattersPage() {
         </div>
       </div>
 
+      <BulkBar count={chosen.size} noun="matter" onClear={() => setChosen(new Map())}>
+        <Action icon="push_pin" onClick={() => void pinAll(true)} testId="bulk-pin">
+          {busy ? "Working…" : "Pin to sidebar"}
+        </Action>
+        <Action icon="keep_off" onClick={() => void pinAll(false)} testId="bulk-unpin">
+          Unpin
+        </Action>
+      </BulkBar>
       <QueryState
         query={matters}
         isEmpty={(d) => d.items.length === 0}
@@ -123,6 +158,21 @@ export function MattersPage() {
               getRowHref={(m) => `/matters/${m.matter_id}`}
               onRowClick={(m) => navigate(`/matters/${m.matter_id}`)}
               rows={d.items}
+              selection={{
+                selected: new Set(chosen.keys()),
+                label: (m) => m.title,
+                onChange: (next) => {
+                  const rows = new Map(d.items.map((x) => [x.matter_id, x] as const));
+                  setChosen((prev) => {
+                    const out = new Map<string, Matter>();
+                    for (const id of next as Set<string>) {
+                      const row = rows.get(id) ?? prev.get(id);
+                      if (row) out.set(id, row);
+                    }
+                    return out;
+                  });
+                },
+              }}
               sort={sort}
               onSort={(next) => update({ sort: next.key, dir: next.dir })}
               columns={[

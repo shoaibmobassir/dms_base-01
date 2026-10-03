@@ -2,6 +2,13 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-03 — Frontend pass 6: the Assistant conversation
+
+- Centred hero composer when empty, rounded composer with chips and a round send button, flat answers with source
+  chips and an action row, subtle user bubbles, edit-and-resend on the last question. Bulk pin and unpin of matters.
+  PDF find shows a match count. Flat shadcn buttons with a 2px focus ring.
+- Playwright 81 passed (4 skipped).
+
 ## 2026-10-03 — Frontend audit pass 5
 
 - Table selection and bulk actions on Documents. Conversation export to Word (`export.docx`, 2 tests) and Markdown.

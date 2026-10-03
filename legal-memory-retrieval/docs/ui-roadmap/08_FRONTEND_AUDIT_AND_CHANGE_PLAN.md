@@ -337,5 +337,13 @@ find inside the PDF viewer (next or previous page with the phrase); review of `M
 confirm before accepting or rejecting several tracked changes at once and before deleting a comment, "Apply to Word" wording,
 token colours, `dvh` heights.
 
-**Not done yet:** `/impeccable init` and a generated `DESIGN.md` (needs a short product interview); bulk actions on other
-lists (matters have none that fit yet); a count of matches inside a PDF (it jumps page to page).
+**Pass 6:** the Assistant now follows the ChatGPT / Harvey conversation pattern (requirements, not copied markup):
+a centred greeting and rounded message box when empty (matter and mode as chips, "+" for documents, round send button),
+starter prompts as chips; flat assistant answers with an avatar, a step line, a streaming caret, an action row (copy,
+regenerate, link, time) and source chips with "Show passages"; subtle user bubbles and edit-and-resend on the last question.
+Also: bulk pin and unpin of matters; match count in the PDF find; flat buttons with a 2px focus ring; the locked-paragraph
+style in the editor uses theme tokens.
+
+**Not done yet:** a thumbs up or down on answers (needs a place to store it); branching of edited messages (editing drops
+the answer and resends; the server transcript keeps the earlier turn); `.eyebrow` and the uppercase `meta-label` styles are
+still used in places that `DESIGN.md` does not canonise.

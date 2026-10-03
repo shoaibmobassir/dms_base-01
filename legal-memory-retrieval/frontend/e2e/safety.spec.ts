@@ -314,3 +314,29 @@ test.describe("Assistant conversation layout", () => {
     expect(docked!.y).toBeGreaterThan(500); // at the bottom
   });
 });
+
+test("pin several matters at once from the list, then unpin them", async ({ page, request }) => {
+  const pinnedRes = await request.get("/api/matters/pinned", { headers: { "X-Member-Id": ME } });
+  const pinned = new Set(((await pinnedRes.json()) as { items: { matter_id: string }[] }).items.map((m) => m.matter_id));
+  await page.goto("/ui/matters");
+  const rows = page.getByTestId("matters-table").locator("tbody tr");
+  await expect(rows.first()).toBeVisible();
+  const n = await rows.count();
+  let target = -1;
+  for (let i = 0; i < n; i++) {
+    const id = (await rows.nth(i).getAttribute("data-testid"))!.replace("row-", "");
+    if (!pinned.has(id)) {
+      target = i;
+      break;
+    }
+  }
+  test.skip(target < 0, "every listed matter is already pinned");
+  const row = rows.nth(target);
+  const title = (await row.getByRole("link").first().innerText()).split("\n").pop()!.trim();
+  await row.locator('input[type="checkbox"]').check();
+  await page.getByTestId("bulk-pin").click();
+  await expect(page.getByTestId("sidebar-pinned")).toContainText(title.slice(0, 20));
+  await row.locator('input[type="checkbox"]').check();
+  await page.getByTestId("bulk-unpin").click();
+  await expect(page.getByTestId("sidebar-pinned").filter({ hasText: title.slice(0, 20) })).toHaveCount(0);
+});

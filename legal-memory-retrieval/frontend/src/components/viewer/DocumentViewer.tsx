@@ -151,6 +151,7 @@ export function DocumentViewer({
   // Find in the PDF: the next page that holds the phrase.
   const [findText, setFindText] = useState("");
   const [findState, setFindState] = useState<"idle" | "searching" | "found" | "none">("idle");
+  const [findTotal, setFindTotal] = useState<number | null>(null);
   const findPage = useRef(0);
   const findRun = useRef(0);
 
@@ -412,6 +413,17 @@ export function DocumentViewer({
         setHighlight({ page: n, runs: m.runs, nonce: Date.now() });
         goToPage(n);
         setFindState("found");
+        // Count every match in the background so the reader knows how many there are.
+        if (findTotal === null) {
+          const needle = q.toLowerCase();
+          let total = 0;
+          for (let page = 1; page <= doc.numPages; page++) {
+            const text = runsOf(await getText(page)).join(" ").toLowerCase();
+            if (run !== findRun.current) return;
+            for (let at = text.indexOf(needle); at >= 0; at = text.indexOf(needle, at + needle.length)) total += 1;
+          }
+          if (run === findRun.current) setFindTotal(total);
+        }
         return;
       }
     }
@@ -492,6 +504,7 @@ export function DocumentViewer({
               setFindText(e.target.value);
               findPage.current = 0;
               findRun.current += 1;
+              setFindTotal(null);
               setFindState("idle");
             }}
             onKeyDown={(e) => {
@@ -513,7 +526,7 @@ export function DocumentViewer({
           <ChevronDown className="h-4 w-4" />
         </ToolButton>
         <span className="text-muted-foreground" role="status" data-testid="viewer-find-status">
-          {findState === "searching" ? "Searching…" : findState === "none" ? "No match" : findState === "found" ? `Page ${findPage.current}` : ""}
+          {findState === "searching" ? "Searching…" : findState === "none" ? "No match" : findState === "found" ? `Page ${findPage.current}${findTotal !== null ? ` · ${findTotal} ${findTotal === 1 ? "match" : "matches"}` : ""}` : ""}
         </span>
       </div>
 
