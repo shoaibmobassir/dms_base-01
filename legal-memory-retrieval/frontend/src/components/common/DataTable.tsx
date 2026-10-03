@@ -24,6 +24,7 @@ export function DataTable<T extends object = Record<string, unknown>>({
   getRowHref,
   sort,
   onSort,
+  selection,
   empty,
   testId,
 }: {
@@ -36,15 +37,39 @@ export function DataTable<T extends object = Record<string, unknown>>({
   /** The current sort, and what to do when a sortable header is pressed. */
   sort?: TableSort;
   onSort?: (sort: TableSort) => void;
+  /** Adds a checkbox column. Needs `getRowKey`. */
+  selection?: { selected: ReadonlySet<string | number>; onChange: (next: Set<string | number>) => void; label: (row: T) => string };
   empty?: ReactNode;
   testId?: string;
 }) {
   if (!rows || rows.length === 0) return empty ?? null;
+  const onPage = selection && getRowKey ? rows.filter((r) => selection.selected.has(getRowKey(r))).length : 0;
+  const allOnPage = onPage > 0 && onPage === rows.length;
+  const someOnPage = onPage > 0;
   return (
     <div className="w-full overflow-x-auto" data-testid={testId}>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-border">
+            {selection && getRowKey && (
+              <th className="w-10 py-3 pr-2 text-left">
+                <input
+                  type="checkbox"
+                  aria-label="Select all rows on this page"
+                  data-testid="select-all"
+                  checked={allOnPage}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someOnPage && !allOnPage;
+                  }}
+                  onChange={() => {
+                    const next = new Set(selection.selected);
+                    for (const r of rows) (allOnPage ? next.delete(getRowKey(r)) : next.add(getRowKey(r)));
+                    selection.onChange(next);
+                  }}
+                  className="h-4 w-4 accent-[var(--wine)]"
+                />
+              </th>
+            )}
             {columns.map((c, ci) => (
               <th
                 key={c.key}
@@ -102,6 +127,23 @@ export function DataTable<T extends object = Record<string, unknown>>({
                 )}
                 data-testid={`row-${key}`}
               >
+                {selection && getRowKey && (
+                  <td className="w-10 py-4 pr-2 align-top" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${selection.label(row)}`}
+                      data-testid={`select-${key}`}
+                      checked={selection.selected.has(key)}
+                      onChange={() => {
+                        const next = new Set(selection.selected);
+                        if (next.has(key)) next.delete(key);
+                        else next.add(key);
+                        selection.onChange(next);
+                      }}
+                      className="h-4 w-4 accent-[var(--wine)]"
+                    />
+                  </td>
+                )}
                 {columns.map((c, ci) => (
                   <td
                     key={c.key}

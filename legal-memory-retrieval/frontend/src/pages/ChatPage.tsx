@@ -262,8 +262,9 @@ export function ChatPage() {
   // Ask the Firm hands a question over with ?q= (and usually ?matter=): pre-fill it, never auto-send.
   const handedQuestion = searchParams.get("q");
   // A document page hands over the document to work on (?doc=&docTitle=): it arrives attached.
-  const handedDoc = searchParams.get("doc");
-  const handedDocTitle = searchParams.get("docTitle");
+  const handedDocs = searchParams.getAll("doc");
+  const handedDocTitles = searchParams.getAll("docTitle");
+  const handedKey = handedDocs.join(",");
   useEffect(() => {
     if (!handedQuestion) return;
     setDraft({ text: handedQuestion, nonce: Date.now() });
@@ -272,12 +273,16 @@ export function ChatPage() {
   }, [handedQuestion]);
 
   useEffect(() => {
-    if (!handedDoc) return;
-    setAttachments((list) =>
-      list.some((a) => a.document_id === handedDoc) ? list : [...list, { document_id: handedDoc, filename: handedDocTitle || handedDoc }],
-    );
+    if (handedDocs.length === 0) return;
+    setAttachments((list) => {
+      const next = [...list];
+      handedDocs.forEach((id, i) => {
+        if (!next.some((a) => a.document_id === id)) next.push({ document_id: id, filename: handedDocTitles[i] || id });
+      });
+      return next;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handedDoc]);
+  }, [handedKey]);
 
   const openSource = (next: Omit<PanelSource, "nonce"> | null) => {
     if (!next) return;

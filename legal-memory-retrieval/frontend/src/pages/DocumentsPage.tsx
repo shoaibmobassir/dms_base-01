@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { BulkBar } from "@/components/common/BulkBar";
+import { downloadDocument } from "@/api/resources";
+import { useApp } from "@/context/AppContext";
 import { PAGE_SIZE, useDocumentFacets, useDocuments } from "@/api/resources";
+import type { DocumentItem } from "@/api/types";
 import { DataTable, type TableSort } from "@/components/common/DataTable";
 import { Action, EmptyState, Icon, MonoId, PageHeader, SearchField } from "@/components/common/primitives";
 import { Pager, QueryState } from "@/components/common/QueryState";
@@ -21,6 +25,18 @@ function documentKind(doc: { document_type: string; mime_type?: string | null; t
   return "File";
 }
 
+/** The Assistant with these documents attached (limited to their matter when they share one). */
+function assistantLink(docs: DocumentItem[]) {
+  const q = new URLSearchParams();
+  for (const d of docs.slice(0, 10)) {
+    q.append("doc", d.document_id);
+    q.append("docTitle", d.title);
+  }
+  const matters = new Set(docs.map((d) => d.matter_id));
+  if (matters.size === 1 && docs[0]?.matter_id) q.set("matter", docs[0].matter_id);
+  return `/chat?${q.toString()}`;
+}
+
 export function DocumentsPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -38,6 +54,10 @@ export function DocumentsPage() {
         return next;
       }, { replace: true });
   }, [params, setParams]);
+  const { toast } = useApp();
+  // Chosen rows, kept across pages (id to the row, so actions know titles and matters).
+  const [chosen, setChosen] = useState<Map<string, DocumentItem>>(new Map());
+  const [downloading, setDownloading] = useState(false);
   const q = useDebounced(query.trim());
   const sort: TableSort | undefined = params.get("sort")
     ? { key: params.get("sort")!, dir: params.get("dir") === "asc" ? "asc" : "desc" }
@@ -45,7 +65,11 @@ export function DocumentsPage() {
   const documents = useDocuments({ q, page, sort, doc_type: docType || undefined, matter_id: matterId || undefined });
   const facets = useDocumentFacets();
 
-  useEffect(() => setPage(0), [q, docType, matterId, params.get("sort"), params.get("dir")]);
+  useEffect(() => {
+    setPage(0);
+    setChosen(new Map());
+  }, [q, docType, matterId]);
+  useEffect(() => setPage(0), [params.get("sort"), params.get("dir")]);
 
   const selectClass = "rounded-md border border-border bg-card px-2.5 py-2 text-sm text-foreground focus:border-wine/50 focus:outline-none";
 
@@ -83,6 +107,37 @@ export function DocumentsPage() {
           </button>
         )}
       </div>
+      <BulkBar count={chosen.size} noun="document" onClear={() => setChosen(new Map())}>
+        <Action
+          to={assistantLink([...chosen.values()])}
+          icon="edit_note"
+          testId="bulk-assistant"
+        >
+          Work on in Assistant
+        </Action>
+        <Action
+          icon="download"
+          testId="bulk-download"
+          onClick={() => {
+            if (downloading) return;
+            setDownloading(true);
+            void (async () => {
+              let failed = 0;
+              for (const d of chosen.values()) {
+                try {
+                  await downloadDocument(d.document_id);
+                } catch {
+                  failed += 1;
+                }
+              }
+              setDownloading(false);
+              toast(failed ? `${failed} of ${chosen.size} could not be downloaded` : `${chosen.size} downloaded`);
+            })();
+          }}
+        >
+          {downloading ? "Downloading…" : "Download"}
+        </Action>
+      </BulkBar>
       <QueryState
         query={documents}
         isEmpty={(d) => d.items.length === 0}
@@ -96,6 +151,21 @@ export function DocumentsPage() {
               getRowHref={(doc) => `/documents/${doc.document_id}`}
               onRowClick={(doc) => navigate(`/documents/${doc.document_id}`)}
               rows={d.items}
+              selection={{
+                selected: new Set(chosen.keys()),
+                label: (doc) => doc.title,
+                onChange: (next) => {
+                  const rows = new Map(d.items.map((x) => [x.document_id, x] as const));
+                  setChosen((prev) => {
+                    const out = new Map<string, DocumentItem>();
+                    for (const id of next as Set<string>) {
+                      const row = rows.get(id) ?? prev.get(id);
+                      if (row) out.set(id, row);
+                    }
+                    return out;
+                  });
+                },
+              }}
               sort={sort}
               onSort={(next) =>
                 setParams((prev) => {

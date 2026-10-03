@@ -233,3 +233,22 @@ test("the reader offers the original file as a download", async ({ page, request
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("document-download").click()]);
   expect(download.suggestedFilename().length).toBeGreaterThan(0);
 });
+
+test("select documents and work on them together in the Assistant", async ({ page }) => {
+  await page.goto("/ui/documents");
+  const boxes = page.getByTestId("documents-table").locator('tbody input[type="checkbox"]');
+  await expect(boxes.first()).toBeVisible();
+  await boxes.nth(0).check();
+  await boxes.nth(1).check();
+  await expect(page.getByTestId("bulk-count")).toHaveText("2 documents selected");
+  // Selecting the whole page, then clearing.
+  await page.getByTestId("select-all").check();
+  await expect(page.getByTestId("bulk-count")).toContainText("documents selected");
+  await page.getByTestId("bulk-clear").click();
+  await expect(page.getByTestId("bulk-bar")).toHaveCount(0);
+  await boxes.nth(0).check();
+  await boxes.nth(1).check();
+  await page.getByTestId("bulk-assistant").click();
+  await expect(page).toHaveURL(/\/ui\/chat\?.*doc=.*doc=/);
+  await expect(page.getByTestId("composer-attachments").getByTestId("composer-attachment-open")).toHaveCount(2);
+});
