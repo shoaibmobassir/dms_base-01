@@ -43,6 +43,7 @@ export function ClientsPage() {
             <DataTable
               testId="clients-table"
               getRowKey={(c) => c.client_id}
+              getRowHref={(c) => `/clients/${c.client_id}`}
               onRowClick={(c) => navigate(`/clients/${c.client_id}`)}
               rows={d.items}
               columns={[
@@ -55,7 +56,7 @@ export function ClientsPage() {
                       <div className="text-foreground">
                         {c.name}
                         {c.status && c.status !== "active" && (
-                          <span className="ml-2 rounded bg-amber-100 px-1.5 text-[11px] text-amber-900" data-testid="client-status">{c.status}</span>
+                          <span className="ml-2 rounded bg-warning-soft px-1.5 text-xs text-warning-ink" data-testid="client-status">{c.status}</span>
                         )}
                       </div>
                     </div>

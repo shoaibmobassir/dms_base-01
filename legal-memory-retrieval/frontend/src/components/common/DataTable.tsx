@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 export type DataTableColumn<T> = {
@@ -16,6 +17,7 @@ export function DataTable<T extends object = Record<string, unknown>>({
   rows,
   onRowClick,
   getRowKey,
+  getRowHref,
   empty,
   testId,
 }: {
@@ -23,6 +25,8 @@ export function DataTable<T extends object = Record<string, unknown>>({
   rows: T[] | null | undefined;
   onRowClick?: (row: T) => void;
   getRowKey?: (row: T) => string | number;
+  /** Where the row leads. The first cell becomes a real link (open in a new tab, copy link). */
+  getRowHref?: (row: T) => string;
   empty?: ReactNode;
   testId?: string;
 }) {
@@ -52,13 +56,25 @@ export function DataTable<T extends object = Record<string, unknown>>({
         <tbody>
           {rows.map((row, i) => {
             const key = getRowKey ? getRowKey(row) : i;
+            const href = getRowHref?.(row);
+            const onKeyDown = onRowClick
+              ? (e: KeyboardEvent<HTMLTableRowElement>) => {
+                  // Only when the row itself has focus: links and buttons inside keep their own keys.
+                  if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    onRowClick(row);
+                  }
+                }
+              : undefined;
             return (
               <tr
                 key={key}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onKeyDown={onKeyDown}
+                tabIndex={onRowClick ? 0 : undefined}
                 className={cn(
                   "border-b border-border transition-colors",
-                  onRowClick && "cursor-pointer hover:bg-secondary/60",
+                  onRowClick && "cursor-pointer hover:bg-secondary/60 focus-visible:bg-secondary/60 focus-visible:outline-offset-[-2px]",
                 )}
                 data-testid={`row-${key}`}
               >
@@ -72,7 +88,16 @@ export function DataTable<T extends object = Record<string, unknown>>({
                       c.secondary && "hidden md:table-cell",
                     )}
                   >
-                    {c.render ? c.render(row) : ((row as Record<string, unknown>)[c.key] as ReactNode)}
+                    {(() => {
+                      const content = c.render ? c.render(row) : ((row as Record<string, unknown>)[c.key] as ReactNode);
+                      return href && ci === 0 ? (
+                        <Link to={href} onClick={(e) => e.stopPropagation()} className="block hover:text-wine focus-visible:text-wine">
+                          {content}
+                        </Link>
+                      ) : (
+                        content
+                      );
+                    })()}
                   </td>
                 ))}
               </tr>

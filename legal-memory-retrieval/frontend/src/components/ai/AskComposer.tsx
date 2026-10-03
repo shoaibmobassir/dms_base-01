@@ -9,6 +9,7 @@ export function AskComposer({
   scopeType,
   large,
   placeholder = "Ask anything about the firm's work…",
+  followUpOf,
 }: {
   examples?: string[];
   /** A matter code / client name the question is about; sent along with the question. */
@@ -17,6 +18,8 @@ export function AskComposer({
   scopeType?: "matter" | "client" | "auto";
   large?: boolean;
   placeholder?: string;
+  /** Saved answer this question follows up on: the earlier question and scope carry over. */
+  followUpOf?: string | null;
 }) {
   const [q, setQ] = useState("");
   const navigate = useNavigate();
@@ -27,7 +30,8 @@ export function AskComposer({
     const scoped = scopeLabel
       ? `&scope=${encodeURIComponent(scopeLabel)}${scopeType && scopeType !== "auto" ? `&scopeType=${scopeType}` : ""}`
       : "";
-    navigate(`/ask?q=${encodeURIComponent(query)}${scoped}`);
+    const follow = followUpOf ? `&follow=${encodeURIComponent(followUpOf)}` : "";
+    navigate(`/ask?q=${encodeURIComponent(query)}${scoped}${follow}`);
   };
 
   return (
@@ -39,7 +43,7 @@ export function AskComposer({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 submit();
               }
@@ -66,7 +70,7 @@ export function AskComposer({
             data-testid="ask-submit"
             className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
           >
-            Ask the Firm <Icon name="arrow_forward" style={{ fontSize: 16 }} />
+            {followUpOf ? "Ask follow-up" : "Ask the Firm"} <Icon name="arrow_forward" style={{ fontSize: 16 }} />
           </button>
         </div>
       </div>

@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { ingestDocument, PAGE_SIZE, useDocumentFacets, useDocuments, useMatters } from "@/api/resources";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { PAGE_SIZE, useDocumentFacets, useDocuments } from "@/api/resources";
 import { DataTable } from "@/components/common/DataTable";
 import { Action, EmptyState, Icon, MonoId, PageHeader, SearchField } from "@/components/common/primitives";
 import { Pager, QueryState } from "@/components/common/QueryState";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useApp } from "@/context/AppContext";
+import { MatterPicker } from "@/components/common/MatterPicker";
+import { UploadFlow } from "@/components/documents/UploadFlow";
 import { formatDate } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
 
@@ -29,15 +27,19 @@ export function DocumentsPage() {
   const [page, setPage] = useState(0);
   const [docType, setDocType] = useState("");
   const [matterId, setMatterId] = useState("");
-  const [showUpload, setShowUpload] = useState(false);
+  // "Add documents" in the command palette arrives as ?add=1.
+  const [params, setParams] = useSearchParams();
+  const [showUpload, setShowUpload] = useState(params.get("add") === "1");
+  useEffect(() => {
+    if (params.get("add") === "1") setParams({}, { replace: true });
+  }, [params, setParams]);
   const q = useDebounced(query.trim());
   const documents = useDocuments({ q, page, doc_type: docType || undefined, matter_id: matterId || undefined });
   const facets = useDocumentFacets();
-  const matters = useMatters({ limit: 200 });
 
   useEffect(() => setPage(0), [q, docType, matterId]);
 
-  const selectClass = "rounded-md border border-border bg-card px-2.5 py-2 text-sm text-foreground focus:border-wine/50 focus:outline-hidden";
+  const selectClass = "rounded-md border border-border bg-card px-2.5 py-2 text-sm text-foreground focus:border-wine/50 focus:outline-none";
 
   return (
     <div className="space-y-6">
@@ -48,7 +50,7 @@ export function DocumentsPage() {
         subtitle="Every document is filed to its matter, with its author and versions."
         actions={
           <Action onClick={() => setShowUpload(true)} icon="upload" testId="add-documents">
-            Add document
+            Add documents
           </Action>
         }
       />
@@ -64,14 +66,9 @@ export function DocumentsPage() {
             </option>
           ))}
         </select>
-        <select value={matterId} onChange={(e) => setMatterId(e.target.value)} aria-label="Matter" data-testid="documents-matter" className={`${selectClass} max-w-[260px]`}>
-          <option value="">All matters</option>
-          {(matters.data?.items ?? []).map((m) => (
-            <option key={m.matter_id} value={m.matter_id}>
-              {m.matter_code} · {m.title}
-            </option>
-          ))}
-        </select>
+        <div className="sm:w-64">
+          <MatterPicker value={matterId || null} onChange={(m) => setMatterId(m?.matter_id ?? "")} allowNone noneLabel="All matters" testId="documents-matter" />
+        </div>
         {(docType || matterId) && (
           <button type="button" onClick={() => { setDocType(""); setMatterId(""); }} className="text-xs font-medium text-wine hover:underline">
             Clear filters
@@ -88,6 +85,7 @@ export function DocumentsPage() {
             <DataTable
               testId="documents-table"
               getRowKey={(doc) => doc.document_id}
+              getRowHref={(doc) => `/documents/${doc.document_id}`}
               onRowClick={(doc) => navigate(`/documents/${doc.document_id}`)}
               rows={d.items}
               columns={[
@@ -99,7 +97,7 @@ export function DocumentsPage() {
                       <Icon name="description" className="text-muted-foreground" style={{ fontSize: 16 }} />
                       {doc.title}
                       {doc.privacy && (
-                        <Icon name={doc.privacy === "private" ? "lock" : "shield_lock"} className="text-amber-600"
+                        <Icon name={doc.privacy === "private" ? "lock" : "shield_lock"} className="text-warning-ink"
                           style={{ fontSize: 14 }} aria-label={doc.privacy === "private" ? "Private" : "Restricted"} data-testid="doc-privacy-icon" />
                       )}
                     </span>
@@ -125,105 +123,7 @@ export function DocumentsPage() {
           </>
         )}
       </QueryState>
-      {showUpload && <UploadDialog onClose={() => setShowUpload(false)} />}
+      {showUpload && <UploadFlow onClose={() => setShowUpload(false)} />}
     </div>
-  );
-}
-
-const DOC_TYPES = ["Memo", "Pleading", "Submission", "Correspondence", "Contract Draft", "Opinion"];
-
-function UploadDialog({ onClose }: { onClose: () => void }) {
-  const { toast } = useApp();
-  const queryClient = useQueryClient();
-  // Only open matters the caller can see are valid targets.
-  const matters = useMatters({ status: "Open", limit: 200 });
-  const [title, setTitle] = useState("");
-  const [matterId, setMatterId] = useState("");
-  const [docType, setDocType] = useState(DOC_TYPES[0]);
-  const [body, setBody] = useState("");
-  const [privateDraft, setPrivateDraft] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const options = matters.data?.items ?? [];
-  const target = matterId || options[0]?.matter_id || "";
-
-  const submit = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await ingestDocument({ title: title.trim(), matter_id: target, body: body.trim(), document_type: docType,
-        visibility: privateDraft ? "private" : "matter" });
-      await queryClient.invalidateQueries();
-      toast(`Indexed ${res.document_id ?? "document"}`);
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ingest failed");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="font-display text-2xl">Add a document</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3 text-sm">
-          <input
-            className="w-full rounded-md border border-border bg-card px-3 py-2"
-            placeholder="Title"
-            aria-label="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <select
-            className="w-full rounded-md border border-border bg-card px-3 py-2"
-            aria-label="Matter"
-            value={target}
-            onChange={(e) => setMatterId(e.target.value)}
-            disabled={matters.isPending}
-          >
-            {options.map((m) => (
-              <option key={m.matter_id} value={m.matter_id}>
-                {m.matter_code} — {m.title}
-              </option>
-            ))}
-          </select>
-          <select
-            className="w-full rounded-md border border-border bg-card px-3 py-2"
-            aria-label="Document type"
-            value={docType}
-            onChange={(e) => setDocType(e.target.value)}
-          >
-            {DOC_TYPES.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={privateDraft} onChange={(e) => setPrivateDraft(e.target.checked)} data-testid="ingest-private" />
-            Private draft — only I can see it until I share it
-          </label>
-          <textarea
-            className="min-h-32 w-full rounded-md border border-border bg-card px-3 py-2"
-            placeholder="Document text"
-            aria-label="Document text"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-          />
-          {error && <p className="text-destructive">{error}</p>}
-          <p className="text-xs text-muted-foreground">The text is chunked and indexed into the matter, and inherits its permissions.</p>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button disabled={busy || !title.trim() || !target || !body.trim()} onClick={() => void submit()}>
-            {busy ? "Indexing…" : "Ingest"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }

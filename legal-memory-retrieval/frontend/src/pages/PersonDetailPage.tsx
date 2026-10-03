@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { usePerson } from "@/api/resources";
 import { DataTable } from "@/components/common/DataTable";
 import { PersonAvatar } from "@/components/common/EntityLink";
-import { Action, EmptyState, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { Action, EmptyState, PageHeader, SectionLabel, StatusLabel, DetailSkeleton } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
 import { initials, useApp } from "@/context/AppContext";
 
@@ -19,7 +19,7 @@ export function PersonDetailPage() {
   const [editing, setEditing] = useState(false);
 
   return (
-    <QueryState query={person} loading={<p className="text-sm text-muted-foreground">Loading…</p>}>
+    <QueryState query={person} loading={<DetailSkeleton />}>
       {({ person: p, matters }) => (
         <div className="space-y-10">
           <PageHeader eyebrow={p.role} title={p.name} subtitle={[p.practice_areas.join(", "), p.office].filter(Boolean).join(" · ")}

@@ -441,6 +441,9 @@ export type KmPanel = {
 export type AskHistoryItem = { id: string; query: string; scope: string | null; scope_type: string | null; asked_at: string }
 
 export type AskResult = {
+  /** Set when this answer follows up on an earlier one. */
+  follow_up_of?: string | null
+  follow_up_query?: string | null
   answer?: string
   key_finding?: string
   abstained?: boolean

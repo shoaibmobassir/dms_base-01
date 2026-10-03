@@ -22,6 +22,8 @@ import { createPerson, firmError } from "@/api/firm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState, MonoId, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { useConfirm } from "@/components/common/Confirm";
+import { Field } from "@/components/common/Field";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
@@ -131,15 +133,18 @@ function OnboardPerson() {
   return (
     <section className="space-y-2 rounded-lg border border-border bg-card p-4" data-testid="admin-onboard-form">
       <SectionLabel>Add a person</SectionLabel>
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} data-testid="onboard-name" />
-        <Input placeholder="Title (e.g. Associate)" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Input placeholder="Office" value={office} onChange={(e) => setOffice(e.target.value)} />
-        <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <select className="rounded-md border border-border bg-background px-2 py-2 text-sm" value={role} onChange={(e) => setRole(e.target.value)}
-          aria-label="Firm role">
-          {(roles.data ?? []).map((r) => <option key={r.role_key} value={r.role_key}>{r.name}</option>)}
-        </select>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Full name">{(f) => <Input {...f} value={name} onChange={(e) => setName(e.target.value)} data-testid="onboard-name" />}</Field>
+        <Field label="Title" hint="For example: Associate.">{(f) => <Input {...f} value={title} onChange={(e) => setTitle(e.target.value)} />}</Field>
+        <Field label="Office">{(f) => <Input {...f} value={office} onChange={(e) => setOffice(e.target.value)} />}</Field>
+        <Field label="Email">{(f) => <Input {...f} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />}</Field>
+        <Field label="Firm role">
+          {(f) => (
+            <select {...f} className="w-full rounded-md border border-border bg-background px-2 py-2 text-sm" value={role} onChange={(e) => setRole(e.target.value)}>
+              {(roles.data ?? []).map((r) => <option key={r.role_key} value={r.role_key}>{r.name}</option>)}
+            </select>
+          )}
+        </Field>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <div className="flex gap-2">
@@ -213,7 +218,7 @@ function UserRow({ user, roles, canEdit }: { user: AdminUser; roles: FirmRole[];
                 onClick={() => toggle(r.role_key)}
                 data-testid={`role-${user.member_id}-${r.role_key}`}
                 className={cn(
-                  "rounded-full border px-2 py-0.5 text-[11px]",
+                  "rounded-full border px-2 py-0.5 text-xs",
                   on ? "border-wine bg-wine-soft text-wine" : "border-border text-muted-foreground",
                   canEdit && "hover:border-wine/50",
                 )}
@@ -234,6 +239,7 @@ function TeamsSection() {
   const { identityKey } = useApp();
   const queryClient = useQueryClient();
   const { busy, run } = useRun();
+  const confirm = useConfirm();
   const [name, setName] = useState("");
   const refresh = () => queryClient.invalidateQueries({ queryKey: [identityKey, "admin-teams"] });
 
@@ -259,7 +265,10 @@ function TeamsSection() {
                 <div className="text-xs text-muted-foreground">{t.kind} · {t.member_count} members</div>
               </div>
               {t.kind === "custom" && (
-                <Button size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => deleteTeam(t.team_id), "Team deleted").then(refresh)}>
+                <Button size="sm" variant="ghost" disabled={busy} onClick={async () => {
+                  if (await confirm({ title: `Delete the team “${t.name}”?`, description: "Members keep their access through other teams and roles.", confirmLabel: "Delete team" }))
+                    void run(() => deleteTeam(t.team_id), "Team deleted").then(refresh);
+                }}>
                   Delete
                 </Button>
               )}
@@ -316,7 +325,7 @@ function WallsSection() {
           <tr key={w.matter_id}>
             <td className="py-2">
               <Link to={`/matters/${w.matter_id}`} className="hover:text-wine">{w.title}</Link>
-              <div><MonoId className="text-[11px]">{w.matter_code}</MonoId></div>
+              <div><MonoId className="text-xs">{w.matter_code}</MonoId></div>
             </td>
             <td className="text-muted-foreground">{w.client_name}</td>
             <td>

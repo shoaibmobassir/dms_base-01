@@ -38,7 +38,7 @@ function useScopedQuery<T>(
   key: unknown[],
   fn: () => Promise<T>,
   enabled = true,
-  opts: { once?: boolean } = {},
+  opts: { once?: boolean; fresh?: boolean } = {},
 ) {
   const { identityKey } = useApp()
   return useQuery({
@@ -47,7 +47,7 @@ function useScopedQuery<T>(
     enabled: enabled && identityKey !== null,
     // Lists keep showing the previous page while the next one loads. One-shot
     // queries (Ask runs the LLM) never refetch and never show stale answers.
-    placeholderData: opts.once ? undefined : keepPreviousData,
+    placeholderData: opts.once || opts.fresh ? undefined : keepPreviousData,
     staleTime: opts.once ? Infinity : undefined,
     retry: opts.once ? false : undefined,
   })
@@ -233,3 +233,19 @@ export function setPinned(matterId: string, pinned: boolean) {
 
 export const useRecentConversations = () =>
   useScopedQuery(['chat-sessions'], () => apiFetch<ChatSession[]>('/api/chat/sessions?limit=50'))
+
+// ── Find in document ──────────────────────────────────────────────────────
+export type BlockMatch = { block_id: string; index: number; page_number: number | null; section_title: string | null; snippet: string }
+
+export function useDocumentSearch(documentId: string, versionId: string | undefined, q: string) {
+  return useScopedQuery(
+    ['document', documentId, 'search', versionId, q],
+    () =>
+      apiFetch<{ matches: BlockMatch[]; total: number }>(
+        `/api/documents/${encodeURIComponent(documentId)}/versions/${encodeURIComponent(versionId!)}/search${qs({ q })}`,
+      ),
+    Boolean(versionId) && q.length >= 2,
+    // Never show the previous phrase's matches while a new phrase loads.
+    { fresh: true },
+  )
+}

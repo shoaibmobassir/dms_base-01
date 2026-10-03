@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DataTable } from "@/components/common/DataTable";
 import { Action, EmptyState, PageHeader, SearchField, StatusLabel } from "@/components/common/primitives";
 import { can, useMyAccess } from "@/api/access";
@@ -20,7 +20,12 @@ export function MattersPage() {
   const q = useDebounced(query.trim());
   const matters = useMatters({ q, status: status === "All" ? undefined : status, page });
   const myAccess = useMyAccess();
-  const [creating, setCreating] = useState(false);
+  // "New matter" in the command palette arrives as ?new=1.
+  const [params, setParams] = useSearchParams();
+  const [creating, setCreating] = useState(params.get("new") === "1");
+  useEffect(() => {
+    if (params.get("new") === "1") setParams({}, { replace: true });
+  }, [params, setParams]);
 
   useEffect(() => setPage(0), [q, status]);
 
@@ -39,7 +44,7 @@ export function MattersPage() {
           ) : undefined
         }
       />
-      {creating && (
+      {creating && can(myAccess.data, "matters.create") && (
         <NewMatterDialog open onClose={() => setCreating(false)} onCreated={(id) => { setCreating(false); navigate(`/matters/${id}`); }} />
       )}
 
@@ -80,6 +85,7 @@ export function MattersPage() {
             <DataTable
               testId="matters-table"
               getRowKey={(m) => m.matter_id}
+              getRowHref={(m) => `/matters/${m.matter_id}`}
               onRowClick={(m) => navigate(`/matters/${m.matter_id}`)}
               rows={d.items}
               columns={[

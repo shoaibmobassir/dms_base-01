@@ -19,6 +19,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { FindInDocument } from "@/components/document-workspace/FindInDocument";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -163,13 +166,20 @@ function WorkspaceFrame({
   const [rightTab, setRightTab] = useState<RightTab>(panelParam === "versions" ? "versions" : "info");
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  // Below these widths the rails are drawers, opened from the toolbar.
+  const isMd = useMediaQuery("(min-width: 768px)");
+  const isLg = useMediaQuery("(min-width: 1024px)");
+  const [leftSheet, setLeftSheet] = useState(false);
+  const [rightSheet, setRightSheet] = useState(false);
   const [goOpen, setGoOpen] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
   const workspaceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (panelParam === "versions") {
       setRightTab("versions");
       setRightOpen(true);
+      setRightSheet(true);
     }
   }, [panelParam]);
 
@@ -181,6 +191,11 @@ function WorkspaceFrame({
     const onKey = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target)) return;
       const meta = e.metaKey || e.ctrlKey;
+      if (e.key === "/" && !meta) {
+        e.preventDefault();
+        setFindOpen(true);
+        return;
+      }
       if (e.key === "g" || e.key === "G" || (meta && (e.key === "g" || e.key === "G"))) {
         e.preventDefault();
         setGoOpen(true);
@@ -228,6 +243,99 @@ function WorkspaceFrame({
   const newerAvailable =
     Boolean(currentVersionId) && Boolean(openVersionId) && currentVersionId !== openVersionId;
 
+  const leftRail = (
+    <>
+      <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
+        {hasOutline && (
+          <RailTab active={railTab === "outline"} onClick={() => setLeftTab("outline")}>
+            Outline
+          </RailTab>
+        )}
+        <RailTab active={railTab === "thumbnails"} onClick={() => setLeftTab("thumbnails")}>
+          {unitLabel}s
+        </RailTab>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {railTab === "outline" ? (
+          <OutlineList
+            items={outline.data?.outline ?? []}
+            loading={outline.isPending}
+            currentPart={part}
+            usePages={usePages}
+            onJump={(item) => {
+              setAddress({
+                part: item.page_number || 1,
+                blockId: item.block_id,
+              });
+            }}
+          />
+        ) : (
+          <ThumbnailList
+            total={unitTotal}
+            current={part}
+            unitLabel={unitLabel}
+            onJump={(n) => goToPart(n, { allowClamp: true })}
+          />
+        )}
+      </div>
+    </>
+  );
+  const rightRail = (
+    <>
+      <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
+        <RailTab active={rightTab === "versions"} onClick={() => setRightTab("versions")}>
+          Versions
+        </RailTab>
+        <RailTab active={rightTab === "info"} onClick={() => setRightTab("info")}>
+          Info
+        </RailTab>
+        <RailTab active={rightTab === "ai"} onClick={() => setRightTab("ai")}>
+          AI
+        </RailTab>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        {rightTab === "versions" && (
+          <VersionsList
+            versions={versionRows}
+            currentVersionId={currentVersionId}
+            openVersionId={openVersionId}
+            loading={versions.isPending}
+            onOpen={(v) => setAddress({ versionId: v.version_id, part: 1 })}
+          />
+        )}
+        {rightTab === "info" && (
+          <InfoPanel doc={doc} openVersion={openVersion} unitTotal={unitTotal} unitLabel={unitLabel} />
+        )}
+        {rightTab === "ai" && (
+          <div className="space-y-4 text-sm" data-testid="document-ai">
+            <p className="text-muted-foreground">Start an Assistant conversation with this document attached.</p>
+            <div className="flex flex-col gap-1.5">
+              {AI_TASKS.map((t) => (
+                <Link
+                  key={t.label}
+                  to={assistantLink(doc, t.prompt)}
+                  data-testid="document-ai-task"
+                  className="flex items-center gap-2 rounded-md border border-border px-3 py-2 hover:bg-secondary"
+                >
+                  <Icon name={t.icon} className="text-wine" style={{ fontSize: 18 }} />
+                  {t.label}
+                </Link>
+              ))}
+            </div>
+            {doc.matter_code && (
+              <Link
+                to={`/ask?scope=${encodeURIComponent(doc.matter_code)}&scopeType=matter`}
+                className="inline-flex items-center gap-1.5 text-wine hover:underline"
+              >
+                <Icon name="manage_search" style={{ fontSize: 16 }} /> Ask the Firm about this matter
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div
       ref={workspaceRef}
@@ -248,52 +356,33 @@ function WorkspaceFrame({
         onNext={() => goToPart(part + 1, { allowClamp: true })}
         onJump={(n) => goToPart(n)}
         onOpenGo={() => setGoOpen(true)}
+        onOpenFind={() => setFindOpen((v) => !v)}
         onShowCurrent={() => currentVersionId && setAddress({ versionId: currentVersionId, part: 1 })}
-        onToggleLeft={() => setLeftOpen((v) => !v)}
-        onToggleRight={() => setRightOpen((v) => !v)}
-        leftOpen={leftOpen}
-        rightOpen={rightOpen}
+        onToggleLeft={() => (isMd ? setLeftOpen((v) => !v) : setLeftSheet((v) => !v))}
+        onToggleRight={() => (isLg ? setRightOpen((v) => !v) : setRightSheet((v) => !v))}
+        leftOpen={isMd ? leftOpen : leftSheet}
+        rightOpen={isLg ? rightOpen : rightSheet}
       />
 
+      {findOpen && (
+        <FindInDocument
+          documentId={doc.document_id}
+          versionId={openVersionId}
+          onClose={() => setFindOpen(false)}
+          onPick={(m) => {
+            const target = usePages ? m.page_number || 1 : Math.floor(m.index / PART_SIZE) + 1;
+            setAddress({ part: Math.min(Math.max(1, target), unitTotal), blockId: m.block_id, clearChunk: true });
+          }}
+        />
+      )}
+
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {leftOpen && (
+        {isMd && leftOpen && (
           <aside
-            className="hidden w-64 shrink-0 flex-col border-r border-border bg-card md:flex"
+            className="flex w-64 shrink-0 flex-col border-r border-border bg-card"
             data-testid="document-left-rail"
           >
-            <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
-              {hasOutline && (
-                <RailTab active={railTab === "outline"} onClick={() => setLeftTab("outline")}>
-                  Outline
-                </RailTab>
-              )}
-              <RailTab active={railTab === "thumbnails"} onClick={() => setLeftTab("thumbnails")}>
-                {unitLabel}s
-              </RailTab>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {railTab === "outline" ? (
-                <OutlineList
-                  items={outline.data?.outline ?? []}
-                  loading={outline.isPending}
-                  currentPart={part}
-                  usePages={usePages}
-                  onJump={(item) => {
-                    setAddress({
-                      part: item.page_number || 1,
-                      blockId: item.block_id,
-                    });
-                  }}
-                />
-              ) : (
-                <ThumbnailList
-                  total={unitTotal}
-                  current={part}
-                  unitLabel={unitLabel}
-                  onJump={(n) => goToPart(n, { allowClamp: true })}
-                />
-              )}
-            </div>
+            {leftRail}
           </aside>
         )}
 
@@ -309,54 +398,32 @@ function WorkspaceFrame({
           highlightBlock={address.blockId}
         />
 
-        {rightOpen && (
+        {isLg && rightOpen && (
           <aside
-            className="hidden w-72 shrink-0 flex-col border-l border-border bg-card lg:flex"
+            className="flex w-72 shrink-0 flex-col border-l border-border bg-card"
             data-testid="document-right-rail"
           >
-            <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
-              <RailTab active={rightTab === "versions"} onClick={() => setRightTab("versions")}>
-                Versions
-              </RailTab>
-              <RailTab active={rightTab === "info"} onClick={() => setRightTab("info")}>
-                Info
-              </RailTab>
-              <RailTab active={rightTab === "ai"} onClick={() => setRightTab("ai")}>
-                AI
-              </RailTab>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              {rightTab === "versions" && (
-                <VersionsList
-                  versions={versionRows}
-                  currentVersionId={currentVersionId}
-                  openVersionId={openVersionId}
-                  loading={versions.isPending}
-                  onOpen={(v) => setAddress({ versionId: v.version_id, part: 1 })}
-                />
-              )}
-              {rightTab === "info" && (
-                <InfoPanel doc={doc} openVersion={openVersion} unitTotal={unitTotal} unitLabel={unitLabel} />
-              )}
-              {rightTab === "ai" && (
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <p>Ask about this document in the Assistant, or ask the firm about its matter.</p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={doc.matter_id ? `/chat?matter=${doc.matter_id}` : "/chat"}>Open Assistant</Link>
-                    </Button>
-                    {doc.matter_code && (
-                      <Button asChild variant="outline" size="sm">
-                        <Link to={`/ask?scope=${encodeURIComponent(doc.matter_code)}&scopeType=matter`}>Ask the Firm</Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            {rightRail}
           </aside>
         )}
       </div>
+
+      <Sheet open={!isMd && leftSheet} onOpenChange={setLeftSheet}>
+        <SheetContent side="left" className="flex w-[320px] max-w-[90vw] flex-col gap-0 p-0" aria-describedby={undefined}>
+          <SheetTitle className="sr-only">Outline</SheetTitle>
+          <div className="flex min-h-0 flex-1 flex-col pt-10" data-testid="document-left-sheet">
+            {leftRail}
+          </div>
+        </SheetContent>
+      </Sheet>
+      <Sheet open={!isLg && rightSheet} onOpenChange={setRightSheet}>
+        <SheetContent side="right" className="flex w-[360px] max-w-[92vw] flex-col gap-0 p-0" aria-describedby={undefined}>
+          <SheetTitle className="sr-only">Versions and details</SheetTitle>
+          <div className="flex min-h-0 flex-1 flex-col pt-10" data-testid="document-right-sheet">
+            {rightRail}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <GoToDialog
         open={goOpen}
@@ -374,6 +441,19 @@ function WorkspaceFrame({
   );
 }
 
+const AI_TASKS = [
+  { label: "Summarise this document", icon: "summarize", prompt: "Summarise this document: the parties, what it does and anything that needs attention." },
+  { label: "List obligations and deadlines", icon: "checklist", prompt: "List every obligation, deadline and condition in this document, with the clause that creates each." },
+  { label: "Find risks", icon: "report", prompt: "Review this document and list the key risks, with suggested changes." },
+];
+
+/** An Assistant conversation limited to the document's matter, with the document attached and a starting prompt. */
+function assistantLink(doc: DocumentDetail, prompt: string) {
+  const q = new URLSearchParams({ doc: doc.document_id, docTitle: doc.title, q: prompt });
+  if (doc.matter_id) q.set("matter", doc.matter_id);
+  return `/chat?${q.toString()}`;
+}
+
 function Toolbar({
   doc,
   openVersion,
@@ -387,6 +467,7 @@ function Toolbar({
   onNext,
   onJump,
   onOpenGo,
+  onOpenFind,
   onShowCurrent,
   onToggleLeft,
   onToggleRight,
@@ -405,6 +486,7 @@ function Toolbar({
   onNext: () => void;
   onJump: (n: number) => boolean | void;
   onOpenGo: () => void;
+  onOpenFind: () => void;
   onShowCurrent: () => void;
   onToggleLeft: () => void;
   onToggleRight: () => void;
@@ -440,14 +522,14 @@ function Toolbar({
     >
       <button
         type="button"
-        className="hidden rounded-md p-1.5 text-muted-foreground hover:bg-secondary md:inline-flex"
+        className="inline-flex rounded-md p-2 text-muted-foreground hover:bg-secondary"
         aria-label={leftOpen ? "Hide outline" : "Show outline"}
         onClick={onToggleLeft}
       >
         <Icon name="view_sidebar" style={{ fontSize: 20 }} />
       </button>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-[calc(100%-3rem)] sm:basis-0">
         <div className="flex flex-wrap items-baseline gap-2">
           <h1 className="truncate font-display text-lg text-ink" data-testid="document-title">
             {doc.title}
@@ -525,6 +607,9 @@ function Toolbar({
         >
           <Icon name="chevron_right" style={{ fontSize: 20 }} />
         </Button>
+        <Button type="button" variant="ghost" size="icon" aria-label="Find in document (/)" onClick={onOpenFind} data-testid="document-find">
+          <Icon name="search" style={{ fontSize: 20 }} />
+        </Button>
         <Button type="button" variant="ghost" size="sm" onClick={onOpenGo} data-testid="document-go-to">
           Go to
         </Button>
@@ -539,7 +624,7 @@ function Toolbar({
 
       <button
         type="button"
-        className="hidden rounded-md p-1.5 text-muted-foreground hover:bg-secondary lg:inline-flex"
+        className="inline-flex rounded-md p-2 text-muted-foreground hover:bg-secondary"
         aria-label={rightOpen ? "Hide panel" : "Show panel"}
         onClick={onToggleRight}
       >
@@ -616,7 +701,7 @@ function ReaderCanvas({
             <span>
               {unitLabel} {part.toLocaleString()} of {unitTotal.toLocaleString()}
             </span>
-            {!usePages && <span>Reader · no page rendition yet</span>}
+            {!usePages && <span>Text view</span>}
           </div>
 
           {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
@@ -690,7 +775,7 @@ function OutlineList({
                   {item.section_id ? `${item.section_id} ` : ""}
                   {item.section_title}
                 </div>
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   {usePages ? `Page ${item.page_number}` : "Jump"}
                 </div>
               </button>
@@ -743,7 +828,7 @@ function ThumbnailList({
             n === current ? "border-wine bg-wine-soft text-wine" : "bg-card hover:bg-secondary",
           )}
         >
-          <span className="flex h-10 w-8 items-center justify-center rounded border border-dashed border-border bg-secondary text-[10px]">
+          <span className="flex h-10 w-8 items-center justify-center rounded border border-dashed border-border bg-secondary text-xs">
             {n}
           </span>
           {unitLabel} {n}
@@ -802,7 +887,7 @@ function VersionsList({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{v.version_label || `Version ${v.version_number ?? ""}`}</span>
-                  {isCurrent && <span className="text-[10px] uppercase tracking-wide">Current</span>}
+                  {isCurrent && <span className="text-xs uppercase tracking-wide">Current</span>}
                 </div>
                 <div className="mt-0.5 text-xs text-muted-foreground">
                   {[v.author_name, v.version_status, v.created_at ? formatDate(v.created_at) : null].filter(Boolean).join(" · ")}

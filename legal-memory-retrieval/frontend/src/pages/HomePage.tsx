@@ -4,19 +4,11 @@ import { AskComposer } from "@/components/ai/AskComposer";
 import { DataTable } from "@/components/common/DataTable";
 import { QueryState } from "@/components/common/QueryState";
 import { useQuery } from "@tanstack/react-query";
-import { listAskHistory } from "@/api/ask";
+import { listAskHistory, useQuestionIdeas } from "@/api/ask";
 import { useDeadlines, useHomeStats, useMatters, useRecentConversations } from "@/api/resources";
-import { formatDate } from "@/lib/format";
+import { dueLabel, formatDate } from "@/lib/format";
 import { useApp } from "@/context/AppContext";
-import { dueLabel } from "@/pages/CalendarPage";
 import { MyWork } from "@/components/home/MyWork";
-
-const EXAMPLES = [
-  "What did we argue on maintainability before the Appellate Tribunal for Electricity?",
-  "Which matters concern transmission charges under the CERC sharing regulations?",
-  "Summarise the PCIJ's approach to reparation in our historical corpus.",
-  "Which Security Council resolutions did we advise on in 2025?",
-];
 
 function greeting() {
   const h = new Date().getHours();
@@ -28,6 +20,7 @@ function greeting() {
 export function HomePage() {
   const { me, identityKey } = useApp();
   const navigate = useNavigate();
+  const ideas = useQuestionIdeas(3);
   const stats = useHomeStats();
   const openMatters = useMatters({ status: "Open", limit: 6 });
   const deadlines = useDeadlines({ status: "open", limit: 6 });
@@ -50,7 +43,6 @@ export function HomePage() {
       <PageHeader
         eyebrow={first ? `${greeting()}, ${first}` : greeting()}
         title="Firm Intelligence"
-        subtitle="The firm's knowledge, at work."
         actions={
           <>
             <Action to="/chat" icon="edit_note" testId="home-assistant">
@@ -63,7 +55,20 @@ export function HomePage() {
         }
       />
 
-      <AskComposer examples={EXAMPLES} placeholder="Ask anything about the firm's work…" />
+      <AskComposer examples={ideas} placeholder="Ask anything about the firm's work…" />
+
+      {counts && counts.matters === 0 && (
+        <EmptyState
+          icon="gavel"
+          title="No matters in your access scope yet"
+          description="Open a matter to start filing documents, tracking court dates and asking the firm about its work."
+          action={
+            <Action to="/matters?new=1" primary icon="add" testId="home-new-matter">
+              New matter
+            </Action>
+          }
+        />
+      )}
 
       <MyWork />
 
@@ -96,7 +101,7 @@ export function HomePage() {
                           <span className="block text-foreground">
                             {d.title}
                             {d.owner_member_id && d.owner_member_id === me?.member_id && (
-                              <span className="ml-2 rounded bg-wine-soft px-1.5 py-px align-middle text-[10px] font-semibold uppercase text-wine">Yours</span>
+                              <span className="ml-2 rounded bg-wine-soft px-1.5 py-px align-middle text-xs font-semibold uppercase text-wine">Yours</span>
                             )}
                           </span>
                           <span className="block truncate text-xs text-muted-foreground">

@@ -65,7 +65,7 @@ function NavItem({ item, collapsed }: { item: NavItemConfig; collapsed?: boolean
             <span className="min-w-0">
               <span className="block truncate">{item.label}</span>
               {item.hint && (
-                <span aria-hidden className="block truncate text-[11px] font-normal text-muted-foreground">
+                <span aria-hidden className="block truncate text-xs font-normal text-muted-foreground">
                   {item.hint}
                 </span>
               )}
@@ -93,7 +93,7 @@ function ShortcutList({
   if (items.length === 0) return null;
   return (
     <div className="mb-5" data-testid={testId}>
-      <div className="meta-label px-3 pb-1.5 text-[10px]">{label}</div>
+      <div className="meta-label px-3 pb-1.5 text-xs">{label}</div>
       <div className="space-y-0.5">
         {items.map((it, i) => (
           <Link
@@ -108,7 +108,7 @@ function ShortcutList({
           >
             <Icon name={it.icon} className="text-muted-foreground" style={{ fontSize: 16 }} />
             <span className="min-w-0 flex-1 truncate">{it.title}</span>
-            {it.hint && <span className="shrink-0 font-mono-id text-[10px] text-muted-foreground">{it.hint}</span>}
+            {it.hint && <span className="shrink-0 font-mono-id text-xs text-muted-foreground">{it.hint}</span>}
           </Link>
         ))}
       </div>
@@ -116,7 +116,7 @@ function ShortcutList({
   );
 }
 
-export function Sidebar({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
+export function Sidebar({ collapsed, onNavigate, onShortcuts }: { collapsed?: boolean; onNavigate?: () => void; onShortcuts?: () => void }) {
   const { firm } = useApp();
   const pinned = usePinnedMatters();
   const recent = useRecentConversations();
@@ -146,7 +146,7 @@ export function Sidebar({ collapsed, onNavigate }: { collapsed?: boolean; onNavi
       <div className="flex-1 overflow-y-auto px-3 pb-6 pt-2">
         {navGroups.map((group) => (
           <div key={group.label} className="mb-5">
-            {!collapsed && <div className="meta-label px-3 pb-1.5 text-[10px]">{group.label}</div>}
+            {!collapsed && <div className="meta-label px-3 pb-1.5 text-xs">{group.label}</div>}
             <div className="space-y-0.5">
               {group.items.map((item) => (
                 <NavItem key={item.to} item={item} collapsed={collapsed} />
@@ -191,14 +191,19 @@ export function Sidebar({ collapsed, onNavigate }: { collapsed?: boolean; onNavi
         )}
       </div>
 
-      {!collapsed && (
-        <div className="border-t border-border px-5 py-3 text-[10px] leading-relaxed text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <Icon name="shield" style={{ fontSize: 13 }} /> Firm-isolated knowledge
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Icon name="visibility_lock" style={{ fontSize: 13 }} /> Permission-aware retrieval
-          </div>
+      {!collapsed && onShortcuts && (
+        <div className="border-t border-border px-3 py-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onShortcuts();
+            }}
+            data-testid="sidebar-shortcuts"
+            className="flex w-full items-center gap-2.5 rounded-md py-1.5 pl-3 pr-2 text-[13px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <Icon name="keyboard" style={{ fontSize: 16 }} /> Keyboard shortcuts
+          </button>
         </div>
       )}
     </nav>

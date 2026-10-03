@@ -19,14 +19,16 @@ import {
   updateMatter,
   type MatterInput,
 } from "@/api/firm";
-import { useClients, useMatters, usePeople } from "@/api/resources";
+import { useMatters, usePeople } from "@/api/resources";
 import type { MatterArgument, MatterDetail, TeamMember, TimelineEvent } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Icon } from "@/components/common/primitives";
+import { ClientPicker } from "@/components/common/ClientPicker";
+import { Field, fieldControl } from "@/components/common/Field";
 import { useApp } from "@/context/AppContext";
 
-const inputCls = "w-full rounded-md border border-border bg-card px-3 py-2 text-sm";
+const inputCls = fieldControl;
 
 /** Run a write, report its outcome, and refresh what it changed. */
 export function useFirmWrite(matterId?: string) {
@@ -89,19 +91,16 @@ const lines = (text: string) => text.split("\n").map((s) => s.trim()).filter(Boo
 
 export function NewMatterDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (id: string) => void }) {
   const { me } = useApp();
-  const clients = useClients({});
   const people = usePeople();
   const { run, busy, error } = useFirmWrite();
   const [form, setForm] = useState<MatterInput>({ title: "", client_id: "", practice_area: "", access_mode: "team" });
   const [facts, setFacts] = useState("");
   const [team, setTeam] = useState<string[]>([]);
   const set = (patch: Partial<MatterInput>) => setForm((f) => ({ ...f, ...patch }));
-  const active = (clients.data?.items ?? []).filter((c) => (c.status ?? "active") === "active");
 
   const submit = async () => {
     const out = await run(() => createMatter({
       ...form,
-      client_id: form.client_id || active[0]?.client_id || "",
       facts: lines(facts),
       team: team.map((member_id) => ({ member_id, role: "Associate" })),
     }), "Matter opened");
@@ -111,40 +110,35 @@ export function NewMatterDialog({ open, onClose, onCreated }: { open: boolean; o
   return (
     <Shell open={open} onClose={onClose} title="Open a matter" testId="new-matter-dialog"
       description="You lead it unless you name another lead. New clients go through intake and a conflict check first.">
-      <input className={inputCls} placeholder="Title" aria-label="Title" value={form.title} onChange={(e) => set({ title: e.target.value })} data-testid="new-matter-title" />
-      <select className={inputCls} aria-label="Client" value={form.client_id} onChange={(e) => set({ client_id: e.target.value })} data-testid="new-matter-client">
-        <option value="">Choose a client…</option>
-        {active.map((c) => <option key={c.client_id} value={c.client_id}>{c.name}</option>)}
-      </select>
-      <div className="grid grid-cols-2 gap-2">
-        <input className={inputCls} placeholder="Practice area" aria-label="Practice area" value={form.practice_area}
-          onChange={(e) => set({ practice_area: e.target.value })} data-testid="new-matter-practice" />
-        <input className={inputCls} placeholder="Office" aria-label="Office" value={form.office ?? ""} onChange={(e) => set({ office: e.target.value })} />
-        <input className={inputCls} placeholder="Opposing party" aria-label="Opposing party" value={form.opposing_party ?? ""}
-          onChange={(e) => set({ opposing_party: e.target.value })} />
-        <input className={inputCls} placeholder="Forum / court" aria-label="Court" value={form.court ?? ""} onChange={(e) => set({ court: e.target.value })} />
+      <Field label="Title">{(f) => <input {...f} className={inputCls} value={form.title} onChange={(e) => set({ title: e.target.value })} data-testid="new-matter-title" />}</Field>
+      <ClientPicker value={form.client_id || null} onChange={(id) => set({ client_id: id ?? "" })} testId="new-matter-client" />
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Practice area">{(f) => <input {...f} className={inputCls} value={form.practice_area} onChange={(e) => set({ practice_area: e.target.value })} data-testid="new-matter-practice" />}</Field>
+        <Field label="Office">{(f) => <input {...f} className={inputCls} value={form.office ?? ""} onChange={(e) => set({ office: e.target.value })} />}</Field>
+        <Field label="Opposing party">{(f) => <input {...f} className={inputCls} value={form.opposing_party ?? ""} onChange={(e) => set({ opposing_party: e.target.value })} />}</Field>
+        <Field label="Forum or court">{(f) => <input {...f} className={inputCls} value={form.court ?? ""} onChange={(e) => set({ court: e.target.value })} />}</Field>
       </div>
-      <textarea className={`${inputCls} min-h-20`} placeholder="Key facts, one per line" value={facts} onChange={(e) => setFacts(e.target.value)} />
-      <label className="block">
-        <span className="text-xs text-muted-foreground">Who can see it</span>
-        <select className={inputCls} value={form.access_mode} onChange={(e) => set({ access_mode: e.target.value as MatterInput["access_mode"] })}
-          data-testid="new-matter-access">
-          <option value="team">The matter team</option>
-          <option value="open">Everyone in the firm</option>
-          <option value="restricted">Restricted (named people only)</option>
-        </select>
-      </label>
-      <label className="block">
-        <span className="text-xs text-muted-foreground">Team (besides the lead)</span>
-        <select multiple className={`${inputCls} h-28`} value={team}
-          onChange={(e) => setTeam([...e.target.selectedOptions].map((o) => o.value))} data-testid="new-matter-team">
-          {(people.data ?? []).filter((p) => p.member_id !== me?.member_id).map((p) => (
-            <option key={p.member_id} value={p.member_id}>{p.name} — {p.role}</option>
-          ))}
-        </select>
-      </label>
+      <Field label="Key facts" hint="One per line.">{(f) => <textarea {...f} className={`${inputCls} min-h-20`} value={facts} onChange={(e) => setFacts(e.target.value)} />}</Field>
+      <Field label="Who can see it">
+        {(f) => (
+          <select {...f} className={inputCls} value={form.access_mode} onChange={(e) => set({ access_mode: e.target.value as MatterInput["access_mode"] })} data-testid="new-matter-access">
+            <option value="team">The matter team</option>
+            <option value="open">Everyone in the firm</option>
+            <option value="restricted">Restricted (named people only)</option>
+          </select>
+        )}
+      </Field>
+      <Field label="Team (besides the lead)" hint="Hold Ctrl or ⌘ to choose several.">
+        {(f) => (
+          <select {...f} multiple className={`${inputCls} h-28`} value={team} onChange={(e) => setTeam([...e.target.selectedOptions].map((o) => o.value))} data-testid="new-matter-team">
+            {(people.data ?? []).filter((p) => p.member_id !== me?.member_id).map((p) => (
+              <option key={p.member_id} value={p.member_id}>{p.name}, {p.role}</option>
+            ))}
+          </select>
+        )}
+      </Field>
       <Footer busy={busy} error={error} onCancel={onClose} onSubmit={() => void submit()} label="Open matter"
-        disabled={!form.title.trim() || !form.practice_area.trim()} testId="new-matter-submit" />
+        disabled={!form.title.trim() || !form.practice_area.trim() || !form.client_id} testId="new-matter-submit" />
     </Shell>
   );
 }
@@ -176,17 +170,21 @@ export function EditMatterDialog({ detail, open, onClose }: { detail: MatterDeta
   };
   return (
     <Shell open={open} onClose={onClose} title="Edit matter" testId="edit-matter-dialog">
-      <input className={inputCls} aria-label="Title" value={title} onChange={(e) => setTitle(e.target.value)} data-testid="edit-matter-title" />
-      <div className="grid grid-cols-2 gap-2">
-        <select className={inputCls} aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} data-testid="edit-matter-status">
-          {["Open", "On hold", "Closed"].map((s) => <option key={s}>{s}</option>)}
-        </select>
-        <input className={inputCls} placeholder="Opposing party" aria-label="Opposing party" value={opposing} onChange={(e) => setOpposing(e.target.value)} />
-        <input className={`${inputCls} col-span-2`} placeholder="Forum / court" aria-label="Court" value={court} onChange={(e) => setCourt(e.target.value)} />
+      <Field label="Title">{(f) => <input {...f} className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} data-testid="edit-matter-title" />}</Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Status">
+          {(f) => (
+            <select {...f} className={inputCls} value={status} onChange={(e) => setStatus(e.target.value)} data-testid="edit-matter-status">
+              {["Open", "On hold", "Closed"].map((st) => <option key={st}>{st}</option>)}
+            </select>
+          )}
+        </Field>
+        <Field label="Opposing party">{(f) => <input {...f} className={inputCls} value={opposing} onChange={(e) => setOpposing(e.target.value)} />}</Field>
+        <Field label="Forum or court" className="col-span-2">{(f) => <input {...f} className={inputCls} value={court} onChange={(e) => setCourt(e.target.value)} />}</Field>
       </div>
-      {status === "Closed" && <input className={inputCls} placeholder="Outcome" aria-label="Outcome" value={outcome} onChange={(e) => setOutcome(e.target.value)} />}
-      <textarea className={`${inputCls} min-h-24`} placeholder="Key facts, one per line" value={facts} onChange={(e) => setFacts(e.target.value)} />
-      <textarea className={`${inputCls} min-h-16`} placeholder="Legal issues, one per line" value={issues} onChange={(e) => setIssues(e.target.value)} />
+      {status === "Closed" && <Field label="Outcome">{(f) => <input {...f} className={inputCls} value={outcome} onChange={(e) => setOutcome(e.target.value)} />}</Field>}
+      <Field label="Key facts" hint="One per line.">{(f) => <textarea {...f} className={`${inputCls} min-h-24`} value={facts} onChange={(e) => setFacts(e.target.value)} />}</Field>
+      <Field label="Legal issues" hint="One per line.">{(f) => <textarea {...f} className={`${inputCls} min-h-16`} value={issues} onChange={(e) => setIssues(e.target.value)} />}</Field>
       <Footer busy={busy} error={error} onCancel={onClose} onSubmit={() => void submit()} label="Save" disabled={!title.trim()} testId="edit-matter-save" />
     </Shell>
   );
@@ -218,7 +216,7 @@ export function TeamEditor({ matterId, team, canManage }: { matterId: string; te
               <tr key={t.member_id} className={t.active === false ? "text-muted-foreground" : ""} data-testid="team-row">
                 <td className="px-3 py-2">
                   {t.name}
-                  {t.active === false && <span className="ml-2 rounded bg-secondary px-1.5 text-[11px]">ended</span>}
+                  {t.active === false && <span className="ml-2 rounded bg-secondary px-1.5 text-xs">ended</span>}
                 </td>
                 <td className="px-3 py-2">
                   {canManage ? (
@@ -288,14 +286,18 @@ export function TimelineEntryDialog({ matterId, entry, open, onClose }: { matter
   };
   return (
     <Shell open={open} onClose={onClose} title={entry ? "Edit timeline entry" : "Add to the timeline"} testId="timeline-dialog">
-      <div className="grid grid-cols-2 gap-2">
-        <input type="date" className={inputCls} aria-label="Date" value={date} onChange={(e) => setDate(e.target.value)} data-testid="timeline-date" />
-        <select className={inputCls} aria-label="Kind" value={kind} onChange={(e) => setKind(e.target.value)}>
-          {EVENT_KINDS.map((k) => <option key={k} value={k}>{k[0].toUpperCase() + k.slice(1)}</option>)}
-        </select>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Date">{(f) => <input {...f} type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} data-testid="timeline-date" />}</Field>
+        <Field label="Kind">
+          {(f) => (
+            <select {...f} className={inputCls} value={kind} onChange={(e) => setKind(e.target.value)}>
+              {EVENT_KINDS.map((k) => <option key={k} value={k}>{k[0].toUpperCase() + k.slice(1)}</option>)}
+            </select>
+          )}
+        </Field>
       </div>
-      <input className={inputCls} placeholder="What happened" aria-label="Title" value={title} onChange={(e) => setTitle(e.target.value)} data-testid="timeline-title" />
-      <textarea className={`${inputCls} min-h-20`} placeholder="Details (optional)" value={detail} onChange={(e) => setDetail(e.target.value)} />
+      <Field label="What happened">{(f) => <input {...f} className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} data-testid="timeline-title" />}</Field>
+      <Field label="Details" hint="Optional.">{(f) => <textarea {...f} className={`${inputCls} min-h-20`} value={detail} onChange={(e) => setDetail(e.target.value)} />}</Field>
       <Footer busy={busy} error={error} onCancel={onClose} onSubmit={() => void submit()} label="Save" disabled={!title.trim() || !date} testId="timeline-save" />
     </Shell>
   );
@@ -323,10 +325,10 @@ export function ArgumentDialog({ matterId, arg, open, onClose }: { matterId: str
   };
   return (
     <Shell open={open} onClose={onClose} title={arg ? "Edit argument" : "Record an argument"} testId="argument-dialog">
-      <input className={inputCls} placeholder="Issue" aria-label="Issue" value={issue} onChange={(e) => setIssue(e.target.value)} data-testid="argument-issue" />
-      <input className={inputCls} placeholder="Whose position (e.g. our client, opposing party)" aria-label="Position" value={position} onChange={(e) => setPosition(e.target.value)} />
-      <textarea className={`${inputCls} min-h-28`} placeholder="The argument" value={text} onChange={(e) => setText(e.target.value)} data-testid="argument-text" />
-      <input className={inputCls} placeholder="Outcome (if decided)" aria-label="Outcome" value={outcome} onChange={(e) => setOutcome(e.target.value)} />
+      <Field label="Issue">{(f) => <input {...f} className={inputCls} value={issue} onChange={(e) => setIssue(e.target.value)} data-testid="argument-issue" />}</Field>
+      <Field label="Whose position" hint="For example: our client, or the opposing party.">{(f) => <input {...f} className={inputCls} value={position} onChange={(e) => setPosition(e.target.value)} />}</Field>
+      <Field label="The argument">{(f) => <textarea {...f} className={`${inputCls} min-h-28`} value={text} onChange={(e) => setText(e.target.value)} data-testid="argument-text" />}</Field>
+      <Field label="Outcome" hint="If it has been decided.">{(f) => <input {...f} className={inputCls} value={outcome} onChange={(e) => setOutcome(e.target.value)} />}</Field>
       <Footer busy={busy} error={error} onCancel={onClose} onSubmit={() => void submit()} label="Save" disabled={!issue.trim() || !text.trim()} testId="argument-save" />
     </Shell>
   );
@@ -353,16 +355,20 @@ export function LinkMatterDialog({ matterId, open, onClose }: { matterId: string
   return (
     <Shell open={open} onClose={onClose} title="Link a related matter" testId="link-dialog"
       description="You need edit access to both matters: the link shows each to the other's team.">
-      <input className={inputCls} placeholder="Find a matter…" value={q} onChange={(e) => setQ(e.target.value)} data-testid="link-search" />
-      <select className={`${inputCls} h-32`} size={6} value={target} onChange={(e) => setTarget(e.target.value)} data-testid="link-target">
+      <Field label="Find a matter">{(f) => <input {...f} className={inputCls} value={q} onChange={(e) => setQ(e.target.value)} data-testid="link-search" />}</Field>
+      <select className={`${inputCls} h-32`} size={6} aria-label="Matters found" value={target} onChange={(e) => setTarget(e.target.value)} data-testid="link-target">
         {(matters.data?.items ?? []).filter((m) => m.matter_id !== matterId).map((m) => (
-          <option key={m.matter_id} value={m.matter_id}>{m.matter_code} — {m.title}</option>
+          <option key={m.matter_id} value={m.matter_id}>{m.matter_code}, {m.title}</option>
         ))}
       </select>
-      <select className={inputCls} value={relation} onChange={(e) => setRelation(e.target.value)} aria-label="Relation">
-        {RELATIONS.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
-      </select>
-      <input className={inputCls} placeholder="Why (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+      <Field label="How they relate">
+        {(f) => (
+          <select {...f} className={inputCls} value={relation} onChange={(e) => setRelation(e.target.value)}>
+            {RELATIONS.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
+          </select>
+        )}
+      </Field>
+      <Field label="Why" hint="Optional.">{(f) => <input {...f} className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} />}</Field>
       <Footer busy={busy} error={error} onCancel={onClose} onSubmit={() => void submit()} label="Link" disabled={!target} testId="link-save" />
     </Shell>
   );

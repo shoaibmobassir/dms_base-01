@@ -117,7 +117,7 @@ export function ExactView({ documentId, currentVersionId, side = { kind: "commen
   return (
     <div className="grid flex-1 gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1fr)_340px]">
       {viewing && (
-        <div className="flex items-center gap-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm xl:col-span-2 dark:bg-amber-950/30" data-testid="exact-old-version">
+        <div className="flex items-center gap-3 rounded-md border border-warning/60 bg-warning-soft px-3 py-2 text-sm xl:col-span-2" data-testid="exact-old-version">
           <Icon name="history" style={{ fontSize: 16 }} />
           Viewing v{viewing.number ?? "?"}, an earlier version, as it was when the comment was made.
           <Button size="sm" variant="outline" className="ml-auto" onClick={() => { setViewing(null); setLocated({}); }}>
@@ -173,7 +173,7 @@ export function ExactView({ documentId, currentVersionId, side = { kind: "commen
             <p className="text-xs text-muted-foreground">{viewing ? "Comments are added on the current version." : "Switch to All markup to add comments."}</p>
           ) : composing && selection ? (
             <div className="space-y-2" data-testid="comment-composer">
-              <p className="line-clamp-3 border-l-2 border-amber-400 pl-2 text-xs italic text-muted-foreground">“{selection.quote}”</p>
+              <p className="line-clamp-3 border-l-2 border-warning/60 pl-2 text-xs italic text-muted-foreground">“{selection.quote}”</p>
               <textarea
                 autoFocus
                 value={draft}
@@ -279,20 +279,20 @@ function Thread({
   return (
     <li
       id={`comment-${thread.comment_id}`}
-      className={cn("rounded-md border p-3 text-sm transition-colors", active ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : "border-border", resolved && "opacity-70")}
+      className={cn("rounded-md border p-3 text-sm transition-colors", active ? "border-warning/60 bg-warning-soft" : "border-border", resolved && "opacity-70")}
       data-testid="comment-thread"
       data-status={thread.status}
     >
       <button type="button" className="block w-full text-left" onClick={onFocus}>
         <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 font-semibold text-black">{label}</span>
+          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1 font-semibold text-black">{label}</span>
           <span>p. {thread.page}</span>
           {resolved && <span className="rounded bg-secondary px-1.5">Resolved{thread.resolved_by ? ` by ${thread.resolved_by}` : ""}</span>}
           {thread.carried && <span className="rounded bg-secondary px-1.5" data-testid="comment-carried">from v{thread.version_number ?? "?"}</span>}
-          {thread.source === "word" && <span className="rounded bg-sky-100 px-1.5 text-sky-900" data-testid="comment-from-word">Word</span>}
+          {thread.source === "word" && <span className="rounded bg-info-soft px-1.5 text-info" data-testid="comment-from-word">Word</span>}
         </div>
         {thread.quote && (
-          <p className={cn("mb-1.5 line-clamp-2 border-l-2 pl-2 text-xs italic text-muted-foreground", detached ? "border-muted-foreground/40 line-through" : "border-amber-400")}>
+          <p className={cn("mb-1.5 line-clamp-2 border-l-2 pl-2 text-xs italic text-muted-foreground", detached ? "border-muted-foreground/40 line-through" : "border-warning/60")}>
             “{thread.quote}”
           </p>
         )}
@@ -350,7 +350,7 @@ function Message({ author, at, body, canDelete, onDelete }: { author: string | n
     <div>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-xs font-semibold">{author ?? "Unknown"}</span>
-        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
           {when(at)}
           {canDelete && (
             <button type="button" title="Delete" aria-label="Delete comment" className="rounded p-0.5 hover:bg-secondary" onClick={onDelete}>

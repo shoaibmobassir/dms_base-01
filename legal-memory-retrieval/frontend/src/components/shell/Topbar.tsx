@@ -13,6 +13,10 @@ import { Icon } from "@/components/common/primitives";
 import { PersonAvatar } from "@/components/common/EntityLink";
 import { initials, useApp } from "@/context/AppContext";
 import { useTheme, type Theme } from "@/lib/theme";
+import { usePageTitle } from "@/lib/use-page-title";
+import { Notifications } from "@/components/shell/Notifications";
+
+const IS_MAC = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
 const LABELS: Record<string, string> = {
   ask: "Ask the Firm",
@@ -27,6 +31,7 @@ const LABELS: Record<string, string> = {
   settings: "Settings",
   admin: "Admin",
   history: "Draft evolution",
+  edit: "Edit",
 };
 
 const RECORD_KEYS: Record<string, string> = { matters: "matter", documents: "document", clients: "client", people: "person" };
@@ -46,6 +51,16 @@ function useRecordTitle(section: string | undefined, id: string | undefined): st
         if (hit) return hit.title?.trim() || "Untitled conversation";
       }
       return "Conversation";
+    }
+    if (section === "ask" && id) {
+      // Saved answers: the question, from the cached history list.
+      for (const [, list] of queryClient.getQueriesData<{ items?: { id: string; query: string }[] }>({
+        queryKey: [identityKey, "ask-history"],
+      })) {
+        const hit = list?.items?.find((x) => x.id === id);
+        if (hit) return hit.query.length > 60 ? `${hit.query.slice(0, 57)}…` : hit.query;
+      }
+      return "Answer";
     }
     if (!key || !id) return undefined;
     for (const [, data] of queryClient.getQueriesData<Record<string, unknown>>({ queryKey: [identityKey, key, id] })) {
@@ -72,6 +87,8 @@ function Crumbs() {
     const label = i === 1 && recordTitle ? recordTitle : LABELS[s] || decodeURIComponent(s);
     crumbs.push({ label, to: acc });
   });
+  // The tab title follows the page: "Matters · Precentis", "Acme v. Union · Precentis".
+  usePageTitle(segs.length === 0 ? "Home" : crumbs[crumbs.length - 1].label);
   return (
     <nav className="flex items-center gap-1.5 text-sm" aria-label="Breadcrumb">
       {crumbs.map((c, i) => (
@@ -176,12 +193,13 @@ export function Topbar({
       >
         <Icon name="search" style={{ fontSize: 18 }} />
         <span className="flex-1 text-left">Search Precentis…</span>
-        <kbd className="hidden rounded border border-border bg-secondary px-1.5 py-0.5 font-mono-id text-[10px] text-muted-foreground sm:inline">
-          ⌘K
+        <kbd className="hidden rounded border border-border bg-secondary px-1.5 py-0.5 font-mono-id text-xs text-muted-foreground sm:inline">
+          {IS_MAC ? "⌘K" : "Ctrl K"}
         </kbd>
       </button>
 
       <div className="ml-auto flex items-center gap-1">
+        <Notifications />
         <ThemeMenu />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -193,7 +211,7 @@ export function Topbar({
               <PersonAvatar person={{ name, initials: initials(name) }} size={30} />
               <span className="hidden text-left leading-tight sm:block">
                 <span className="block text-sm font-semibold text-foreground">{name}</span>
-                <span className="block max-w-[160px] truncate text-[11px] text-muted-foreground">
+                <span className="block max-w-[160px] truncate text-xs text-muted-foreground">
                   {[me?.role, me?.office].filter(Boolean).join(" · ")}
                 </span>
               </span>

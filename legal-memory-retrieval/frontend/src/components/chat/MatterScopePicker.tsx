@@ -93,7 +93,7 @@ export function MatterScopePicker({
               placeholder="Find a matter by name, code or client"
               aria-label="Find a matter"
               data-testid="chat-scope-search"
-              className="w-full rounded-md border border-border bg-card py-1.5 pl-8 pr-2 text-[13px] placeholder:text-muted-foreground focus:outline-hidden"
+              className="w-full rounded-md border border-border bg-card py-1.5 pl-8 pr-2 text-[13px] placeholder:text-muted-foreground focus:outline-none"
             />
           </div>
           <ul role="listbox" className="max-h-72 overflow-y-auto">
@@ -127,7 +127,7 @@ export function MatterScopePicker({
                   <Check className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", current?.matter_id === m.matter_id ? "text-wine" : "invisible")} />
                   <span className="min-w-0">
                     <span className="block truncate text-[13px] font-medium">{m.title}</span>
-                    <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                    <span className="block truncate font-mono text-xs text-muted-foreground">
                       {[m.matter_code, m.client_name].filter(Boolean).join(" · ")}
                     </span>
                   </span>

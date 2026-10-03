@@ -148,16 +148,16 @@ export function StepTimeline({ events, streaming }: { events: ChatEvent[]; strea
                 ) : st.state === "failed" ? (
                   <XCircle className="h-3.5 w-3.5 text-destructive" />
                 ) : st.state === "done" ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success-ink" />
                 ) : (
                   <CircleDashed className="h-3.5 w-3.5 text-muted-foreground" />
                 )}
               </span>
               <div className="min-w-0">
                 <div className={cn("text-[12px]", st.state === "info" ? "text-muted-foreground" : "text-foreground/85")}>{st.label}</div>
-                {st.detail && <div className="text-[11px] text-muted-foreground">{st.detail}</div>}
+                {st.detail && <div className="text-xs text-muted-foreground">{st.detail}</div>}
                 {st.files && st.files.length > 0 && (
-                  <ul className="mt-0.5 space-y-px text-[11px] text-muted-foreground">
+                  <ul className="mt-0.5 space-y-px text-xs text-muted-foreground">
                     {st.files.slice(0, 5).map((f) => (
                       <li key={f} className="truncate">
                         · {f}
@@ -244,7 +244,7 @@ export function AskInputsCard({
                 value={answers[it.id] ?? ""}
                 onChange={(e) => setAnswers((a) => ({ ...a, [it.id]: e.target.value }))}
                 data-testid="ask-text"
-                className="w-full resize-none rounded-md border border-border bg-card px-2 py-1.5 text-[13px] focus:outline-hidden"
+                className="w-full resize-none rounded-md border border-border bg-card px-2 py-1.5 text-[13px] focus:outline-none"
               />
             )}
             {it.kind === "documents" && (
@@ -276,7 +276,7 @@ export function AskInputsCard({
                   Attach a document
                 </button>
                 {(files[it.id] ?? []).map((f) => (
-                  <span key={f.document_id} className="rounded bg-secondary px-1.5 py-0.5 text-[11px]">
+                  <span key={f.document_id} className="rounded bg-secondary px-1.5 py-0.5 text-xs">
                     {f.filename}
                   </span>
                 ))}
@@ -398,11 +398,11 @@ export function EditProposalsCard({
         {edits.length > 1 && (
           <div className="ml-auto flex shrink-0 items-center gap-1">
             <button type="button" disabled={busy === "all"} onClick={() => void decideAll("accepted")}
-              className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-secondary" data-testid="edits-accept-all">
+              className="rounded-md border border-border px-2 py-0.5 text-xs hover:bg-secondary" data-testid="edits-accept-all">
               Accept all
             </button>
             <button type="button" disabled={busy === "all"} onClick={() => void decideAll("rejected")}
-              className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-secondary" data-testid="edits-reject-all">
+              className="rounded-md border border-border px-2 py-0.5 text-xs hover:bg-secondary" data-testid="edits-reject-all">
               Reject all
             </button>
           </div>
@@ -412,7 +412,7 @@ export function EditProposalsCard({
           disabled={!canSave || accepted === 0 || exporting}
           onClick={() => void exportDocx()}
           data-testid="edits-export"
-          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
         >
           {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
           Word file ({accepted})
@@ -421,14 +421,14 @@ export function EditProposalsCard({
       <ul className="divide-y divide-border">
         {edits.slice(0, shown).map((edit, i) => (
           <li key={edit.id} className="space-y-1.5 px-3 py-2.5" data-testid="edit-card" data-status={edit.status}>
-            <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <span>
                 Edit {i + 1}
                 {edit.page ? ` · page ${edit.page}` : ""}
-                {!edit.located && <span className="ml-1 text-amber-700 dark:text-amber-400">· passage not found in document</span>}
+                {!edit.located && <span className="ml-1 text-warning-ink">· passage not found in document</span>}
               </span>
               {edit.status !== "pending" && (
-                <span className={cn("font-semibold", edit.status === "accepted" ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground")}>
+                <span className={cn("font-semibold", edit.status === "accepted" ? "text-success-ink" : "text-muted-foreground")}>
                   {edit.status === "accepted" ? "Accepted" : "Rejected"}
                 </span>
               )}
@@ -439,9 +439,9 @@ export function EditProposalsCard({
               </p>
             )}
             {edit.proposed ? (
-              <p className="rounded bg-emerald-500/10 px-2 py-1 text-[12.5px] text-emerald-900 dark:text-emerald-200">{edit.proposed}</p>
+              <p className="rounded bg-success-soft px-2 py-1 text-[12.5px] text-success-ink">{edit.proposed}</p>
             ) : (
-              <p className="text-[11px] italic text-muted-foreground">Delete this passage.</p>
+              <p className="text-xs italic text-muted-foreground">Delete this passage.</p>
             )}
             {edit.reason && <p className="text-[12px] text-muted-foreground">{edit.reason}</p>}
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
@@ -451,9 +451,9 @@ export function EditProposalsCard({
                 onClick={() => void decide(edit, edit.status === "accepted" ? "pending" : "accepted")}
                 data-testid="edit-accept"
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium",
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium",
                   edit.status === "accepted"
-                    ? "border-emerald-600/40 bg-emerald-600 text-white"
+                    ? "border-success/40 bg-success text-white"
                     : "border-border hover:bg-secondary",
                 )}
               >
@@ -465,7 +465,7 @@ export function EditProposalsCard({
                 onClick={() => void decide(edit, edit.status === "rejected" ? "pending" : "rejected")}
                 data-testid="edit-reject"
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium",
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium",
                   edit.status === "rejected" ? "border-border bg-secondary text-foreground" : "border-border hover:bg-secondary",
                 )}
               >
@@ -476,7 +476,7 @@ export function EditProposalsCard({
                   type="button"
                   onClick={() => onView(edit)}
                   data-testid="edit-view"
-                  className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
                 >
                   <Eye className="h-3 w-3" /> Show in document
                 </button>
@@ -516,13 +516,13 @@ export function FileCard({ documentId, filename, onOpen }: { documentId: string;
     <div className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-secondary/30 px-3 py-2" data-testid="generated-file">
       <FileText className="h-5 w-5 shrink-0 text-wine" />
       <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">{filename}</span>
-      <button type="button" onClick={onOpen} className="rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-secondary hover:text-foreground">
+      <button type="button" onClick={onOpen} className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground">
         Open
       </button>
       <button
         type="button"
         onClick={() => void downloadFile(documentId, filename)}
-        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[11px] font-medium hover:bg-secondary"
+        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium hover:bg-secondary"
       >
         <Download className="h-3 w-3" /> Download
       </button>

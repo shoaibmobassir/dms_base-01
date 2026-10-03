@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useClient } from "@/api/resources";
 import type { ClientNote } from "@/api/types";
 import { DataTable } from "@/components/common/DataTable";
-import { Action, EmptyState, MonoId, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { Action, EmptyState, MonoId, PageHeader, SectionLabel, StatusLabel, DetailSkeleton } from "@/components/common/primitives";
 import { formatDate } from "@/lib/format";
 import { QueryState } from "@/components/common/QueryState";
 
@@ -18,7 +18,7 @@ export function ClientDetailPage() {
   const client = useClient(id);
 
   return (
-    <QueryState query={client} loading={<p className="text-sm text-muted-foreground">Loading client…</p>}>
+    <QueryState query={client} loading={<DetailSkeleton />}>
       {(c) => (
         <div className="space-y-10">
           <PageHeader

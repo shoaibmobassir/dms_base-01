@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useApp } from '@/context/AppContext'
+import { listSuggestions } from './chat'
 import { ApiError, apiFetch, authHeaders } from './client'
 import type { AskScopeType } from './resources'
 import type { AskHistoryItem, AskResult } from './types'
@@ -88,7 +91,7 @@ export async function getSavedAsk(
 
 /** POST /api/answers/stream and report each server-sent event. */
 export async function streamAsk(
-  body: { query: string; scope?: { type: AskScopeType; value: string } | null; refresh?: boolean },
+  body: { query: string; scope?: { type: AskScopeType; value: string } | null; refresh?: boolean; followUpOf?: string | null },
   onEvent: (event: AskEvent) => void,
   signal: AbortSignal,
 ): Promise<void> {
@@ -99,6 +102,7 @@ export async function streamAsk(
       query: body.query,
       k: 10,
       refresh: !!body.refresh,
+      ...(body.followUpOf ? { follow_up_of: body.followUpOf } : {}),
       ...(body.scope?.value ? { scope: body.scope } : {}),
     }),
     signal,
@@ -132,6 +136,8 @@ export type UseAskArgs = {
   /** Fresh question from `?q=` (runs once, then the page should navigate to the saved id). */
   query?: string | null
   scope?: { type: AskScopeType; value: string } | null
+  /** Saved answer this question follows up on (from `?follow=`). */
+  followUpOf?: string | null
   /** >0 forces a model refresh for the current question. */
   runKey?: number
   /** Called when a fresh ask finishes and the server returns a stable saved id. */
@@ -141,7 +147,7 @@ export type UseAskArgs = {
 /**
  * Open by answer id (no model), or run a new question once and hand the saved id back.
  */
-export function useAskStream({ answerId = null, query = null, scope = null, runKey = 0, onSaved }: UseAskArgs) {
+export function useAskStream({ answerId = null, query = null, scope = null, followUpOf = null, runKey = 0, onSaved }: UseAskArgs) {
   const [state, setState] = useState<AskStreamState>(INITIAL)
   const scopeType = scope?.type ?? null
   const scopeValue = scope?.value ?? null
@@ -230,7 +236,7 @@ export function useAskStream({ answerId = null, query = null, scope = null, runK
         return
       }
 
-      if (!refresh && !answerId) {
+      if (!refresh && !answerId && !followUpOf) {
         try {
           const saved = await getSavedAsk(askQuery, scopeArg, controller.signal)
           if (controller.signal.aborted) return
@@ -246,7 +252,7 @@ export function useAskStream({ answerId = null, query = null, scope = null, runK
       }
 
       await streamAsk(
-        { query: askQuery, scope: scopeArg, refresh },
+        { query: askQuery, scope: scopeArg, refresh, followUpOf },
         applyEvent,
         controller.signal,
       )
@@ -259,7 +265,7 @@ export function useAskStream({ answerId = null, query = null, scope = null, runK
     return () => controller.abort()
     // Intentionally omit onSaved — callers pass stable callbacks.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerId, query, scopeType, scopeValue, runKey])
+  }, [answerId, query, scopeType, scopeValue, followUpOf, runKey])
 
   return state
 }
@@ -272,4 +278,16 @@ export function listAskHistory(limit = 30) {
 
 export function deleteAskHistory(id?: string) {
   return apiFetch<void>(id ? `/api/answers/history/${encodeURIComponent(id)}` : '/api/answers/history', { method: 'DELETE' })
+}
+
+/** Question ideas drawn from the member's own open matters (the same list the Assistant offers). */
+export function useQuestionIdeas(limit = 4) {
+  const { identityKey } = useApp()
+  const ideas = useQuery({
+    queryKey: [identityKey, 'chat-suggestions'],
+    queryFn: listSuggestions,
+    enabled: !!identityKey,
+    staleTime: 5 * 60_000,
+  })
+  return (ideas.data ?? []).slice(0, limit)
 }

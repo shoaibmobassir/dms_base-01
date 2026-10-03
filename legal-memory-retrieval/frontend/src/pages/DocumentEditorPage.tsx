@@ -439,7 +439,7 @@ function EditorWorkspace({ model }: { model: EditModel }) {
               <MonoId>{id}</MonoId>
               <span>· editing v{model.version_number ?? "?"}</span>
               {(model.pending_changes ?? 0) > 0 && (
-                <button type="button" onClick={() => setView("review")} className="rounded bg-amber-100 px-1.5 text-amber-900 hover:underline"
+                <button type="button" onClick={() => setView("review")} className="rounded bg-warning-soft px-1.5 text-warning-ink hover:underline"
                   data-testid="editor-pending-chip">
                   {model.pending_changes} pending change{model.pending_changes === 1 ? "" : "s"} by {model.pending_people?.join(", ")}
                 </button>

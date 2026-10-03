@@ -103,7 +103,7 @@ export function ReviewPanel({
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: authorColour(p.name) }} />
                   {p.member_id ? <Link to={`/people/${p.member_id}`} className="font-medium hover:underline">{p.name}</Link> : <span className="font-medium">{p.name}</span>}
-                  {p.external && <span className="rounded bg-secondary px-1 text-[10px] uppercase text-muted-foreground">outside the firm</span>}
+                  {p.external && <span className="rounded bg-secondary px-1 text-xs uppercase text-muted-foreground">outside the firm</span>}
                   {inFile && (
                     <button type="button" className={cn("ml-auto text-xs underline", person === inFile.author ? "text-primary" : "text-muted-foreground")}
                       onClick={() => setPerson(person === inFile.author ? "" : inFile.author)} data-testid="review-filter-person">
@@ -202,7 +202,7 @@ function ChangeRow({ change: c, busy, mayAct, onAccept, onReject, onJump }: {
       <button type="button" className="mt-1 block w-full text-left" onClick={() => jumpTo && onJump?.(jumpTo)} disabled={!onJump || !jumpTo}>
         {text ? (
           <span className={cn("line-clamp-3 whitespace-pre-wrap",
-            inserted && "text-emerald-700 underline decoration-emerald-400 dark:text-emerald-300",
+            inserted && "text-success-ink underline decoration-success",
             deleted && "text-destructive line-through")}>{text}</span>
         ) : null}
         {c.detail && <span className="block text-xs text-muted-foreground">{c.detail}</span>}

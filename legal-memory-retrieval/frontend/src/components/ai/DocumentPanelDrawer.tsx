@@ -115,7 +115,7 @@ export function DocumentPanelProvider({ children }: { children: ReactNode }) {
               if (e.key === "ArrowLeft") setWidth((w) => clampWidth(w + 32));
               if (e.key === "ArrowRight") setWidth((w) => clampWidth(w - 32));
             }}
-            className="group relative hidden w-1.5 shrink-0 cursor-col-resize bg-border/70 transition-colors hover:bg-wine/40 focus-visible:bg-wine/50 focus-visible:outline-hidden lg:block"
+            className="group relative hidden w-1.5 shrink-0 cursor-col-resize bg-border/70 transition-colors hover:bg-wine/40 focus-visible:bg-wine/50 focus-visible:outline-none lg:block"
           >
             <span className="absolute left-1/2 top-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded bg-muted-foreground/40 group-hover:bg-wine" />
           </div>
