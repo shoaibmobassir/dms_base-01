@@ -10,14 +10,14 @@ import json
 from datetime import date
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.auth.deps import resolve_member
 from app.db.connection import connect
-from app.firm import FirmError, clients as client_svc, feed, matters as matter_svc, people as people_svc
+from app.firm import FirmError, clients as client_svc, feed, imports as import_svc, matters as matter_svc, people as people_svc
 
 matters_router = APIRouter(tags=["matters (write)"])
 clients_router = APIRouter(tags=["clients (write)"])
@@ -25,6 +25,7 @@ conflicts_router = APIRouter(tags=["conflicts"])
 people_router = APIRouter(tags=["people (write)"])
 events_router = APIRouter(tags=["events"])
 home_router = APIRouter(tags=["home"])
+imports_router = APIRouter(tags=["imports"])
 
 
 def _run(fn, *args, **kwargs):
@@ -199,6 +200,26 @@ def post_link(matter_id: str, body: LinkBody, member_id: str | None = Depends(re
 @matters_router.delete("/{matter_id}/related/{related_id}", status_code=204)
 def delete_link(matter_id: str, related_id: str, member_id: str | None = Depends(resolve_member)) -> None:
     _run(matter_svc.unlink_matters, member_id, matter_id, related_id)
+
+
+# ── spreadsheet import ───────────────────────────────────────────────────────
+
+@imports_router.get("/{entity}/template")
+def get_import_template(entity: str) -> Response:
+    try:
+        text = import_svc.template_csv(entity)
+    except FirmError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+    return Response(content=text, media_type="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="{entity}-template.csv"'})
+
+
+@imports_router.post("/{entity}")
+async def post_import(entity: str, file: UploadFile = File(...), dry_run: bool = Form(default=True),
+                      member_id: str | None = Depends(resolve_member)) -> dict:
+    raw = await file.read(import_svc.MAX_BYTES + 1)
+    fn = import_svc.preview if dry_run else import_svc.apply
+    return _run(fn, member_id, entity, raw)
 
 
 # ── clients and conflict checks ──────────────────────────────────────────────

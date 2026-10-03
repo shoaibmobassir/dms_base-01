@@ -218,3 +218,16 @@ export const deleteClientNote = (id: string, noteId: string) => apiFetch(`/api/c
 
 export const deactivatePerson = (id: string, reason: string) => apiFetch(`/api/people/${enc(id)}/deactivate`, json('POST', { reason }))
 export const reactivatePerson = (id: string) => apiFetch(`/api/people/${enc(id)}/reactivate`, json('POST'))
+
+// ── spreadsheet import ───────────────────────────────────────────────────────
+
+export type ImportEntity = 'clients' | 'people' | 'matters'
+export type ImportRow = { row: number; label: string; status: 'ok' | 'created' | 'review' | 'error'; message: string }
+export type ImportReport = { entity: ImportEntity; total: number; ok: number; review: number; errors: number; created: number; rows: ImportRow[] }
+
+export const importFile = (entity: ImportEntity, file: File, dryRun: boolean) => {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('dry_run', String(dryRun))
+  return apiFetch<ImportReport>(`/api/imports/${entity}`, { method: 'POST', body: form })
+}

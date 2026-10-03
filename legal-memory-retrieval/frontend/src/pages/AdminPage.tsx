@@ -18,7 +18,8 @@ import {
   type FirmRole,
 } from "@/api/access";
 import { usePeople } from "@/api/resources";
-import { createPerson, firmError } from "@/api/firm";
+import { createPerson, firmError, importFile, type ImportEntity, type ImportReport } from "@/api/firm";
+import { downloadFile } from "@/api/client";
 import { DataTable } from "@/components/common/DataTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,13 +29,14 @@ import { Field } from "@/components/common/Field";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
-type Section = "users" | "teams" | "walls" | "requests";
+type Section = "users" | "teams" | "walls" | "requests" | "import";
 
 const SECTIONS: { key: Section; label: string; permission: string[] }[] = [
   { key: "users", label: "Users & roles", permission: ["users.manage", "roles.manage", "walls.manage"] },
   { key: "teams", label: "Teams", permission: ["teams.manage"] },
   { key: "walls", label: "Ethical walls", permission: ["walls.manage", "audit.read"] },
   { key: "requests", label: "Access requests", permission: ["access_requests.decide", "walls.manage"] },
+  { key: "import", label: "Import", permission: ["users.manage", "clients.create", "matters.create"] },
 ];
 
 /** Firm administration: people and roles, teams, walls and access requests. */
@@ -70,6 +72,7 @@ export function AdminPage() {
       {active === "teams" && <TeamsSection />}
       {active === "walls" && <WallsSection />}
       {active === "requests" && <RequestsSection />}
+      {active === "import" && <ImportSection />}
     </div>
   );
 }
@@ -366,5 +369,99 @@ function RequestsSection() {
         </li>
       ))}
     </ul>
+  );
+}
+
+const IMPORTS: { key: ImportEntity; label: string; hint: string; permission: string }[] = [
+  { key: "clients", label: "Clients", hint: "Each new client name is checked for conflicts first. Names with possible conflicts are left for the conflict queue.", permission: "clients.create" },
+  { key: "people", label: "People", hint: "Name is required. Roles are separated by semicolons, for example fee_earner; knowledge_manager.", permission: "users.manage" },
+  { key: "matters", label: "Matters", hint: "The client must already exist and be active. The lead is found by email; if left empty, you lead the matter.", permission: "matters.create" },
+];
+
+/** Bring clients, people or matters in from a CSV file: check it first, then import what passes. */
+function ImportSection() {
+  const me = useMyAccess();
+  const queryClient = useQueryClient();
+  const { toast } = useApp();
+  const allowed = IMPORTS.filter((i) => can(me.data, i.permission));
+  const [entity, setEntity] = useState<ImportEntity | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [report, setReport] = useState<ImportReport | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const current = allowed.find((i) => i.key === (entity ?? allowed[0]?.key));
+  if (!current) return <EmptyState icon="lock" title="You cannot import data" />;
+
+  const pick = (key: ImportEntity) => { setEntity(key); setFile(null); setReport(null); setError(null); };
+  const go = async (dry: boolean) => {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const out = await importFile(current.key, file, dry);
+      setReport(out);
+      if (!dry) {
+        toast(`${out.created} ${out.created === 1 ? "row" : "rows"} imported`);
+        queryClient.invalidateQueries();
+      }
+    } catch (err) {
+      setError(firmError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const applied = report !== null && report.created > 0;
+  const pending = report !== null && !applied;
+
+  return (
+    <section className="space-y-5" data-testid="admin-import">
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="What to import">
+        {allowed.map((i) => (
+          <Button key={i.key} size="sm" variant={i.key === current.key ? "default" : "outline"} role="tab" aria-selected={i.key === current.key}
+            onClick={() => pick(i.key)} data-testid={`import-entity-${i.key}`}>{i.label}</Button>
+        ))}
+      </div>
+      <p className="max-w-[65ch] text-sm text-muted-foreground">{current.hint}</p>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="outline" size="sm" onClick={() => downloadFile(`/api/imports/${current.key}/template`, `${current.key}-template.csv`)} data-testid="import-template">
+          Download the template
+        </Button>
+        <input type="file" accept=".csv,text/csv" aria-label="CSV file" data-testid="import-file"
+          onChange={(e) => { setFile(e.target.files?.[0] ?? null); setReport(null); setError(null); }}
+          className="text-sm file:mr-3 file:rounded-md file:border file:border-border file:bg-card file:px-3 file:py-1.5 file:text-sm" />
+        <Button size="sm" disabled={!file || busy} onClick={() => go(true)} data-testid="import-check">Check the file</Button>
+      </div>
+      {error && <p role="alert" className="text-sm text-destructive" data-testid="import-error">{error}</p>}
+      {report && (
+        <div className="space-y-3" data-testid="import-report">
+          <p className="text-sm" aria-live="polite">
+            {applied
+              ? <>{report.created} imported. {report.errors + report.review} not imported.</>
+              : <>{report.total} rows: <strong>{report.ok}</strong> can be imported{report.review > 0 && <>, {report.review} need conflict review</>}{report.errors > 0 && <>, {report.errors} have problems</>}. Nothing is saved yet.</>}
+          </p>
+          {pending && report.ok > 0 && (
+            <Button size="sm" disabled={busy} onClick={() => go(false)} data-testid="import-apply">
+              Import {report.ok} {report.ok === 1 ? "row" : "rows"}
+            </Button>
+          )}
+          <div className="overflow-x-auto rounded-md border border-border">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Row</th><th className="px-3 py-2">Name</th><th className="px-3 py-2">Result</th></tr></thead>
+              <tbody>
+                {report.rows.map((r) => (
+                  <tr key={r.row} className="border-t border-border" data-testid={`import-row-${r.status}`}>
+                    <td className="px-3 py-2 tabular-nums">{r.row}</td>
+                    <td className="px-3 py-2">{r.label}</td>
+                    <td className={cn("px-3 py-2", r.status === "error" ? "text-destructive" : r.status === "review" ? "text-warning-ink" : "text-success-ink")}>
+                      {r.status === "ok" ? "Ready" : r.status === "created" ? "Imported" : r.message}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

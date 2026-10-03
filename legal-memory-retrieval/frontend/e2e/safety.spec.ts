@@ -577,3 +577,21 @@ test("record an argument from the bank, edit it, and delete it after a confirmat
   await page.getByTestId("confirm-accept").click();
   await expect(page.getByTestId("arguments-list")).toHaveCount(0); // nothing else matches this search
 });
+
+test("importing a spreadsheet checks first, saves nothing, then imports the rows that pass", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("precentis.persona", "MEM-00011"));
+  const name = `E2E-TMP Import ${Date.now()}`;
+  await page.goto("/ui/admin");
+  await page.getByTestId("admin-tab-import").click();
+  await page.getByTestId("import-entity-clients").click();
+  await page.getByTestId("import-file").setInputFiles({
+    name: "clients.csv", mimeType: "text/csv", buffer: Buffer.from(`name,industry\n${name},Energy\n,Energy\n`),
+  });
+  await page.getByTestId("import-check").click();
+  const report = page.getByTestId("import-report");
+  await expect(report).toContainText("Nothing is saved yet");
+  await expect(report.getByTestId("import-row-error")).toContainText("name is required");
+  await page.getByTestId("import-apply").click();
+  await expect(report).toContainText("1 imported");
+  await expect(report.getByTestId("import-row-created")).toContainText(name);
+});
