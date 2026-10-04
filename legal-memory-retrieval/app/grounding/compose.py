@@ -28,6 +28,8 @@ _ABBREV_END = re.compile(
     r"\b(?:v|vs|No|Nos|Ltd|Pvt|Rs|Co|Corp|Inc|Art|Arts|Reg|Regs|Sec|Cl|para|paras|p|pp|Mr|Ms|Dr|Anr|Ors|viz|i\.e|e\.g|etc|S)\.$",
     re.I,
 )
+# A clause number quoted inside a sentence ("3. Remuneration", "(2.1. Term") is not the end of that sentence.
+_QUOTED_NUMBER_END = re.compile(r"(?:^|[\"“‘'(\[])\s*\d{1,3}(?:\.\d{1,3})*\.$")
 _LEAD_REF = re.compile(r"^(?:\s*(?:\[\d+\]|\((?:[^()]*(?:DOC|MTR|MEM)-[^()]*)\)))+")
 _BULLET = re.compile(r"^(\s*(?:[-*•]|\d+[.)])\s+)")
 
@@ -79,7 +81,8 @@ def _pieces(line: str) -> list[tuple[int, int]]:
     ranges: list[tuple[int, int]] = []
     pos = body_start
     for m in _SENT_SPLIT.finditer(line, body_start):
-        if _ABBREV_END.search(line[pos:m.start()].rstrip()):
+        before = line[pos:m.start()].rstrip()
+        if _ABBREV_END.search(before) or _QUOTED_NUMBER_END.search(before):
             continue
         ranges.append((pos, m.start()))
         pos = m.end()
@@ -186,8 +189,12 @@ def ground_answer(
     removed_note: bool = True,
     empty_message: str | None = "The documents and records available to you do not contain a supported answer to this question.",
     full_sources: list[Source] | None = None,
+    non_claim: Callable[[str], bool] | None = None,
 ) -> Grounded:
     """Verify every unit of ``text`` and rebuild it with span-level citations.
+
+    ``non_claim`` marks units that are not statements about the sources (the Assistant reporting its own actions) so
+    they are kept as written and never sent to the judge.
 
     ``ref_style`` is "markers" for [n] citations (Assistant) or "ids" for inline
     DOC/MTR/MEM ids (Ask the Firm). ``cited_keys``/``offered_quotes`` map a unit's
@@ -199,13 +206,18 @@ def ground_answer(
         for u in units
     ]
     _mark_suggestion_lists(text, units, claims)
+    preset = [bool(non_claim and non_claim(c.text)) for c in claims]
+    for c, is_preset in zip(claims, preset):
+        if is_preset:
+            c.kind = "non_claim"
+    judged = [c for c, is_preset in zip(claims, preset) if not is_preset]
     llms = llm if isinstance(llm, list) else [llm]
     t = time.perf_counter()
-    verify_consensus(claims, sources, llms)
+    verify_consensus(judged, sources, llms)
     verify_ms = (time.perf_counter() - t) * 1000
     # "X is not in the documents" is checked against whole documents, not only retrieved passages.
     t = time.perf_counter()
-    check_absences(claims, full_sources if full_sources is not None else sources, llms[0])
+    check_absences(judged, full_sources if full_sources is not None else sources, llms[0])
     timings = {"units": len(claims), "verify_ms": round(verify_ms, 1),
                "absence_ms": round((time.perf_counter() - t) * 1000, 1)}
 

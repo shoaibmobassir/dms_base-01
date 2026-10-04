@@ -95,14 +95,50 @@ def delete(doc_id: str) -> None:
         conn.commit()
 
 
+def chat_edits(doc_id: str, member: str, base: str) -> dict:
+    """A conversation whose answer proposes two renumbering edits to the document (the pasted report's case), as the
+    Assistant's cards would show them. Returns the session to open at /chat/<session_id>."""
+    from app.chat.models import MessageRole
+    from app.chat.store import append_message
+
+    with httpx.Client(base_url=base, headers={"X-Member-Id": member}, timeout=60) as c:
+        session = c.post("/api/chat/sessions", json={}).json()
+    event = {
+        "type": "edit_proposals", "document_id": doc_id, "version_id": None, "filename": "Employment Agreement - History check.docx",
+        "instruction": "Renumber the sections", "edits": [
+            {"id": "n1", "original": "5. Remuneration", "proposed": "3. Remuneration", "reason": "Renumber to sequential order.",
+             "page": 1, "located": True, "status": "pending"},
+            {"id": "n2", "original": "2. Appointment and Term", "proposed": "1. Appointment and Term",
+             "reason": "Renumber to sequential order.", "page": 1, "located": True, "status": "pending"}]}
+    with connect() as conn:
+        append_message(conn, session["id"], MessageRole.user, "fix the numbering on this page")
+        append_message(conn, session["id"], MessageRole.assistant, "I renumbered the sections.", events=[event])
+        conn.commit()
+    return {"session_id": session["id"]}
+
+
+def delete_session(session_id: str) -> None:
+    from app.chat.store import delete_session as remove
+
+    with connect() as conn:
+        remove(conn, session_id)
+        conn.commit()
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("action", choices=["create", "delete"])
+    ap.add_argument("action", choices=["create", "delete", "chat-edits", "delete-session"])
     ap.add_argument("document_id", nargs="?")
+    ap.add_argument("--member", default="")
     ap.add_argument("--base", default="http://127.0.0.1:8021")
     a = ap.parse_args()
     if a.action == "create":
         print(json.dumps(create(a.base)))
+    elif a.action == "chat-edits":
+        print(json.dumps(chat_edits(a.document_id, a.member, a.base)))
+    elif a.action == "delete-session":
+        delete_session(a.document_id)
+        print("deleted", a.document_id)
     else:
         delete(a.document_id)
         print("deleted", a.document_id)

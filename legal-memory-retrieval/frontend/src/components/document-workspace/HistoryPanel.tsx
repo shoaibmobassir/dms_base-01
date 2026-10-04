@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   compareDocxUrl,
@@ -39,7 +39,10 @@ export function HistoryPanel({
   documentId,
   openVersionId,
   onOpen,
+  reviewNonce = 0,
 }: {
+  /** Changes each time "Review changes" is pressed: open what the current version changed. */
+  reviewNonce?: number;
   documentId: string;
   openVersionId?: string;
   onOpen: (versionId: string) => void;
@@ -54,6 +57,10 @@ export function HistoryPanel({
   const [restoring, setRestoring] = useState<Commit | null>(null);
   const rows = commits.data ?? [];
   const head = rows.find((c) => c.is_current);
+  useEffect(() => {
+    if (reviewNonce > 0 && head?.parent_version_id) setChanges(head);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewNonce, head?.version_id]);
 
   if (commits.isPending) return <p className="text-xs text-muted-foreground">Loading history…</p>;
   if (commits.isError) return <p className="text-xs text-destructive">The history could not be loaded.</p>;

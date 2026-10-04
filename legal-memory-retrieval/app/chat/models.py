@@ -66,11 +66,20 @@ class ChatSessionPatch(BaseModel):
 # Chat messages
 # ---------------------------------------------------------------------------
 
+class PageReference(BaseModel):
+    """The page (or part) of a document the lawyer dragged into the Assistant, addressed as the viewer shows it."""
+    unit: str = Field(default="page", pattern="^(page|part)$")
+    number: int = Field(ge=1, le=100000)
+    version_id: Optional[str] = None
+    part_size: int = Field(default=5, ge=1, le=50)
+
+
 class FileAttachment(BaseModel):
-    """A document attached to a user message."""
+    """A document attached to a user message, optionally pointing at one page of it."""
     filename: str
     document_id: Optional[str] = None
     content_type: Optional[str] = None
+    reference: Optional[PageReference] = None
 
 
 class WorkMode(str, Enum):

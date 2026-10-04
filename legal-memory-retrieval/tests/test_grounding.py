@@ -351,3 +351,53 @@ def test_pointers_under_a_suggestion_lead_in_are_kept():
                       sources=sources, llm=judge)
     assert "Sharing of Inter-State Transmission Charges and Losses) Regulations" in g.text
     assert "four components" not in g.text  # says what the law provides: must be verified, and is not
+
+
+# ── the Assistant reporting its own edits is not a claim about the documents ──
+
+def test_edit_turn_reports_are_kept_and_never_judged():
+    from app.chat.agent import edit_report_detector
+
+    edits = [{"original": "Remuneration", "proposed": "2. Remuneration (renumbered)"}]
+    is_report = edit_report_detector(edits)
+    for kept in ("I'll fix the numbering now.", "I've renumbered the sections.", "Please accept the edit cards to apply this.",
+                 "Summary of changes: one heading renumbered.", "The edit is shown below.",
+                 'The heading becomes "2. Remuneration (renumbered)".'):
+        assert is_report(kept), kept
+    for claim in ("Arbitration is seated in Delhi.", "The agreement runs for two years.", "The Board approved the transfer on 12 September 2026."):
+        assert not is_report(claim), claim
+
+
+def test_ground_answer_keeps_non_claim_units_and_still_removes_unsupported_claims():
+    from app.chat.agent import edit_report_detector
+
+    sources = [Source("doc-0", "DOC-06D46C4AD1", "Board Resolution.docx", BOARD)]
+    text = "I'll fix the numbering now.\n\nPlease accept the edit cards to apply this.\n\nArbitration is seated in Delhi."
+    judged: list[str] = []
+
+    def judge(messages):
+        judged.append(messages[-1]["content"])
+        return json.dumps({"units": [{"i": 1, "kind": "claim", "elements": [], "verdict": "unsupported", "missing": "x"}]})
+
+    g = ground_answer(text, ref_style="markers", cited_keys=lambda u: [], offered_quotes=lambda u: [], sources=sources, llm=judge,
+                      non_claim=edit_report_detector([{"proposed": "2. Remuneration"}]))
+    assert "I'll fix the numbering now." in g.text and "Please accept the edit cards" in g.text
+    assert "Delhi" not in g.text and "1 statement removed" in g.text
+    assert all("fix the numbering" not in j and "Please accept" not in j for j in judged)  # never sent to the judge
+
+
+def test_a_quoted_clause_number_does_not_end_the_sentence():
+    text = 'The edit card shows the change from "3. Remuneration" to "2. Remuneration", to correct the sequence.'
+    assert len(split(text, "markers")) == 1
+    # a real sentence that happens to end in a number still ends there
+    assert len(split("The notice period is set by Clause 8. The Company may terminate earlier.", "markers")) == 2
+
+
+def test_the_sentences_a_live_edit_turn_produced_are_all_reports():
+    from app.chat.agent import edit_report_detector
+
+    is_report = edit_report_detector([{"original": "3. Remuneration", "proposed": "2. Remuneration"}])
+    for s in ("The clauses jump from 1 to 3, so I need to renumber clause 3 as clause 2.",
+              'The edit card shows the change from "3. Remuneration" to "2. Remuneration", to correct the sequence.',
+              "Accept the card to apply the change directly to the document."):
+        assert is_report(s), s

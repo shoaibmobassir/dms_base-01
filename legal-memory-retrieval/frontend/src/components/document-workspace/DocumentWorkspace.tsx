@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { HistoryPanel } from "@/components/document-workspace/HistoryPanel";
+import { AssistantDrop } from "@/components/document-workspace/AssistantDrop";
+import { GripVertical } from "lucide-react";
+import { startPageDrag, type PageDrag } from "@/lib/pageDrag";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   useDocument,
@@ -165,6 +168,8 @@ function WorkspaceFrame({
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [goOpen, setGoOpen] = useState(false);
+  // "Review changes" opens the History tab on what the current version changed against the one before it.
+  const [reviewNonce, setReviewNonce] = useState(0);
   const workspaceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -250,6 +255,12 @@ function WorkspaceFrame({
         onJump={(n) => goToPart(n)}
         onOpenGo={() => setGoOpen(true)}
         onShowCurrent={() => currentVersionId && setAddress({ versionId: currentVersionId, part: 1 })}
+        canReview={versionRows.length > 1 && !newerAvailable}
+        onReview={() => {
+          setRightOpen(true);
+          setRightTab("versions");
+          setReviewNonce((n) => n + 1);
+        }}
         onToggleLeft={() => setLeftOpen((v) => !v)}
         onToggleRight={() => setRightOpen((v) => !v)}
         leftOpen={leftOpen}
@@ -292,6 +303,14 @@ function WorkspaceFrame({
                   current={part}
                   unitLabel={unitLabel}
                   onJump={(n) => goToPart(n, { allowClamp: true })}
+                  dragOf={(n) => ({
+                    document_id: doc.document_id,
+                    filename: doc.title,
+                    unit: usePages ? "page" : "part",
+                    number: n,
+                    version_id: openVersionId,
+                    part_size: PART_SIZE,
+                  })}
                 />
               )}
             </div>
@@ -299,6 +318,7 @@ function WorkspaceFrame({
         )}
 
         <ReaderCanvas
+          filename={doc.title}
           documentId={doc.document_id}
           versionId={openVersionId}
           part={part}
@@ -329,6 +349,7 @@ function WorkspaceFrame({
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
               {rightTab === "versions" && (
                 <HistoryPanel
+                  reviewNonce={reviewNonce}
                   documentId={doc.document_id}
                   openVersionId={openVersionId}
                   onOpen={(versionId) => setAddress({ versionId, part: 1 })}
@@ -338,19 +359,18 @@ function WorkspaceFrame({
                 <InfoPanel doc={doc} openVersion={openVersion} unitTotal={unitTotal} unitLabel={unitLabel} />
               )}
               {rightTab === "ai" && (
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <p>Ask about this document in the Assistant, or ask the firm about its matter.</p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={doc.matter_id ? `/chat?matter=${doc.matter_id}` : "/chat"}>Open Assistant</Link>
-                    </Button>
-                    {doc.matter_code && (
-                      <Button asChild variant="outline" size="sm">
-                        <Link to={`/ask?scope=${encodeURIComponent(doc.matter_code)}&scopeType=matter`}>Ask the Firm</Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                <AssistantDrop
+                  current={{
+                    document_id: doc.document_id,
+                    filename: doc.title,
+                    unit: usePages ? "page" : "part",
+                    number: part,
+                    version_id: openVersionId,
+                    part_size: PART_SIZE,
+                  }}
+                  matterId={doc.matter_id}
+                  matterCode={doc.matter_code}
+                />
               )}
             </div>
           </aside>
@@ -387,11 +407,15 @@ function Toolbar({
   onJump,
   onOpenGo,
   onShowCurrent,
+  canReview,
+  onReview,
   onToggleLeft,
   onToggleRight,
   leftOpen,
   rightOpen,
 }: {
+  canReview: boolean;
+  onReview: () => void;
   doc: DocumentDetail;
   openVersion?: DocVersion | DocumentDetail["current_version"];
   openVersionId?: string;
@@ -530,6 +554,11 @@ function Toolbar({
       </div>
 
       <PrivacyControl documentId={doc.document_id} />
+      {canReview && (
+        <Button type="button" size="sm" variant="outline" onClick={onReview} data-testid="document-review-changes">
+          <Icon name="difference" style={{ fontSize: 16 }} /> Review changes
+        </Button>
+      )}
       <Button asChild size="sm" variant="outline" data-testid="document-edit">
         <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>
           <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit
@@ -558,7 +587,9 @@ function ReaderCanvas({
   unitTotal,
   highlightChunk,
   highlightBlock,
+  filename,
 }: {
+  filename: string;
   documentId: string;
   versionId?: string;
   part: number;
@@ -612,7 +643,23 @@ function ReaderCanvas({
       <div className="min-h-0 flex-1 overflow-y-auto">
         <article className="mx-auto my-6 max-w-3xl rounded-lg border border-border bg-card px-8 py-10 shadow-sm lg:px-12">
           <div className="mb-6 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
+            <span
+              draggable
+              onDragStart={(e) =>
+                startPageDrag(e, {
+                  document_id: documentId,
+                  filename,
+                  unit: usePages ? "page" : "part",
+                  number: part,
+                  version_id: versionId,
+                  part_size: partSize,
+                })
+              }
+              title={`Drag this ${unitLabel.toLowerCase()} to the Assistant`}
+              data-testid="page-handle"
+              className="inline-flex cursor-grab items-center gap-1 rounded px-1 py-0.5 hover:bg-secondary active:cursor-grabbing"
+            >
+              <GripVertical className="h-3.5 w-3.5" />
               {unitLabel} {part.toLocaleString()} of {unitTotal.toLocaleString()}
             </span>
             {!usePages && <span>Reader · no page rendition yet</span>}
@@ -706,11 +753,14 @@ function ThumbnailList({
   current,
   unitLabel,
   onJump,
+  dragOf,
 }: {
   total: number;
   current: number;
   unitLabel: string;
   onJump: (n: number) => void;
+  /** What dragging page n carries to the Assistant. */
+  dragOf: (n: number) => PageDrag;
 }) {
   const windowSize = 40;
   const start = Math.max(1, current - windowSize);
@@ -736,9 +786,13 @@ function ThumbnailList({
         <button
           key={n}
           type="button"
+          draggable
+          onDragStart={(e) => startPageDrag(e, dragOf(n))}
+          title={`Drag ${unitLabel.toLowerCase()} ${n} to the Assistant`}
+          data-testid="page-thumb"
           onClick={() => onJump(n)}
           className={cn(
-            "flex w-full items-center gap-2 rounded-md border border-border px-2 py-2 text-left text-xs",
+            "flex w-full cursor-grab items-center gap-2 rounded-md border border-border px-2 py-2 text-left text-xs active:cursor-grabbing",
             n === current ? "border-wine bg-wine-soft text-wine" : "bg-card hover:bg-secondary",
           )}
         >

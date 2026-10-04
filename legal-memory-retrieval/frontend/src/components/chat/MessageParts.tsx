@@ -1,4 +1,6 @@
 import { useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   CheckCircle2,
@@ -350,9 +352,21 @@ export function EditProposalsCard({
   const [busy, setBusy] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [shown, setShown] = useState(EDITS_PAGE);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const canSave = Boolean(sessionId && messageId);
   const accepted = edits.filter((e) => e.status === "accepted").length;
+  const applied = edits.filter((e) => e.applied_version_id).length;
   const readOnly = Boolean(group.read_only);
+
+  /** The document just changed: anything showing it (viewer, history, search) reloads. */
+  const documentChanged = (versionNumber: number | null | undefined, count: number) => {
+    void queryClient.invalidateQueries({ predicate: (q) => JSON.stringify(q.queryKey).includes(group.document_id) });
+    toast.success(
+      `${count} edit${count === 1 ? "" : "s"} written into the document${versionNumber ? ` as version ${versionNumber}` : ""}.`,
+      { action: { label: "History", onClick: () => navigate(`/documents/${encodeURIComponent(group.document_id)}?panel=versions`) } },
+    );
+  };
 
   const decideAll = async (status: EditProposal["status"]) => {
     if (!canSave) {
@@ -360,10 +374,17 @@ export function EditProposalsCard({
       return;
     }
     const previous = edits;
-    setEdits((list) => list.map((e) => ({ ...e, status })));
+    if (status !== "accepted") setEdits((list) => list.map((e) => (e.applied_version_id ? e : { ...e, status })));
     setBusy("all");
     try {
-      await decideAllEdits(sessionId!, messageId!, group.document_id, status);
+      const out = await decideAllEdits(sessionId!, messageId!, group.document_id, status);
+      if (out.edits?.length) setEdits(out.edits);
+      if (status === "accepted") {
+        const failed = Object.keys(out.failed ?? {}).length;
+        const wrote = out.version_number ? out.edits.filter((e) => e.applied_version_number === out.version_number).length : 0;
+        if (wrote) documentChanged(out.version_number, wrote);
+        if (failed) toast.error(`${failed} edit${failed === 1 ? "" : "s"} could not be placed in the document: ${Object.values(out.failed)[0]}.`);
+      }
     } catch (err) {
       setEdits(previous);
       toast.error(errorText(err, "Could not save your decision."));
@@ -378,10 +399,12 @@ export function EditProposalsCard({
       return;
     }
     const previous = edits;
-    setEdits((list) => list.map((e) => (e.id === edit.id ? { ...e, status } : e)));
+    if (status !== "accepted" || readOnly) setEdits((list) => list.map((e) => (e.id === edit.id ? { ...e, status } : e)));
     setBusy(edit.id);
     try {
-      await decideEdit(sessionId!, messageId!, edit.id, status);
+      const saved = await decideEdit(sessionId!, messageId!, edit.id, status);
+      setEdits((list) => list.map((e) => (e.id === edit.id ? { ...e, ...saved } : e)));
+      if (status === "accepted" && saved.applied_version_id && !edit.applied_version_id) documentChanged(saved.applied_version_number, 1);
     } catch (err) {
       setEdits(previous);
       toast.error(errorText(err, "Could not save your decision."));
@@ -395,7 +418,9 @@ export function EditProposalsCard({
     try {
       const out = await exportEdits(sessionId!, messageId!, group.document_id);
       toast.success(
-        out.tracked_in_original
+        out.redline
+          ? `Redline of ${out.applied} edit${out.applied === 1 ? "" : "s"} ready to download.`
+          : out.tracked_in_original
           ? `${out.applied} edit${out.applied === 1 ? "" : "s"} written into the original Word file as tracked changes` +
               (out.version_label ? `; saved as version ${out.version_label} (developing).` : ".")
           : `${out.applied} edit${out.applied === 1 ? "" : "s"} saved as tracked changes.`,
@@ -441,7 +466,7 @@ export function EditProposalsCard({
           className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
         >
           {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-          Word file ({accepted})
+          {applied > 0 && applied === accepted ? `Redline (.docx)` : `Word file (${accepted})`}
         </button>}
       </div>
       <ul className="divide-y divide-border">
@@ -454,12 +479,13 @@ export function EditProposalsCard({
                 {!edit.located && <span className="ml-1 text-amber-700 dark:text-amber-400">· passage not found in document</span>}
               </span>
               {edit.status !== "pending" && (
-                <span className={cn("font-semibold", edit.status === "accepted" ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground")}>
-                  {edit.status === "accepted" ? "Accepted" : "Rejected"}
+                <span className={cn("font-semibold", edit.status === "accepted" ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground")}
+                  data-testid="edit-status">
+                  {edit.applied_version_id ? `In the document · v${edit.applied_version_number}` : edit.status === "accepted" ? "Accepted" : "Rejected"}
                 </span>
               )}
             </div>
-            {edit.original && (
+            {edit.original && !edit.applied_version_id && (
               <p className="rounded bg-red-500/10 px-2 py-1 text-[12.5px] text-red-900 line-through decoration-red-400/70 dark:text-red-200">
                 {edit.original}
               </p>
@@ -470,10 +496,15 @@ export function EditProposalsCard({
               <p className="text-[11px] italic text-muted-foreground">Delete this passage.</p>
             )}
             {edit.reason && <p className="text-[12px] text-muted-foreground">{edit.reason}</p>}
+            {edit.apply_error && !edit.applied_version_id && (
+              <p className="text-[12px] text-amber-700 dark:text-amber-400" data-testid="edit-apply-error">
+                Not applied: {edit.apply_error}.
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
               {!readOnly && <button
                 type="button"
-                disabled={busy === edit.id}
+                disabled={busy === edit.id || Boolean(edit.applied_version_id)}
                 onClick={() => void decide(edit, edit.status === "accepted" ? "pending" : "accepted")}
                 data-testid="edit-accept"
                 className={cn(
@@ -487,7 +518,8 @@ export function EditProposalsCard({
               </button>}
               {!readOnly && <button
                 type="button"
-                disabled={busy === edit.id}
+                disabled={busy === edit.id || Boolean(edit.applied_version_id)}
+                title={edit.applied_version_id ? "Already in the document; restore an earlier version from History to undo it" : undefined}
                 onClick={() => void decide(edit, edit.status === "rejected" ? "pending" : "rejected")}
                 data-testid="edit-reject"
                 className={cn(

@@ -89,10 +89,48 @@ PyMuPDF (AGPL).
 - [x] clean default: a file that still carries tracked changes opens in the Final view
 - [x] verified in Chrome on a throwaway CTO-style agreement (`evals/history_ui_fixture.py`, `evals/history_ui_check.cjs`):
   INR 1,20,00,000 → 1,50,00,000 shows as `1,20,00,000` (struck) → `1,50,00,000`; restoring v1 made v4 current
-- [ ] "Review changes" toggle in the document viewer; commit-message prompt on save (the note field exists in the API)
+- [x] "Review changes" button in the document toolbar: opens History on what the current version changed
+- [ ] commit-message prompt on save (the note field exists in the API)
 - [ ] rebuild the `static/` bundle
 
+## D — drag a page to the Assistant; accepting an edit changes the document
+
+Reported 2026-10-04 (the CTO agreement, "fix this page 9, I don't want tracked changes but the actual change").
+Causes found by reading the code and a live run:
+1. **Accept only recorded a decision.** The document changed only through the "Word file (N)" button, which wrote
+   tracked changes (crossed-out text) into a new file. So accepting did nothing "in real time", and what finally
+   appeared was the crossed-out look again.
+2. **"Page 9" meant nothing.** A Word file with no page rendition is shown as *Part 1 of 1*; the Assistant had no way
+   to know what the lawyer was pointing at and asked which page they meant.
+3. **The answer was cut up.** The verifier judged the Assistant's own sentences about its edits ("I'll fix…", "Please
+   accept…") as claims about the documents and removed them ("4 statements removed…"); the sentence splitter also
+   broke `"3. Remuneration"` after the "3.".
+
+- [x] **Accept writes the change** (`app/documents/assistant_apply.py`, `chat_router.decide_edit/decide_edits_bulk`):
+  the accepted edits become one clean version ("Assistant: <instruction>"), placed by paragraph id when that paragraph
+  still reads as proposed, otherwise by finding the passage in exactly one paragraph; anything else stays pending with
+  the reason. An applied edit cannot be un-accepted from the card (History → Restore). PDFs stay recommendations.
+  Export after accepting is a **redline** between the two versions and writes nothing.
+- [x] **Drag a page**: pages/parts in the page list and the "Page n of N" handle in the reader are draggable; the AI tab
+  is a drop zone ("Continue in Assistant" hands the pages and the typed instruction to the chat, pre-filled, never
+  auto-sent); the chat composer is also a drop target. A reference (`document_id`, version, page|part, part_size) is
+  stored on the message; the server resolves its text itself (`app/chat/page_reference.py`, ACL-checked) and puts it in
+  the prompt, and the prompt tells the model "this page" means that text.
+- [x] **Reports are not claims**: in a turn that produced edit cards, sentences that report the Assistant's actions or
+  restate a proposed edit skip verification; real claims are still checked. The splitter keeps a quoted clause number in
+  its sentence.
+- [x] Tests: `tests/test_assistant_apply.py` (11), `tests/test_grounding.py` (+4), `tests/test_edit_document_flow.py`
+  (legacy export). Browser: `evals/assistant_drag_check.cjs` (drag → AI tab → chat attachment, composer drop, accept all →
+  "In the document · v4", no struck text left, History + Review changes); live model: `evals/page_reference_live.py`
+  (reads the dragged page and proposes the edit without asking; 1 of 2 runs still lost one prediction sentence before the
+  last regex tweak, not re-measured).
+- [ ] accepted edits are not yet visible in a document open in another tab until it refetches (queries are invalidated
+  in the same tab only)
+- [ ] a model that ignores the page and asks anyway: not seen in 3 live runs, no counter-measure built
+
 ## Log
+- **2026-10-04** D: accept writes a clean version; drag a page to the Assistant; edit-turn reports no longer cut as
+  unsupported claims; Review changes button. 1003 passed / 5 skipped, typecheck clean, Chrome + live runs.
 - **2026-10-04** C3: History panel, diff dialog with arrow, blame, restore; typecheck clean, 988 passed / 5 skipped, Chrome check clean.
 - **2026-10-04** A1: the Assistant no longer reports scan reading errors as document defects (cards 100% → 0%, live prose 2/3 → 0/10).
 - **2026-10-04** Investigated all three problems (three read-only explorations, measurements on the real PDF and

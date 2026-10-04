@@ -56,7 +56,14 @@ export function decideEdit(sessionId: string, messageId: string, editId: string,
 
 /** Accept, reject or reset every edit to one document in a message. */
 export function decideAllEdits(sessionId: string, messageId: string, documentId: string, status: EditProposal['status']) {
-  return apiFetch<{ updated: number; status: string }>(
+  return apiFetch<{
+    updated: number
+    status: string
+    /** Edits that could not be placed in the document, by id, with the reason. */
+    failed: Record<string, string>
+    edits: EditProposal[]
+    version_number: number | null
+  }>(
     `/api/chat/sessions/${enc(sessionId)}/messages/${enc(messageId)}/edits`,
     { method: 'PATCH', body: JSON.stringify({ status, document_id: documentId }) },
   )
@@ -71,6 +78,8 @@ export function exportEdits(sessionId: string, messageId: string, documentId: st
     applied: number
     /** Paragraph edits: written into the original Word file, and saved as a new version. */
     tracked_in_original?: boolean
+    /** Edits already in the document: a Word redline of what they changed. */
+    redline?: boolean
     version_label?: string | null
   }>(
     `/api/chat/sessions/${enc(sessionId)}/messages/${enc(messageId)}/edits/export?document_id=${enc(documentId)}`,

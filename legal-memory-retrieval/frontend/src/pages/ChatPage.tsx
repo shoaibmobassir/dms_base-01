@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSession,
@@ -25,6 +25,7 @@ import { Markdown } from "@/components/chat/Markdown";
 import { Icon } from "@/components/common/primitives";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
+import { attachmentKey, attachmentLabel, hasPageDrag, pageAttachment, readPageDrag } from "@/lib/pageDrag";
 import {
   Sparkles,
   Paperclip,
@@ -287,6 +288,17 @@ export function ChatPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [draft, setDraft] = useState<{ text: string; nonce: number }>();
   const nonceRef = useRef(0);
+  // The document viewer hands over the pages the lawyer dragged to the Assistant (and what they typed): they become
+  // attachments and the box is pre-filled; nothing is sent until the lawyer sends it.
+  const location = useLocation();
+  useEffect(() => {
+    const hand = (location.state as { handoff?: { pages?: Attachment[]; prompt?: string } } | null)?.handoff;
+    if (!hand) return;
+    (hand.pages ?? []).forEach((p) => attach(p));
+    if (hand.prompt) setDraft({ text: hand.prompt, nonce: Date.now() });
+    navigate(location.pathname + location.search, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
   // Ask the Firm hands a question over with ?q= (and usually ?matter=): pre-fill it, never auto-send.
   const handedQuestion = searchParams.get("q");
   useEffect(() => {
@@ -346,7 +358,7 @@ export function ChatPage() {
   };
 
   const attach = (att: Attachment) =>
-    setAttachments((list) => (list.some((a) => a.document_id === att.document_id) ? list : [...list, att]));
+    setAttachments((list) => (list.some((a) => attachmentKey(a) === attachmentKey(att)) ? list : [...list, att]));
 
   /** File an uploaded document in the first open matter, index it, and return it as an attachment. */
   const uploadDocument = async (file: File): Promise<Attachment | null> => {
@@ -568,7 +580,7 @@ export function ChatPage() {
                     <div className="flex max-w-[85%] flex-wrap justify-end gap-1" data-testid="message-attachments">
                       {(m.files ?? []).map((f) => (
                         <button
-                          key={f.document_id ?? f.filename}
+                          key={`${f.document_id ?? f.filename}:${f.reference ? `${f.reference.unit}${f.reference.number}` : ""}`}
                           type="button"
                           onClick={() =>
                             f.document_id &&
@@ -577,7 +589,7 @@ export function ChatPage() {
                           className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-0.5 text-[11px] text-foreground hover:bg-secondary"
                         >
                           <FileText className="h-3 w-3 text-amber-500" />
-                          <span className="max-w-[220px] truncate">{f.filename}</span>
+                          <span className="max-w-[220px] truncate">{attachmentLabel(f)}</span>
                         </button>
                       ))}
                     </div>
@@ -612,7 +624,8 @@ export function ChatPage() {
           uploading={uploading}
           attachments={attachments}
           draft={draft}
-          onRemoveAttachment={(id) => setAttachments((list) => list.filter((a) => a.document_id !== id))}
+          onRemoveAttachment={(key) => setAttachments((list) => list.filter((a) => attachmentKey(a) !== key))}
+          onDropPage={(page) => attach(pageAttachment(page))}
           onOpenAttachment={(a) => openSource({ documentId: a.document_id, title: a.filename, label: "Attached document", quotes: [] })}
           onUpload={(file) => void uploadDocument(file).then((att) => att && attach(att))}
           onPickDocuments={() => setPickerOpen(true)}
@@ -1200,6 +1213,7 @@ function Composer({
   attachments,
   draft,
   onRemoveAttachment,
+  onDropPage,
   onOpenAttachment,
   onUpload,
   onPickDocuments,
@@ -1214,7 +1228,9 @@ function Composer({
   attachments: Attachment[];
   /** Text placed in the box by a starter card; `nonce` changes on every pick. */
   draft?: { text: string; nonce: number };
-  onRemoveAttachment: (documentId: string) => void;
+  onRemoveAttachment: (key: string) => void;
+  /** A page dragged in from the document viewer. */
+  onDropPage: (page: NonNullable<ReturnType<typeof readPageDrag>>) => void;
   onOpenAttachment: (attachment: Attachment) => void;
   onUpload: (file: File) => void;
   onPickDocuments: () => void;
@@ -1222,6 +1238,7 @@ function Composer({
   onStop: () => void;
 }) {
   const [text, setText] = useState("");
+  const [dropping, setDropping] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const current = MODES.find((m) => m.id === mode) ?? MODES[0];
@@ -1252,12 +1269,39 @@ function Composer({
   return (
     <div className="border-t border-border/80 bg-background/90 px-4 pb-2 pt-3 lg:px-8">
       <div className="mx-auto max-w-3xl">
-        <div className="flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all focus-within:border-wine/60 focus-within:ring-2 focus-within:ring-wine/10">
+        <div
+          data-testid="composer"
+          onDragOver={(e) => {
+            if (!hasPageDrag(e)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+            setDropping(true);
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropping(false);
+          }}
+          onDrop={(e) => {
+            setDropping(false);
+            const page = readPageDrag(e);
+            if (!page) return;
+            e.preventDefault();
+            onDropPage(page);
+            ref.current?.focus();
+          }}
+          className={cn(
+            "flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all focus-within:border-wine/60 focus-within:ring-2 focus-within:ring-wine/10",
+            dropping && "border-wine ring-2 ring-wine/30",
+          )}
+        >
+          {dropping && (
+            <p className="px-3 pt-2.5 text-xs font-medium text-wine" data-testid="composer-drop-hint">Drop the page to add it to this message</p>
+          )}
           {(attachments.length > 0 || uploading) && (
             <div className="flex flex-wrap gap-1.5 px-3 pt-2.5" data-testid="composer-attachments">
               {attachments.map((a) => (
                 <span
-                  key={a.document_id}
+                  key={attachmentKey(a)}
+                  data-testid="composer-attachment"
                   className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 py-0.5 pl-1.5 pr-0.5 text-[11px] text-foreground"
                 >
                   <button
@@ -1268,12 +1312,12 @@ function Composer({
                     className="inline-flex items-center gap-1 hover:underline"
                   >
                     <FileText className="h-3 w-3 text-amber-500" />
-                    <span className="max-w-[200px] truncate">{a.filename}</span>
+                    <span className="max-w-[200px] truncate">{attachmentLabel(a)}</span>
                   </button>
                   <button
                     type="button"
-                    aria-label={`Remove ${a.filename}`}
-                    onClick={() => onRemoveAttachment(a.document_id)}
+                    aria-label={`Remove ${attachmentLabel(a)}`}
+                    onClick={() => onRemoveAttachment(attachmentKey(a))}
                     className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
                   >
                     <X className="h-3 w-3" />

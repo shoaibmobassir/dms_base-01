@@ -356,11 +356,44 @@ def grounding_sources(doc_index: DocIndex, doc_store: DocStore, records: list[st
     return sources
 
 
+# The Assistant reporting what it did, or asking the lawyer to review the edit cards. These describe its own actions,
+# not what a document says, so they are not checked against sources (the cards carry the edits themselves).
+_ACTION_REPORT = re.compile(
+    r"^\W*(?:I(?:['’]ll|['’]ve|['’]m| will| have| am|\s+(?:read|renumbered|fixed|proposed|changed|updated|corrected|"
+    r"revised|replaced|prepared|made|found|checked|looked))\b"
+    r"|(?:please|you can|you may|just)\s+(?:accept|review|reject|use)\b"
+    r"|(?:summary of (?:the )?(?:changes?|edits?)|changes? (?:made|proposed)|proposed (?:changes?|edits?))\b"
+    r"|(?:the |these |each |all )?(?:edits?|changes?|cards?)\b.{0,40}\b(?:shown|ready|below|above|proposed|apply|applied|accept))",
+    re.IGNORECASE,
+)
+
+
+_ACTION_ANYWHERE = re.compile(
+    r"\bI(?:['’](?:ll|ve|m)|\s+(?:will|have|need|should|can|am|renumber\w*|fix\w*|propos\w*|chang\w*|updat\w*|correct\w*|"
+    r"revis\w*|replac\w*))\b|\b(?:edit|suggested|proposed|change)\s+cards?\b|\baccept\s+(?:the|these|each|all)\b"
+    r"|\b(?:once|after|when)\s+(?:the\s+\w+\s+(?:is\s+)?)?(?:accepted|applied)\b|\bif you accept\b",
+    re.IGNORECASE,
+)
+
+
+def edit_report_detector(edits: list[dict[str, Any]]):
+    """For a turn that produced edit cards: true for a sentence that reports the Assistant's actions or restates one
+    of the proposed edits (it quotes the new wording), so it is kept as written instead of being checked."""
+    proposed = [str(e.get("proposed") or "").strip() for e in edits]
+    proposed = [p for p in proposed if len(p) >= 6]
+
+    def is_report(text: str) -> bool:
+        return bool(_ACTION_REPORT.search(text) or _ACTION_ANYWHERE.search(text)) or any(p in text for p in proposed)
+
+    return is_report
+
+
 def ground_chat_text(
     full_text: str,
     doc_index: DocIndex,
     doc_store: DocStore,
     records: list[str],
+    edits: list[dict[str, Any]] | None = None,
 ) -> tuple[str, list[dict[str, Any]], dict[str, Any]]:
     """Verify every statement of the final answer; return (text, citations, report)."""
     prose = extract_citations_text(full_text)
@@ -376,6 +409,7 @@ def ground_chat_text(
         offered_quotes=lambda u: [q.quote for c in refs(u) for q in (getattr(c, "quotes", None) or [])],
         sources=grounding_sources(doc_index, doc_store, records),
         llm=verifier_llms(),
+        non_claim=edit_report_detector(edits) if edits else None,
     )
     citations = []
     for c in grounded.citations:
@@ -675,6 +709,7 @@ def build_llm_messages(
     max_pairs: int | None = None,
     mode: str | None = None,
     matter: dict[str, str] | None = None,
+    page_note: str | None = None,
 ) -> list[dict[str, Any]]:
     """Build the LLM message array: system + windowed history + current user."""
     doc_availability = build_doc_availability(doc_index)
@@ -694,6 +729,8 @@ def build_llm_messages(
             "or similar, they mean these; work on these, not on similarly named search results):\n"
             + "\n".join(f"- {d['doc_id']}: {d['filename']}" for d in attached)
         )
+    if page_note:
+        system_content += page_note
     if found:
         heading = "OTHER DOCUMENTS FOUND BY SEARCH" if attached else "AVAILABLE DOCUMENTS"
         system_content += f"\n\n{heading}:\n" + "\n".join(f"- {d['doc_id']}: {d['filename']}" for d in found)
@@ -965,6 +1002,7 @@ def run_chat_agent(
     mode: str | None = None,
     hit_count: int | None = None,
     matter: dict[str, str] | None = None,
+    page_note: str | None = None,
 ) -> Generator[str, None, dict[str, Any]]:
     """
     Execute the multi-round tool-use agent loop.
@@ -987,7 +1025,7 @@ def run_chat_agent(
     }
     all_events.append(opening)
     yield sse_event("reasoning", {"text": opening["text"], "mode": opening["mode"]})
-    messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode, matter=matter)
+    messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode, matter=matter, page_note=page_note)
     tools = ALL_TOOLS
     request_id = current_request_id() or "-"
 
@@ -1182,7 +1220,8 @@ def run_chat_agent(
         yield sse_event("reasoning", {"text": step["text"], "mode": step["mode"]})
         t = time.perf_counter()
         try:
-            clean_text, verified_citations, report = ground_chat_text(full_text, doc_index, doc_store, records)
+            turn_edits = [e for ev in all_events if ev.get("type") == "edit_proposals" for e in ev.get("edits", [])]
+            clean_text, verified_citations, report = ground_chat_text(full_text, doc_index, doc_store, records, turn_edits)
         except Exception as exc:  # never show an unchecked answer as if it were checked
             logger.error("[chat/agent] grounding failed: %s, request_id=%s", exc, request_id)
             clean_text = ("The answer could not be checked against its sources, so it is not shown. "
@@ -1257,6 +1296,7 @@ def run_chat_agent_sync(
     mode: str | None = None,
     hit_count: int | None = None,
     matter: dict[str, str] | None = None,
+    page_note: str | None = None,
 ) -> dict[str, Any]:
     """
     Run the agent loop synchronously, collecting all SSE events.
@@ -1274,6 +1314,7 @@ def run_chat_agent_sync(
         mode=mode,
         hit_count=hit_count,
         matter=matter,
+        page_note=page_note,
     )
 
     result = {"full_text": "", "events": [], "citations": []}
