@@ -1,0 +1,134 @@
+{
+  "n": 109,
+  "pass_rate": 0.9083,
+  "p50_s": 7.46,
+  "p95_s": 19.97,
+  "mean_s": 8.27,
+  "scope_mode": "structured",
+  "categories": {
+    "client_matters": {
+      "n": 7,
+      "pass_rate": 1.0,
+      "panel": {
+        "panel_matters_recall": 1.0
+      },
+      "check_fail_counts": {
+        "grounded": 0,
+        "http_200": 0,
+        "matters_recall": 0,
+        "no_slow_channel": 0
+      }
+    },
+    "ethical_wall": {
+      "n": 4,
+      "pass_rate": 1.0,
+      "panel": {},
+      "check_fail_counts": {
+        "http_200": 0,
+        "no_leak": 0,
+        "no_slow_channel": 0
+      }
+    },
+    "lead_unscoped": {
+      "n": 19,
+      "pass_rate": 0.8947,
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "panel_people_recall": 1.0,
+        "people_in_answer": 0.947
+      },
+      "check_fail_counts": {
+        "grounded": 0,
+        "http_200": 0,
+        "matter": 0,
+        "no_slow_channel": 2,
+        "people": 0
+      }
+    },
+    "negative": {
+      "n": 3,
+      "pass_rate": 0.3333,
+      "panel": {},
+      "check_fail_counts": {
+        "clean_negative": 0,
+        "http_200": 0,
+        "no_dump": 0,
+        "no_slow_channel": 2
+      }
+    },
+    "paraphrase_lowercase": {
+      "n": 6,
+      "pass_rate": 1.0,
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "check_fail_counts": {
+        "grounded": 0,
+        "http_200": 0,
+        "matter": 0,
+        "no_slow_channel": 0
+      }
+    },
+    "people_expertise": {
+      "n": 19,
+      "pass_rate": 0.8947,
+      "panel": {
+        "panel_people_recall": 0.895,
+        "people_in_answer": 0.895
+      },
+      "check_fail_counts": {
+        "grounded": 2,
+        "http_200": 2,
+        "no_slow_channel": 0,
+        "people": 2
+      }
+    },
+    "people_on_matter": {
+      "n": 19,
+      "pass_rate": 0.9474,
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "panel_people_recall": 1.0,
+        "people_in_answer": 1.0
+      },
+      "check_fail_counts": {
+        "grounded": 0,
+        "http_200": 0,
+        "matter": 0,
+        "no_slow_channel": 1,
+        "people": 0
+      }
+    },
+    "scoped_fact": {
+      "n": 13,
+      "pass_rate": 0.7692,
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "check_fail_counts": {
+        "facts_all": 0,
+        "grounded": 0,
+        "http_200": 0,
+        "matter": 0,
+        "no_slow_channel": 3
+      }
+    },
+    "scoped_overview": {
+      "n": 19,
+      "pass_rate": 1.0,
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "check_fail_counts": {
+        "facts_any": 0,
+        "grounded": 0,
+        "http_200": 0,
+        "matter": 0,
+        "no_slow_channel": 0
+      }
+    }
+  }
+}
+  }
+  }
+}

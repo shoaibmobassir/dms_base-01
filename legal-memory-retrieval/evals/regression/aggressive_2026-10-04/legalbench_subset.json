@@ -1,0 +1,1822 @@
+{
+  "generator": "zai.glm-5",
+  "prompting": "task-specific Yes/No or theory-list",
+  "tasks": [
+    {
+      "task": "hearsay",
+      "n": 50,
+      "accuracy": 0.62
+    },
+    {
+      "task": "personal_jurisdiction",
+      "n": 50,
+      "accuracy": 0.72
+    },
+    {
+      "task": "diversity_1",
+      "n": 50,
+      "accuracy": 0.76
+    },
+    {
+      "task": "overruling",
+      "n": 50,
+      "accuracy": 0.96
+    },
+    {
+      "task": "proa",
+      "n": 50,
+      "accuracy": 0.98
+    },
+    {
+      "task": "successor_liability",
+      "n": 40,
+      "accuracy": 0.05
+    }
+  ],
+  "tasks_full": [
+    {
+      "task": "hearsay",
+      "n": 50,
+      "accuracy": 0.62,
+      "rows": [
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.92
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.1
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 1.03
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 0.92
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.92
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 1.04
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.12
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.22
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 0.96
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 0.89
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.25
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.15
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.02
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.91
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 6.7
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 4.93
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.11
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.91
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 0.96
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.02
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.95
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 6.78
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.23
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 1.66
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 4.45
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 0.97
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 0.9
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.22
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.88
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.09
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.0
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 2.77
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 14.88
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.26
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.14
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 0.97
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 7.69
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 0.97
+        }
+      ]
+    },
+    {
+      "task": "personal_jurisdiction",
+      "n": 50,
+      "accuracy": 0.72,
+      "rows": [
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.95
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.95
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.14
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.08
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.02
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 3.4
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.89
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.14
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 0.96
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.16
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.95
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 4.72
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 5.78
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.12
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.97
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 3.04
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.91
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.11
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.92
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.02
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.37
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 4.26
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.02
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.02
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.1
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.09
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.95
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 16.67
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.15
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.13
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 0.97
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 4.37
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.93
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.86
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.07
+        }
+      ]
+    },
+    {
+      "task": "diversity_1",
+      "n": 50,
+      "accuracy": 0.76,
+      "rows": [
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 0.92
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 3.76
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 6.17
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.9
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.91
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.95
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.01
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 0.97
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.95
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.03
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.98
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.57
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.14
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 1.64
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.09
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.95
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 1.29
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.99
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 4.25
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.02
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.03
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 0.98
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 2.23
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 2.33
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.22
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.06
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 3.22
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 1.32
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.15
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 2.93
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 2.74
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 2.63
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 2.38
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 1.01
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.96
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.1
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.01
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 1.05
+        }
+      ]
+    },
+    {
+      "task": "overruling",
+      "n": 50,
+      "accuracy": 0.96,
+      "rows": [
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 7.42
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.93
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 1.02
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 2.82
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.93
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.17
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.12
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.06
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.06
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.17
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.96
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.6
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.03
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 2.53
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.93
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.1
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.98
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 3.03
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 2.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "No",
+          "ok": false,
+          "seconds": 0.96
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.92
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.95
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.06
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.97
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.11
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 10.75
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.95
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.94
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 3.65
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.06
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.03
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 2.12
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 6.21
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.1
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.09
+        }
+      ]
+    },
+    {
+      "task": "proa",
+      "n": 50,
+      "accuracy": 0.98,
+      "rows": [
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.22
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.94
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 6.63
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.94
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.11
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.23
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.13
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 14.0
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.02
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.02
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.92
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.1
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.04
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.0
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.12
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.02
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.28
+        },
+        {
+          "gold": "No",
+          "pred": "Yes",
+          "ok": false,
+          "seconds": 0.96
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.22
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 2.13
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 5.99
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.97
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.13
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 5.72
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.01
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.15
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.19
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 4.55
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.98
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.11
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 1.02
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 0.99
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.12
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 3.89
+        },
+        {
+          "gold": "Yes",
+          "pred": "Yes",
+          "ok": true,
+          "seconds": 3.65
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.05
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.06
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 1.03
+        },
+        {
+          "gold": "No",
+          "pred": "No",
+          "ok": true,
+          "seconds": 0.96
+        }
+      ]
+    },
+    {
+      "task": "successor_liability",
+      "n": 40,
+      "accuracy": 0.05,
+      "rows": [
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['de facto merger', 'mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.15
+        },
+        {
+          "gold": "['mere continuation', 'de facto merger']",
+          "pred": "['de facto merger', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.11
+        },
+        {
+          "gold": "['mere continuation', 'fraudulent conveyance']",
+          "pred": "['de facto merger', 'mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 0.97
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['express assumption', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.03
+        },
+        {
+          "gold": "['mere continuation']",
+          "pred": "['mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 3.07
+        },
+        {
+          "gold": "['de facto merger', 'mere continuation']",
+          "pred": "['de facto merger', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.38
+        },
+        {
+          "gold": "['de facto merger', 'mere continuation']",
+          "pred": "['de facto merger', 'express assumption', 'mere continuation']",
+          "ok": false,
+          "seconds": 1.05
+        },
+        {
+          "gold": "['de facto merger', 'mere continuation']",
+          "pred": "['de facto merger', 'mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.3
+        },
+        {
+          "gold": "['mere continuation', 'fraudulent conveyance']",
+          "pred": "['de facto merger', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.1
+        },
+        {
+          "gold": "['mere continuation', 'de facto merger']",
+          "pred": "['de facto merger', 'mere continuation']",
+          "ok": true,
+          "seconds": 0.98
+        },
+        {
+          "gold": "['de facto merger', 'mere continuation']",
+          "pred": "['de facto merger', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.07
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['de facto merger', 'mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.18
+        },
+        {
+          "gold": "['express agreement']",
+          "pred": "['express assumption']",
+          "ok": false,
+          "seconds": 1.08
+        },
+        {
+          "gold": "['mere continuation']",
+          "pred": "['fraudulent conveyance']",
+          "ok": false,
+          "seconds": 4.86
+        },
+        {
+          "gold": "['de facto merger', 'mere continuation']",
+          "pred": "['de facto merger', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 6.99
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['de facto merger', 'mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.2
+        },
+        {
+          "gold": "['mere continuation']",
+          "pred": "['fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.05
+        },
+        {
+          "gold": "['express agreement']",
+          "pred": "['de facto merger', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 3.39
+        },
+        {
+          "gold": "['mere continuation']",
+          "pred": "['mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.71
+        },
+        {
+          "gold": "['express agreement', 'implied assumption of liability']",
+          "pred": "['de facto merger', 'mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.18
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "```python",
+          "ok": false,
+          "seconds": 1.22
+        },
+        {
+          "gold": "['mere continuation', 'de facto merger']",
+          "pred": "['de facto merger', 'mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 3.53
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.05
+        },
+        {
+          "gold": "['mere continuation', 'de facto merger']",
+          "pred": "['de facto merger', 'mere continuation']",
+          "ok": true,
+          "seconds": 1.07
+        },
+        {
+          "gold": "['mere continuation', 'de facto merger']",
+          "pred": "['mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.36
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['de facto merger', 'mere continuation', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.07
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.36
+        },
+        {
+          "gold": "['express agreement']",
+          "pred": "['express assumption']",
+          "ok": false,
+          "seconds": 5.24
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['de facto merger', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.06
+        },
+        {
+          "gold": "['express agreement']",
+          "pred": "['de facto merger', 'express assumption', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.39
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.06
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.07
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['de facto merger', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 0.98
+        },
+        {
+          "gold": "['express agreement']",
+          "pred": "['de facto merger', 'express assumption', 'mere continuation']",
+          "ok": false,
+          "seconds": 1.08
+        },
+        {
+          "gold": "['de facto merger', 'mere continuation']",
+          "pred": "['mere continuation', 'express assumption', 'fraudulent conveyance']",
+          "ok": false,
+          "seconds": 0.98
+        },
+        {
+          "gold": "['de facto merger', 'mere continuation']",
+          "pred": "['express assumption', 'de facto merger', 'mere continuation']",
+          "ok": false,
+          "seconds": 1.16
+        },
+        {
+          "gold": "['de facto merger', 'mere continuation']",
+          "pred": "['de facto merger', 'mere continuation', 'express assumption']",
+          "ok": false,
+          "seconds": 1.08
+        },
+        {
+          "gold": "['fraudulent conveyance', 'mere continuation']",
+          "pred": "['fraudulent conveyance']",
+          "ok": false,
+          "seconds": 1.15
+        },
+        {
+          "gold": "['express agreement']",
+          "pred": "['express assumption']",
+          "ok": false,
+          "seconds": 1.24
+        },
+        {
+          "gold": "['mere continuation', 'de facto merger']",
+          "pred": "['de facto merger', 'mere continuation', 'express assumption']",
+          "ok": false,
+          "seconds": 4.3
+        }
+      ]
+    }
+  ],
+  "macro_accuracy": 0.6817,
+  "note": "Parametric LegalBench subset. Comparable to Vals/LegalBench model leaderboards (not RAG)."
+}
