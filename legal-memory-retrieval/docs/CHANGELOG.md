@@ -2,6 +2,110 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-03 — Entity lifecycle and ingestion (plan 09)
+
+- Matters: close (with outcome and what is still open) and reopen. Team editor by search with make-lead. Clients: edit,
+  notes, on hold / inactive. People: admin edit, deactivate, reactivate. Arguments recordable from the bank.
+- Ingestion: folder-ingest endpoint limited to administrators, folder upload, CSV import for clients, people and matters
+  (check first, then apply), recent uploads with retry, archive and restore of documents (migration `20261003d`).
+- PDF edits become comments; "What changed" panel per version; Assistant has a free-text ask box.
+
+## 2026-10-03 — Frontend pass 7: one document page, Notion-style comments, Assistant comments
+
+- Document page = rendered pages + comments (no Edit needed); Pages | Text switch; version switch keeps the page; comment
+  highlight only for the open thread; select, press Comment, write.
+- `comment_on_document` Assistant tool (`app/chat/tools/comment_tools.py`, `tests/test_comment_tool.py`, 3) and a
+  "comments added" card. Playwright 83 passed (4 skipped).
+
+## 2026-10-03 — Frontend pass 6: the Assistant conversation
+
+- Centred hero composer when empty, rounded composer with chips and a round send button, flat answers with source
+  chips and an action row, subtle user bubbles, edit-and-resend on the last question. Bulk pin and unpin of matters.
+  PDF find shows a match count. Flat shadcn buttons with a 2px focus ring.
+- Playwright 81 passed (4 skipped).
+
+## 2026-10-03 — Frontend audit pass 5
+
+- Table selection and bulk actions on Documents. Conversation export to Word (`export.docx`, 2 tests) and Markdown.
+  Find inside the PDF viewer. Confirm before bulk accept/reject of tracked changes and before deleting a comment.
+- Tests: Playwright 78 + backend 23 on the new modules.
+
+## 2026-10-03 — Frontend audit pass 4
+
+- `GET /api/matters` and `/api/documents` take `sort` and `dir` (whitelisted columns); `/api/matters` takes `mine=true`.
+  Sortable table headers, "My matters" pill, state in the URL. Admin people table on `DataTable`. Download the original
+  from the reader. Tests: `tests/test_list_sorting.py` (6); Playwright 76 passed (4 skipped).
+
+## 2026-10-03 — Review fixes (code-review, high)
+
+- **Security:** `/documents/{id}/versions/{vid}/search`, `/blocks` and `/outline` now require the version to belong to the
+  document that was access-checked (the search could read another document's blocks by version id).
+- Follow-ups are stored apart from stand-alone answers: migration `20261003a_ask_follow_up.sql` adds
+  `ask_answers.follow_up_of` to the unique key; `load`/`drop` only touch stand-alone rows, so the cache can neither serve
+  nor be overwritten by a follow-up. A follow-up of a follow-up keeps the thread's topic (`retrieval_query`).
+- Find in document: whitespace-insensitive phrases, no stale matches while typing. Matter Overview shows the real count of
+  open deadlines. Ask answers keep single line breaks. A mangled colour class on the Open pill and proposed edits fixed.
+  Escape closes a picker list, not the dialog around it.
+- Tests: backend 159 document tests + 59 Ask tests pass; Playwright 73 passed (4 skipped).
+
+## 2026-10-03 — Frontend audit pass 3
+
+- Form primitives (`Field`, `SearchPicker`, `MatterPicker`, `ClientPicker`); labelled dialogs; a new matter requires a
+  chosen client (it used the first active client when none was picked).
+- Notifications bell; conversation download and message times; `ChatPage.tsx` split into modules (1,567 to 704 lines).
+- Playwright 72 passed (4 skipped).
+
+## 2026-10-03 — Frontend audit pass 2
+
+- Ask answers use the Assistant's Markdown renderer and one shared citation chip; answer actions (copy with sources,
+  copy link, continue in the Assistant).
+- Find in document: `GET /api/documents/{id}/versions/{version_id}/search?q=` (`app/documents/block_search.py`,
+  `tests/test_block_search.py`, 5) and a search bar in the reader (`/`).
+- Arguments detail is a sheet on phones; Calendar month is an agenda on phones; matter Overview rebuilt; Home first-run.
+- Playwright 70 (4 skipped). One editor test failed once in the full run and passes alone; the shared database is used
+  by other sessions.
+
+## 2026-10-03 — Frontend audit pass 1: safety, foundation, follow-ups (docs/ui-roadmap/08)
+
+- **Ask follow-ups are real.** `POST /api/answers` and `/stream` accept `follow_up_of` (a saved answer id).
+  The earlier question is folded into retrieval, the earlier scope is inherited, the answer is never served from
+  the cache, and the stored row keeps the member's own wording plus `follow_up_of` / `follow_up_query`. A stored
+  follow-up is never returned for the same words asked on their own. `app/km/follow_up.py`,
+  `tests/test_ask_follow_up.py` (6). No retrieval or fusion change.
+- **No silent filing.** Documents page: multi-file upload (PDF, Word, text) with per-file results; a matter must be
+  chosen. Assistant uploads use the conversation's matter or ask which one (they used "the first open matter").
+- Searchable `MatterPicker` replaces 200-item dropdowns (Documents, Calendar). Confirm dialog before deleting
+  arguments, timeline entries, links and teams; Ask "Clear all" asks first.
+- Chat no longer yanks the scroll while an answer streams ("Jump to latest"); IME-safe Enter; Assistant attaches the
+  document handed over from the reader (`/chat?doc=`).
+- Document reader: side panels are drawers below `lg`; real AI tab (summarise, obligations, risks).
+- Foundation: Tailwind v4-only classes fixed for the v3 build; semantic colour tokens replace raw amber/emerald/sky;
+  12px type floor; fonts and icon font self-hosted; routes lazy-loaded (main chunk 1.2 MB to 355 KB); tab titles,
+  breadcrumbs, `?` shortcut list, palette actions, keyboard and link rows in tables, matter tab in the URL,
+  add document / add court date inside a matter, System info for administrators only.
+- Tests: Playwright 66 passed (4 skipped); backend 60 passed across the Ask suites.
+
+## 2026-10-02 — Ask the Firm: answer ids like Assistant sessions
+
+- URL is now ``/ask/{saved_id}`` after the first answer (same pattern as ``/chat/{sessionId}``).
+  Reopen loads ``GET /api/answers/saved/{id}`` only — no query string, no model re-run.
+- Recent questions list ids from ``ask_answers``; clicking one opens ``/ask/{id}``.
+- Root cause of “always hits the API with q=”: saved rows include scope, but reopen used
+  ``?q=`` alone, so the lookup missed and streamed again.
+
+## 2026-10-02 — Ask the Firm: docket pin + stored answers (plan 19)
+
+- Docket parse pins questions that name an appeal/petition (`Appeal No. 163 of 2018`, `APL. 163 of 2018`,
+  `Civil Appeal …`, `Petition 310/MP/2026`) to the matter whose **title** contains that phrase before the stem
+  resolver runs. Document-title copies on other matters (e.g. uploads on `CI-OPEN-001`) are noted, not cited as
+  the appeal. `understand()` records `docket` on `ParsedQuery`; fusion weights unchanged.
+- Stored answers: `ask_answers` table + `GET /api/answers/saved`; `POST /api/answers` and `/stream` return the
+  saved payload unless `refresh=true`. ACL re-checked on read. Ask UI loads saved answers first; Refresh forces
+  a re-run.
+- Tests: `tests/test_ask_docket_and_saved.py` (10) + Ask e2e saved-answer case. Full suite: 868 passed; 11
+  pre-existing failures in `test_calendar` / `test_firm_writes` (ACL/event feed), confirmed present without this
+  change.
+
 ## 2026-09-28 — Write layer and calendar (plan 17: P2, P3)
 
 - Matters: open (with lead, team and access mode), edit and close with optimistic concurrency; team with start/end

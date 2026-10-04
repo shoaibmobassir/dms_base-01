@@ -35,7 +35,8 @@ test("open a matter, staff it and add to its timeline", async ({ browser, reques
     await page.goto("/ui/matters");
     await page.getByTestId("matters-new").click();
     await page.getByTestId("new-matter-title").fill(title);
-    await page.getByTestId("new-matter-client").selectOption({ index: 1 });
+    await page.getByTestId("new-matter-client").click();
+    await page.getByTestId("new-matter-client-option").first().click();
     await page.getByTestId("new-matter-practice").fill("Corporate");
     await page.getByTestId("new-matter-submit").click();
     await expect(page.getByRole("heading", { name: title })).toBeVisible();
@@ -43,7 +44,8 @@ test("open a matter, staff it and add to its timeline", async ({ browser, reques
 
     // Staff it.
     await page.getByTestId("matter-tab-people").click();
-    await page.getByTestId("team-add-person").selectOption(associate);
+    await page.getByTestId("team-add-person").click();
+    await page.locator(`[data-option-id="${associate}"]`).click();
     await page.getByTestId("team-add").click();
     await expect(page.getByTestId("team-row")).toHaveCount(2);
 

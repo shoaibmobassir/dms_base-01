@@ -3,9 +3,10 @@ import { ApiError } from "@/api/client";
 import { LockedMatter } from "@/components/access/LockedMatter";
 import { MatterAccessTab } from "@/components/access/MatterAccessTab";
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  PAGE_SIZE,
   setPinned,
   usePinnedMatters,
   useDeadlines,
@@ -18,16 +19,20 @@ import {
 import type { MatterDetail } from "@/api/types";
 import { DataTable } from "@/components/common/DataTable";
 import { useStartConversation } from "@/components/chat/useStartConversation";
-import { formatDate } from "@/lib/format";
+import { dueLabel, formatDate } from "@/lib/format";
 import { ClientLink } from "@/components/common/EntityLink";
-import { Action, EmptyState, Icon, MonoId, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
-import { QueryState } from "@/components/common/QueryState";
+import { Action, EmptyState, Icon, MonoId, PageHeader, SectionLabel, StatusLabel, DetailSkeleton } from "@/components/common/primitives";
+import { Pager, QueryState } from "@/components/common/QueryState";
+import { UploadFlow } from "@/components/documents/UploadFlow";
+import { CreateDialog } from "@/pages/CalendarPage";
+import { useConfirm } from "@/components/common/Confirm";
 import { useApp } from "@/context/AppContext";
-import { dueLabel } from "@/pages/CalendarPage";
 import { cn } from "@/lib/utils";
 import {
   ArgumentDialog,
+  CloseMatterDialog,
   EditMatterDialog,
+  ReopenMatterDialog,
   LinkMatterDialog,
   TeamEditor,
   TimelineEntryDialog,
@@ -48,7 +53,7 @@ export function MatterDetailPage() {
     return <LockedMatter matterId={id} />;
   }
   return (
-    <QueryState query={matter} loading={<p className="text-sm text-muted-foreground">Loading matter…</p>}>
+    <QueryState query={matter} loading={<DetailSkeleton />}>
       {(detail) => <MatterView key={detail.matter.matter_id} detail={detail} />}
     </QueryState>
   );
@@ -89,13 +94,29 @@ function AssistantAction({ matterId }: { matterId: string }) {
 
 function MatterView({ detail }: { detail: MatterDetail }) {
   const { matter: m, team } = detail;
-  const [tab, setTab] = useState<Tab>("Overview");
+  // The open tab lives in the URL: it survives a reload, the back button and a shared link.
+  const [params, setParams] = useSearchParams();
   const status = useMatterAccessStatus(m.matter_id, true);
   const tabs = TABS.filter((t) => t !== "Access" || status.data?.level === "manage");
+  const asked = params.get("tab");
+  const tab: Tab = tabs.find((t) => t.toLowerCase() === asked) ?? "Overview";
+  const setTab = (next: Tab) =>
+    setParams(
+      (prev) => {
+        const out = new URLSearchParams(prev);
+        if (next === "Overview") out.delete("tab");
+        else out.set("tab", next.toLowerCase());
+        return out;
+      },
+      { replace: true },
+    );
   const level = detail.my_level ?? "read";
   const canEdit = level === "edit" || level === "manage";
   const canManage = level === "manage";
   const [editing, setEditing] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [reopening, setReopening] = useState(false);
+  const closed = m.status === "Closed";
 
   return (
     <div className="space-y-8">
@@ -115,6 +136,11 @@ function MatterView({ detail }: { detail: MatterDetail }) {
                 Edit
               </Action>
             )}
+            {canManage && !closed && (
+              <Action onClick={() => setClosing(true)} icon="task_alt" testId="matter-close">
+                Close matter
+              </Action>
+            )}
           </>
         }
       >
@@ -127,6 +153,20 @@ function MatterView({ detail }: { detail: MatterDetail }) {
           </span>
         </div>
       </PageHeader>
+
+      {closed && (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-secondary/50 px-4 py-3 text-sm" data-testid="matter-closed-banner">
+          <Icon name="task_alt" className="text-muted-foreground" />
+          <span className="min-w-0 flex-1">
+            Closed{m.closed_date ? ` on ${formatDate(m.closed_date)}` : ""}.{m.outcome ? ` Outcome: ${m.outcome}` : ""}
+          </span>
+          {canManage && (
+            <Action onClick={() => setReopening(true)} icon="undo" testId="matter-reopen">
+              Reopen
+            </Action>
+          )}
+        </div>
+      )}
 
       <div className="sticky top-0 z-10 -mx-6 border-b border-border bg-background/90 px-6 backdrop-blur lg:-mx-10 lg:px-10">
         <div className="flex gap-1 overflow-x-auto" role="tablist">
@@ -151,39 +191,74 @@ function MatterView({ detail }: { detail: MatterDetail }) {
       </div>
 
       <div className="animate-fade">
-        {tab === "Overview" && <Overview detail={detail} />}
-        {tab === "Documents" && <DocumentsTab matterId={m.matter_id} />}
+        {tab === "Overview" && <Overview detail={detail} onTab={setTab} />}
+        {tab === "Documents" && <DocumentsTab matter={m} canEdit={canEdit} />}
         {tab === "Timeline" && <TimelineTab matterId={m.matter_id} canEdit={canEdit} />}
-        {tab === "Deadlines" && <DeadlinesTab matterId={m.matter_id} />}
+        {tab === "Deadlines" && <DeadlinesTab matterId={m.matter_id} canEdit={canEdit} />}
         {tab === "People" && <TeamEditor matterId={m.matter_id} team={team} canManage={canManage} />}
         {tab === "Arguments" && <ArgumentsTab matterId={m.matter_id} canEdit={canEdit} />}
         {tab === "Related" && <RelatedTab matterId={m.matter_id} canEdit={canEdit} />}
         {tab === "Access" && <MatterAccessTab matterId={m.matter_id} />}
       </div>
       {editing && <EditMatterDialog detail={detail} open onClose={() => setEditing(false)} />}
+      {closing && <CloseMatterDialog detail={detail} open onClose={() => setClosing(false)} />}
+      {reopening && <ReopenMatterDialog detail={detail} open onClose={() => setReopening(false)} />}
     </div>
   );
 }
 
-function Overview({ detail }: { detail: MatterDetail }) {
+function Overview({ detail, onTab }: { detail: MatterDetail; onTab: (t: Tab) => void }) {
   const { matter: m, team } = detail;
+  const docs = useDocuments({ matter_id: m.matter_id, limit: 1 });
+  const upcoming = useDeadlines({ status: "open", matter_id: m.matter_id });
+  const openDeadlines = upcoming.data ?? [];
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="space-y-6 lg:col-span-2">
-        <div className="rounded-lg border border-border bg-card p-6">
+    <div className="grid gap-10 lg:grid-cols-3">
+      <div className="space-y-10 lg:col-span-2">
+        <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm" data-testid="matter-glance">
+          <button type="button" onClick={() => onTab("Documents")} className="hover:text-wine">
+            <span className="font-display text-2xl text-ink">{docs.data?.total ?? "·"}</span>{" "}
+            <span className="text-muted-foreground">{docs.data?.total === 1 ? "document" : "documents"}</span>
+          </button>
+          <button type="button" onClick={() => onTab("Deadlines")} className="hover:text-wine">
+            <span className="font-display text-2xl text-ink">{upcoming.data ? openDeadlines.length : "·"}</span>{" "}
+            <span className="text-muted-foreground">open {openDeadlines.length === 1 ? "deadline" : "deadlines"}</span>
+          </button>
+        </div>
+
+        {openDeadlines.length > 0 && (
+          <section>
+            <SectionLabel right={<button type="button" onClick={() => onTab("Deadlines")} className="text-xs font-semibold text-wine hover:underline">All deadlines</button>}>
+              Coming up
+            </SectionLabel>
+            <ul className="divide-y divide-border border-y border-border">
+              {openDeadlines.slice(0, 3).map((d) => (
+                <li key={d.id} className="flex items-baseline justify-between gap-4 py-2.5 text-sm">
+                  <span className="min-w-0 truncate">{d.title}</span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                    {formatDate(d.due)} <span className="text-wine">{dueLabel(d.due)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section>
           <SectionLabel>Facts</SectionLabel>
           {m.facts.length === 0 ? (
             <p className="text-sm text-muted-foreground">No facts recorded for this matter.</p>
           ) : (
-            <ul className="space-y-2 text-[15px] leading-relaxed text-foreground">
+            <ul className="max-w-prose space-y-3 text-[15px] leading-relaxed text-foreground">
               {m.facts.map((f) => (
                 <li key={f}>{f}</li>
               ))}
             </ul>
           )}
-        </div>
+        </section>
+
         {m.legal_issues.length > 0 && (
-          <div className="rounded-lg border border-border bg-card p-6">
+          <section>
             <SectionLabel>Legal issues</SectionLabel>
             <div className="flex flex-wrap gap-1.5">
               {m.legal_issues.map((k) => (
@@ -192,13 +267,14 @@ function Overview({ detail }: { detail: MatterDetail }) {
                 </span>
               ))}
             </div>
-          </div>
+          </section>
         )}
       </div>
-      <div className="space-y-6">
-        <div className="rounded-lg border border-border bg-card p-5">
+
+      <div className="space-y-10">
+        <section>
           <SectionLabel>Parties</SectionLabel>
-          <dl className="space-y-2.5 text-sm">
+          <dl className="divide-y divide-border border-y border-border text-sm">
             <Field label="Client">{m.client_name}</Field>
             <Field label="Opposing party">{m.opposing_party}</Field>
             <Field label="Forum">{m.court}</Field>
@@ -207,26 +283,28 @@ function Overview({ detail }: { detail: MatterDetail }) {
             {m.closed_date && <Field label="Closed">{formatDate(m.closed_date)}</Field>}
             {m.outcome && <Field label="Outcome">{m.outcome}</Field>}
           </dl>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-5">
-          <SectionLabel>Team</SectionLabel>
-          <div className="space-y-2.5">
-            {team.length === 0 && <p className="text-sm text-muted-foreground">No team recorded.</p>}
+        </section>
+        <section>
+          <SectionLabel right={<button type="button" onClick={() => onTab("People")} className="text-xs font-semibold text-wine hover:underline">Manage</button>}>
+            Team
+          </SectionLabel>
+          <div className="divide-y divide-border border-y border-border">
+            {team.length === 0 && <p className="py-3 text-sm text-muted-foreground">No team recorded.</p>}
             {[...team]
               .sort((a, b) => Number(b.role_on_matter?.toLowerCase() === "lead") - Number(a.role_on_matter?.toLowerCase() === "lead"))
               .map((tm) => (
-                <div key={tm.member_id} className="text-sm" data-testid="matter-team-member">
+                <div key={tm.member_id} className="py-2.5 text-sm" data-testid="matter-team-member">
                   <Link to={`/people/${tm.member_id}`} className="font-medium hover:text-wine">
                     {tm.name}
                   </Link>
                   {tm.role_on_matter?.toLowerCase() === "lead" && (
-                    <span className="ml-1.5 rounded bg-wine px-1 py-px align-middle text-[10px] font-semibold uppercase text-primary-foreground">Lead</span>
+                    <span className="ml-1.5 rounded bg-wine px-1 py-px align-middle text-xs font-semibold text-primary-foreground">Lead</span>
                   )}
                   <div className="text-xs text-muted-foreground">{[tm.role, tm.office].filter(Boolean).join(" · ")}</div>
                 </div>
               ))}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
@@ -234,20 +312,40 @@ function Overview({ detail }: { detail: MatterDetail }) {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd>{children || "—"}</dd>
+    <div className="grid grid-cols-3 gap-3 py-2.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="col-span-2">{children || "—"}</dd>
     </div>
   );
 }
 
-function DocumentsTab({ matterId }: { matterId: string }) {
+function DocumentsTab({ matter, canEdit }: { matter: MatterDetail["matter"]; canEdit: boolean }) {
   const navigate = useNavigate();
-  const docs = useDocuments({ matter_id: matterId, limit: 200 });
+  const [page, setPage] = useState(0);
+  const [adding, setAdding] = useState(false);
+  const docs = useDocuments({ matter_id: matter.matter_id, page });
   return (
-    <QueryState query={docs} isEmpty={(d) => d.items.length === 0} empty={<EmptyState icon="description" title="No documents on this matter" />}>
+    <div className="space-y-4">
+      {canEdit && (
+        <Action onClick={() => setAdding(true)} icon="upload" testId="matter-add-documents">
+          Add documents
+        </Action>
+      )}
+      {adding && (
+        <UploadFlow
+          matter={{ matter_id: matter.matter_id, matter_code: matter.matter_code, title: matter.title }}
+          onClose={() => setAdding(false)}
+        />
+      )}
+    <QueryState
+      query={docs}
+      isEmpty={(d) => d.items.length === 0}
+      empty={<EmptyState icon="description" title="No documents on this matter yet" description={canEdit ? "Add the first document to file it here." : undefined} />}
+    >
       {(d) => (
+        <>
         <DataTable
+          getRowHref={(doc) => `/documents/${doc.document_id}`}
           testId="matter-documents"
           getRowKey={(doc) => doc.document_id}
           onRowClick={(doc) => navigate(`/documents/${doc.document_id}`)}
@@ -268,15 +366,22 @@ function DocumentsTab({ matterId }: { matterId: string }) {
             { key: "date", header: "Date", align: "right", render: (doc) => <span className="whitespace-nowrap tabular-nums">{formatDate(doc.doc_date)}</span> },
           ]}
         />
+        <Pager page={page} total={d.total} pageSize={PAGE_SIZE} onPage={setPage} />
+        </>
       )}
     </QueryState>
+    </div>
   );
 }
 
 function TimelineTab({ matterId, canEdit }: { matterId: string; canEdit: boolean }) {
   const timeline = useMatterTimeline(matterId);
   const [dialog, setDialog] = useState<{ entry?: TimelineEvent } | null>(null);
-  const remove = useDeleteTimelineEntry(matterId);
+  const removeEntry = useDeleteTimelineEntry(matterId);
+  const confirm = useConfirm();
+  const remove = async (eventId: string) => {
+    if (await confirm({ title: "Remove this timeline entry?", description: "It is removed for everyone on the matter.", confirmLabel: "Remove entry" })) await removeEntry(eventId);
+  };
   return (
     <div className="space-y-4">
       {canEdit && (
@@ -290,7 +395,7 @@ function TimelineTab({ matterId, canEdit }: { matterId: string; canEdit: boolean
             {events.map((e) => (
               <li key={e.event_id ?? `${e.doc_id}-${e.date}`} className="group relative" data-testid={e.source === "entry" ? "timeline-entry" : undefined}>
                 <span className={cn("absolute -left-[27px] top-1 h-3 w-3 rounded-full border-2 bg-background",
-                  e.source === "entry" ? "border-amber-500" : "border-wine")} />
+                  e.source === "entry" ? "border-warning/60" : "border-wine")} />
                 <div className="font-mono-id text-xs text-wine">{e.date || "undated"}</div>
                 {e.doc_id ? (
                   <Link to={`/documents/${e.doc_id}`} className="mt-0.5 block text-base text-foreground hover:text-wine">{e.event}</Link>
@@ -301,7 +406,7 @@ function TimelineTab({ matterId, canEdit }: { matterId: string; canEdit: boolean
                 <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                   {[e.doc_type, e.author].filter(Boolean).join(" · ")}
                   {canEdit && e.source === "entry" && e.event_id && (
-                    <span className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                    <span className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">
                       <button type="button" className="underline" onClick={() => setDialog({ entry: e })}>Edit</button>{" "}
                       <button type="button" className="underline" onClick={() => void remove(e.event_id!)}>Delete</button>
                     </span>
@@ -317,9 +422,17 @@ function TimelineTab({ matterId, canEdit }: { matterId: string; canEdit: boolean
   );
 }
 
-function DeadlinesTab({ matterId }: { matterId: string }) {
+function DeadlinesTab({ matterId, canEdit }: { matterId: string; canEdit: boolean }) {
   const deadlines = useDeadlines({ status: "all", matter_id: matterId });
+  const [adding, setAdding] = useState(false);
   return (
+    <div className="space-y-4">
+      {canEdit && (
+        <Action onClick={() => setAdding(true)} icon="gavel" testId="matter-add-deadline">
+          Add court date
+        </Action>
+      )}
+      {adding && <CreateDialog kind="deadline" defaultMatter={matterId} onClose={() => setAdding(false)} />}
     <QueryState query={deadlines} isEmpty={(d) => d.length === 0} empty={<EmptyState icon="event" title="No deadlines on this matter" />}>
       {(rows) => (
         <DataTable
@@ -335,13 +448,18 @@ function DeadlinesTab({ matterId }: { matterId: string }) {
         />
       )}
     </QueryState>
+    </div>
   );
 }
 
 function ArgumentsTab({ matterId, canEdit }: { matterId: string; canEdit: boolean }) {
   const args = useMatterArguments(matterId);
   const [dialog, setDialog] = useState<{ arg?: MatterArgument } | null>(null);
-  const remove = useDeleteArgument(matterId);
+  const removeArgument = useDeleteArgument(matterId);
+  const confirm = useConfirm();
+  const remove = async (argumentId: string) => {
+    if (await confirm({ title: "Delete this argument?", description: "It is removed from the matter and from the firm's argument bank.", confirmLabel: "Delete argument" })) await removeArgument(argumentId);
+  };
   return (
     <div className="space-y-4">
       {canEdit && (
@@ -359,7 +477,7 @@ function ArgumentsTab({ matterId, canEdit }: { matterId: string; canEdit: boolea
                 <p className="mt-1 text-sm text-muted-foreground">{a.argument}</p>
                 {a.outcome && <p className="mt-1 text-xs text-muted-foreground">Outcome: {a.outcome}</p>}
                 {canEdit && (
-                  <div className="mt-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                  <div className="mt-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">
                     <button type="button" className="underline" onClick={() => setDialog({ arg: a })}>Edit</button>{" "}
                     <button type="button" className="underline" onClick={() => void remove(a.argument_id)}>Delete</button>
                   </div>
@@ -378,7 +496,11 @@ function RelatedTab({ matterId, canEdit }: { matterId: string; canEdit: boolean 
   const navigate = useNavigate();
   const related = useMatterRelated(matterId);
   const [linking, setLinking] = useState(false);
-  const unlink = useUnlinkMatter(matterId);
+  const unlinkMatter = useUnlinkMatter(matterId);
+  const confirm = useConfirm();
+  const unlink = async (otherId: string) => {
+    if (await confirm({ title: "Remove this link?", description: "The two matters stay as they are; only the link between them is removed.", confirmLabel: "Remove link" })) await unlinkMatter(otherId);
+  };
   return (
     <div className="space-y-4">
       {canEdit && (
@@ -410,7 +532,7 @@ function RelatedTab({ matterId, canEdit }: { matterId: string; canEdit: boolean 
                 render: (r) => (
                   <span className="text-sm text-muted-foreground">
                     {(r.relation ?? "").replace(/_/g, " ")}
-                    {r.manual && <span className="ml-1 rounded bg-secondary px-1 text-[11px]">linked</span>}
+                    {r.manual && <span className="ml-1 rounded bg-secondary px-1 text-xs">linked</span>}
                     {r.note && <span className="block text-xs">{r.note}</span>}
                   </span>
                 ),

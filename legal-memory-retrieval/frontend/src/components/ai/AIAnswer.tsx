@@ -2,7 +2,10 @@ import { Fragment, createContext, useContext, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon, SectionLabel } from "@/components/common/primitives";
 import { useDocumentPanel } from "@/components/ai/DocumentPanelDrawer";
+import { useApp } from "@/context/AppContext";
 import type { AskResult, Citation } from "@/api/types";
+import { citationChipClass } from "@/components/common/citation";
+import { Markdown } from "@/components/chat/Markdown";
 
 /** A passage the answer relies on (from `sources` in the /api/answers payload). */
 export type CitedSource = {
@@ -72,7 +75,7 @@ const CITE_GROUP_RE = new RegExp(String.raw`[(\[]\s*((?:${EVIDENCE_ID})(?:\s*[,;
 const EVIDENCE_ID_RE = new RegExp(EVIDENCE_ID, "gi");
 
 const CHIP =
-  "mx-0.5 inline-flex items-center rounded-[3px] bg-wine-soft px-1 align-baseline font-mono-id text-[11px] font-semibold text-wine transition-colors hover:bg-wine hover:text-primary-foreground";
+  "mx-0.5 inline-flex items-center rounded-[3px] bg-wine-soft px-1 align-baseline font-mono-id text-xs font-semibold text-wine transition-colors hover:bg-wine hover:text-primary-foreground";
 
 /** Names for the ids in the answer, so chips read "Share Purchase Agreement" or "Helena Voss" instead of an id. */
 const DocTitles = createContext<Map<string, string>>(new Map());
@@ -122,7 +125,7 @@ function SpanChip({ num, citation, onOpen }: { num: number; citation: Citation; 
     <button
       type="button"
       onClick={onOpen}
-      className={`${CHIP} ${partial ? "border border-dashed border-wine/60" : ""}`}
+      className={citationChipClass({ partial })}
       data-testid={`span-citation-${num}`}
       title={`${citation.title ?? citation.document_id ?? "Source"}${partial ? " — supports only part of this statement" : ""}`}
     >
@@ -185,34 +188,20 @@ export function withCitationChips(
   return out;
 }
 
-/** Minimal markdown: paragraphs, "- " bullet lists and "#" headings, with citation chips inline. */
+/** The answer text: the same Markdown as the Assistant (lists, tables, bold), with record ids and [n] markers as chips. */
 export function AnswerBody({ text, onCite, spans }: { text: string; onCite: (documentId: string) => void; spans?: SpanCites }) {
-  const blocks = text.replace(/\r/g, "").split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
   const seenMatters = new Set<string>();
-  const inline = (t: string) => withCitationChips(t.replace(/\*\*(.+?)\*\*/g, "$1"), onCite, spans, seenMatters);
   return (
-    <div className="space-y-4 text-[16px] leading-[1.75] text-foreground">
-      {blocks.map((block, i) => {
-        const lines = block.split("\n");
-        const heading = block.match(/^#{1,4}\s+(.*)$/);
-        if (heading && lines.length === 1) {
-          return <h3 key={i} className="font-display text-lg text-ink">{inline(heading[1])}</h3>;
-        }
-        const items = lines.filter((l) => /^\s*[-*•]\s+/.test(l));
-        if (items.length > 0) {
-          const lead = lines.filter((l) => !/^\s*[-*•]\s+/.test(l)).join(" ").trim();
-          return (
-            <div key={i}>
-              {lead && <p className="mb-2">{inline(lead)}</p>}
-              <ul className="list-disc space-y-1 pl-6">
-                {items.map((l, j) => <li key={j}>{inline(l.replace(/^\s*[-*•]\s+/, ""))}</li>)}
-              </ul>
-            </div>
-          );
-        }
-        return <p key={i} className="whitespace-pre-wrap">{inline(block)}</p>;
-      })}
-    </div>
+    <Markdown
+      text={text}
+      preserveLineBreaks
+      paragraphClassName="my-0 whitespace-pre-wrap text-[16px] leading-[1.75] text-foreground"
+      renderCitation={(n) => {
+        const citation = spans?.byRef.get(n);
+        return citation ? <SpanChip num={n} citation={citation} onOpen={() => spans!.open(citation)} /> : <>[{n}]</>;
+      }}
+      renderText={(t) => withCitationChips(t, onCite, undefined, seenMatters)}
+    />
   );
 }
 
@@ -302,6 +291,44 @@ export function AIAnswer({ result }: { result: AskResult }) {
       {caption && <p className="text-xs text-muted-foreground" data-testid="ai-provider">{caption}</p>}
     </div>
     </DocTitles.Provider>
+  );
+}
+
+/** Plain text of an answer for pasting into an email or note: the text, then the sources its [n] markers point to. */
+export function answerAsText(result: AskResult): string {
+  const lines = [String(result.key_finding ?? "").trim(), String(result.answer ?? "").trim()].filter(Boolean);
+  const refs = (result.span_citations ?? [])
+    .filter((c) => typeof c.ref === "number")
+    .map((c) => `[${c.ref}] ${c.title ?? c.document_id ?? "Source"}${c.page != null ? `, p. ${String(c.page)}` : ""}`);
+  return refs.length ? `${lines.join("\n\n")}\n\nSources\n${refs.join("\n")}` : lines.join("\n\n");
+}
+
+/** Copy the answer, copy a link to it, or carry on in the Assistant. */
+export function AnswerActions({ result, question }: { result: AskResult; question: string }) {
+  const { toast } = useApp();
+  const copy = async (text: string, done: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(done);
+    } catch {
+      toast("Copying was blocked by the browser");
+    }
+  };
+  const top = result.panel?.matters?.[0];
+  const assistant = `/chat?${new URLSearchParams({ ...(top ? { matter: top.matter_id } : {}), q: question }).toString()}`;
+  const btn = "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground";
+  return (
+    <div className="flex flex-wrap items-center gap-1 border-t border-border pt-3" data-testid="answer-actions">
+      <button type="button" className={btn} onClick={() => void copy(answerAsText(result), "Answer copied with its sources")} data-testid="answer-copy">
+        <Icon name="content_copy" style={{ fontSize: 16 }} /> Copy answer
+      </button>
+      <button type="button" className={btn} onClick={() => void copy(window.location.href, "Link copied")} data-testid="answer-copy-link">
+        <Icon name="link" style={{ fontSize: 16 }} /> Copy link
+      </button>
+      <Link to={assistant} className={btn} data-testid="answer-assistant">
+        <Icon name="edit_note" style={{ fontSize: 16 }} /> Continue in the Assistant
+      </Link>
+    </div>
   );
 }
 

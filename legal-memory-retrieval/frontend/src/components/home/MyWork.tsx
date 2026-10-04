@@ -17,7 +17,7 @@ export function MyWork() {
   if (empty) return null;
   return (
     <section className="space-y-4" data-testid="my-work">
-      <SectionLabel>My work</SectionLabel>
+      <SectionLabel>Needs your attention</SectionLabel>
       <div className="grid gap-4 md:grid-cols-2">
         {w.due.length > 0 && (
           <Card title="Due in the next two weeks" icon="event">

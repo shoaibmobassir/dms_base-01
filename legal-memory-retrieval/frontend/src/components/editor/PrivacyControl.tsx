@@ -38,7 +38,7 @@ export function PrivacyControl({ documentId }: { documentId: string }) {
         onClick={() => setOpen(true)}
         className={cn(
           "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs",
-          v === "matter" ? "border-border text-muted-foreground" : "border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200",
+          v === "matter" ? "border-border text-muted-foreground" : "border-warning/60 bg-warning-soft text-warning-ink",
         )}
         title={HELP[v]}
         data-testid="privacy-chip"

@@ -110,31 +110,48 @@ def test_page_origin_is_conservative_when_unknown():
 
 # --- propose_edits end to end --------------------------------------------------------------------------
 
-def _run(monkeypatch, info, edits, text=DOC):
+def _run(monkeypatch, info, edits, text=DOC, filename="Rejoinder.pdf"):
     monkeypatch.setattr(review_tools, "source_info", lambda conn, document_id: info)
-    entry = DocEntry(doc_id="doc-0", document_id="DOC-X", filename="Rejoinder.pdf", text=text)
+    entry = DocEntry(doc_id="doc-0", document_id="DOC-X", filename=filename, text=text)
     return propose_edits("doc-0", edits, {"doc-0": entry}, {"doc-0": text})
 
 
-def test_propose_edits_drops_artifacts_and_marks_a_pdf_read_only(monkeypatch):
+def test_a_pdf_gets_no_edit_cards_at_all(monkeypatch):
+    """A PDF cannot be changed in place: the Assistant comments on it instead (comment_on_document)."""
+    from app.chat.tools.document_tools import PDF_NOT_EDITABLE
+
     res = _run(monkeypatch, PDF_SCANNED, [
         {"original": "knowledgeand belief", "proposed": "knowledge and belief", "reason": "spacing"},
         {"original": "the lessor shall pay", "proposed": "the lessor shall pay within thirty days", "reason": "certainty"},
     ])
-    assert res["proposed"] == 1 and len(res["dropped_as_reading_artifacts"]) == 1
-    assert res["event"]["read_only"] is True and res["event"]["source_format"] == "pdf"
-    assert "read-only" in res["note"]
-
-
-def test_propose_edits_with_only_artifacts_says_there_is_nothing_to_report(monkeypatch):
-    res = _run(monkeypatch, PDF_SCANNED, [{"original": "knowledgeand belief", "proposed": "knowledge and belief"}])
-    assert res["proposed"] == 0 and "event" not in res
-    assert "Do not report them" in res["note"]
+    assert res == {"error": PDF_NOT_EDITABLE}
 
 
 def test_propose_edits_on_a_word_file_is_unchanged(monkeypatch):
-    res = _run(monkeypatch, DOCX, [{"original": "knowledgeand belief", "proposed": "knowledge and belief"}])
+    res = _run(monkeypatch, DOCX, [{"original": "knowledgeand belief", "proposed": "knowledge and belief"}],
+               filename="Rejoinder.docx")
     assert res["proposed"] == 1 and res["event"]["read_only"] is False
+
+
+def test_comments_about_scan_reading_are_never_added_to_a_scanned_pdf(monkeypatch):
+    """Comments are written on the document for everyone: a scan's reading error must not become one."""
+    from app.chat.tools import comment_tools
+    from app.chat.tools.comment_tools import comment_on_document_tool
+
+    blocks = [{"block_id": "B1", "page_number": 1, "text": DOC}]
+    added: list[str] = []
+    monkeypatch.setattr("app.documents.canonical.get_version_blocks", lambda version_id: blocks)
+    monkeypatch.setattr(comment_tools, "source_info", lambda conn, document_id: PDF_SCANNED)
+    monkeypatch.setattr(comment_tools.comments, "add_comment",
+                        lambda conn, document_id, member_id, **kw: added.append(kw["body"]) or {"comment_id": "C1", "page": 1})
+    entry = DocEntry(doc_id="doc-0", document_id="DOC-X", filename="Rejoinder.pdf", text=DOC, version_id="VER-X")
+    result, events = comment_on_document_tool({"doc_id": "doc-0", "comments": [
+        {"quote": "knowledgeand belief", "comment": 'Typo: "knowledgeand" should read "knowledge and" (missing space).'},
+        {"quote": "the lessor shall pay", "comment": "No deadline is given for payment; add one."},
+    ]}, {"doc-0": entry}, None, "MEM-1")
+    assert added == ["No deadline is given for payment; add one."]
+    assert result["added"] == 1 and result["dropped_as_reading_artifacts"] == ["knowledgeand belief"]
+    assert events and len(events[0]["comments"]) == 1
 
 
 # --- export is refused for a PDF -----------------------------------------------------------------------

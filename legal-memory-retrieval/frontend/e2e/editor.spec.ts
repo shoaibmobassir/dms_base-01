@@ -133,6 +133,7 @@ test("comment on selected text in the exact view; a colleague replies; the threa
       sel.addRange(range);
       el.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
     });
+    await page.getByTestId("comment-pill").click(); // select, then press Comment
     await expect(page.getByTestId("comment-composer")).toContainText("thirty");
     await page.getByTestId("comment-input").fill("Should this be sixty days?");
     await page.getByTestId("comment-submit").click();
@@ -278,4 +279,44 @@ test("bold a clause and restyle a paragraph; the saved Word file carries the for
   const fees = after.paragraphs.find((p) => p.text.includes("forty-five"))!;
   expect(fees.runs.every((r) => r.bold)).toBe(true);
   expect(after.paragraphs.find((p) => p.text.includes("thirty (30) days"))!.style).toBe("Heading 2");
+});
+
+test("the document page shows the pages and comments without Edit; a comment is marked only when opened", async ({ browser, request }) => {
+  test.setTimeout(120_000);
+  const { doc, editor } = await setup(request);
+  const ctx = await browser.newContext();
+  await ctx.addInitScript((id) => localStorage.setItem("precentis.persona", id), editor);
+  const page = await ctx.newPage();
+  try {
+    await page.goto(`/ui/documents/${doc}`);
+    // The same rendered pages as the editor's exact view, and the comments, with no Edit button pressed.
+    await expect(page.getByTestId("document-view-pages")).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId("editor-comments")).toBeVisible();
+    const span = page.getByTestId("document-canvas").locator(".textLayer span", { hasText: "thirty" }).first();
+    await expect(span).toBeAttached({ timeout: 30_000 });
+    await span.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      el.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    });
+    await page.getByTestId("comment-pill").click();
+    await page.getByTestId("comment-input").fill("Check the notice period.");
+    await page.getByTestId("comment-submit").click();
+    await expect(page.getByTestId("comment-thread")).toContainText("Check the notice period.");
+    await expect(page.getByTestId("viewer-mark").first()).toBeVisible(); // the new thread is the open one
+
+    // After a reload nothing is highlighted until the comment is opened.
+    await page.reload();
+    await expect(page.getByTestId("viewer-mark-badge")).toHaveCount(1, { timeout: 30_000 });
+    await expect(page.getByTestId("viewer-mark")).toHaveCount(0);
+    await page.getByTestId("comment-thread").getByRole("button").first().click();
+    await expect(page.getByTestId("viewer-mark").first()).toBeVisible();
+  } finally {
+    await ctx.close();
+    const list = await json<{ threads: { comment_id: string; author_id: string }[] }>(request, `/api/editor/documents/${doc}/comments`, editor);
+    for (const t of list.threads) await request.delete(`/api/editor/documents/${doc}/comments/${t.comment_id}`, { headers: { "X-Member-Id": t.author_id } });
+  }
 });

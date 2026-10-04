@@ -183,12 +183,14 @@ def document_access(conn, member_id: str | None, document_id: str) -> dict[str, 
     Returns {level, matter_id, privacy, privileged}; level "none" for unknown documents.
     """
     doc = _one(conn, """
-        SELECT d.document_id, d.matter_id, d.visible_to, da.visibility, da.owner_member_id
+        SELECT d.document_id, d.matter_id, d.visible_to, d.archived_at, da.visibility, da.owner_member_id
         FROM documents d LEFT JOIN document_access da USING (document_id)
         WHERE d.document_id = %s""", (document_id,))
     if doc is None:
         return {"level": "none", "matter_id": None, "privacy": None, "privileged": False}
     out = {"level": "none", "matter_id": doc["matter_id"], "privacy": doc["visibility"], "privileged": False}
+    if doc["archived_at"] is not None:  # archived: nobody reaches it until an administrator restores it
+        return out
     level = matter_level(conn, member_id, doc["matter_id"])
     if level == "none" or member_id is None or doc["visibility"] is None:
         return {**out, "level": level}
@@ -651,7 +653,7 @@ def list_users(conn, actor: str | None) -> list[dict]:
     return _rows(
         conn,
         """
-        SELECT mb.member_id, mb.name, mb.role, mb.office, mb.email, mb.practice_areas, mb.is_lawyer,
+        SELECT mb.member_id, mb.name, mb.role, mb.office, mb.email, mb.practice_areas, mb.is_lawyer, mb.active,
                coalesce((SELECT array_agg(role_key ORDER BY role_key) FROM member_roles r WHERE r.member_id = mb.member_id), '{}') AS roles,
                coalesce((SELECT array_agg(t.name ORDER BY t.name) FROM team_members tm JOIN teams t USING (team_id)
                          WHERE tm.member_id = mb.member_id), '{}') AS teams,

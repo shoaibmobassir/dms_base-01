@@ -73,6 +73,7 @@ export type AdminUser = {
   roles: string[]
   teams: string[]
   matter_count: number
+  active: boolean
 }
 
 export type FirmRole = { role_key: string; name: string; description: string; permissions: string[]; member_count: number }

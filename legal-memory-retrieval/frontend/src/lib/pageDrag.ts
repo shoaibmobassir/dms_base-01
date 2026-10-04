@@ -10,6 +10,8 @@ export type PageDrag = {
   number: number;
   version_id?: string;
   part_size?: number;
+  /** The page as the viewer renders it (Pages mode), not the stored text's page. */
+  rendered?: boolean;
 };
 
 export function pageLabel(p: Pick<PageDrag, "unit" | "number">) {
@@ -43,7 +45,7 @@ export function pageAttachment(p: PageDrag): Attachment {
   return {
     document_id: p.document_id,
     filename: p.filename,
-    reference: { unit: p.unit, number: p.number, version_id: p.version_id, part_size: p.part_size },
+    reference: { unit: p.unit, number: p.number, version_id: p.version_id, part_size: p.part_size, rendered: p.rendered },
   };
 }
 

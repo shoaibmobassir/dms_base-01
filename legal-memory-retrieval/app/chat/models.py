@@ -72,6 +72,8 @@ class PageReference(BaseModel):
     number: int = Field(ge=1, le=100000)
     version_id: Optional[str] = None
     part_size: int = Field(default=5, ge=1, le=50)
+    # The page as rendered in the viewer's Pages mode (a Word file laid out as pages), not the stored text's page.
+    rendered: bool = False
 
 
 class FileAttachment(BaseModel):

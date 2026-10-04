@@ -38,7 +38,9 @@ test("a court date needs a second lawyer to confirm it", async ({ browser, reque
     await a.page.goto("/ui/calendar");
     await a.page.getByTestId("calendar-new-deadline").click();
     await a.page.getByTestId("calendar-create-title").fill(title);
-    await a.page.getByTestId("calendar-create-matter").selectOption(matter.matter_id);
+    await a.page.getByTestId("calendar-create-matter").click();
+    await a.page.getByTestId("calendar-create-matter-search").fill(matter.matter_code);
+    await a.page.getByTestId("calendar-create-matter-option").filter({ hasText: matter.matter_code }).first().click();
     await a.page.getByTestId("calendar-create-save").click();
     await a.page.getByTestId("calendar-scope-mine").click();
     const row = a.page.getByTestId("deadlines-table").locator("tr", { hasText: title });
@@ -55,7 +57,9 @@ test("a court date needs a second lawyer to confirm it", async ({ browser, reque
   try {
     await b.page.goto("/ui/calendar");
     await b.page.getByTestId("calendar-scope-matter").click();
-    await b.page.getByTestId("calendar-matter").selectOption(matter.matter_id);
+    await b.page.getByTestId("calendar-matter").click();
+    await b.page.getByTestId("calendar-matter-search").fill(matter.matter_code);
+    await b.page.getByTestId("calendar-matter-option").filter({ hasText: matter.matter_code }).first().click();
     await b.page.getByTestId("deadlines-table").locator("tr", { hasText: title }).click();
     await b.page.getByTestId("calendar-confirm").click();
     await expect(b.page.getByTestId("deadlines-table").locator("tr", { hasText: title }).getByTestId("badge-unconfirmed")).toHaveCount(0);

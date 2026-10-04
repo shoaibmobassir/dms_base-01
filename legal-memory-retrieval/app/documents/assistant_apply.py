@@ -69,6 +69,13 @@ def _place_passage(paragraphs: list[str], original: str, proposed: str) -> tuple
     return i, new
 
 
+def _headline(instruction: str, limit: int = 100) -> str:
+    """The instruction's first sentence (or clause), short enough for a line in History."""
+    text = " ".join((instruction or "").split())
+    first = re.split(r"(?<=[.;:])\s|,\s(?:so that|so|and then|then)\s", text, maxsplit=1)[0].rstrip(".;:, ")
+    return first if len(first) <= limit else first[: limit - 1].rsplit(" ", 1)[0] + "…"
+
+
 def apply_accepted(conn, document_id: str, member_id: str | None, edits: list[dict[str, Any]], instruction: str = "") -> dict:
     """Write ``edits`` into the document as one clean version.
 
@@ -107,7 +114,7 @@ def apply_accepted(conn, document_id: str, member_id: str | None, edits: list[di
     if not ops:
         return {"version_id": None, "version_number": None, "applied": [], "failed": failed, "from_version_id": None}
 
-    note = ("Assistant: " + (instruction.strip() or f"{len(applied)} suggested edit{'s' if len(applied) != 1 else ''} accepted"))[:300]
+    note = "Assistant: " + (_headline(instruction) or f"{len(applied)} suggested edit{'s' if len(applied) != 1 else ''} accepted")
     out = editing.save_edits(conn, document_id, member_id, model["base_version_id"], list(ops.values()),
                              note=note, mode="clean")
     return {"version_id": out["version_id"], "version_number": out["version_number"], "applied": applied, "failed": failed,

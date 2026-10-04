@@ -46,6 +46,7 @@ from app.chat.tools.document_tools import (
     search_firm_records,
 )
 from app.chat.tools.batch_tools import review_documents_tool
+from app.chat.tools.comment_tools import comment_on_document_tool
 from app.chat.tools.edit_tools import edit_document_tool
 from app.chat.context import carried_documents, fit_context, working_set, working_set_note
 from app.chat.tools.firm_tools import (
@@ -79,6 +80,7 @@ _RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 _DB_TOOLS = frozenset({
     "review_documents",
     "edit_document",
+    "comment_on_document",
     "ask_firm",
     "resolve_matter",
     "get_matter_profile",
@@ -222,6 +224,11 @@ def dispatch_tool_call(
     elif name == "edit_document":
         result, edit_events = edit_document_tool(arguments, doc_index, conn, member_id)
         events.extend(edit_events)
+        return result, events
+
+    elif name == "comment_on_document":
+        result, comment_events = comment_on_document_tool(arguments, doc_index, conn, member_id)
+        events.extend(comment_events)
         return result, events
 
     elif name == "review_documents":
@@ -498,6 +505,8 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
         return f"Opening the contents of {doc_name}"
     if name == "edit_document":
         return f"Planning edits to {doc_name}"
+    if name == "comment_on_document":
+        return f"Adding comments to {doc_name}"
     if name == "review_documents":
         n = len(arguments.get("doc_ids") or [])
         what = f"{n} documents" if n else (f"the documents of {arguments['matter']}" if arguments.get("matter") else "the documents")

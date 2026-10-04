@@ -336,3 +336,28 @@ def test_lapsed_staffing_loses_team_access(cast):
             conn.execute("UPDATE matter_members SET ended_at = NULL WHERE matter_id = %s AND member_id = %s", (mid, who))
             conn.execute("UPDATE matter_access SET mode = %s WHERE matter_id = %s", (mode, mid))
             conn.commit()
+
+
+ADMIN = "MEM-00011"
+
+
+def test_an_archived_document_is_reachable_by_nobody_until_restored(client, cast, doc):
+    # Staff without manage access cannot archive; the lead can, and must say why.
+    assert client.post(f"/api/documents/{doc}/archive", json={"reason": "obsolete"}, headers=as_member(cast["stranger"])).status_code in (403, 404)
+    assert client.post(f"/api/documents/{doc}/archive", json={"reason": ""}, headers=as_member(cast["lead"])).status_code == 422
+    done = client.post(f"/api/documents/{doc}/archive", json={"reason": "Filed in error"}, headers=as_member(cast["lead"]))
+    assert done.status_code == 200, done.text
+    assert client.post(f"/api/documents/{doc}/archive", json={"reason": "again"}, headers=as_member(cast["lead"])).status_code in (404, 409)
+
+    for who in ("author", "lead", "auditor", "stranger"):
+        assert _none(_reach(client, cast, doc, cast[who])), who
+
+    # Only an administrator sees the archive and restores from it.
+    assert client.get("/api/documents/archived", headers=as_member(cast["lead"])).status_code == 403
+    listed = client.get("/api/documents/archived", headers=as_member(ADMIN)).json()["items"]
+    assert any(d["document_id"] == doc and d["archive_reason"] == "Filed in error" for d in listed)
+    assert client.post(f"/api/documents/{doc}/restore", headers=as_member(cast["lead"])).status_code == 403
+    assert client.post(f"/api/documents/{doc}/restore", headers=as_member(ADMIN)).status_code == 200
+
+    for who in ("author", "lead", "stranger"):
+        assert _all(_reach(client, cast, doc, cast[who])), who

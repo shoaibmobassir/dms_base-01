@@ -51,6 +51,16 @@ export const RELATIONS = ['related', 'follow_up_to', 'parallel_proceeding', 'app
 export const createMatter = (body: MatterInput) => apiFetch<MatterBrief>('/api/matters', json('POST', body))
 export const updateMatter = (id: string, changes: Record<string, unknown>, rowVersion?: number) =>
   apiFetch<MatterBrief>(`/api/matters/${enc(id)}`, json('PATCH', { changes, row_version: rowVersion }))
+export type CloseCheck = {
+  matter_id: string
+  status: string
+  deadlines: { deadline_id: string; title: string; kind: string; due_date: string; confirmed: boolean }[]
+  pending_requests: number
+}
+export const getCloseCheck = (id: string) => apiFetch<CloseCheck>(`/api/matters/${enc(id)}/close-check`)
+export const closeMatter = (id: string, body: { outcome: string; closed_date?: string; resolve_deadlines?: boolean; row_version?: number }) =>
+  apiFetch<MatterBrief>(`/api/matters/${enc(id)}/close`, json('POST', body))
+export const reopenMatter = (id: string, reason: string) => apiFetch<MatterBrief>(`/api/matters/${enc(id)}/reopen`, json('POST', { reason }))
 export const setStaff = (id: string, memberId: string, body: { role: string; started_at?: string | null; ended_at?: string | null }) =>
   apiFetch(`/api/matters/${enc(id)}/team/${enc(memberId)}`, json('PUT', body))
 export const removeStaff = (id: string, memberId: string) => apiFetch(`/api/matters/${enc(id)}/team/${enc(memberId)}`, json('DELETE'))
@@ -189,3 +199,43 @@ export function useLiveEvents() {
     }
   }, [identityKey, queryClient])
 }
+
+// ── client upkeep ────────────────────────────────────────────────────────────
+export type ClientPatch = {
+  name?: string
+  industry?: string
+  size?: string
+  headquarters?: string
+  aliases?: string[]
+  locations?: string[]
+  subsidiaries?: string[]
+  status?: 'active' | 'on_hold' | 'inactive'
+}
+export const updateClient = (id: string, body: ClientPatch) => apiFetch(`/api/clients/${enc(id)}`, json('PATCH', body))
+export const addClientNote = (id: string, body: { kind: 'prefers' | 'avoid' | 'terms'; text: string; source_matter_id?: string | null }) =>
+  apiFetch(`/api/clients/${enc(id)}/notes`, json('POST', body))
+export const deleteClientNote = (id: string, noteId: string) => apiFetch(`/api/clients/${enc(id)}/notes/${enc(noteId)}`, json('DELETE'))
+
+export const deactivatePerson = (id: string, reason: string) => apiFetch(`/api/people/${enc(id)}/deactivate`, json('POST', { reason }))
+export const reactivatePerson = (id: string) => apiFetch(`/api/people/${enc(id)}/reactivate`, json('POST'))
+
+// ── spreadsheet import ───────────────────────────────────────────────────────
+
+export type ImportEntity = 'clients' | 'people' | 'matters'
+export type ImportRow = { row: number; label: string; status: 'ok' | 'created' | 'review' | 'error'; message: string }
+export type ImportReport = { entity: ImportEntity; total: number; ok: number; review: number; errors: number; created: number; rows: ImportRow[] }
+
+export const importFile = (entity: ImportEntity, file: File, dryRun: boolean) => {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('dry_run', String(dryRun))
+  return apiFetch<ImportReport>(`/api/imports/${entity}`, { method: 'POST', body: form })
+}
+
+// ── archiving documents ──────────────────────────────────────────────────────
+
+export type ArchivedDocument = { document_id: string; title: string; matter_id: string; matter_title: string | null; archived_at: string; archive_reason: string | null; archived_by_name: string | null }
+
+export const archiveDocument = (id: string, reason: string) => apiFetch(`/api/documents/${enc(id)}/archive`, json('POST', { reason }))
+export const restoreDocument = (id: string) => apiFetch(`/api/documents/${enc(id)}/restore`, json('POST'))
+export const fetchArchived = () => apiFetch<{ items: ArchivedDocument[] }>('/api/documents/archived').then((r) => r.items)

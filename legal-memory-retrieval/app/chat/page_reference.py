@@ -28,8 +28,39 @@ def _blocks(conn, document_id: str, version_id: str | None) -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def reference_text(conn, document_id: str, version_id: str | None, unit: str, number: int, part_size: int) -> str:
+def rendered_page_text(conn, document_id: str, version_id: str | None, number: int) -> str | None:
+    """The text of page ``number`` of the file as the viewer renders it (cached rendition), or None."""
+    import io
+
+    from pypdf import PdfReader
+
+    from app.documents.pdf_render import to_pdf
+    from app.storage.object_store import get_object_store
+
+    row = conn.execute(
+        """SELECT v.storage_uri, coalesce(v.mime_type, d.mime_type) AS mime, d.title
+           FROM documents d JOIN document_versions v ON v.version_id = COALESCE(%s, d.current_version_id)
+           WHERE d.document_id = %s""",
+        (version_id, document_id),
+    ).fetchone()
+    if not row or not row["storage_uri"]:
+        return None
+    try:
+        pdf = PdfReader(io.BytesIO(to_pdf(get_object_store().get(row["storage_uri"]), row["mime"], row["title"])))
+        if not 1 <= number <= len(pdf.pages):
+            return None
+        return (pdf.pages[number - 1].extract_text() or "").strip()
+    except Exception:  # noqa: BLE001 — no rendition: fall back to the stored text
+        return None
+
+
+def reference_text(conn, document_id: str, version_id: str | None, unit: str, number: int, part_size: int,
+                   rendered: bool = False) -> str:
     """The text on that page or part, as the viewer shows it."""
+    if rendered and unit == "page":
+        text = rendered_page_text(conn, document_id, version_id, number)
+        if text is not None:
+            return text
     blocks = _blocks(conn, document_id, version_id)
     if unit == "page":
         picked = [b for b in blocks if (b["page_number"] or 1) == number]
@@ -55,7 +86,7 @@ def resolve_references(conn, files: list[FileAttachment] | None, member_id: str 
         ).fetchone()
         if not allowed:
             continue
-        text = reference_text(conn, f.document_id, ref.version_id, ref.unit, ref.number, ref.part_size)
+        text = reference_text(conn, f.document_id, ref.version_id, ref.unit, ref.number, ref.part_size, ref.rendered)
         out.append({"document_id": f.document_id, "filename": allowed["title"], "unit": ref.unit, "number": ref.number,
                     "version_id": ref.version_id, "text": text[:MAX_REFERENCE_CHARS],
                     "truncated": len(text) > MAX_REFERENCE_CHARS})

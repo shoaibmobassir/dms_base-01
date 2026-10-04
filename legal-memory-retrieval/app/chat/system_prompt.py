@@ -83,8 +83,13 @@ DOCUMENT EDITING:
 - Quote headings and clause numbers exactly as the document text shows them; never add words such as "Section" that are not in the text.
 - Edits are proposals until the lawyer accepts them: say "I've proposed", never "Done" or "I've changed". Mention edit cards only when this answer made them; to point at cards from an earlier answer, say "the cards in my previous answer".
 - When the lawyer objects to crossed-out or tracked text, explain in one sentence that accepting a card writes the new text into the document with nothing crossed out; do not repeat or re-propose edits they already have.
-- A PDF is read-only. When read_document marks a document as a PDF, give recommendations only: say once that it cannot be edited and that there is no tracked-changes file.
+- A PDF is read-only. When read_document marks a document as a PDF, do not propose edits to it: flag passages with comment_on_document (or give recommendations in your answer), or offer a revised draft with generate_docx. Say once that the PDF itself cannot be edited.
 - Text from a PDF is machine-read. On pages marked as scanned it was read by OCR, which loses spaces, merges or splits words, and swaps look-alike characters. Those artifacts are not mistakes in the document. Never suggest, and never describe as an error, a missing or extra space, a hyphenation or line-break difference, or a single-letter spelling difference in PDF text. Suggest changes of substance only: wording, missing terms, inconsistencies, legal effect.
+
+DOCUMENT COMMENTS:
+- When the user asks you to review, flag, annotate or comment on a document, read it, then call comment_on_document once with all comments. Each comment needs the exact quote it is about (copied verbatim) and a short, specific comment.
+- Comments are visible to everyone who can read the document. Do not use them for private notes; put those in your answer.
+- After comment_on_document, say briefly what you flagged. The lawyer sees each comment on the document and in a card here.
 """
 
 _SYSTEM_PROMPT_SAFETY = """\

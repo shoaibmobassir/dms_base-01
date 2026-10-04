@@ -173,7 +173,7 @@ export type ClientItem = {
   size: string | null
   headquarters: string | null
   /** Intake: prospective until the conflict check is cleared. */
-  status?: 'prospective' | 'active' | 'declined'
+  status?: 'prospective' | 'active' | 'on_hold' | 'inactive' | 'declined'
   /** Counted over the matters the caller can see. */
   open_matters?: number
   total_matters?: number
@@ -201,6 +201,9 @@ export type Person = {
   member_id: string
   name: string
   role: string
+  /** False for someone who has left or is away (only administrators see them). */
+  active?: boolean
+  email?: string | null
   practice_areas: string[]
   specializations: string[]
   office: string | null
@@ -345,7 +348,7 @@ export type ChatEvent = { type: string; [key: string]: unknown }
 
 /** A document attached to a user message. */
 /** The page (or part) of the document the lawyer pointed at, addressed as the viewer shows it. */
-export type PageReference = { unit: "page" | "part"; number: number; version_id?: string; part_size?: number }
+export type PageReference = { unit: "page" | "part"; number: number; version_id?: string; part_size?: number; rendered?: boolean }
 
 export type Attachment = { filename: string; document_id: string; content_type?: string; reference?: PageReference }
 
@@ -454,6 +457,9 @@ export type KmPanel = {
 export type AskHistoryItem = { id: string; query: string; scope: string | null; scope_type: string | null; asked_at: string }
 
 export type AskResult = {
+  /** Set when this answer follows up on an earlier one. */
+  follow_up_of?: string | null
+  follow_up_query?: string | null
   answer?: string
   key_finding?: string
   abstained?: boolean
@@ -470,5 +476,11 @@ export type AskResult = {
   span_citations?: Citation[]
   grounding?: GroundingReport
   provider?: string
+  /** Stable reopen id — URL becomes ``/ask/{saved_id}``. */
+  saved_id?: string
+  saved?: boolean
+  query?: string
+  scope?: string | null
+  scope_type?: string | null
   [key: string]: unknown
 }

@@ -65,7 +65,7 @@ export function ReviewTableCard({
               <tr key={r.document_id} className="border-t border-border align-top" data-testid="review-row">
                 <td className="px-3 py-2">
                   <span className="block text-foreground">{r.title || r.document_id}</span>
-                  {r.matter_code && <span className="font-mono text-[10px] text-muted-foreground">{r.matter_code}</span>}
+                  {r.matter_code && <span className="font-mono text-xs text-muted-foreground">{r.matter_code}</span>}
                 </td>
                 {full
                   ? (r.cells ?? []).map((c, i) => (
@@ -88,7 +88,7 @@ export function ReviewTableCard({
                             data-testid="review-cell"
                           >
                             {c.answer}
-                            {!c.verified && <span className="ml-1 text-[10px] text-amber-700">(quote unchecked)</span>}
+                            {!c.verified && <span className="ml-1 text-xs text-warning-ink">(quote unchecked)</span>}
                           </button>
                         )}
                       </td>

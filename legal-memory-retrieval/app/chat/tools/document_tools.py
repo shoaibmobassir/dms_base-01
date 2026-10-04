@@ -51,6 +51,16 @@ class DocEntry:
 
 
 DocIndex = dict[str, DocEntry]
+
+PDF_NOT_EDITABLE = (
+    "This document is a PDF, which cannot be changed in place, so accepting an edit would change nothing. "
+    "Use comment_on_document to flag the passages and say what to change, or generate_docx to draft a revised version."
+)
+
+
+def is_pdf(entry: "DocEntry") -> bool:
+    """A PDF original: edits cannot be written into it (comments can still be added)."""
+    return str(entry.filename or "").lower().endswith(".pdf")
 DocStore = dict[str, str]  # doc_id → full extracted text
 
 

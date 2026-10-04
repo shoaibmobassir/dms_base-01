@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from psycopg.rows import dict_row
 
+from app.api.sorting import order_by
 from app.api.acl import ACL_CLAUSE, doc_acl
 from app.api.documents import (
     document_detail_enriched,
@@ -30,6 +31,7 @@ from app.documents import (
     get_version,
     diff_versions,
 )
+from app.documents import archive as archive_svc
 from app.documents.anchor import AnchorTarget, resolve_anchor
 from app.documents.canonical import (
     get_version_blocks,
@@ -38,6 +40,15 @@ from app.documents.canonical import (
 )
 
 router = APIRouter(tags=["documents"])
+
+# What the documents list can be sorted by.
+DOCUMENT_SORT = {
+    "date": "d.doc_date",
+    "title": "lower(d.title)",
+    "type": "lower(d.document_type)",
+    "author": "lower(d.author_name)",
+    "matter": "lower(m.title)",
+}
 
 SERVICE = "documents"
 
@@ -54,6 +65,8 @@ def documents_list(
     client_id: str | None = Query(default=None),
     doc_type: str | None = Query(default=None),
     author: str | None = Query(default=None),
+    sort: str | None = Query(default=None, description="date, title, type, author or matter"),
+    dir: str | None = Query(default=None, pattern="^(asc|desc)$"),
     member_id: str | None = Depends(resolve_member),
     limit: int = Query(default=50, le=200),
     offset: int = Query(default=0, ge=0),
@@ -90,7 +103,7 @@ def documents_list(
         LEFT JOIN matters m ON m.matter_id = d.matter_id
         LEFT JOIN document_access da ON da.document_id = d.document_id
         WHERE {where}
-        ORDER BY d.doc_date DESC NULLS LAST, d.document_id DESC
+        {order_by(sort, dir, DOCUMENT_SORT, 'date', 'd.document_id')}
         LIMIT %(limit)s OFFSET %(offset)s
     """
     count_sql = f"""
@@ -106,6 +119,36 @@ def documents_list(
             cur.execute(count_sql, count_params)
             total = cur.fetchone()["n"]
     return {"service": SERVICE, "total": total, "items": items}
+
+
+class ArchiveBody(BaseModel):
+    reason: str
+
+
+def _archive_call(fn, *args):
+    try:
+        with connect() as conn:
+            out = fn(conn, *args)
+    except archive_svc.ArchiveError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+    if isinstance(out, list):
+        return {"service": SERVICE, "items": [{**r, "archived_at": r["archived_at"].isoformat()} for r in out]}
+    return {"service": SERVICE, **out}
+
+
+@router.get("/archived")
+def archived_documents(member_id: str | None = Depends(resolve_member)) -> dict:
+    return _archive_call(archive_svc.list_archived, member_id)
+
+
+@router.post("/{document_id}/archive")
+def archive_document(document_id: str, body: ArchiveBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _archive_call(archive_svc.archive_document, member_id, document_id, body.reason)
+
+
+@router.post("/{document_id}/restore")
+def restore_document(document_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _archive_call(archive_svc.restore_document, member_id, document_id)
 
 
 @router.get("/facets")
@@ -136,11 +179,21 @@ def ingest_document_endpoint(
     return result
 
 
+def _require_integrations(member_id: str | None) -> None:
+    """Server-side folder ingestion is an administrator's tool (it reads files from the server)."""
+    from app import access
+
+    with connect() as conn:
+        if not access.has_permission(conn, member_id, "integrations.manage"):
+            raise HTTPException(status_code=403, detail="Requires the 'integrations.manage' permission")
+
+
 @router.post("/ingest/jobs")
 def ingest_job_create(
     req: IngestJobRequest,
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
+    _require_integrations(member_id)
     result = create_ingest_job(req.source_root, req.manifest, req.workers)
     if req.run_immediately:
         run_result = run_ingest_job(result["job_id"], req.manifest)
@@ -154,6 +207,7 @@ def ingest_job_status(
     job_id: str,
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
+    _require_integrations(member_id)
     result = get_ingest_job(job_id)
     result["service"] = SERVICE
     return result
@@ -165,6 +219,7 @@ def ingest_job_retry(
     req: IngestJobRequest,
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
+    _require_integrations(member_id)
     result = retry_ingest_job(job_id, req.manifest)
     result["service"] = SERVICE
     return result
@@ -294,6 +349,9 @@ def document_version_diff(
     member_id: str | None = Depends(resolve_member),
 ) -> dict:
     _check_doc_access(document_id, member_id)
+    # Both versions must belong to the document that was access-checked.
+    if get_version(document_id.upper(), version_id) is None or get_version(document_id.upper(), compare_with) is None:
+        raise HTTPException(status_code=404, detail="Version not found")
     result = diff_versions(version_id, compare_with)
     result["service"] = SERVICE
     return result
@@ -402,6 +460,22 @@ def get_chunk_context_envelope(
 # ── Canonical AST Blocks & Intelligence ──────────────────────────────────────
 
 
+def _blocks_of_version(document_id: str, version_id: str) -> list[dict]:
+    """Blocks of one version of this document (404 when the version belongs to another document).
+
+    Access is decided by the document, so the version must be one of its own.
+    """
+    ver = get_version(document_id.upper(), version_id)
+    if ver is None:
+        raise HTTPException(status_code=404, detail="Version not found")
+    blocks = get_version_blocks(version_id)
+    if not blocks and ver.get("body"):
+        parsed = parse_canonical_blocks(ver["body"], document_id.upper(), version_id)
+        save_canonical_blocks(parsed)
+        blocks = [b.to_dict() for b in parsed]
+    return blocks
+
+
 @router.get("/{document_id}/versions/{version_id}/blocks")
 def get_version_blocks_endpoint(
     document_id: str,
@@ -412,14 +486,7 @@ def get_version_blocks_endpoint(
 ) -> dict:
     """Canonical AST blocks. Pass from+limit to page; omit limit for the full set."""
     _check_doc_access(document_id, member_id)
-
-    blocks = get_version_blocks(version_id)
-    if not blocks:
-        ver = get_version(document_id.upper(), version_id)
-        if ver and ver.get("body"):
-            parsed = parse_canonical_blocks(ver["body"], document_id.upper(), version_id)
-            save_canonical_blocks(parsed)
-            blocks = [b.to_dict() for b in parsed]
+    blocks = _blocks_of_version(document_id, version_id)
 
     total = len(blocks)
     if limit is not None:
@@ -437,6 +504,21 @@ def get_version_blocks_endpoint(
     }
 
 
+@router.get("/{document_id}/versions/{version_id}/search")
+def search_version_blocks_endpoint(
+    document_id: str,
+    version_id: str,
+    q: str = Query(..., min_length=1, max_length=200),
+    member_id: str | None = Depends(resolve_member),
+) -> dict:
+    """Find a phrase in this version of the document (access checked like the blocks)."""
+    from app.documents.block_search import search_blocks
+
+    _check_doc_access(document_id, member_id)
+    blocks = _blocks_of_version(document_id, version_id)
+    return {"service": SERVICE, "document_id": document_id, "version_id": version_id, **search_blocks(blocks, q)}
+
+
 @router.get("/{document_id}/versions/{version_id}/outline")
 def get_version_outline_endpoint(
     document_id: str,
@@ -445,6 +527,8 @@ def get_version_outline_endpoint(
 ) -> dict:
     """Heading tree for the left outline. Native headings only."""
     _check_doc_access(document_id, member_id)
+    if get_version(document_id.upper(), version_id) is None:
+        raise HTTPException(status_code=404, detail="Version not found")
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(

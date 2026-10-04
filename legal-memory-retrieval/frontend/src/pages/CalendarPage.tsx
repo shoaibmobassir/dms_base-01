@@ -3,14 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/api/client";
 import { firmError } from "@/api/firm";
-import { useMatters, usePeople } from "@/api/resources";
+import { usePeople } from "@/api/resources";
 import { DataTable } from "@/components/common/DataTable";
 import { Action, EmptyState, Icon, PageHeader, StatusLabel } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
+import { MatterPicker } from "@/components/common/MatterPicker";
+import { useConfirm } from "@/components/common/Confirm";
+import { Field, fieldControl } from "@/components/common/Field";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useApp } from "@/context/AppContext";
-import { formatDate } from "@/lib/format";
+import { dueLabel, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 // Mirrors app/firm/calendar.py (plan 17, P3).
@@ -50,21 +54,9 @@ const SCOPES: { key: Scope; label: string }[] = [
   { key: "firm", label: "Firm" },
 ];
 const STATUS = ["open", "done", "all"] as const;
-const inputCls = "w-full rounded-md border border-border bg-card px-3 py-2 text-sm";
+const inputCls = fieldControl;
 const EVENT_KINDS = ["meeting", "hearing", "filing", "internal", "out_of_office"];
 const DEADLINE_KINDS = ["hearing", "filing", "limitation", "compliance"];
-
-/** "in 3 days", "today", "2 days ago" — relative to the viewer's clock. */
-export function dueLabel(iso: string) {
-  const due = new Date(`${iso.slice(0, 10)}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Math.round((due.getTime() - today.getTime()) / 86_400_000);
-  if (days === 0) return "today";
-  if (days === 1) return "tomorrow";
-  if (days === -1) return "yesterday";
-  return days > 0 ? `in ${days} days` : `${-days} days ago`;
-}
 
 function isoDay(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -77,13 +69,14 @@ const timeOf = (it: CalItem) => (it.all_day ? "" : new Date(it.start).toLocaleTi
 function tone(it: CalItem) {
   if (it.status === "done") return "bg-secondary text-muted-foreground line-through";
   if (isOverdue(it)) return "bg-destructive/10 text-destructive";
-  if (it.confirmed === false) return "bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200";
-  if (it.source === "event") return "bg-sky-100 text-sky-900 dark:bg-sky-950/40 dark:text-sky-200";
+  if (it.confirmed === false) return "bg-warning-soft text-warning-ink";
+  if (it.source === "event") return "bg-info-soft text-info";
   return "bg-wine-soft text-wine";
 }
 
 export function CalendarPage() {
   const { identityKey } = useApp();
+  const isMd = useMediaQuery("(min-width: 768px)");
   const [view, setView] = useState<View>("list");
   const [scope, setScope] = useState<Scope>("firm");
   const [matterId, setMatterId] = useState("");
@@ -92,7 +85,6 @@ export function CalendarPage() {
   const [open, setOpen] = useState<CalItem | null>(null);
   const [creating, setCreating] = useState<"event" | "deadline" | null>(null);
   const [subscribing, setSubscribing] = useState(false);
-  const matters = useMatters({ status: "Open", limit: 200 });
 
   // The range the view needs: a wide window for the list, the visible grid otherwise.
   const range = useMemo(() => {
@@ -143,11 +135,9 @@ export function CalendarPage() {
         <Segmented value={scope} onChange={setScope} options={SCOPES.map((s) => s.key)} labels={Object.fromEntries(SCOPES.map((s) => [s.key, s.label]))}
           testId="calendar-scope" />
         {scope === "matter" && (
-          <select className="rounded-md border border-border bg-card px-2 py-1.5 text-xs" value={matterId} onChange={(e) => setMatterId(e.target.value)}
-            aria-label="Matter" data-testid="calendar-matter">
-            <option value="">Choose a matter…</option>
-            {(matters.data?.items ?? []).map((m) => <option key={m.matter_id} value={m.matter_id}>{m.matter_code} — {m.title}</option>)}
-          </select>
+          <div className="w-72">
+            <MatterPicker value={matterId || null} onChange={(m) => setMatterId(m?.matter_id ?? "")} testId="calendar-matter" />
+          </div>
         )}
         <div className="ml-2 flex gap-1.5">
           {STATUS.map((s) => (
@@ -159,7 +149,7 @@ export function CalendarPage() {
           ))}
         </div>
         {unconfirmed > 0 && (
-          <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-900" data-testid="calendar-unconfirmed">
+          <span className="ml-auto rounded-full bg-warning-soft px-2.5 py-1 text-xs text-warning-ink" data-testid="calendar-unconfirmed">
             {unconfirmed} court {unconfirmed === 1 ? "date" : "dates"} awaiting confirmation
           </span>
         )}
@@ -173,7 +163,9 @@ export function CalendarPage() {
           {(items) =>
             view === "list" ? <ListView rows={items} onOpen={setOpen} /> :
             view === "week" ? <WeekView rows={items} cursor={cursor} setCursor={setCursor} onOpen={setOpen} /> :
-            <MonthGrid rows={items} cursor={cursor} setCursor={setCursor} onOpen={setOpen} />
+            isMd
+              ? <MonthGrid rows={items} cursor={cursor} setCursor={setCursor} onOpen={setOpen} />
+              : <MonthAgenda rows={items} cursor={cursor} setCursor={setCursor} onOpen={setOpen} />
           }
         </QueryState>
       )}
@@ -204,7 +196,7 @@ function Segmented<T extends string>({ value, onChange, options, labels, testId 
 function Badges({ it }: { it: CalItem }) {
   return (
     <>
-      {it.confirmed === false && <span className="ml-1.5 rounded bg-amber-100 px-1 text-[10px] font-semibold uppercase text-amber-900" data-testid="badge-unconfirmed">unconfirmed</span>}
+      {it.confirmed === false && <span className="ml-1.5 rounded bg-warning-soft px-1 text-xs font-semibold uppercase text-warning-ink" data-testid="badge-unconfirmed">unconfirmed</span>}
       {it.restricted && <Icon name="shield_lock" className="ml-1 align-middle text-muted-foreground" style={{ fontSize: 13 }} />}
     </>
   );
@@ -278,7 +270,7 @@ function Nav({ label, onPrev, onNext, onToday }: { label: string; onPrev: () => 
 function Chip({ it, onOpen }: { it: CalItem; onOpen: (it: CalItem) => void }) {
   return (
     <button type="button" onClick={() => onOpen(it)} title={`${it.title}${it.matter_code ? ` · ${it.matter_code}` : ""}`}
-      className={cn("block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px]", tone(it))} data-testid="calendar-chip">
+      className={cn("block w-full truncate rounded px-1.5 py-0.5 text-left text-xs", tone(it))} data-testid="calendar-chip">
       {timeOf(it) && <span className="mr-1 tabular-nums">{timeOf(it)}</span>}
       {it.confirmed === false && "⚠ "}{it.title}
     </button>
@@ -305,7 +297,7 @@ function MonthGrid({ rows, cursor, setCursor, onOpen }: { rows: CalItem[]; curso
         onPrev={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
         onNext={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} onToday={() => setCursor(new Date())} />
       <div className="grid grid-cols-7 border-l border-t border-border text-sm">
-        {WEEKDAYS.map((w) => <div key={w} className="meta-label border-b border-r border-border px-2 py-1.5 text-[10px]">{w}</div>)}
+        {WEEKDAYS.map((w) => <div key={w} className="meta-label border-b border-r border-border px-2 py-1.5 text-xs">{w}</div>)}
         {days.map((d) => {
           const key = isoDay(d);
           return (
@@ -316,6 +308,32 @@ function MonthGrid({ rows, cursor, setCursor, onOpen }: { rows: CalItem[]; curso
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** The month on a phone: only the days that have something, as a list. */
+function MonthAgenda({ rows, cursor, setCursor, onOpen }: { rows: CalItem[]; cursor: Date; setCursor: (d: Date) => void; onOpen: (it: CalItem) => void }) {
+  const map = byDay(rows);
+  const month = cursor.getMonth();
+  const days = [...map.keys()].filter((k) => new Date(`${k}T00:00:00`).getMonth() === month).sort();
+  return (
+    <div data-testid="calendar-agenda">
+      <Nav label={cursor.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+        onPrev={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
+        onNext={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} onToday={() => setCursor(new Date())} />
+      {days.length === 0 ? (
+        <p className="py-8 text-sm text-muted-foreground">Nothing scheduled this month.</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {days.map((k) => (
+            <li key={k} className="py-3">
+              <div className="mb-1.5 text-sm font-medium">{formatDate(k)} <span className="text-xs font-normal text-muted-foreground">{dueLabel(k)}</span></div>
+              <div className="space-y-1">{(map.get(k) ?? []).map((it) => <Chip key={it.id} it={it} onOpen={onOpen} />)}</div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -375,6 +393,7 @@ function ItemDialog({ item, onClose }: { item: CalItem; onClose: () => void }) {
   const navigate = useNavigate();
   const { me } = useApp();
   const { run, busy, error } = useCalWrite();
+  const confirm = useConfirm();
   const [date, setDate] = useState(item.start.slice(0, 10));
   const isDeadline = item.source === "deadline";
   const base = isDeadline ? `/api/calendar/deadlines/${encodeURIComponent(item.id)}` : `/api/calendar/events/${encodeURIComponent(item.id)}`;
@@ -426,7 +445,10 @@ function ItemDialog({ item, onClose }: { item: CalItem; onClose: () => void }) {
               )}
               {!isDeadline && (
                 <Button size="sm" variant="outline" className="text-destructive" disabled={busy}
-                  onClick={() => void run(() => apiFetch(base, json("DELETE")), "Event deleted").then((ok) => ok && onClose())}>
+                  onClick={async () => {
+                    if (await confirm({ title: "Delete this event?", description: "Attendees will no longer see it.", confirmLabel: "Delete event" }))
+                      void run(() => apiFetch(base, json("DELETE")), "Event deleted").then((ok) => ok && onClose());
+                  }}>
                   Delete
                 </Button>
               )}
@@ -439,8 +461,7 @@ function ItemDialog({ item, onClose }: { item: CalItem; onClose: () => void }) {
   );
 }
 
-function CreateDialog({ kind, onClose, defaultMatter }: { kind: "event" | "deadline"; onClose: () => void; defaultMatter: string }) {
-  const matters = useMatters({ status: "Open", limit: 200 });
+export function CreateDialog({ kind, onClose, defaultMatter }: { kind: "event" | "deadline"; onClose: () => void; defaultMatter: string }) {
   const people = usePeople();
   const { run, busy, error } = useCalWrite();
   const [title, setTitle] = useState("");
@@ -472,34 +493,47 @@ function CreateDialog({ kind, onClose, defaultMatter }: { kind: "event" | "deadl
           {kind === "deadline" && <DialogDescription>Hearing, filing and limitation dates stay “unconfirmed” until a second lawyer checks them.</DialogDescription>}
         </DialogHeader>
         <div className="space-y-3 text-sm">
-          <input className={inputCls} placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} data-testid="calendar-create-title" />
-          <select className={inputCls} value={matterId} onChange={(e) => setMatterId(e.target.value)} aria-label="Matter" data-testid="calendar-create-matter">
-            <option value="">{kind === "event" ? "Personal (no matter)" : "Choose a matter…"}</option>
-            {(matters.data?.items ?? []).map((m) => <option key={m.matter_id} value={m.matter_id}>{m.matter_code} — {m.title}</option>)}
-          </select>
-          <div className="grid grid-cols-2 gap-2">
-            <select className={inputCls} value={type} onChange={(e) => setType(e.target.value)} aria-label="Kind">
-              {(kind === "event" ? EVENT_KINDS : DEADLINE_KINDS).map((k) => <option key={k} value={k}>{k.replace(/_/g, " ")}</option>)}
-            </select>
-            <input type="date" className={inputCls} value={day} onChange={(e) => setDay(e.target.value)} aria-label="Date" data-testid="calendar-create-date" />
+          <Field label="Title">{(f) => <input {...f} className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} data-testid="calendar-create-title" />}</Field>
+          <MatterPicker
+            value={matterId || null}
+            onChange={(m) => setMatterId(m?.matter_id ?? "")}
+            label={kind === "deadline" ? "Matter (required)" : "Matter"}
+            status="Open"
+            allowNone={kind === "event"}
+            noneLabel="Personal (no matter)"
+            testId="calendar-create-matter"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Kind">
+              {(f) => (
+                <select {...f} className={inputCls} value={type} onChange={(e) => setType(e.target.value)}>
+                  {(kind === "event" ? EVENT_KINDS : DEADLINE_KINDS).map((k) => <option key={k} value={k}>{k.replace(/_/g, " ")}</option>)}
+                </select>
+              )}
+            </Field>
+            <Field label="Date">{(f) => <input {...f} type="date" className={inputCls} value={day} onChange={(e) => setDay(e.target.value)} data-testid="calendar-create-date" />}</Field>
           </div>
           {kind === "event" && (
             <>
               <label className="flex items-center gap-2"><input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} /> All day</label>
               {!allDay && (
-                <div className="grid grid-cols-2 gap-2">
-                  <input type="time" className={inputCls} value={start} onChange={(e) => setStart(e.target.value)} aria-label="Starts" />
-                  <input type="time" className={inputCls} value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Ends" />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Starts">{(f) => <input {...f} type="time" className={inputCls} value={start} onChange={(e) => setStart(e.target.value)} />}</Field>
+                  <Field label="Ends">{(f) => <input {...f} type="time" className={inputCls} value={end} onChange={(e) => setEnd(e.target.value)} />}</Field>
                 </div>
               )}
-              <select multiple className={`${inputCls} h-24`} value={attendees} aria-label="Attendees"
-                onChange={(e) => setAttendees([...e.target.selectedOptions].map((o) => o.value))}>
-                {(people.data ?? []).map((p) => <option key={p.member_id} value={p.member_id}>{p.name}</option>)}
-              </select>
+              <Field label="Attendees" hint="Hold Ctrl or ⌘ to choose several.">
+                {(f) => (
+                  <select {...f} multiple className={`${inputCls} h-24`} value={attendees} onChange={(e) => setAttendees([...e.target.selectedOptions].map((o) => o.value))}>
+                    {(people.data ?? []).map((p) => <option key={p.member_id} value={p.member_id}>{p.name}</option>)}
+                  </select>
+                )}
+              </Field>
             </>
           )}
-          <input className={inputCls} placeholder={kind === "event" ? "Location (optional)" : "Court / forum (optional)"} value={location}
-            onChange={(e) => setLocation(e.target.value)} />
+          <Field label={kind === "event" ? "Location" : "Court or forum"} hint="Optional.">
+            {(f) => <input {...f} className={inputCls} value={location} onChange={(e) => setLocation(e.target.value)} />}
+          </Field>
           {error && <p className="text-destructive" data-testid="form-error">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>Cancel</Button>

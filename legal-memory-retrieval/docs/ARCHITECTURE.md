@@ -1,4 +1,4 @@
-# LEXOS Retrieval Platform Architecture
+# Precentis Retrieval Platform Architecture
 
 Production-oriented parallel retrieval fabric for institutional legal memory.
 
@@ -62,4 +62,4 @@ Every channel filters permissions in SQL before ranking. Graph expansion is ACL-
 8. Eval gate: `evals/retrieval_eval.py` vs `last_retrieval_run.json`  
 9. Scale infrastructure only when measured  
 
-See also: `docs/CHANGELOG.md`, `docs/NORTH_STAR.md`, `docs/plan/04_retrieval_debug_ui.md`.
+See also: `docs/SYSTEM_ARCHITECTURE.md` (full services + Ask + Assistant map), `docs/CHANGELOG.md`, `docs/NORTH_STAR.md`, `docs/plan/04_retrieval_debug_ui.md`.

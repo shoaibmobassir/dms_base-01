@@ -63,6 +63,7 @@ export function PeoplePage() {
             <DataTable
               testId="people-table"
               getRowKey={(p) => p.member_id}
+              getRowHref={(p) => `/people/${p.member_id}`}
               onRowClick={(p) => navigate(`/people/${p.member_id}`)}
               rows={visible}
               empty={<EmptyState title="No people match" />}

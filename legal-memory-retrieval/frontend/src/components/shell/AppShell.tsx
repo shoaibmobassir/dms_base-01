@@ -1,10 +1,12 @@
-import { useCallback, useState, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { Topbar } from "@/components/shell/Topbar";
 import { CommandPalette } from "@/components/shell/CommandPalette";
+import { ShortcutsDialog } from "@/components/shell/ShortcutsDialog";
+import { ConfirmProvider } from "@/components/common/Confirm";
 import { InspectorProvider } from "@/components/common/Inspector";
 import { ErrorState, Icon } from "@/components/common/primitives";
 import { cn } from "@/lib/utils";
@@ -26,6 +28,7 @@ function LiveUpdates() {
 }
 
 const SIDEBAR_KEY = "precentis.sidebarWidth";
+const COLLAPSED_KEY = "precentis.sidebarCollapsed";
 const SIDEBAR_MIN = 220;
 const SIDEBAR_MAX = 320;
 const SIDEBAR_DEFAULT = 256;
@@ -96,7 +99,7 @@ function BottomNav() {
           to={item.to}
           end={item.end}
           className={({ isActive }) =>
-            cn("flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium", isActive ? "text-wine" : "text-muted-foreground")
+            cn("flex flex-col items-center gap-0.5 py-2 text-xs font-medium", isActive ? "text-wine" : "text-muted-foreground")
           }
         >
           <Icon name={item.icon} style={{ fontSize: 22 }} />
@@ -110,24 +113,55 @@ function BottomNav() {
 function Shell({ children }: { children: ReactNode }) {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [shortcuts, setShortcuts] = useState(false);
+  const [collapsed, setCollapsedState] = useState(() => {
+    try {
+      return localStorage.getItem(COLLAPSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const setCollapsed = (next: boolean | ((c: boolean) => boolean)) =>
+    setCollapsedState((prev) => {
+      const value = typeof next === "function" ? next(prev) : next;
+      try {
+        localStorage.setItem(COLLAPSED_KEY, value ? "1" : "0");
+      } catch {
+        // not persisted
+      }
+      return value;
+    });
   const sidebar = useSidebarWidth();
+
+  // "?" opens the shortcut list, unless the person is typing.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "?" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      e.preventDefault();
+      setShortcuts(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const { pathname } = useLocation();
   // Remount (and fade) per section, not per URL: moving within a section keeps state.
   const section = pathname.split("/")[1] ?? "";
   // Full-bleed workspaces: document viewer and chat (history + thread need the width).
   // Ask the Firm too: its document panel sits beside the answer and needs the full height.
   const fillFrame =
-    /^\/documents\/[^/]+/.test(pathname) || pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/ask";
+    /^\/documents\/[^/]+/.test(pathname) || pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/ask" || pathname.startsWith("/ask/");
 
   return (
     <InspectorProvider>
-      <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+      <ConfirmProvider>
+      <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
         <aside
           className="relative hidden shrink-0 border-r border-border lg:block"
           style={{ width: collapsed ? 68 : sidebar.width }}
         >
-          <Sidebar collapsed={collapsed} />
+          <Sidebar collapsed={collapsed} onShortcuts={() => setShortcuts(true)} />
           {!collapsed && (
             <div
               role="separator"
@@ -143,7 +177,7 @@ function Shell({ children }: { children: ReactNode }) {
 
         <Sheet open={mobileNav} onOpenChange={setMobileNav}>
           <SheetContent side="left" className="w-[256px] p-0">
-            <Sidebar onNavigate={() => setMobileNav(false)} />
+            <Sidebar onNavigate={() => setMobileNav(false)} onShortcuts={() => setShortcuts(true)} />
           </SheetContent>
         </Sheet>
 
@@ -173,13 +207,15 @@ function Shell({ children }: { children: ReactNode }) {
       <BottomNav />
       <LiveUpdates />
       <CommandPalette open={cmdOpen} setOpen={setCmdOpen} />
+      <ShortcutsDialog open={shortcuts} onOpenChange={setShortcuts} />
       <Toaster position="bottom-right" />
+      </ConfirmProvider>
     </InspectorProvider>
   );
 }
 
 function Centered({ children }: { children: ReactNode }) {
-  return <div className="flex min-h-screen items-center justify-center bg-background px-6">{children}</div>;
+  return <div className="flex min-h-dvh items-center justify-center bg-background px-6">{children}</div>;
 }
 
 function BootError({ message }: { message: string }) {

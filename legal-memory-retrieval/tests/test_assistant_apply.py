@@ -195,3 +195,18 @@ def test_the_current_headings_of_documents_in_play_reach_the_prompt(doc, people)
     assert "CURRENT HEADINGS" in note and "Services Agreement.docx" in note
     assert "Article 1 — Term" in note and "Article 2 — Fees" in note
     assert note.count("Services Agreement.docx") == 1  # each document once
+
+
+def test_a_page_dragged_in_pages_mode_is_the_rendered_page(doc, people):
+    """In Pages mode the viewer shows the Word file laid out as pages; the reference is that page's text."""
+    from app.documents.pdf_render import RenderUnavailable, to_pdf  # noqa: F401
+    from app.chat.page_reference import rendered_page_text
+
+    with connect() as conn:
+        text = rendered_page_text(conn, doc, None, 1)
+        if text is None:
+            pytest.skip("no PDF converter here (LibreOffice or Gotenberg)")
+        refs = resolve_references(conn, [_ref(doc, unit="page", number=1, rendered=True)], people["editor"])
+        assert rendered_page_text(conn, doc, None, 99) is None  # past the last page
+    assert "Services Agreement" in text and "Article 2" in text
+    assert refs[0]["text"] == text[:6000]

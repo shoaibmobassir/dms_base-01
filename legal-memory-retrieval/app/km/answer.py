@@ -27,6 +27,7 @@ from app.km import directory, passages as passage_mod
 from app.km.panel import build_panel, mark_cited
 from app.km.evidence import evidence_ids, matter_block, pack, person_block
 from app.km.intent import classify
+from app.km.docket import docket_scope_note, pin_docket
 from app.km.resolver import resolve_matter
 from app.km.scope import MatterRef, ScopeResolution, client_named_in, resolve_scope
 
@@ -163,6 +164,7 @@ class _Gathered:
     compact: bool = False
     done: bool = False  # the base is already the final result (no evidence / unknown scope)
     panel: dict[str, Any] | None = None
+    docket_note: str = ""
 
     def panel_people(self) -> list[dict]:
         """Panel people not already in the context as a person record or a matter team."""
@@ -179,7 +181,9 @@ class _Gathered:
                 f"[{p['member_id']}] {p['name']}, {p['role']} — {p['why']}" for p in extra)
             allowed |= {p["member_id"].upper() for p in extra}
         note = ""
-        if self.sc.matters:
+        if self.docket_note:
+            note = self.docket_note
+        elif self.sc.matters:
             note = f"The user scoped this question to: {self.sc.label} ({', '.join(self.sc.matter_ids[:12])}).\n"
         return context, allowed, note
 
@@ -231,6 +235,7 @@ def gather_evidence(
     compact = False
     resolution = None
     engine_latency: dict = {}
+    docket_note = ""
 
     t = time.perf_counter()
     if sc.kind == "matter":
@@ -250,33 +255,55 @@ def gather_evidence(
             compact = True
             cards = directory.matter_cards(conn, sc.matter_ids[:25], member_id, max_docs=3)
     if sc.kind not in {"matter", "client"}:
-        resolution = resolve_matter(conn, q, member_id)
-        timings["resolver_ms"] = round((time.perf_counter() - t) * 1000, 1)
-        if resolution.resolved and not (intent.people and not _mentions_matter(q)):
-            ids = [c["matter_id"] for c in resolution.resolved]
-            sc = ScopeResolution(question=q, kind="matter", method=f"resolver_{resolution.method}",
-                                 matters=_refs_from_candidates(resolution.resolved),
-                                 label=", ".join(c["matter_code"] for c in resolution.resolved))
-            cards = directory.matter_cards(conn, ids, member_id)
-            passages = passage_mod.scoped_passages(conn, q, ids, member_id, overview=intent.overview)
+        # Proceeding numbers pin before the stem resolver so a copy of the same
+        # filing on another matter cannot widen the evidence.
+        titled, copies, docket = pin_docket(conn, q, member_id)
+        if titled and docket:
+            pinned = titled[0]
+            sc = ScopeResolution(
+                question=q, kind="matter", method="docket", label=pinned.matter_code,
+                matters=[pinned],
+            )
+            docket_note = docket_scope_note(docket, pinned, copies)
+            cards = directory.matter_cards(conn, [pinned.matter_id], member_id)
+            passages = passage_mod.scoped_passages(
+                conn, q, [pinned.matter_id], member_id, overview=intent.overview,
+            )
+            timings["docket_ms"] = round((time.perf_counter() - t) * 1000, 1)
+            base["docket"] = docket.label
+            if copies:
+                base["docket_copies"] = [
+                    {"matter_id": c.matter_id, "matter_code": c.matter_code, "title": c.title}
+                    for c in copies
+                ]
         else:
-            if intent.matter_list:
-                strong = [c for c in resolution.candidates if c["score"] >= 0.35][:10]
-                if strong:
-                    compact = True
-                    cards = directory.matter_cards(conn, [c["matter_id"] for c in strong], member_id, max_docs=3)
-            if not intent.people or _mentions_matter(q):
-                passages, engine_latency = _unscoped_passages(conn, q, member_id)
-                eng_scope = engine_latency.get("matter_scope") if isinstance(engine_latency.get("matter_scope"), dict) else {}
-                eng_ids = list(eng_scope.get("matter_ids") or [])
-                if not cards and 1 <= len(eng_ids) <= 2:
-                    cards = directory.matter_cards(conn, eng_ids, member_id)
-            if not cards and intent.people and resolution.method == "ambiguous":
-                # "who led X?" with near-tied matters: show each candidate's team.
-                close = [c for c in resolution.candidates if c["score"] >= resolution.top_score - 0.15][:3]
-                cards = directory.matter_cards(conn, [c["matter_id"] for c in close], member_id, max_docs=3)
-            if not cards:
-                candidates = [c for c in resolution.candidates if c["score"] >= 0.2][:5]
+            resolution = resolve_matter(conn, q, member_id)
+            timings["resolver_ms"] = round((time.perf_counter() - t) * 1000, 1)
+            if resolution.resolved and not (intent.people and not _mentions_matter(q)):
+                ids = [c["matter_id"] for c in resolution.resolved]
+                sc = ScopeResolution(question=q, kind="matter", method=f"resolver_{resolution.method}",
+                                     matters=_refs_from_candidates(resolution.resolved),
+                                     label=", ".join(c["matter_code"] for c in resolution.resolved))
+                cards = directory.matter_cards(conn, ids, member_id)
+                passages = passage_mod.scoped_passages(conn, q, ids, member_id, overview=intent.overview)
+            else:
+                if intent.matter_list:
+                    strong = [c for c in resolution.candidates if c["score"] >= 0.35][:10]
+                    if strong:
+                        compact = True
+                        cards = directory.matter_cards(conn, [c["matter_id"] for c in strong], member_id, max_docs=3)
+                if not intent.people or _mentions_matter(q):
+                    passages, engine_latency = _unscoped_passages(conn, q, member_id)
+                    eng_scope = engine_latency.get("matter_scope") if isinstance(engine_latency.get("matter_scope"), dict) else {}
+                    eng_ids = list(eng_scope.get("matter_ids") or [])
+                    if not cards and 1 <= len(eng_ids) <= 2:
+                        cards = directory.matter_cards(conn, eng_ids, member_id)
+                if not cards and intent.people and resolution.method == "ambiguous":
+                    # "who led X?" with near-tied matters: show each candidate's team.
+                    close = [c for c in resolution.candidates if c["score"] >= resolution.top_score - 0.15][:3]
+                    cards = directory.matter_cards(conn, [c["matter_id"] for c in close], member_id, max_docs=3)
+                if not cards:
+                    candidates = [c for c in resolution.candidates if c["score"] >= 0.2][:5]
     if intent.people and sc.kind != "matter":
         people = directory.people_search(conn, q, member_id)
     timings["evidence_ms"] = round((time.perf_counter() - t) * 1000, 1)
@@ -298,7 +325,10 @@ def gather_evidence(
     base["hits"] = passages
     base["panel"] = panel
 
-    g = _Gathered(base, timings, t0, q, sc, intent, cards, people, passages, candidates, compact, panel=panel)
+    g = _Gathered(
+        base, timings, t0, q, sc, intent, cards, people, passages, candidates, compact,
+        panel=panel, docket_note=docket_note,
+    )
     if not (cards or people or passages or candidates or panel["matters"] or panel["people"]):
         base.update(reason="no_evidence", abstained=True)
         timings["total_ms"] = round((time.perf_counter() - t0) * 1000, 1)
@@ -396,6 +426,38 @@ def _ground(g: "_Gathered", base: dict[str, Any], conn: Any = None) -> None:
     g.timings["grounding"] = {"key": key.timings, "body": body.timings}
 
 
+def _claim_core(text: str) -> str:
+    """Strip citations and punctuation so two wordings of the same claim compare equal."""
+    t = re.sub(r"\[(\d{1,3}|DOC-[0-9A-F]+|MTR-[^\s)\]]+|MEM-\d+)\]", " ", text or "", flags=re.I)
+    t = re.sub(r"\((?:DOC-|MTR-|MEM-)[^)]*\)", " ", t, flags=re.I)
+    return re.sub(r"\W+", " ", t).lower().strip()
+
+
+def _dedupe_key_finding(key: str, answer: str) -> tuple[str, str]:
+    """Keep the key finding once: drop it from the body when the first paragraph repeats it."""
+    key = (key or "").strip()
+    answer = (answer or "").strip()
+    if not key or not answer:
+        return key, answer
+    core = _claim_core(key)
+    if len(core) < 12:
+        return key, answer
+    parts = re.split(r"\n\s*\n", answer, maxsplit=1)
+    first = parts[0].strip()
+    first_core = _claim_core(first)
+    if first_core == core or first_core.startswith(core) or core.startswith(first_core):
+        rest = parts[1].strip() if len(parts) > 1 else ""
+        return key, rest
+    # Also drop when the body's first sentence is the key finding.
+    sentence = re.split(r"(?<=[.!?])\s+", first, maxsplit=1)
+    if sentence and (_claim_core(sentence[0]) == core or core.startswith(_claim_core(sentence[0]))):
+        remainder = (sentence[1] if len(sentence) > 1 else "").strip()
+        if len(parts) > 1:
+            remainder = (remainder + "\n\n" + parts[1]).strip() if remainder else parts[1].strip()
+        return key, remainder
+    return key, answer
+
+
 def _finish(
     g: _Gathered, parsed: dict[str, Any] | None, provider: str, model: str | None, conn: Any = None,
 ) -> dict[str, Any]:
@@ -404,8 +466,9 @@ def _finish(
     if model:
         base["model"] = model
     if parsed and parsed["answer"] and (parsed["citations"] or parsed["status"] == "not_found"):
+        key, body = _dedupe_key_finding(parsed["key_finding"], parsed["answer"])
         base.update(
-            answer=parsed["answer"], key_finding=parsed["key_finding"], citations=parsed["citations"],
+            answer=body, key_finding=key, citations=parsed["citations"],
             provider="bedrock", status=parsed["status"], invented_citations=parsed["invented"],
         )
         if parsed["status"] == "not_found":
@@ -424,6 +487,9 @@ def _finish(
                 base.update(abstained=True, reason="grounding_failed", status="insufficient",
                             answer="The answer could not be checked against its sources, so it is not shown.",
                             key_finding="")
+            else:
+                key, body = _dedupe_key_finding(base.get("key_finding") or "", base.get("answer") or "")
+                base.update(key_finding=key, answer=body)
     else:
         key, body, cited = _fallback(g.intent, g.cards, g.people, g.passages)
         base.update(

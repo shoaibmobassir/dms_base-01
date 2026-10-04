@@ -98,7 +98,7 @@ export function HistoryPane({
         <div className="min-w-0">
           <h2 className="font-display text-base text-ink">History</h2>
           {!loading && (
-            <p className="text-[11px] text-muted-foreground" data-testid="chat-history-count">
+            <p className="text-xs text-muted-foreground" data-testid="chat-history-count">
               {sessions.length} {sessions.length === 1 ? "conversation" : "conversations"}
             </p>
           )}
@@ -135,7 +135,7 @@ export function HistoryPane({
             placeholder="Search titles, matters, questions"
             aria-label="Search conversations"
             data-testid="chat-history-search"
-            className="w-full rounded-md border border-border bg-card py-1.5 pl-8 pr-2 text-[13px] placeholder:text-muted-foreground focus:border-wine/50 focus:outline-hidden"
+            className="w-full rounded-md border border-border bg-card py-1.5 pl-8 pr-2 text-[13px] placeholder:text-muted-foreground focus:border-wine/50 focus:outline-none"
           />
         </div>
         {pinnedCount > 0 && (
@@ -169,7 +169,7 @@ export function HistoryPane({
         )}
         {groups.map((g) => (
           <div key={g.label} className="mt-2">
-            <div className="px-2 pb-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</div>
+            <div className="px-2 pb-1 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</div>
             <div className="space-y-px">
               {g.items.map((s) => {
                 const isActive = s.id === activeId;
@@ -229,7 +229,7 @@ export function HistoryPane({
                             {s.pinned && <Pin aria-label="Pinned" className="mr-1 inline h-3 w-3 -translate-y-px text-wine" />}
                             {sessionTitle(s)}
                           </span>
-                          <span className="mt-0.5 block truncate font-mono text-[11px] text-muted-foreground">
+                          <span className="mt-0.5 block truncate font-mono text-xs text-muted-foreground">
                             {[when(s.updated_at), s.matter_code ?? s.matter_id].filter(Boolean).join(" · ")}
                           </span>
                         </button>

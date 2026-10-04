@@ -6,7 +6,6 @@ import uuid
 from app.api.routers.chat_router import _search
 from app.chat.models import ChatSession
 from app.db.connection import connect
-from app.km import ask_history
 from tests.conftest import Wall, as_member
 
 
@@ -63,11 +62,25 @@ def test_scoped_conversation_searches_only_its_matter(walls: list[Wall]):
 
 
 def test_ask_history_is_personal_deduplicated_and_deletable(client, seeded):
+    from app.km import ask_answers
+
     question = f"History test {uuid.uuid4()}"
     with connect() as conn:
-        ask_history.record(conn, "MEM-00001", question, None)
-        ask_history.record(conn, "MEM-00001", question, None)  # asked again: one row
-        ask_history.record(conn, "MEM-00001", question, {"type": "matter", "value": "CORP/X"})
+        ask_answers.save(conn, "MEM-00001", question, None, {
+            "answer": "a", "key_finding": "a", "status": "answered", "provider": "records",
+            "abstained": False, "citations": [], "panel": {"matters": [], "documents": [], "people": []},
+            "matter_cards": [], "sources": [], "people": [], "hits": [],
+        })
+        ask_answers.save(conn, "MEM-00001", question, None, {
+            "answer": "a2", "key_finding": "a2", "status": "answered", "provider": "records",
+            "abstained": False, "citations": [], "panel": {"matters": [], "documents": [], "people": []},
+            "matter_cards": [], "sources": [], "people": [], "hits": [],
+        })  # same question: one row
+        ask_answers.save(conn, "MEM-00001", question, {"type": "matter", "value": "CORP/X"}, {
+            "answer": "b", "key_finding": "b", "status": "answered", "provider": "records",
+            "abstained": False, "citations": [], "panel": {"matters": [], "documents": [], "people": []},
+            "matter_cards": [], "sources": [], "people": [], "hits": [],
+        })
 
     mine = client.get("/api/answers/history", headers=as_member("MEM-00001")).json()["items"]
     rows = [r for r in mine if r["query"] == question]

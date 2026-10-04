@@ -1,28 +1,34 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AdminPage } from "@/pages/AdminPage";
-import { DocumentEditorPage } from "@/pages/DocumentEditorPage";
 import { AppShell } from "@/components/shell/AppShell";
 import { HomePage } from "@/pages/HomePage";
-import { AskPage } from "@/pages/AskPage";
-import { ChatPage } from "@/pages/ChatPage";
-import { MattersPage } from "@/pages/MattersPage";
-import { MatterDetailPage } from "@/pages/MatterDetailPage";
-import { DocumentsPage } from "@/pages/DocumentsPage";
-import { DocumentDetailPage, DocumentHistoryRedirect } from "@/pages/DocumentDetailPage";
-import { ClientsPage } from "@/pages/ClientsPage";
-import { ClientDetailPage } from "@/pages/ClientDetailPage";
-import { PeoplePage } from "@/pages/PeoplePage";
-import { PersonDetailPage } from "@/pages/PersonDetailPage";
-import { CalendarPage } from "@/pages/CalendarPage";
-import { ArgumentsPage } from "@/pages/ArgumentsPage";
-import { SettingsPage } from "@/pages/SettingsPage";
+import { TableSkeleton } from "@/components/common/primitives";
+
+// Each page loads when first opened, so the first screen does not carry the editor, chat or admin code.
+const AdminPage = lazy(() => import("@/pages/AdminPage").then((m) => ({ default: m.AdminPage })));
+const DocumentEditorPage = lazy(() => import("@/pages/DocumentEditorPage").then((m) => ({ default: m.DocumentEditorPage })));
+const AskPage = lazy(() => import("@/pages/AskPage").then((m) => ({ default: m.AskPage })));
+const ChatPage = lazy(() => import("@/pages/ChatPage").then((m) => ({ default: m.ChatPage })));
+const MattersPage = lazy(() => import("@/pages/MattersPage").then((m) => ({ default: m.MattersPage })));
+const MatterDetailPage = lazy(() => import("@/pages/MatterDetailPage").then((m) => ({ default: m.MatterDetailPage })));
+const DocumentsPage = lazy(() => import("@/pages/DocumentsPage").then((m) => ({ default: m.DocumentsPage })));
+const DocumentDetailPage = lazy(() => import("@/pages/DocumentDetailPage").then((m) => ({ default: m.DocumentDetailPage })));
+const DocumentHistoryRedirect = lazy(() => import("@/pages/DocumentDetailPage").then((m) => ({ default: m.DocumentHistoryRedirect })));
+const ClientsPage = lazy(() => import("@/pages/ClientsPage").then((m) => ({ default: m.ClientsPage })));
+const ClientDetailPage = lazy(() => import("@/pages/ClientDetailPage").then((m) => ({ default: m.ClientDetailPage })));
+const PeoplePage = lazy(() => import("@/pages/PeoplePage").then((m) => ({ default: m.PeoplePage })));
+const PersonDetailPage = lazy(() => import("@/pages/PersonDetailPage").then((m) => ({ default: m.PersonDetailPage })));
+const CalendarPage = lazy(() => import("@/pages/CalendarPage").then((m) => ({ default: m.CalendarPage })));
+const ArgumentsPage = lazy(() => import("@/pages/ArgumentsPage").then((m) => ({ default: m.ArgumentsPage })));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 
 function App() {
   return (
     <AppShell>
+      <Suspense fallback={<div className="w-full px-6 py-8"><TableSkeleton /></div>}>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/ask" element={<AskPage />} />
+        <Route path="/ask/:answerId?" element={<AskPage />} />
         {/* One route so opening a new conversation's URL mid-answer doesn't remount the page. */}
         <Route path="/chat/:sessionId?" element={<ChatPage />} />
         <Route path="/assistant" element={<Navigate to="/chat" replace />} />
@@ -44,6 +50,7 @@ function App() {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </AppShell>
   );
 }

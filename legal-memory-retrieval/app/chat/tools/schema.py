@@ -100,6 +100,38 @@ EDIT_DOCUMENT = {
     },
 }
 
+COMMENT_ON_DOCUMENT = {
+    "type": "function",
+    "function": {
+        "name": "comment_on_document",
+        "description": (
+            "Leave comments on passages of a document, as a colleague would when reviewing it. Each comment is "
+            "anchored to an exact quote. Use it when the user asks you to review, flag, annotate or comment on a "
+            "document (risks, ambiguities, missing terms, points to confirm). The comments appear on the document "
+            "for everyone who can read it. To change wording instead, use edit_document or propose_edits."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "doc_id": {"type": "string", "description": "The document ID (e.g. 'doc-0')."},
+                "comments": {
+                    "type": "array",
+                    "maxItems": 25,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "quote": {"type": "string", "description": "Exact wording from the document the comment is about (a sentence or clause)."},
+                            "comment": {"type": "string", "description": "The comment: what to check or change and why. Plain, specific, a few sentences at most."},
+                        },
+                        "required": ["quote", "comment"],
+                    },
+                },
+            },
+            "required": ["doc_id", "comments"],
+        },
+    },
+}
+
 FETCH_DOCUMENTS = {
     "type": "function",
     "function": {
@@ -643,6 +675,7 @@ CORE_TOOLS = [
     GET_OUTLINE,
     REVIEW_DOCUMENTS,
     EDIT_DOCUMENT,
+    COMMENT_ON_DOCUMENT,
     FETCH_DOCUMENTS,
     FIND_IN_DOCUMENT,
     GENERATE_DOCX,

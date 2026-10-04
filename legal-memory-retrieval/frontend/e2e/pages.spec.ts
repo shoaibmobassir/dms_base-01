@@ -60,7 +60,9 @@ test("documents list: type and matter filters, file kinds instead of 'Uploaded'"
   const m = matters.items.find((x) => !x.restricted)!;
   const docs = await api<{ total: number }>(request, `/api/documents?matter_id=${m.matter_id}&limit=1`, ME);
   await page.getByRole("button", { name: "Clear filters" }).click();
-  await page.getByTestId("documents-matter").selectOption(m.matter_id);
+  await page.getByTestId("documents-matter").click();
+  await page.getByTestId("documents-matter-search").fill(m.matter_code);
+  await page.getByTestId("documents-matter-option").filter({ hasText: m.matter_code }).first().click();
   await expect(page.getByTestId("page-count")).toHaveText(`${docs.total} ${docs.total === 1 ? "document" : "documents"}`);
 });
 

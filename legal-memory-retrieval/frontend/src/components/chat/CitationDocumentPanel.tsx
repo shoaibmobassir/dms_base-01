@@ -156,12 +156,12 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
     <aside className="flex h-full min-h-0 flex-col bg-card" data-testid="citation-document-panel">
       <header className="flex items-start justify-between gap-3 border-b border-border px-3 py-2.5">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <FileText className="h-3.5 w-3.5 text-amber-500" />
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
             {source.label}
             {quote?.page && <span className="font-mono normal-case">· page {quote.page}</span>}
           </div>
-          <h2 className="mt-0.5 truncate font-display text-sm font-semibold text-ink" title={source.title ?? documentId}>
+          <h2 className="mt-0.5 truncate font-display text-sm font-normal text-ink" title={source.title ?? documentId}>
             {source.title ?? documentId}
           </h2>
         </div>
@@ -173,7 +173,7 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
             <Link
               to={`/documents/${encodeURIComponent(documentId)}`}
               title="Open in document workspace"
-              className="mr-1 inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-secondary"
+              className="mr-1 inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs font-medium text-foreground hover:bg-secondary"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Open in workspace
@@ -192,7 +192,7 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
           <div className="flex items-center gap-2">
             <blockquote
               className={cn(
-                "flex-1 cursor-pointer border-l-2 border-amber-500/70 pl-2 text-[12px] italic text-muted-foreground",
+                "flex-1 cursor-pointer border-l-2 border-warning/60 pl-2 text-[12px] italic text-muted-foreground",
                 !quoteOpen && "line-clamp-2",
               )}
               title={quoteOpen ? "Show less" : "Show the whole quote"}
@@ -202,7 +202,7 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
               {displayQuote(quote.quote)}
             </blockquote>
             {quotes.length > 1 && (
-              <div className="flex shrink-0 items-center gap-0.5 text-[11px] text-muted-foreground" data-testid="panel-quote-switcher">
+              <div className="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground" data-testid="panel-quote-switcher">
                 <IconButton label="Previous quote" disabled={active === 0} onClick={() => setActive((i) => i - 1)}>
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </IconButton>
@@ -216,7 +216,7 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
             )}
           </div>
           {quote.verified === false && (
-            <p className="flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400" data-testid="panel-unverified">
+            <p className="flex items-center gap-1 text-xs font-medium text-warning-ink" data-testid="panel-unverified">
               <AlertTriangle className="h-3.5 w-3.5" />
               Not confirmed: this quote was not found word-for-word in the document text.
             </p>
@@ -224,8 +224,8 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
           {status && (
             <p
               className={cn(
-                "flex items-center gap-1 text-[11px]",
-                status.tone === "ok" ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground",
+                "flex items-center gap-1 text-xs",
+                status.tone === "ok" ? "text-success-ink" : "text-muted-foreground",
               )}
               data-testid="panel-locate-status"
             >
@@ -237,7 +237,7 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
       )}
 
       {unavailable ? (
-        <p className="border-b border-border px-3 py-1.5 text-[11px] text-muted-foreground" data-testid="panel-text-only">
+        <p className="border-b border-border px-3 py-1.5 text-xs text-muted-foreground" data-testid="panel-text-only">
           Page view isn't available for this file. Showing its text.
         </p>
       ) : (
@@ -363,11 +363,11 @@ function TextView({ documentId, quote }: { documentId: string; quote: SourceQuot
       <div className="mx-auto max-w-[70ch] space-y-3">
         {pages.map((p) => (
           <article key={p.page} className="rounded-md border border-border bg-background px-4 py-3 text-[13.5px] leading-[1.7] text-foreground/90">
-            <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Page {p.page}</div>
+            <div className="mb-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">Page {p.page}</div>
             {hit?.page === p.page ? (
               <p className="whitespace-pre-wrap">
                 {hit.span.before}
-                <mark ref={markRef} data-testid="citation-highlight" className="rounded-sm bg-amber-200/90 px-0.5 text-ink dark:bg-amber-500/40">
+                <mark ref={markRef} data-testid="citation-highlight" className="rounded-sm bg-highlight px-0.5 text-ink">
                   {hit.span.match}
                 </mark>
                 {hit.span.after}

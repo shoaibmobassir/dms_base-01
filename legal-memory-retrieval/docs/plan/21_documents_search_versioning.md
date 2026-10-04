@@ -168,7 +168,15 @@ Found by replaying the reported conversation on a copy of the real document (`ev
       `documents` queued behind the ALTER. Ask now ends its read transaction before calling the model
       (`km/answer.py _end_reads`, test in `tests/test_ask_the_firm.py`); the two stale sessions were terminated.
 - [ ] "N statements removed" still appears on some first-turn remarks ("a short agreement with one page")
-- [ ] merge `docs-search-versioning` into the branch the app runs from
+- [x] Integrated with `new_frontend_v2` on branch `integrate/docs-search-versioning-v2` (their branch untouched):
+      their document page (rendered pages, comments, Assistant ask box) + History (commits, diff, restore, blame),
+      draggable thumbnails and a page grip, pages dropped on the ask box sent with the question (a rendered page's text
+      in Pages mode, `rendered_page_text`), Review changes, reader/outline fixes; their PDF flow (comments instead of
+      edit cards) kept, with scan-reading comments dropped before they are written (`comment_tools`). 1080 passed;
+      live Chrome run on a CTO copy (`evals/merged_flow_check.cjs`): drag page → ask "renumber…" → 4 correct cards →
+      Accept all → v2 with no tracked text, Review changes 5→3 7→4 8→5 9→6, outline 1–6.
+- [ ] the app on :8000/:5173 runs the main checkout: switch it to the integration branch (or merge it into
+      `new_frontend_v2`) and restart
 
 ## Log
 - **2026-10-04** E: real heading text, revision detection, re-index + clean history of the real documents, Assistant

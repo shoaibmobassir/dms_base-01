@@ -21,7 +21,7 @@ const inputCls = "w-full rounded-md border border-border bg-card px-3 py-2 text-
 function Hit({ hit }: { hit: ConflictHit }) {
   if (hit.kind === "adverse_party" && "redacted" in hit && hit.redacted) {
     return (
-      <li className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-sm dark:bg-amber-950/30" data-testid="conflict-hit">
+      <li className="flex items-start gap-2 rounded-md border border-warning/60 bg-warning-soft p-2 text-sm" data-testid="conflict-hit">
         <Icon name="shield_lock" style={{ fontSize: 16 }} /> <span><b>{hit.query}</b>: {hit.note}</span>
       </li>
     );
@@ -115,8 +115,8 @@ export function NewClientDialog({ open, onClose }: { open: boolean; onClose: () 
           ) : (
             <>
               <div className={cn("rounded-md px-3 py-2 font-medium",
-                check.status === "clear" || check.status === "waived" ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200" :
-                check.status === "conflict" ? "bg-destructive/10 text-destructive" : "bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200")}
+                check.status === "clear" || check.status === "waived" ? "bg-success-soft text-success-ink" :
+                check.status === "conflict" ? "bg-destructive/10 text-destructive" : "bg-warning-soft text-warning-ink")}
                 data-testid="new-client-status">
                 {STATUS_TEXT[check.status]}
               </div>
@@ -158,7 +158,7 @@ export function ConflictQueue() {
   };
   if (!checks.data?.length) return null;
   return (
-    <section className="space-y-3 rounded-lg border border-amber-300 bg-amber-50/40 p-4 dark:bg-amber-950/10" data-testid="conflict-queue">
+    <section className="space-y-3 rounded-lg border border-warning/60 bg-warning-soft p-4" data-testid="conflict-queue">
       <SectionLabel>Conflict checks waiting for Risk ({checks.data.length})</SectionLabel>
       {checks.data.map((c) => (
         <div key={c.check_id} className="space-y-2 rounded-md border border-border bg-card p-3" data-testid="conflict-queue-item">

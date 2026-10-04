@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useApp } from '@/context/AppContext'
-import { apiFetch, qs } from './client'
+import { apiFetch, downloadFile, qs } from './client'
 import type {
   ArgumentItem,
   ArgumentKind,
@@ -38,7 +38,7 @@ function useScopedQuery<T>(
   key: unknown[],
   fn: () => Promise<T>,
   enabled = true,
-  opts: { once?: boolean } = {},
+  opts: { once?: boolean; fresh?: boolean } = {},
 ) {
   const { identityKey } = useApp()
   return useQuery({
@@ -47,7 +47,7 @@ function useScopedQuery<T>(
     enabled: enabled && identityKey !== null,
     // Lists keep showing the previous page while the next one loads. One-shot
     // queries (Ask runs the LLM) never refetch and never show stale answers.
-    placeholderData: opts.once ? undefined : keepPreviousData,
+    placeholderData: opts.once || opts.fresh ? undefined : keepPreviousData,
     staleTime: opts.once ? Infinity : undefined,
     retry: opts.once ? false : undefined,
     // A document can change under an open tab (the Assistant or a colleague saves a version): coming back to the tab
@@ -60,11 +60,15 @@ function useScopedQuery<T>(
 export const useHomeStats = () => useScopedQuery(['home'], () => apiFetch<HomeStats>('/api/home/stats'))
 
 // ── Matters ───────────────────────────────────────────────────────────────
-export function useMatters(p: { q?: string; status?: string; page?: number; limit?: number }) {
+export type Sort = { key: string; dir: 'asc' | 'desc' }
+
+export function useMatters(p: { q?: string; status?: string; mine?: boolean; sort?: Sort; page?: number; limit?: number }) {
   const limit = p.limit ?? PAGE_SIZE
   const offset = (p.page ?? 0) * limit
-  return useScopedQuery(['matters', p.q, p.status, offset, limit], () =>
-    apiFetch<Paged<Matter>>(`/api/matters${qs({ q: p.q, status: p.status, limit, offset })}`),
+  return useScopedQuery(['matters', p.q, p.status, p.mine, p.sort?.key, p.sort?.dir, offset, limit], () =>
+    apiFetch<Paged<Matter>>(
+      `/api/matters${qs({ q: p.q, status: p.status, mine: p.mine ? 'true' : undefined, sort: p.sort?.key, dir: p.sort?.dir, limit, offset })}`,
+    ),
   )
 }
 
@@ -87,12 +91,12 @@ export const useMatterRelated = (id: string) =>
   )
 
 // ── Documents ─────────────────────────────────────────────────────────────
-export function useDocuments(p: { q?: string; matter_id?: string; doc_type?: string; page?: number; limit?: number; enabled?: boolean }) {
+export function useDocuments(p: { q?: string; matter_id?: string; doc_type?: string; sort?: Sort; page?: number; limit?: number; enabled?: boolean }) {
   const limit = p.limit ?? PAGE_SIZE
   const offset = (p.page ?? 0) * limit
-  return useScopedQuery(['documents', p.q, p.matter_id, p.doc_type, offset, limit], () =>
+  return useScopedQuery(['documents', p.q, p.matter_id, p.doc_type, p.sort?.key, p.sort?.dir, offset, limit], () =>
     apiFetch<Paged<DocumentItem>>(
-      `/api/documents${qs({ q: p.q, matter_id: p.matter_id, doc_type: p.doc_type, limit, offset })}`,
+      `/api/documents${qs({ q: p.q, matter_id: p.matter_id, doc_type: p.doc_type, sort: p.sort?.key, dir: p.sort?.dir, limit, offset })}`,
     ),
     p.enabled ?? true,
   )
@@ -236,3 +240,39 @@ export function setPinned(matterId: string, pinned: boolean) {
 
 export const useRecentConversations = () =>
   useScopedQuery(['chat-sessions'], () => apiFetch<ChatSession[]>('/api/chat/sessions?limit=50'))
+
+// ── Find in document ──────────────────────────────────────────────────────
+export type BlockMatch = { block_id: string; index: number; page_number: number | null; section_title: string | null; snippet: string }
+
+export function useDocumentSearch(documentId: string, versionId: string | undefined, q: string) {
+  return useScopedQuery(
+    ['document', documentId, 'search', versionId, q],
+    () =>
+      apiFetch<{ matches: BlockMatch[]; total: number }>(
+        `/api/documents/${encodeURIComponent(documentId)}/versions/${encodeURIComponent(versionId!)}/search${qs({ q })}`,
+      ),
+    Boolean(versionId) && q.length >= 2,
+    // Never show the previous phrase's matches while a new phrase loads.
+    { fresh: true },
+  )
+}
+
+// ── Download the original file ────────────────────────────────────────────
+/** Save the original file of a document version (the server records the download). */
+export function downloadDocument(documentId: string, versionId?: string): Promise<void> {
+  return downloadFile(`/api/documents/${encodeURIComponent(documentId)}/download${qs({ version_id: versionId })}`, documentId)
+}
+
+// ── What changed between two versions ─────────────────────────────────────
+export type VersionDiff = { added_lines: number; removed_lines: number; diff: string[] }
+
+export function useVersionDiff(documentId: string, versionId: string, previousId: string | undefined, enabled: boolean) {
+  return useScopedQuery(
+    ['document', documentId, 'diff', versionId, previousId],
+    () =>
+      apiFetch<VersionDiff>(
+        `/api/documents/${encodeURIComponent(documentId)}/versions/${encodeURIComponent(versionId)}/diff${qs({ compare_with: previousId })}`,
+      ),
+    enabled && Boolean(previousId),
+  )
+}

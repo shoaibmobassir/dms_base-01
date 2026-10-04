@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Icon, MonoId, SectionLabel, StatusLabel, Hairline } from "@/components/common/primitives";
+import { DetailSkeleton, Icon, MonoId, SectionLabel, StatusLabel, Hairline } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
 import { formatDate } from "@/lib/format";
 import { useClient, useDocument, useMatter, usePerson } from "@/api/resources";
@@ -114,7 +114,7 @@ function Padded({ children }: { children: ReactNode }) {
 function MatterPeek({ id, onClose }: { id: string; onClose: () => void }) {
   const q = useMatter(id);
   return (
-    <QueryState query={q} loading={<Padded>Loading…</Padded>}>
+    <QueryState query={q} loading={<Padded><DetailSkeleton /></Padded>}>
       {({ matter: m, team }) => (
         <div>
           <Header type="Matter" title={m.title} sub={<MonoId>{m.matter_code}</MonoId>} to={`/matters/${m.matter_id}`} onClose={onClose} />
@@ -162,7 +162,7 @@ function MatterPeek({ id, onClose }: { id: string; onClose: () => void }) {
 function PersonPeek({ id, onClose }: { id: string; onClose: () => void }) {
   const q = usePerson(id);
   return (
-    <QueryState query={q} loading={<Padded>Loading…</Padded>}>
+    <QueryState query={q} loading={<Padded><DetailSkeleton /></Padded>}>
       {({ person: p, matters }) => (
         <div>
           <Header
@@ -187,7 +187,7 @@ function PersonPeek({ id, onClose }: { id: string; onClose: () => void }) {
 function ClientPeek({ id, onClose }: { id: string; onClose: () => void }) {
   const q = useClient(id);
   return (
-    <QueryState query={q} loading={<Padded>Loading…</Padded>}>
+    <QueryState query={q} loading={<Padded><DetailSkeleton /></Padded>}>
       {(c) => (
         <div>
           <Header type="Client" title={c.name} sub={<MonoId>{c.client_id}</MonoId>} to={`/clients/${c.client_id}`} onClose={onClose} />
@@ -216,7 +216,7 @@ function ClientPeek({ id, onClose }: { id: string; onClose: () => void }) {
 function DocumentPeek({ id, chunkId, quotes, onClose }: { id: string; chunkId?: string; quotes?: string[]; onClose: () => void }) {
   const q = useDocument(id, { chunk_id: chunkId });
   return (
-    <QueryState query={q} loading={<Padded>Loading…</Padded>}>
+    <QueryState query={q} loading={<Padded><DetailSkeleton /></Padded>}>
       {(d) => {
         const passage =
           d.chunks.find((c) => c.chunk_id === (chunkId || d.highlight_chunk_id))?.text ??

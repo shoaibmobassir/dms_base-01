@@ -10,7 +10,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from app.chat.tools.document_tools import DocIndex
+from app.chat.tools.document_tools import PDF_NOT_EDITABLE, DocIndex, is_pdf
 from app.chat.tools.edit_guard import filter_edits
 from app.documents.text_origin import source_info
 
@@ -38,6 +38,8 @@ def edit_document_tool(
         return {"error": f"Document '{arguments.get('doc_id')}' not found."}, []
     if not instruction:
         return {"error": "Give the change to make, as an instruction."}, []
+    if is_pdf(entry):
+        return {"error": PDF_NOT_EDITABLE}, []
     doc = load_editable(conn, entry.document_id, member_id)
     if doc is None or not doc.paragraphs:
         return {"error": "The document could not be opened for editing."}, []

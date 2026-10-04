@@ -14,6 +14,14 @@ module.exports = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xs: "2px",
+      },
+      boxShadow: {
+        "2xs": "0 1px 0 0 rgb(0 0 0 / 0.05)",
+        xs: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+      },
+      backdropBlur: {
+        xs: "2px",
       },
       colors: {
         paper: "var(--paper)",
@@ -53,8 +61,9 @@ module.exports = {
           foreground: "var(--destructive-foreground)",
         },
         highlight: "var(--highlight)",
-        success: "var(--success)",
-        warning: "var(--warning)",
+        success: { DEFAULT: "var(--success)", soft: "var(--success-soft)", ink: "var(--success-ink)" },
+        warning: { DEFAULT: "var(--warning)", soft: "var(--warning-soft)", ink: "var(--warning-ink)" },
+        info: { DEFAULT: "var(--info)", soft: "var(--info-soft)" },
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
