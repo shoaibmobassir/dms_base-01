@@ -52,6 +52,7 @@ export function HistoryPanel({
     queryKey: [identityKey, "doc-commits", documentId],
     queryFn: () => listCommits(documentId),
     enabled: Boolean(identityKey),
+    refetchOnWindowFocus: "always",
   });
   const [changes, setChanges] = useState<Commit | null>(null);
   const [restoring, setRestoring] = useState<Commit | null>(null);

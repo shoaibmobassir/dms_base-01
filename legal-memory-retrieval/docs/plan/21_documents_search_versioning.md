@@ -90,8 +90,9 @@ PyMuPDF (AGPL).
 - [x] verified in Chrome on a throwaway CTO-style agreement (`evals/history_ui_fixture.py`, `evals/history_ui_check.cjs`):
   INR 1,20,00,000 → 1,50,00,000 shows as `1,20,00,000` (struck) → `1,50,00,000`; restoring v1 made v4 current
 - [x] "Review changes" button in the document toolbar: opens History on what the current version changed
-- [ ] commit-message prompt on save (the note field exists in the API)
-- [ ] rebuild the `static/` bundle
+- [x] commit-message prompt on save: the editor's Save dialog already takes a note (it became the commit message)
+- [x] `static/` bundle rebuilt (2026-10-04, after D)
+- [x] document queries and the commit log refetch when the tab regains focus, so an edit accepted elsewhere shows up
 
 ## D — drag a page to the Assistant; accepting an edit changes the document
 

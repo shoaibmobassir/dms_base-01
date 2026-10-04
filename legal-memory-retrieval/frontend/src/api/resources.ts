@@ -50,6 +50,9 @@ function useScopedQuery<T>(
     placeholderData: opts.once ? undefined : keepPreviousData,
     staleTime: opts.once ? Infinity : undefined,
     retry: opts.once ? false : undefined,
+    // A document can change under an open tab (the Assistant or a colleague saves a version): coming back to the tab
+    // shows the current text.
+    refetchOnWindowFocus: key[0] === 'document' ? 'always' : undefined,
   })
 }
 
