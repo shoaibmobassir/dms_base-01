@@ -84,9 +84,16 @@ PyMuPDF (AGPL).
 - [ ] one commit per reviewer on import (allows reverting one person's changes)
 
 ## C3 — frontend
-- [ ] clean default view, History tab, Review-changes toggle, commit message on save
+- [x] History tab (commit log: message, kind, author, date, size change), Changes dialog (old → new with an arrow, word
+  counts, Redline .docx link), "Who wrote what" tab, Restore dialog (creates a new version)
+- [x] clean default: a file that still carries tracked changes opens in the Final view
+- [x] verified in Chrome on a throwaway CTO-style agreement (`evals/history_ui_fixture.py`, `evals/history_ui_check.cjs`):
+  INR 1,20,00,000 → 1,50,00,000 shows as `1,20,00,000` (struck) → `1,50,00,000`; restoring v1 made v4 current
+- [ ] "Review changes" toggle in the document viewer; commit-message prompt on save (the note field exists in the API)
+- [ ] rebuild the `static/` bundle
 
 ## Log
+- **2026-10-04** C3: History panel, diff dialog with arrow, blame, restore; typecheck clean, 988 passed / 5 skipped, Chrome check clean.
 - **2026-10-04** A1: the Assistant no longer reports scan reading errors as document defects (cards 100% → 0%, live prose 2/3 → 0/10).
 - **2026-10-04** Investigated all three problems (three read-only explorations, measurements on the real PDF and
   DB), plan approved. Built and verified B1 over HTTP and in Chrome.

@@ -55,9 +55,47 @@ export type CompareResult = {
   document_id: string
   from: VersionMeta
   to: VersionMeta
-  stats: { inserted: number; deleted: number; changed: number; unchanged: number }
+  stats: { inserted: number; deleted: number; changed: number; unchanged: number; words_added?: number; words_removed?: number }
   blocks: CompareBlock[]
 }
+
+// ── versions as commits (plan 21, C2) ────────────────────────────────────────
+
+/** One version in the document's log. The stored file is the clean document; what it changed is the diff to its parent. */
+export type Commit = {
+  version_id: string
+  version_number: number
+  version_label: string | null
+  /** The commit message: what the editor wrote, "Imported 3 tracked changes from …", "Restored version 2". */
+  message: string | null
+  author_name: string | null
+  created_by_member_id: string | null
+  /** editor | upload | import | restore */
+  kind: string
+  created_at: string
+  parent_version_id: string | null
+  restored_from_version_id: string | null
+  is_clean: boolean | null
+  has_source_file: boolean
+  is_current: boolean
+  chars: number
+  /** Size change against the parent (characters); null for the first version. */
+  chars_delta: number | null
+}
+
+export type BlameParagraph = {
+  pid: number
+  text: string
+  version_id: string
+  version_number: number
+  author: string | null
+  at: string | null
+  message: string | null
+  /** True when the paragraph is older than the versions examined; it is credited to the oldest one. */
+  before_window: boolean
+}
+
+export type RestoreResult = { version_id: string; version_number: number; restored_version_id: string; restored_version_number: number }
 export type VersionMeta = { version_id: string; version_number: number; author: string | null; created_at: string; note: string | null }
 
 export type DocEvent = { seq: number; action: string; version_id: string | null; member_id: string | null; name: string | null; detail: Record<string, unknown>; occurred_at: string }
@@ -151,6 +189,18 @@ export const saveEdits = (id: string, body: { base_version_id: string; ops: Edit
 
 export const compareVersions = (id: string, from: string, to: string) =>
   apiFetch<CompareResult>(`${base(id)}/compare?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
+
+export const listCommits = (id: string, limit = 100) =>
+  apiFetch<{ items: Commit[] }>(`${base(id)}/commits?limit=${limit}`).then((r) => r.items)
+
+/** Make an earlier version current again as a NEW version; history is not rewritten. */
+export const restoreVersion = (id: string, body: { version_id: string; base_version_id: string; note?: string }) =>
+  apiFetch<RestoreResult>(`${base(id)}/restore`, withLock(id, json('POST', body)))
+
+export const getBlame = (id: string, versionId?: string) =>
+  apiFetch<{ version_id: string; paragraphs: BlameParagraph[] }>(
+    `${base(id)}/blame${versionId ? `?version_id=${encodeURIComponent(versionId)}` : ''}`,
+  )
 
 export const compareDocxUrl = (id: string, from: string, to: string) =>
   `${base(id)}/compare.docx?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`

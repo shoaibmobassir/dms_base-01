@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { HistoryPanel } from "@/components/document-workspace/HistoryPanel";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   useDocument,
@@ -19,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** Chunks (or blocks) shown as one reader "part" when there is no real page count. */
@@ -316,7 +317,7 @@ function WorkspaceFrame({
           >
             <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
               <RailTab active={rightTab === "versions"} onClick={() => setRightTab("versions")}>
-                Versions
+                History
               </RailTab>
               <RailTab active={rightTab === "info"} onClick={() => setRightTab("info")}>
                 Info
@@ -327,12 +328,10 @@ function WorkspaceFrame({
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
               {rightTab === "versions" && (
-                <VersionsList
-                  versions={versionRows}
-                  currentVersionId={currentVersionId}
+                <HistoryPanel
+                  documentId={doc.document_id}
                   openVersionId={openVersionId}
-                  loading={versions.isPending}
-                  onOpen={(v) => setAddress({ versionId: v.version_id, part: 1 })}
+                  onOpen={(versionId) => setAddress({ versionId, part: 1 })}
                 />
               )}
               {rightTab === "info" && (
@@ -758,63 +757,6 @@ function ThumbnailList({
           Later…
         </button>
       )}
-    </div>
-  );
-}
-
-function VersionsList({
-  versions,
-  currentVersionId,
-  openVersionId,
-  loading,
-  onOpen,
-}: {
-  versions: DocVersion[];
-  currentVersionId?: string | null;
-  openVersionId?: string;
-  loading: boolean;
-  onOpen: (v: DocVersion) => void;
-}) {
-  if (loading) return <p className="text-xs text-muted-foreground">Loading versions…</p>;
-  if (!versions.length) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        Single unversioned text — upload a file to start a version chain.
-      </p>
-    );
-  }
-  return (
-    <div data-testid="document-versions">
-      <SectionLabel>Version history</SectionLabel>
-      <ol className="mt-3 space-y-1">
-        {versions.map((v) => {
-          const isOpen = v.version_id === openVersionId;
-          const isCurrent = v.version_id === currentVersionId;
-          return (
-            <li key={v.version_id}>
-              <button
-                type="button"
-                onClick={() => onOpen(v)}
-                className={cn(
-                  "w-full rounded-md border border-transparent px-3 py-2 text-left text-sm",
-                  isOpen ? "border-border bg-wine-soft text-wine" : "hover:bg-secondary",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{v.version_label || `Version ${v.version_number ?? ""}`}</span>
-                  {isCurrent && <span className="text-[10px] uppercase tracking-wide">Current</span>}
-                </div>
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  {[v.author_name, v.version_status, v.created_at ? formatDate(v.created_at) : null].filter(Boolean).join(" · ")}
-                </div>
-                {v.change_summary && (
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{v.change_summary}</p>
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ol>
     </div>
   );
 }

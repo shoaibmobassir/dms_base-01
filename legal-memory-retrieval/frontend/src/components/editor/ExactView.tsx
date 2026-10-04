@@ -38,7 +38,9 @@ export function ExactView({ documentId, currentVersionId, side = { kind: "commen
   /** Offer Markup / Final / Original (Word files with tracked changes). */
   showViews?: boolean;
 }) {
-  const [renderView, setRenderView] = useState<"markup" | "final" | "original">("markup");
+  // A file that still carries tracked changes (saved before versions became commits) opens as it now reads;
+  // a clean file has nothing to switch between. "All markup" is one click away for those files.
+  const [renderView, setRenderView] = useState<"markup" | "final" | "original">(showViews ? "final" : "markup");
   const { identityKey, me, toast } = useApp();
   const queryClient = useQueryClient();
   // null = the current version; otherwise an earlier version opened from a detached thread.
