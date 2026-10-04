@@ -74,6 +74,16 @@ class Settings(BaseSettings):
     answer_provider: str = "auto"
     groq_model: str = "llama3-70b-8192"
     gemini_model: str = "gemini-1.5-flash"
+    # Azure OpenAI / AI Foundry (OpenAI-compatible /openai/v1 — httpx only)
+    azure_openai_endpoint: str = ""
+    azure_openai_api_key: str = ""
+    # Chat deployment name (not the azureml:// registry URI — that is aliased in the client).
+    azure_openai_deployment: str = "DeepSeek-V4-Flash"
+    # Optional provenance / docs: registry URI for the deployment above.
+    azure_openai_model_ref: str = (
+        "azureml://registries/azureml-deepseek/models/DeepSeek-V4-Flash/versions/2026-04-23"
+    )
+    azure_ai_project_endpoint: str = ""
     # Amazon Bedrock (bearer token — set AWS_BEARER_TOKEN_BEDROCK)
     aws_bearer_token_bedrock: str = ""
     bedrock_region: str = "us-east-1"

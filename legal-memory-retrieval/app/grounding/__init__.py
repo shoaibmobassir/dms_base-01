@@ -25,15 +25,39 @@ def verifier_llms() -> list:
 
 
 def verifier_llm(model: str | None = None, timeout: float = 90.0):
-    """A JSON-mode, temperature-0 call to the configured verifier model."""
+    """A JSON-mode, temperature-0 call to the configured verifier model.
+
+    Uses Bedrock when the model id looks like a Mantle id (``vendor.model``) and
+    Bedrock is configured; otherwise Azure / the chat gateway. Keep this on a
+    different backend or deployment from the answer writer.
+    """
     from app.config import settings
-    from app.llm.bedrock_client import chat_complete
+    from app.llm.azure_openai_client import azure_configured, chat_complete as azure_chat
+    from app.llm.bedrock_client import bedrock_configured, chat_complete as bedrock_chat
 
     chosen = model or settings.grounding_verifier_model
+    use_bedrock = (
+        bedrock_configured()
+        and "." in chosen
+        and not chosen.lower().startswith("deepseek")
+    )
 
     def call(messages: list[dict[str, Any]]) -> str:
-        result = chat_complete(messages, model=chosen, temperature=0.0, max_tokens=6000,
-                               json_mode=True, timeout=timeout)
+        if use_bedrock:
+            result = bedrock_chat(
+                messages, model=chosen, temperature=0.0, max_tokens=6000,
+                json_mode=True, timeout=timeout,
+            )
+        elif azure_configured():
+            result = azure_chat(
+                messages, model=chosen, temperature=0.0, max_tokens=6000,
+                json_mode=True, timeout=timeout,
+            )
+        else:
+            result = bedrock_chat(
+                messages, model=chosen, temperature=0.0, max_tokens=6000,
+                json_mode=True, timeout=timeout,
+            )
         return str(result.get("content") or "")
 
     return call

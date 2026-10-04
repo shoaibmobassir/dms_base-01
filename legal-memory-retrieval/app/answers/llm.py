@@ -6,7 +6,7 @@ from typing import Any
 import httpx
 
 from app.answers.citations import extract_document_ids, filter_citations
-from app.llm.bedrock_client import chat_complete
+from app.llm import azure_openai_client, bedrock_client
 
 SYSTEM = (
     "You are Ask the Firm — the institutional memory assistant for this law firm. "
@@ -176,8 +176,17 @@ def gemini_complete(api_key: str, model: str, query: str, hits: list[dict]) -> s
 
 def bedrock_complete(model: str, query: str, hits: list[dict]) -> str:
     """Ask-the-Firm completion via Amazon Bedrock Mantle."""
+    return _provider_complete(bedrock_client.chat_complete, model, query, hits)
+
+
+def azure_complete(model: str, query: str, hits: list[dict]) -> str:
+    """Ask-the-Firm completion via Azure OpenAI / AI Foundry."""
+    return _provider_complete(azure_openai_client.chat_complete, model, query, hits)
+
+
+def _provider_complete(complete_fn, model: str, query: str, hits: list[dict]) -> str:
     context = _pack_context(hits)
-    result = chat_complete(
+    result = complete_fn(
         [
             {"role": "system", "content": SYSTEM},
             {

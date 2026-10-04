@@ -45,9 +45,9 @@ LLMCall = Callable[[list[dict[str, str]]], str]
 
 def default_llm(model: str | None = None) -> LLMCall:
     from app.config import settings
-    from app.llm.bedrock_client import chat_complete
+    from app.llm.chat_gateway import chat_complete, writer_model
 
-    chosen = model or settings.review_map_model
+    chosen = model or settings.review_map_model or writer_model()
 
     def call(messages: list[dict[str, str]]) -> str:
         out = chat_complete(messages, model=chosen, temperature=0.0, max_tokens=2000, json_mode=True, timeout=60.0)

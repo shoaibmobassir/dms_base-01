@@ -55,21 +55,21 @@ Return JSON only (no markdown fences):
 
 
 def _llm(question: str, context: str, scope_note: str) -> tuple[str, str]:
-    from app.config import settings
-    from app.llm.bedrock_client import bedrock_configured, chat_complete
+    from app.llm.chat_gateway import chat_complete, chat_configured, preferred_provider, writer_model
 
-    if not bedrock_configured():
-        raise RuntimeError("bedrock_not_configured")
+    if not chat_configured():
+        raise RuntimeError("chat_provider_not_configured")
+    model = writer_model()
     user = f"{scope_note}Question: {question}\n\nEvidence:\n{context}"
     result = chat_complete(
         [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}],
-        model=settings.bedrock_model,
+        model=model,
         temperature=0.0,
         max_tokens=3000,
         json_mode=True,
         timeout=60.0,
     )
-    return str(result.get("content") or ""), settings.bedrock_model
+    return str(result.get("content") or ""), model
 
 
 def _parse(raw: str) -> dict[str, Any] | None:
@@ -469,7 +469,7 @@ def _finish(
         key, body = _dedupe_key_finding(parsed["key_finding"], parsed["answer"])
         base.update(
             answer=body, key_finding=key, citations=parsed["citations"],
-            provider="bedrock", status=parsed["status"], invented_citations=parsed["invented"],
+            provider=provider, status=parsed["status"], invented_citations=parsed["invented"],
         )
         if parsed["status"] == "not_found":
             base.update(abstained=True, reason="no_matching_matter")
@@ -541,7 +541,9 @@ def ask_the_firm(
             payload = _parse(raw)
             if payload is not None:
                 parsed = _validate(payload, allowed)
-                provider = "bedrock"
+                from app.llm.chat_gateway import preferred_provider
+
+                provider = preferred_provider()
         except Exception as exc:  # any provider failure → deterministic fallback
             logger.warning("Ask the Firm LLM failed: %s", exc)
             provider = "error"
@@ -561,17 +563,17 @@ _HEADER_RE = re.compile(r"STATUS:\s*(\w+)\s*\n\s*KEY FINDING:\s*(.*?)\n\s*-{3,}\
 
 
 def _stream_llm(question: str, context: str, scope_note: str) -> tuple[Iterator[str], str]:
-    from app.config import settings
-    from app.llm.bedrock_client import bedrock_configured, chat_stream
+    from app.llm.chat_gateway import chat_configured, chat_stream, writer_model
 
-    if not bedrock_configured():
-        raise RuntimeError("bedrock_not_configured")
+    if not chat_configured():
+        raise RuntimeError("chat_provider_not_configured")
+    model = writer_model()
     system = SYSTEM.split("Return JSON only")[0].rstrip() + STREAM_FORMAT
     user = f"{scope_note}Question: {question}\n\nEvidence:\n{context}"
     return chat_stream(
         [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        model=settings.bedrock_model, temperature=0.0, max_tokens=3000, timeout=90.0,
-    ), settings.bedrock_model
+        model=model, temperature=0.0, max_tokens=3000, timeout=90.0,
+    ), model
 
 
 def ask_the_firm_stream(
@@ -610,7 +612,9 @@ def ask_the_firm_stream(
     provider, model = "none", None
     try:
         deltas, model = _stream_llm(g.q, context, scope_note)
-        provider = "bedrock"
+        from app.llm.chat_gateway import preferred_provider
+
+        provider = preferred_provider()
         for delta in deltas:
             text += delta
             if header is None:
@@ -631,7 +635,7 @@ def ask_the_firm_stream(
     if header is not None:
         payload = {"status": header.group(1), "key_finding": header.group(2).strip(), "answer": text[header.end():].strip()}
         parsed = _validate(payload, allowed)
-    elif text.strip() and provider == "bedrock":
+    elif text.strip() and provider in {"bedrock", "azure"}:
         parsed = _validate({"status": "answered", "key_finding": "", "answer": text.strip()}, allowed)
     yield {"type": "verifying"}
     result = _finish(g, parsed, provider, model, conn)
