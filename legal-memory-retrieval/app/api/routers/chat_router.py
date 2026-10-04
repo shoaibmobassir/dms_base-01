@@ -646,6 +646,13 @@ def export_edits(
         if msg is None:
             raise HTTPException(status_code=404, detail="Message not found")
         groups = [g for g in _edit_groups(msg.events) if g.get("document_id") == document_id]
+        from app.documents.text_origin import source_info
+
+        if source_info(conn, document_id)["format"] == "pdf":
+            raise HTTPException(
+                status_code=409,
+                detail="This document is a PDF, which is read-only, so these suggestions are recommendations and "
+                       "cannot be exported as tracked changes. Apply them in the Word original.")
         if groups and all(g.get("anchoring") == "paragraph" for g in groups):
             out = _export_paragraph_edits(conn, document_id, groups, member_id)
             audit.record("chat.edit_export", member_id=member_id, object_type="chat_message", object_id=message_id,

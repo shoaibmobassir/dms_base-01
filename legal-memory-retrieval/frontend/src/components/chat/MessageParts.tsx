@@ -327,6 +327,8 @@ export type EditGroup = {
   /** "paragraph": document-wide edits from edit_document (tracked in the original file on export). */
   anchoring?: string;
   instruction?: string;
+  /** A PDF cannot be edited: the cards are recommendations, with nothing to accept or export. */
+  read_only?: boolean;
 };
 
 const EDITS_PAGE = 20;
@@ -350,6 +352,7 @@ export function EditProposalsCard({
   const [shown, setShown] = useState(EDITS_PAGE);
   const canSave = Boolean(sessionId && messageId);
   const accepted = edits.filter((e) => e.status === "accepted").length;
+  const readOnly = Boolean(group.read_only);
 
   const decideAll = async (status: EditProposal["status"]) => {
     if (!canSave) {
@@ -410,10 +413,15 @@ export function EditProposalsCard({
       <div className="flex items-center justify-between gap-2 border-b border-border bg-secondary/40 px-3 py-2">
         <div className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-ink">
           <PencilLine className="h-3.5 w-3.5 shrink-0 text-wine" />
-          <span className="truncate">Suggested edits · {group.filename}</span>
+          <span className="truncate">{readOnly ? "Recommendations" : "Suggested edits"} · {group.filename}</span>
           <span className="shrink-0 font-normal text-muted-foreground">({edits.length})</span>
         </div>
-        {edits.length > 1 && (
+        {readOnly && (
+          <span className="ml-auto shrink-0 text-[11px] text-muted-foreground" data-testid="edits-read-only">
+            PDF is read-only
+          </span>
+        )}
+        {!readOnly && edits.length > 1 && (
           <div className="ml-auto flex shrink-0 items-center gap-1">
             <button type="button" disabled={busy === "all"} onClick={() => void decideAll("accepted")}
               className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-secondary" data-testid="edits-accept-all">
@@ -425,7 +433,7 @@ export function EditProposalsCard({
             </button>
           </div>
         )}
-        <button
+        {!readOnly && <button
           type="button"
           disabled={!canSave || accepted === 0 || exporting}
           onClick={() => void exportDocx()}
@@ -434,14 +442,14 @@ export function EditProposalsCard({
         >
           {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
           Word file ({accepted})
-        </button>
+        </button>}
       </div>
       <ul className="divide-y divide-border">
         {edits.slice(0, shown).map((edit, i) => (
           <li key={edit.id} className="space-y-1.5 px-3 py-2.5" data-testid="edit-card" data-status={edit.status}>
             <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
               <span>
-                Edit {i + 1}
+                {readOnly ? "Recommendation" : "Edit"} {i + 1}
                 {edit.page ? ` · page ${edit.page}` : ""}
                 {!edit.located && <span className="ml-1 text-amber-700 dark:text-amber-400">· passage not found in document</span>}
               </span>
@@ -463,7 +471,7 @@ export function EditProposalsCard({
             )}
             {edit.reason && <p className="text-[12px] text-muted-foreground">{edit.reason}</p>}
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-              <button
+              {!readOnly && <button
                 type="button"
                 disabled={busy === edit.id}
                 onClick={() => void decide(edit, edit.status === "accepted" ? "pending" : "accepted")}
@@ -476,8 +484,8 @@ export function EditProposalsCard({
                 )}
               >
                 <Check className="h-3 w-3" /> Accept
-              </button>
-              <button
+              </button>}
+              {!readOnly && <button
                 type="button"
                 disabled={busy === edit.id}
                 onClick={() => void decide(edit, edit.status === "rejected" ? "pending" : "rejected")}
@@ -488,7 +496,7 @@ export function EditProposalsCard({
                 )}
               >
                 <X className="h-3 w-3" /> Reject
-              </button>
+              </button>}
               {edit.located && (
                 <button
                   type="button"

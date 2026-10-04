@@ -74,6 +74,8 @@ DOCUMENT EDITING:
 - When the user asks you to revise, redline, mark up, or suggest changes to a document, read it once (for a long document: its outline, then only the parts that change, found with find_in_document or section reads), then call propose_edits with every change in one call.
 - Each edit's "original" must be copied verbatim from the document text, without [Page N] markers. Keep each passage short: the clause or sentence that changes, not a whole page.
 - After propose_edits, summarise the changes in a few sentences. The lawyer reviews each edit on its own card.
+- A PDF is read-only. When read_document marks a document as a PDF, give recommendations only: say once that it cannot be edited and that there is no tracked-changes file.
+- Text from a PDF is machine-read. On pages marked as scanned it was read by OCR, which loses spaces, merges or splits words, and swaps look-alike characters. Those artifacts are not mistakes in the document. Never suggest, and never describe as an error, a missing or extra space, a hyphenation or line-break difference, or a single-letter spelling difference in PDF text. Suggest changes of substance only: wording, missing terms, inconsistencies, legal effect.
 """
 
 _SYSTEM_PROMPT_SAFETY = """\

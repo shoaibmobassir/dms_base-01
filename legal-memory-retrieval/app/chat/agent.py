@@ -55,6 +55,7 @@ from app.chat.tools.firm_tools import (
     resolve_matter_tool,
 )
 from app.chat.tools.generation_tools import generate_docx, generate_excel
+from app.chat.tools.edit_guard import scan_only_words, scrub_scan_claims
 from app.chat.tools.research_tools import RESEARCH_TOOLS
 from app.chat.tools.review_tools import propose_edits
 from app.chat.tools.schema import ALL_TOOLS
@@ -933,6 +934,20 @@ WRAP_UP_PROMPT = (
 )
 
 
+def drop_scan_claims(text: str, doc_index: DocIndex, doc_store: DocStore) -> tuple[str, int]:
+    """Remove answer lines that call a scanned page's OCR reading a spelling/spacing error (see edit_guard)."""
+    words: set[str] = set()
+    texts: list[str] = []
+    for slug, entry in doc_index.items():
+        if entry.scanned_pages and doc_store.get(slug):
+            words |= scan_only_words(doc_store[slug], entry.scanned_pages)
+            texts.append(doc_store[slug])
+    cleaned, removed = scrub_scan_claims(text, words, "\n".join(texts))
+    if removed:
+        logger.info("[chat/agent] removed %d line(s) reporting OCR artifacts as errors", len(removed))
+    return cleaned, len(removed)
+
+
 def _record_working_set(all_events: list[dict[str, Any]]) -> None:
     """Persist (with the message, not streamed) which documents this turn read or searched."""
     docs = working_set(all_events)
@@ -1173,6 +1188,9 @@ def run_chat_agent(
             clean_text = ("The answer could not be checked against its sources, so it is not shown. "
                           "Please try again.")
             verified_citations, report = [], {"error": "grounding_failed"}
+        clean_text, scan_claims = drop_scan_claims(clean_text, doc_index, doc_store)
+        if scan_claims:
+            timings["scan_claims_removed"] = scan_claims
         timings["grounding_ms"] = round((time.perf_counter() - t) * 1000, 1)
         timings["grounding"] = report.pop("timings", {})
         all_events.append({"type": "grounding", **report})
@@ -1212,6 +1230,7 @@ def run_chat_agent(
 
     # Clean response text (strip CITATIONS block, never show internal doc labels)
     clean_text = name_documents(extract_citations_text(full_text), doc_index)
+    clean_text, _ = drop_scan_claims(clean_text, doc_index, doc_store)
 
     CHAT_TURNS.labels(outcome="completed").inc()
     _record_working_set(all_events)

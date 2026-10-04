@@ -333,7 +333,10 @@ PROPOSE_EDITS = {
         "description": (
             "Suggest specific changes to one document for the lawyer to accept or "
             "reject. Read the document first. Each edit replaces an exact passage "
-            "copied verbatim from the document with new wording, and gives a short reason."
+            "copied verbatim from the document with new wording, and gives a short reason. "
+            "Suggest changes of substance only. Never suggest fixing spacing, line breaks, hyphenation or "
+            "single-letter spelling in text that came from a PDF (especially scanned pages): that text was "
+            "machine-read and those differences are not mistakes in the document; such suggestions are dropped."
         ),
         "parameters": {
             "type": "object",

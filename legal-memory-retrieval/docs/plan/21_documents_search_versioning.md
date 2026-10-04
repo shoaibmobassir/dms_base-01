@@ -33,10 +33,23 @@ PyMuPDF (AGPL).
   A1 covers the extraction side.
 
 ## A1 — stop false corrections on PDF text
-- [ ] page `text_origin` (`born_digital` / `scanned_ocr`) persisted and given to the model
-- [ ] prompt rule + `propose_edits` artifact filter (whitespace/OCR-only, corpus-frequency glue test)
-- [ ] PDF is read-only: recommendations only, no tracked-change export
-- [ ] `evals/pdf_artifact_eval.py` with fixtures; false-correction rate 0
+- [x] 2026-10-04 page provenance from the stored PDF (`app/documents/text_origin.py`, cached by hash; no migration):
+      Rejoinder pages 14–16 are scans, 1–13 born-digital
+- [x] 2026-10-04 `read_document` marks scanned pages inside the text; prompt and `propose_edits` description say a
+      PDF is read-only and spacing/OCR differences are not errors
+- [x] 2026-10-04 `app/chat/tools/edit_guard.py` in `propose_edits` and `edit_document`: spacing-only edits dropped on
+      any PDF; one-word look-alike typos dropped on scanned pages when the odd word is rare and the fix common;
+      numbers, insertions, deletions and swaps between common words kept
+- [x] 2026-10-04 same test on the answer's prose (quoted scan-only word called an error; original/fix pairs)
+- [x] 2026-10-04 PDF cards are read-only recommendations; export returns 409 for a PDF
+- [x] 2026-10-04 `tests/test_edit_guard.py` (21), `evals/pdf_artifact_eval.py` (408 artifacts: false-correction rate
+      100% → 0%, controls kept 100%), `evals/pdf_edit_live.py` (10 live runs: 0 spacing cards, 0 artifact claims,
+      8/10 found the real defects). Decision record: `docs/experiments/pdf_false_corrections_2026-10-04.md`
+- Plan changed after measuring: a better extractor does not help (the OCR layer itself has no space glyph); no
+  `text_origin` migration (derived from the file); no word-frequency glue test (spacing edits on a PDF are dropped
+  outright).
+- [ ] hallucinated quotes (`Hon\'ble`) are not checked against the stored text
+- [ ] normalize known OCR glue for **search** only
 
 ## C1 — token-aware diff
 - [ ] tokenizer for numbers/dates, merge del+ins, visible gap, golden tests
@@ -48,5 +61,6 @@ PyMuPDF (AGPL).
 - [ ] clean default view, History tab, Review-changes toggle, commit message on save
 
 ## Log
+- **2026-10-04** A1: the Assistant no longer reports scan reading errors as document defects (cards 100% → 0%, live prose 2/3 → 0/10).
 - **2026-10-04** Investigated all three problems (three read-only explorations, measurements on the real PDF and
   DB), plan approved. Built and verified B1 over HTTP and in Chrome.

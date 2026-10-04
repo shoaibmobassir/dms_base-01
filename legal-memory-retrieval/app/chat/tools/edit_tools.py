@@ -11,6 +11,8 @@ import uuid
 from typing import Any
 
 from app.chat.tools.document_tools import DocIndex
+from app.chat.tools.edit_guard import filter_edits
+from app.documents.text_origin import source_info
 
 MODEL_SAMPLE = 15
 
@@ -55,12 +57,22 @@ def edit_document_tool(
             "located": True,
             "status": "pending",
         })
+    # Paragraph numbers do not map exactly to PDF pages, so a PDF with any scanned page is treated as scanned.
+    info = source_info(conn, entry.document_id)
+    artifacts: list[dict[str, Any]] = []
+    if info["format"] == "pdf":
+        edits, artifacts = filter_edits(edits, {**info, "origins": None} if info["scanned_pages"] else info,
+                                        "\n".join(doc.paragraphs))
     if not edits:
+        note = ("Every change only fixed spacing, line breaks or look-alike characters in text machine-read from a PDF. "
+                "Those are not defects in the document; do not report them. Say none were needed."
+                if artifacts else "No paragraph needed this change. Tell the lawyer, and say what was searched.")
         return {"doc_id": entry.doc_id, "filename": entry.filename, "proposed": 0, "notes": plan.notes,
-                "note": "No paragraph needed this change. Tell the lawyer, and say what was searched."}, []
+                "dropped_as_reading_artifacts": artifacts, "note": note}, []
     event = {
         "type": "edit_proposals", "document_id": entry.document_id, "version_id": doc.version_id,
         "filename": entry.filename, "anchoring": "paragraph", "source": doc.source,
+        "source_format": info["format"], "read_only": info["format"] == "pdf",
         "instruction": instruction, "edits": edits,
     }
     sample = [{"page": e["page"], "op": e["op"], "before": e["original"][:160], "after": e["proposed"][:160]}
