@@ -273,6 +273,10 @@ export type SearchResult = {
   subtitle: string | null
   meta: string | null
   status: string | null
+  /** Documents only: whether the title/type or the document's text matched. */
+  match_kind?: 'title' | 'content'
+  /** Documents only: a matching passage with the hit words wrapped in << >>. */
+  snippet?: string | null
 }
 
 export type FirmProfile = {
