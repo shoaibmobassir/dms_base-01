@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import difflib
 import io
+import re
 import logging
 import secrets
 from concurrent.futures import ThreadPoolExecutor
@@ -501,16 +502,32 @@ def _store_version_file(doc: dict, version_number: int, filename: str, data: byt
     return get_object_store().put(key, data, content_type=mime)
 
 
+def _store_source_file(doc: dict, version_number: int, filename: str, data: bytes, mime: str) -> str:
+    """The file as it was uploaded, beside the version's own (clean) file: ``versions/vNNN/uploaded.<ext>``.
+
+    The store names a version's file ``original.<ext>``, so the raw copy needs its own key.
+    """
+    from app.config import settings
+    from app.storage.object_store import build_storage_key, get_object_store
+
+    key = build_storage_key(tenant_id=settings.tenant_id, client_id=doc.get("client_id") or "unknown",
+                            matter_id=doc["matter_id"], document_id=doc["document_id"],
+                            version_number=version_number, filename=filename)
+    return get_object_store().put(key.rsplit("/", 1)[0] + "/uploaded." + key.rsplit(".", 1)[-1], data, content_type=mime)
+
+
 def _next_number(conn, document_id: str) -> int:
     row = _one(conn, "SELECT coalesce(max(version_number), 0) + 1 AS n FROM document_versions WHERE document_id = %s", (document_id,))
     return int(row["n"]) if row else 1
 
 
 def _create(conn, doc: dict, member_id: str | None, *, text: str, note: str, origin: str, label: str | None,
-            storage_uri: str | None, mime: str | None, size: int | None, page_spans=None) -> dict:
+            storage_uri: str | None, mime: str | None, size: int | None, page_spans=None,
+            is_clean: bool | None = None, restored_from: str | None = None, source_uri: str | None = None,
+            author_name: str | None = None) -> dict:
     from app.documents import create_version, sync_page_count
 
-    author = _member_name(conn, member_id)
+    author = author_name or _member_name(conn, member_id)
     # Replacing the document's chunks must not interleave with the background embedder
     # writing vectors to them (row locks taken in opposite orders deadlock).
     conn.execute("SELECT pg_advisory_lock(hashtext(%s))", (_INDEX_LOCK + doc["document_id"],))
@@ -518,15 +535,16 @@ def _create(conn, doc: dict, member_id: str | None, *, text: str, note: str, ori
         _snapshot_vectors(conn, doc["document_id"])
         version = create_version(
             document_id=doc["document_id"], body=text[:500_000], author_name=author,
-            source="edit" if origin == "editor" else "upload", version_status="developing", version_label=label,
+            source="edit" if origin in ("editor", "restore") else "upload", version_status="developing", version_label=label,
             change_summary=note or None, storage_uri=storage_uri, page_spans=page_spans,
         )
     finally:
         conn.execute("SELECT pg_advisory_unlock(hashtext(%s))", (_INDEX_LOCK + doc["document_id"],))
     conn.execute(
         "UPDATE document_versions SET created_by_member_id = %s, origin = %s, mime_type = coalesce(%s, mime_type), "
-        "file_size_bytes = coalesce(%s, file_size_bytes) WHERE version_id = %s",
-        (member_id, origin, mime, size, version["version_id"]),
+        "file_size_bytes = coalesce(%s, file_size_bytes), is_clean = %s, restored_from_version_id = %s, "
+        "source_storage_uri = %s WHERE version_id = %s",
+        (member_id, origin, mime, size, is_clean, restored_from, source_uri, version["version_id"]),
     )
     if mime:
         conn.execute("UPDATE documents SET mime_type = %s WHERE document_id = %s", (mime, doc["document_id"]))
@@ -699,14 +717,22 @@ def save_edits(conn, document_id: str, member_id: str | None, base_version_id: s
         from app.documents.review import index_version, sync_comments
 
         out, stats = _edit_docx(data, ops, author, mode)
-
+        # The stored file is the clean document; what this save changed is the difference to its parent. A file
+        # that still carries someone else's pending changes (an old row not yet cleaned) keeps them: accepting them
+        # here would decide, for the reviewer, that their proposals are in.
+        clean = not docx_review.has_revisions(data)
+        marked = out  # this save as tracked changes by ``author``: the record of who changed what
+        if clean:
+            out = docx_review.accept_everything(out)
+            mode = "clean"
         out = sync_comments(conn, doc, out)
         name = Path(doc["title"]).stem + ".docx"
         uri = _store_version_file(doc, number, name, out, DOCX_MIME)
         extracted = extract_from_bytes(name, docx_review.accept_everything(out))
         version = _create(conn, doc, member_id, text=extracted.text, note=note, origin="editor", label=None,
-                          storage_uri=uri, mime=DOCX_MIME, size=len(out), page_spans=extracted.pages)
-        index_version(conn, doc, version["version_id"], out)
+                          storage_uri=uri, mime=DOCX_MIME, size=len(out), page_spans=extracted.pages,
+                          is_clean=clean)
+        index_version(conn, doc, version["version_id"], marked if clean else out)
     elif kind == "pdf":
         raise EditError(422, "PDFs cannot be edited in the browser; upload a Word version to edit the text")
     else:
@@ -752,12 +778,15 @@ def upload_version(conn, document_id: str, member_id: str | None, filename: str,
     if base_version_id and base_version_id != doc["current_version_id"]:
         raise EditError(409, "A newer version was saved since you opened this document; compare before uploading",
                         {"current_version_id": doc["current_version_id"]})
+    if suffix == ".docx" and _zip_has_revisions(data):
+        return _import_reviewed(conn, doc, member_id, filename, data, note, label)
     extracted = extract_from_bytes(filename, _accepted(data) if suffix == ".docx" else data)
     number = _next_number(conn, document_id)
     mime = guess_mime(filename)
     uri = _store_version_file(doc, number, filename, data, mime)
     version = _create(conn, doc, member_id, text=extracted.text, note=note, origin="upload", label=label,
-                      storage_uri=uri, mime=mime, size=len(data), page_spans=extracted.pages)
+                      storage_uri=uri, mime=mime, size=len(data), page_spans=extracted.pages,
+                      is_clean=True if suffix == ".docx" else None)
     if suffix == ".docx":  # who changed what in the file, and its Word comments
         from app.documents.review import index_version
 
@@ -767,6 +796,116 @@ def upload_version(conn, document_id: str, member_id: str | None, filename: str,
     audit.record("document.version.upload", member_id=member_id, object_type="document", object_id=document_id,
                  matter_id=doc["matter_id"], detail={"version_id": version["version_id"], "filename": filename})
     return {"version_id": version["version_id"], "version_number": version["version_number"]}
+
+
+def _same_text(a: str, b: str) -> bool:
+    return " ".join((a or "").split()) == " ".join((b or "").split())
+
+
+def _import_reviewed(conn, doc: dict, member_id: str | None, filename: str, data: bytes, note: str,
+                     label: str | None) -> dict:
+    """A Word file that carries other people's tracked changes becomes commits, so the current version stays clean.
+
+    1. the file's own text before the changes (rejected) — skipped when that is already the current version, which
+       is the usual case: someone took the current version, reviewed it in Word, and sent it back;
+    2. the file with the changes accepted, credited to the people who made them. The raw file is kept as evidence.
+    """
+    from app.documents import docx_review
+    from app.documents.review import index_version
+    from app.ingest.extractors.dispatch import extract_from_bytes
+
+    revs = docx_review.read_revisions(data)
+    authors = sorted({r.author for r in revs if r.author}) or ["Unknown"]
+    credited = ", ".join(authors[:3]) + (f" +{len(authors) - 3}" if len(authors) > 3 else "")
+    name = Path(filename).stem + ".docx"
+    base_file, final_file = docx_review.reject_everything(data), docx_review.accept_everything(data)
+    base_text, final_text = extract_from_bytes(name, base_file), extract_from_bytes(name, final_file)
+    head = _version(conn, doc["document_id"], doc["current_version_id"])
+    made: list[dict] = []
+
+    if head is None or not _same_text(base_text.text, head.get("body") or ""):
+        number = _next_number(conn, doc["document_id"])
+        uri = _store_version_file(doc, number, name, base_file, DOCX_MIME)
+        v = _create(conn, doc, member_id, text=base_text.text, origin="import", label=None, storage_uri=uri,
+                    note=f"Text of {filename} before its {len(revs)} tracked changes", mime=DOCX_MIME,
+                    size=len(base_file), page_spans=base_text.pages, is_clean=True)
+        made.append(v)
+
+    number = _next_number(conn, doc["document_id"])
+    uri = _store_version_file(doc, number, name, final_file, DOCX_MIME)
+    raw_uri = _store_source_file(doc, number, name, data, DOCX_MIME)
+    message = f"Imported {len(revs)} tracked change{'s' if len(revs) != 1 else ''} from {credited}"
+    v = _create(conn, doc, member_id, text=final_text.text, origin="upload", label=label, storage_uri=uri,
+                note=message + (f": {note}" if note else ""), mime=DOCX_MIME, size=len(final_file),
+                page_spans=final_text.pages, is_clean=True, source_uri=raw_uri, author_name=credited)
+    made.append(v)
+    index_version(conn, doc, v["version_id"], data)  # who changed what, and the Word comments, from the raw file
+    record_event(conn, doc["document_id"], member_id, "version.upload", v["version_id"],
+                 {"filename": filename, "note": note, "tracked_changes": len(revs), "authors": authors,
+                  "commits": len(made)})
+    conn.commit()
+    audit.record("document.version.upload", member_id=member_id, object_type="document", object_id=doc["document_id"],
+                 matter_id=doc["matter_id"], detail={"version_id": v["version_id"], "filename": filename,
+                                                     "tracked_changes": len(revs), "commits": len(made)})
+    return {"version_id": v["version_id"], "version_number": v["version_number"],
+            "commits": [{"version_id": m["version_id"], "version_number": m["version_number"]} for m in made],
+            "tracked_changes": len(revs), "authors": authors}
+
+
+def restore_version(conn, document_id: str, member_id: str | None, version_id: str, base_version_id: str,
+                    note: str = "", token: str | None = None) -> dict:
+    """Make an earlier version current again as a NEW version (history is never rewritten, like ``git revert``)."""
+    from app.documents import docx_review
+    from app.documents.review import index_version
+    from app.ingest.extractors.dispatch import extract_from_bytes
+    from app.storage.object_store import guess_mime
+
+    doc = _document(conn, document_id)
+    _require(conn, member_id, doc, "edit")
+    if member_id is None:
+        raise EditError(400, "Sign in to restore a version")
+    _check_can_write(conn, document_id, member_id, token)
+    if base_version_id != doc["current_version_id"]:
+        raise EditError(409, "Someone saved a newer version while you were looking; reload to see it",
+                        {"current_version_id": doc["current_version_id"]})
+    target = _version(conn, document_id, version_id)
+    if target is None:
+        raise EditError(404, "Version not found")
+    if target["version_id"] == doc["current_version_id"]:
+        raise EditError(422, "That is already the current version")
+
+    message = f"Restored version {target['version_number']}" + (f": {note}" if note else "")
+    number = _next_number(conn, document_id)
+    data, kind = _file_of(doc, target) if target.get("storage_uri") else (None, "none")
+    if target.get("storage_uri") and data is None:
+        raise EditError(422, "The file of that version is not available, so it cannot be restored")
+    if kind == "docx":
+        data = docx_review.accept_everything(data)  # a version not yet cleaned restores as it reads in the Final view
+        name = Path(doc["title"]).stem + ".docx"
+        mime = DOCX_MIME
+    elif data is not None:
+        name = Path(target["storage_uri"]).name
+        mime = target.get("mime_type") or guess_mime(name)
+    if data is not None:
+        extracted = extract_from_bytes(name, data)
+        uri = _store_version_file(doc, number, name, data, mime)
+        version = _create(conn, doc, member_id, text=extracted.text, note=message, origin="restore", label=None,
+                          storage_uri=uri, mime=mime, size=len(data), page_spans=extracted.pages,
+                          is_clean=True if kind == "docx" else None, restored_from=target["version_id"])
+        if kind == "docx":
+            index_version(conn, doc, version["version_id"], data)
+    else:  # a text-only document: the version is its text
+        version = _create(conn, doc, member_id, text=target.get("body") or "", note=message, origin="restore",
+                          label=None, storage_uri=None, mime=None, size=None, restored_from=target["version_id"])
+    conn.execute("DELETE FROM document_drafts WHERE document_id = %s AND member_id = %s", (document_id, member_id))
+    record_event(conn, document_id, member_id, "version.restore", version["version_id"],
+                 {"restored": target["version_id"], "restored_number": target["version_number"], "note": note})
+    conn.commit()
+    audit.record("document.version.restore", member_id=member_id, object_type="document", object_id=document_id,
+                 matter_id=doc["matter_id"], detail={"version_id": version["version_id"],
+                                                     "restored": target["version_id"]})
+    return {"version_id": version["version_id"], "version_number": version["version_number"],
+            "restored_version_id": target["version_id"], "restored_version_number": target["version_number"]}
 
 
 # ── compare ──────────────────────────────────────────────────────────────────
@@ -870,6 +1009,21 @@ def compare(conn, document_id: str, member_id: str | None, from_id: str, to_id: 
             stats["inserted"] += 1
             blocks.append({"op": "insert", "new": new[j]})
 
+    def count_words(kind: str) -> int:
+        """Words inserted ("ins") or removed ("del") across the compared blocks."""
+        n = 0
+        for b in blocks:
+            for seg in b.get("segments", []):
+                if seg["t"] == kind:
+                    n += len(re.findall(r"\w+", seg["text"]))
+            if kind == "ins" and b["op"] == "insert":
+                n += len(re.findall(r"\w+", b["new"]))
+            if kind == "del" and b["op"] == "delete":
+                n += len(re.findall(r"\w+", b["old"]))
+        return n
+
+    stats["words_added"], stats["words_removed"] = count_words("ins"), count_words("del")
+
     def meta(v: dict) -> dict:
         return {"version_id": v["version_id"], "version_number": v["version_number"], "author": v["author_name"],
                 "created_at": v["created_at"], "note": v["change_summary"]}
@@ -904,3 +1058,86 @@ def history(conn, document_id: str, member_id: str | None, limit: int = 100) -> 
         (document_id, limit),
     ).fetchall()
     return [dict(r) for r in rows]
+
+
+# ── commits and blame ────────────────────────────────────────────────────────
+
+def commits(conn, document_id: str, member_id: str | None, limit: int = 100) -> list[dict]:
+    """The document's versions as a commit log, newest first: message, author, kind, size change."""
+    doc = _document(conn, document_id)
+    _require(conn, member_id, doc, "read")
+    rows = [dict(r) for r in conn.execute(
+        """
+        SELECT v.version_id, v.version_number, v.version_label, v.change_summary AS message, v.author_name,
+               v.created_by_member_id, v.origin, v.created_at, v.parent_version_id, v.restored_from_version_id,
+               v.is_clean, v.mime_type, v.source_storage_uri IS NOT NULL AS has_source_file, length(v.body) AS chars
+        FROM document_versions v WHERE v.document_id = %s ORDER BY v.version_number DESC LIMIT %s
+        """, (document_id, limit + 1)).fetchall()]
+    older = {r["version_id"]: r for r in rows}
+    out = []
+    for r in rows[:limit]:
+        parent = older.get(r["parent_version_id"] or "")
+        out.append({**r, "is_current": r["version_id"] == doc["current_version_id"],
+                    "kind": r["origin"] or "upload",
+                    "chars_delta": (r["chars"] - parent["chars"]) if parent else None})
+    return out
+
+
+_BLAME_CACHE: dict[tuple[str, str, int], list[dict]] = {}
+_BLAME_CACHE_MAX = 32
+BLAME_DEPTH = 60
+
+
+def _body_paragraphs(body: str) -> list[str]:
+    return [p.strip() for p in re.split(r"\n+", body or "") if p.strip()]
+
+
+def blame(conn, document_id: str, member_id: str | None, version_id: str | None = None,
+          depth: int = BLAME_DEPTH) -> dict:
+    """For each paragraph of a version: the version and person that last changed it (like ``git blame``).
+
+    Works from the stored text of up to ``depth`` versions ending at ``version_id``, oldest first; a paragraph is
+    credited to the version where it last appeared or changed. A paragraph older than the window is credited to the
+    oldest version in it and flagged ``before_window``.
+    """
+    doc = _document(conn, document_id)
+    _require(conn, member_id, doc, "read")
+    target_id = version_id or doc["current_version_id"]
+    target = _version(conn, document_id, target_id)
+    if target is None:
+        raise EditError(404, "Version not found")
+    depth = max(2, min(int(depth), 200))
+    key = (document_id, target["version_id"], depth)
+    if key in _BLAME_CACHE:
+        return {"document_id": document_id, "version_id": target["version_id"], "paragraphs": _BLAME_CACHE[key],
+                "depth": depth}
+    rows = [dict(r) for r in conn.execute(
+        """SELECT version_id, version_number, body, author_name, created_at, change_summary FROM document_versions
+           WHERE document_id = %s AND version_number <= %s ORDER BY version_number DESC LIMIT %s""",
+        (document_id, target["version_number"], depth)).fetchall()][::-1]
+    first = rows[0]
+    reaches_start = first["version_number"] == min(
+        (r["version_number"] for r in conn.execute(
+            "SELECT version_number FROM document_versions WHERE document_id = %s", (document_id,))), default=1)
+
+    def credit(v: dict) -> dict:
+        return {"version_id": v["version_id"], "version_number": v["version_number"], "author": v["author_name"],
+                "at": v["created_at"], "message": v["change_summary"]}
+
+    paras = _body_paragraphs(first["body"])
+    owner = [credit(first) for _ in paras]
+    for v in rows[1:]:
+        new = _body_paragraphs(v["body"])
+        new_owner: list[dict | None] = [None] * len(new)
+        for kind, i, j in _diff_blocks(paras, new):
+            if kind == "equal" or (kind == "replace" and paras[i] == new[j]):
+                new_owner[j] = owner[i]
+            elif kind in ("replace", "insert") and j is not None:
+                new_owner[j] = credit(v)
+        paras, owner = new, [o or credit(v) for o in new_owner]
+    result = [{"pid": i, "text": t, **o, "before_window": (not reaches_start and o["version_id"] == first["version_id"])}
+              for i, (t, o) in enumerate(zip(paras, owner))]
+    if len(_BLAME_CACHE) >= _BLAME_CACHE_MAX:
+        _BLAME_CACHE.pop(next(iter(_BLAME_CACHE)))
+    _BLAME_CACHE[key] = result
+    return {"document_id": document_id, "version_id": target["version_id"], "paragraphs": result, "depth": depth}

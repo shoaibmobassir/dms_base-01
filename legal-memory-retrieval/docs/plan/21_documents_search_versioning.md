@@ -67,7 +67,21 @@ PyMuPDF (AGPL).
   diff view with a gap (C3).
 
 ## C2 — clean-HEAD commit model
-- [ ] migration, history, diff, restore, blame, two-commit Word import, backfill
+- [x] 2026-10-04 migration `20261004a_version_commits.sql` (additive: `is_clean`, `restored_from_version_id`,
+      `source_storage_uri`); commit message = `change_summary`, kind = `origin`
+- [x] 2026-10-04 save stores the clean document (authorship still recorded from the tracked form); a file with someone
+      else's pending changes keeps them until cleaned
+- [x] 2026-10-04 Word upload with tracked changes becomes commit(s) credited to the reviewers, raw file kept
+- [x] 2026-10-04 `GET commits`, `GET diff` (+ word counts), `POST restore` (new version, re-indexed), `GET blame`
+- [x] 2026-10-04 `scripts/clean_versions.py` backfill (dry run by default). **Not applied** to the shared database
+- [x] 2026-10-04 tests: `tests/test_document_history.py` (15), four editor tests updated on purpose, Word review tests
+      now build legacy rows; full suite 988 passed. Decision record: `docs/experiments/document_commits_2026-10-04.md`
+- Plan changed after measuring: blame is computed on demand (0.9 s cold for 1,172 paragraphs × 200 versions), so there
+  is no `document_version_changes` table
+- Found by the tests: the object store keys every version file `original.<ext>`, so the raw upload overwrote the
+  clean copy; the raw copy is stored as `uploaded.<ext>` and the backfill refuses to overwrite
+- [ ] apply the backfill (the CTO agreement from the report is `DOC-7405413EC8`)
+- [ ] one commit per reviewer on import (allows reverting one person's changes)
 
 ## C3 — frontend
 - [ ] clean default view, History tab, Review-changes toggle, commit message on save

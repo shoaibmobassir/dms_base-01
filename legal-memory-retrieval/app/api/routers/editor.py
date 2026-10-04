@@ -123,6 +123,7 @@ async def post_version_upload(
                 base_version_id, note, label, token)
 
 
+@router.get("/documents/{document_id}/diff")
 @router.get("/documents/{document_id}/compare")
 def get_compare(document_id: str, from_: str = Query(alias="from"), to: str = Query(...),
                 member_id: str | None = Depends(resolve_member)) -> dict:
@@ -135,6 +136,37 @@ def get_compare_docx(document_id: str, from_: str = Query(alias="from"), to: str
     data, name = _run(editing.compare_docx, document_id.upper(), member_id, from_, to)
     return Response(content=data, media_type=editing.DOCX_MIME,
                     headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"})
+
+
+class RestoreBody(BaseModel):
+    version_id: str
+    base_version_id: str
+    note: str = Field(default="", max_length=1000)
+
+
+@router.get("/documents/{document_id}/commits")
+def get_commits(document_id: str, limit: int = Query(default=100, le=500),
+                member_id: str | None = Depends(resolve_member)) -> JSONResponse:
+    """The versions as a commit log: message, author, kind (edit/upload/import/restore), size change."""
+    items = _run(editing.commits, document_id.upper(), member_id, limit)
+    return JSONResponse(jsonable_encoder({"items": items}), headers={"Cache-Control": "no-store"})
+
+
+@router.post("/documents/{document_id}/restore", status_code=201)
+def post_restore(document_id: str, body: RestoreBody, token: str | None = LockToken,
+                 member_id: str | None = Depends(resolve_member)) -> dict:
+    """Make an earlier version current again as a new version; history is never rewritten."""
+    return _run(editing.restore_version, document_id.upper(), member_id, body.version_id, body.base_version_id,
+                body.note, token)
+
+
+@router.get("/documents/{document_id}/blame")
+def get_blame(document_id: str, version_id: str | None = Query(default=None),
+              depth: int = Query(default=editing.BLAME_DEPTH, ge=2, le=200),
+              member_id: str | None = Depends(resolve_member)) -> JSONResponse:
+    """For each paragraph, the version and person that last changed it."""
+    out = _run(editing.blame, document_id.upper(), member_id, version_id, depth)
+    return JSONResponse(jsonable_encoder(out), headers={"Cache-Control": "no-store"})
 
 
 @router.get("/documents/{document_id}/history")

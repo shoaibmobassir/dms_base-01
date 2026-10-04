@@ -22,9 +22,11 @@ class TestMultiLevelDiff:
         text_v8 = "The aggregate liability of the Seller shall not exceed $75,000."
 
         tokens = compute_word_redline(text_v7, text_v8)
-        assert any(t.token_type == "delete" and "$50,000." in t.text for t in tokens)
-        assert any(t.token_type == "insert" and "$75,000." in t.text for t in tokens)
+        # The amount is the change; the dollar sign and the full stop beside it are not struck and re-inserted.
+        assert [t.text for t in tokens if t.token_type == "delete"] == ["50,000"]
+        assert [t.text for t in tokens if t.token_type == "insert"] == ["75,000"]
         assert any(t.token_type == "equal" and "The aggregate liability" in t.text for t in tokens)
+        assert any(t.token_type == "equal" and t.text.endswith("$") for t in tokens)
 
     def test_semantic_legal_diff_financial_cap_increase(self):
         blocks_v7 = [
