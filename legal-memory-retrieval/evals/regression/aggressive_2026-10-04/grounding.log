@@ -1,0 +1,358 @@
+{
+ "ask": {
+  "overall": {
+   "n": 41,
+   "claims": 162,
+   "cited_claims": 148,
+   "citation_precision": 0.905,
+   "citation_precision_lenient": 1.0,
+   "claim_coverage": 0.914,
+   "unverified_shown": 0.173,
+   "parametric_legal_claims": 1,
+   "fact_recall": 0.784,
+   "expect_ok": "6/7",
+   "latency_p50_s": 5.5,
+   "latency_p95_s": 11.8,
+   "stages": {
+    "absence_ms": {
+     "p50": 0,
+     "p95": 1933.3,
+     "n": 35
+    },
+    "evidence_ms": {
+     "p50": 326.7,
+     "p95": 2250.9,
+     "n": 36
+    },
+    "grounding_ms": {
+     "p50": 3559.4,
+     "p95": 6120.5,
+     "n": 35
+    },
+    "llm_ms": {
+     "p50": 3410.8,
+     "p95": 4599.2,
+     "n": 36
+    },
+    "resolver_ms": {
+     "p50": 56.2,
+     "p95": 387.9,
+     "n": 5
+    },
+    "scope_ms": {
+     "p50": 3.0,
+     "p95": 21.4,
+     "n": 41
+    },
+    "total_ms": {
+     "p50": 7753.5,
+     "p95": 11920.7,
+     "n": 41
+    },
+    "units": {
+     "p50": 5,
+     "p95": 7,
+     "n": 35
+    },
+    "verify_ms": {
+     "p50": 3313.9,
+     "p95": 5858.7,
+     "n": 35
+    }
+   },
+   "errors": 0
+  },
+  "by_category": {
+   "compound": {
+    "n": 1,
+    "claims": 6,
+    "cited_claims": 6,
+    "citation_precision": 1.0,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 1.0,
+    "unverified_shown": 0.0,
+    "parametric_legal_claims": 0,
+    "fact_recall": 1.0,
+    "expect_ok": null,
+    "latency_p50_s": 0.1,
+    "latency_p95_s": 0.1,
+    "stages": null,
+    "errors": 0
+   },
+   "cross_doc": {
+    "n": 2,
+    "claims": 12,
+    "cited_claims": 11,
+    "citation_precision": 1.0,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.917,
+    "unverified_shown": 0.083,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.5,
+    "expect_ok": null,
+    "latency_p50_s": 10.4,
+    "latency_p95_s": 11.8,
+    "stages": null,
+    "errors": 0
+   },
+   "fact": {
+    "n": 28,
+    "claims": 89,
+    "cited_claims": 89,
+    "citation_precision": 0.921,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 1.0,
+    "unverified_shown": 0.079,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.81,
+    "expect_ok": null,
+    "latency_p50_s": 0.1,
+    "latency_p95_s": 9.9,
+    "stages": null,
+    "errors": 0
+   },
+   "false_premise": {
+    "n": 2,
+    "claims": 15,
+    "cited_claims": 12,
+    "citation_precision": 0.833,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.8,
+    "unverified_shown": 0.333,
+    "parametric_legal_claims": 0,
+    "fact_recall": null,
+    "expect_ok": "2/2",
+    "latency_p50_s": 14.3,
+    "latency_p95_s": 18.7,
+    "stages": null,
+    "errors": 0
+   },
+   "negative": {
+    "n": 2,
+    "claims": 9,
+    "cited_claims": 4,
+    "citation_precision": 1.0,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.444,
+    "unverified_shown": 0.556,
+    "parametric_legal_claims": 0,
+    "fact_recall": null,
+    "expect_ok": "2/2",
+    "latency_p50_s": 8.3,
+    "latency_p95_s": 9.2,
+    "stages": null,
+    "errors": 0
+   },
+   "public_law_absent": {
+    "n": 4,
+    "claims": 18,
+    "cited_claims": 13,
+    "citation_precision": 0.769,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 0.722,
+    "unverified_shown": 0.444,
+    "parametric_legal_claims": 1,
+    "fact_recall": 1.0,
+    "expect_ok": "2/3",
+    "latency_p50_s": 10.4,
+    "latency_p95_s": 63.5,
+    "stages": null,
+    "errors": 0
+   },
+   "summary": {
+    "n": 2,
+    "claims": 13,
+    "cited_claims": 13,
+    "citation_precision": 0.846,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 1.0,
+    "unverified_shown": 0.154,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.5,
+    "expect_ok": null,
+    "latency_p50_s": 9.8,
+    "latency_p95_s": 10.6,
+    "stages": null,
+    "errors": 0
+   }
+  }
+ },
+ "chat": {
+  "overall": {
+   "n": 41,
+   "claims": 19,
+   "cited_claims": 19,
+   "citation_precision": 0.947,
+   "citation_precision_lenient": 1.0,
+   "claim_coverage": 1.0,
+   "unverified_shown": 0.053,
+   "parametric_legal_claims": 0,
+   "fact_recall": 0.103,
+   "expect_ok": "0/7",
+   "latency_p50_s": 1.3,
+   "latency_p95_s": 20.6,
+   "stages": {
+    "absence_ms": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "n": 4
+    },
+    "agent_llm_ms": {
+     "p50": 2700.2,
+     "p95": 6281.6,
+     "n": 16
+    },
+    "agent_tools_ms": {
+     "p50": 3583.7,
+     "p95": 8942.0,
+     "n": 16
+    },
+    "grounding_ms": {
+     "p50": 4296.1,
+     "p95": 5652.8,
+     "n": 4
+    },
+    "multi_tool_rounds": {
+     "p50": 0.0,
+     "p95": 1.0,
+     "n": 41
+    },
+    "rounds": {
+     "p50": 0.0,
+     "p95": 2.0,
+     "n": 41
+    },
+    "total_ms": {
+     "p50": 1083.1,
+     "p95": 20103.4,
+     "n": 41
+    },
+    "units": {
+     "p50": 9.0,
+     "p95": 10.0,
+     "n": 4
+    },
+    "verify_ms": {
+     "p50": 4294.6,
+     "p95": 5651.4,
+     "n": 4
+    }
+   },
+   "errors": 0
+  },
+  "by_category": {
+   "compound": {
+    "n": 1,
+    "claims": 4,
+    "cited_claims": 4,
+    "citation_precision": 1.0,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 1.0,
+    "unverified_shown": 0.0,
+    "parametric_legal_claims": 0,
+    "fact_recall": 1.0,
+    "expect_ok": null,
+    "latency_p50_s": 18.2,
+    "latency_p95_s": 18.2,
+    "stages": null,
+    "errors": 0
+   },
+   "cross_doc": {
+    "n": 2,
+    "claims": 0,
+    "cited_claims": 0,
+    "citation_precision": null,
+    "citation_precision_lenient": null,
+    "claim_coverage": null,
+    "unverified_shown": null,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.0,
+    "expect_ok": null,
+    "latency_p50_s": 4.5,
+    "latency_p95_s": 7.9,
+    "stages": null,
+    "errors": 0
+   },
+   "fact": {
+    "n": 28,
+    "claims": 15,
+    "cited_claims": 15,
+    "citation_precision": 0.933,
+    "citation_precision_lenient": 1.0,
+    "claim_coverage": 1.0,
+    "unverified_shown": 0.067,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.089,
+    "expect_ok": null,
+    "latency_p50_s": 1.3,
+    "latency_p95_s": 20.6,
+    "stages": null,
+    "errors": 0
+   },
+   "false_premise": {
+    "n": 2,
+    "claims": 0,
+    "cited_claims": 0,
+    "citation_precision": null,
+    "citation_precision_lenient": null,
+    "claim_coverage": null,
+    "unverified_shown": null,
+    "parametric_legal_claims": 0,
+    "fact_recall": null,
+    "expect_ok": "0/2",
+    "latency_p50_s": 14.8,
+    "latency_p95_s": 21.2,
+    "stages": null,
+    "errors": 0
+   },
+   "negative": {
+    "n": 2,
+    "claims": 0,
+    "cited_claims": 0,
+    "citation_precision": null,
+    "citation_precision_lenient": null,
+    "claim_coverage": null,
+    "unverified_shown": null,
+    "parametric_legal_claims": 0,
+    "fact_recall": null,
+    "expect_ok": "0/2",
+    "latency_p50_s": 3.1,
+    "latency_p95_s": 4.8,
+    "stages": null,
+    "errors": 0
+   },
+   "public_law_absent": {
+    "n": 4,
+    "claims": 0,
+    "cited_claims": 0,
+    "citation_precision": null,
+    "citation_precision_lenient": null,
+    "claim_coverage": null,
+    "unverified_shown": null,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.0,
+    "expect_ok": "0/3",
+    "latency_p50_s": 2.7,
+    "latency_p95_s": 8.8,
+    "stages": null,
+    "errors": 0
+   },
+   "summary": {
+    "n": 2,
+    "claims": 0,
+    "cited_claims": 0,
+    "citation_precision": null,
+    "citation_precision_lenient": null,
+    "claim_coverage": null,
+    "unverified_shown": null,
+    "parametric_legal_claims": 0,
+    "fact_recall": 0.0,
+    "expect_ok": null,
+    "latency_p50_s": 1.2,
+    "latency_p95_s": 1.2,
+    "stages": null,
+    "errors": 0
+   }
+  }
+ }
+}
