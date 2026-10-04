@@ -173,7 +173,7 @@ export type ClientItem = {
   size: string | null
   headquarters: string | null
   /** Intake: prospective until the conflict check is cleared. */
-  status?: 'prospective' | 'active' | 'declined'
+  status?: 'prospective' | 'active' | 'on_hold' | 'inactive' | 'declined'
   /** Counted over the matters the caller can see. */
   open_matters?: number
   total_matters?: number
@@ -201,6 +201,9 @@ export type Person = {
   member_id: string
   name: string
   role: string
+  /** False for someone who has left or is away (only administrators see them). */
+  active?: boolean
+  email?: string | null
   practice_areas: string[]
   specializations: string[]
   office: string | null
@@ -441,6 +444,9 @@ export type KmPanel = {
 export type AskHistoryItem = { id: string; query: string; scope: string | null; scope_type: string | null; asked_at: string }
 
 export type AskResult = {
+  /** Set when this answer follows up on an earlier one. */
+  follow_up_of?: string | null
+  follow_up_query?: string | null
   answer?: string
   key_finding?: string
   abstained?: boolean

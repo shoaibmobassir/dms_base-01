@@ -5,6 +5,7 @@ import { QueryState } from "@/components/common/QueryState";
 import { useSystemInfo, useTeams } from "@/api/resources";
 import { DataTable } from "@/components/common/DataTable";
 import { EmptyState, Icon } from "@/components/common/primitives";
+import { can, useMyAccess } from "@/api/access";
 import { useTheme, type Theme } from "@/lib/theme";
 import { initials, useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,9 @@ export function SettingsPage() {
   const info = useSystemInfo();
   const teams = useTeams();
   const { theme, setTheme } = useTheme();
+  const access = useMyAccess();
+  // Deployment details are for the people who run it.
+  const isAdmin = ["users.manage", "teams.manage", "roles.manage", "walls.manage", "audit.read"].some((p) => can(access.data, p));
 
   return (
     <div className="space-y-10">
@@ -119,7 +123,8 @@ export function SettingsPage() {
         </QueryState>
       </section>
 
-      <section className="max-w-2xl">
+      {isAdmin && (
+      <section className="max-w-2xl" data-testid="settings-system">
         <SectionLabel>System</SectionLabel>
         <QueryState query={info}>
           {(i) => (
@@ -139,6 +144,7 @@ export function SettingsPage() {
           )}
         </QueryState>
       </section>
+      )}
     </div>
   );
 }

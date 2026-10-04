@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from app.api.main import app
 
-HEADERS = {"X-Member-Id": "MEM-00001"}
+HEADERS = {"X-Member-Id": "MEM-00011"}  # a firm administrator: folder ingest needs integrations.manage
 ROOT = Path(__file__).resolve().parents[1]
 
 

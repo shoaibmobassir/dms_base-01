@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { PAGE_SIZE, useArguments } from "@/api/resources";
+import { Link, useSearchParams } from "react-router-dom";
+import { PAGE_SIZE, useArguments, useMatter, useMatterArguments } from "@/api/resources";
 import type { ArgumentItem, ArgumentKind } from "@/api/types";
 import { MatterLink } from "@/components/common/EntityLink";
-import { EmptyState, Icon, PageHeader, SearchField, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { Action, EmptyState, Icon, PageHeader, SearchField, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { MatterPicker, type MatterOption } from "@/components/common/MatterPicker";
+import { useConfirm } from "@/components/common/Confirm";
+import { ArgumentDialog, useDeleteArgument } from "@/components/matter/MatterEditors";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Pager, QueryState } from "@/components/common/QueryState";
 import { formatDate } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 
 // The bank holds three kinds of record; the filter keeps them apart.
@@ -37,7 +44,7 @@ function ArgumentDetail({ a }: { a: ArgumentItem }) {
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow text-wine">{a.kind ? KIND_LABEL[a.kind] : "Argument"}</span>
-          <span className="font-mono-id text-[11px] text-muted-foreground">{a.argument_id}</span>
+          <span className="font-mono-id text-xs text-muted-foreground">{a.argument_id}</span>
         </div>
         <h2 className="mt-1 text-balance font-display text-2xl leading-snug text-ink">{a.issue}</h2>
         {proposition && <p className="mt-2 text-[15px] font-medium text-foreground">{proposition}</p>}
@@ -46,19 +53,19 @@ function ArgumentDetail({ a }: { a: ArgumentItem }) {
 
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-3">
         <div>
-          <dt className="meta-label text-[11px]">Forum</dt>
+          <dt className="meta-label text-xs">Forum</dt>
           <dd className="mt-0.5 text-sm">{a.court || "—"}</dd>
         </div>
         <div>
-          <dt className="meta-label text-[11px]">Outcome</dt>
+          <dt className="meta-label text-xs">Outcome</dt>
           <dd className="mt-0.5 text-sm">{a.outcome || (a.matter_status ? <StatusLabel status={a.matter_status} /> : "—")}</dd>
         </div>
         <div>
-          <dt className="meta-label text-[11px]">Opened</dt>
+          <dt className="meta-label text-xs">Opened</dt>
           <dd className="mt-0.5 text-sm tabular-nums">{formatDate(a.opened_date)}</dd>
         </div>
         <div>
-          <dt className="meta-label text-[11px]">Led by</dt>
+          <dt className="meta-label text-xs">Led by</dt>
           <dd className="mt-0.5 text-sm">
             {a.lead_member_id ? (
               <Link to={`/people/${a.lead_member_id}`} className="hover:text-wine hover:underline">
@@ -70,11 +77,11 @@ function ArgumentDetail({ a }: { a: ArgumentItem }) {
           </dd>
         </div>
         <div>
-          <dt className="meta-label text-[11px]">Practice</dt>
+          <dt className="meta-label text-xs">Practice</dt>
           <dd className="mt-0.5 text-sm">{a.practice_area || "—"}</dd>
         </div>
         <div>
-          <dt className="meta-label text-[11px]">Matter type</dt>
+          <dt className="meta-label text-xs">Matter type</dt>
           <dd className="mt-0.5 text-sm">{a.matter_type || "—"}</dd>
         </div>
       </dl>
@@ -93,7 +100,7 @@ function ArgumentDetail({ a }: { a: ArgumentItem }) {
             {docs.map((d) => (
               <li key={d.document_id}>
                 <Link to={`/documents/${d.document_id}`} className="flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-secondary/60">
-                  <Icon name="description" className="shrink-0 text-amber-600" style={{ fontSize: 16 }} />
+                  <Icon name="description" className="shrink-0 text-muted-foreground" style={{ fontSize: 16 }} />
                   <span className="min-w-0 flex-1 truncate">{d.title}</span>
                   {d.document_type && <span className="shrink-0 text-xs text-muted-foreground">{d.document_type}</span>}
                 </Link>
@@ -102,6 +109,8 @@ function ArgumentDetail({ a }: { a: ArgumentItem }) {
           </ul>
         )}
       </div>
+
+      {a.kind === "disputes" && <ArgumentActions a={a} />}
 
       <Link
         to={`/ask?q=${encodeURIComponent(`What did we argue on ${a.issue}?`)}&scope=${encodeURIComponent(a.matter_code)}&scopeType=matter`}
@@ -113,11 +122,90 @@ function ArgumentDetail({ a }: { a: ArgumentItem }) {
   );
 }
 
+/** Edit or delete a recorded argument (only for people who may edit its matter). */
+function ArgumentActions({ a }: { a: ArgumentItem }) {
+  const matter = useMatter(a.matter_id);
+  const level = matter.data?.my_level;
+  const mayEdit = level === "edit" || level === "manage";
+  const [editing, setEditing] = useState(false);
+  const remove = useDeleteArgument(a.matter_id);
+  const confirm = useConfirm();
+  if (!mayEdit) return null;
+  return (
+    <div className="flex flex-wrap gap-2" data-testid="argument-actions">
+      <Action icon="edit" onClick={() => setEditing(true)} testId="argument-edit">Edit</Action>
+      <Action
+        icon="delete"
+        testId="argument-delete"
+        onClick={async () => {
+          if (await confirm({ title: "Delete this argument?", description: "It is removed from the matter and from the firm's argument bank.", confirmLabel: "Delete argument" }))
+            await remove(a.argument_id);
+        }}
+      >
+        Delete
+      </Action>
+      {editing && <EditArgument a={a} onClose={() => setEditing(false)} />}
+    </div>
+  );
+}
+
+function EditArgument({ a, onClose }: { a: ArgumentItem; onClose: () => void }) {
+  const args = useMatterArguments(a.matter_id);
+  const current = args.data?.find((x) => x.argument_id === a.argument_id);
+  if (!current) return null; // opens once the matter's own copy (with its version) has loaded
+  return <ArgumentDialog matterId={a.matter_id} arg={current} open onClose={onClose} />;
+}
+
+/** Record an argument from the bank: choose the matter first, then write it. */
+function RecordArgument() {
+  const [open, setOpen] = useState(false);
+  const [matter, setMatter] = useState<MatterOption | null>(null);
+  const [writing, setWriting] = useState(false);
+  const close = () => {
+    setOpen(false);
+    setWriting(false);
+    setMatter(null);
+  };
+  return (
+    <>
+      <Action primary icon="add" onClick={() => setOpen(true)} testId="argument-record">Record an argument</Action>
+      {open && !writing && (
+        <Dialog open onOpenChange={(o) => !o && close()}>
+          <DialogContent className="max-w-md" data-testid="argument-matter-dialog">
+            <DialogHeader>
+              <DialogTitle className="font-display text-2xl">Which matter is it from?</DialogTitle>
+              <DialogDescription>Arguments belong to a matter and follow its access rules.</DialogDescription>
+            </DialogHeader>
+            <MatterPicker value={matter?.matter_id ?? null} onChange={setMatter} testId="argument-matter" />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={close}>Cancel</Button>
+              <Button disabled={!matter} onClick={() => setWriting(true)} data-testid="argument-matter-next">Continue</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      {open && writing && matter && <ArgumentDialog matterId={matter.matter_id} open onClose={close} />}
+    </>
+  );
+}
+
 export function ArgumentsPage() {
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<ArgumentKind | "">("");
   const [page, setPage] = useState(0);
-  const [selectedId, setSelectedId] = useState("");
+  // The chosen record is in the URL (?id=), so a link opens straight to it.
+  const [params, setParams] = useSearchParams();
+  const selectedId = params.get("id") ?? "";
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const isLg = useMediaQuery("(min-width: 1024px)");
+  const setSelectedId = (id: string) => {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("id", id);
+      return next;
+    }, { replace: true });
+    if (!isLg) setSheetOpen(true);
+  };
   const q = useDebounced(query.trim());
   const args = useArguments({ q, kind: kind || undefined, page });
   const counts = args.data?.kinds ?? {};
@@ -132,6 +220,7 @@ export function ArgumentsPage() {
         title="Arguments"
         count={args.data ? `${args.data.total} records` : undefined}
         subtitle="Legal propositions the firm has run, with the forum, outcome and documents behind them."
+        actions={<RecordArgument />}
       />
       <div className="space-y-3">
         <SearchField value={query} onChange={setQuery} placeholder="Search issues, arguments or forums…" testId="arguments-search" />
@@ -187,9 +276,17 @@ export function ArgumentsPage() {
                     );
                   })}
                 </div>
-                <ArgumentDetail a={selected} />
+                {isLg && <ArgumentDetail a={selected} />}
               </div>
               <Pager page={page} total={d.total} pageSize={PAGE_SIZE} onPage={setPage} />
+              <Sheet open={!isLg && sheetOpen} onOpenChange={setSheetOpen}>
+                <SheetContent side="right" className="w-full max-w-full overflow-y-auto p-6 sm:max-w-lg" aria-describedby={undefined}>
+                  <SheetTitle className="sr-only">Argument</SheetTitle>
+                  <div className="pt-6">
+                    <ArgumentDetail a={selected} />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </>
           );
         }}

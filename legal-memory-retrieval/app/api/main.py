@@ -195,6 +195,7 @@ for _router, _prefix in (
     (firm_routes.events_router, "/api/events"),
     (firm_routes.home_router, "/api/home"),
     (firm_routes.calendar_router, "/api/calendar"),
+    (firm_routes.imports_router, "/api/imports"),
 ):
     app.include_router(_router, prefix=_prefix, dependencies=[Depends(resolve_member)])
 # Calendar apps cannot send our headers: the feed's secret token is its only credential.

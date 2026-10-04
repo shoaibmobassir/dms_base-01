@@ -19,3 +19,15 @@ export function formatDateTime(value?: string | null, fallback = "—"): string 
   if (Number.isNaN(d.getTime())) return value;
   return `${formatDate(value)}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
 }
+
+/** "in 3 days", "today", "2 days ago" — relative to the viewer's clock. */
+export function dueLabel(iso: string) {
+  const due = new Date(`${iso.slice(0, 10)}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((due.getTime() - today.getTime()) / 86_400_000);
+  if (days === 0) return "today";
+  if (days === 1) return "tomorrow";
+  if (days === -1) return "yesterday";
+  return days > 0 ? `in ${days} days` : `${-days} days ago`;
+}

@@ -16,8 +16,11 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { Icon } from "@/components/common/primitives";
 import { ApiError, authHeaders } from "@/api/client";
 import { decideAllEdits, decideEdit, exportEdits } from "@/api/chat";
+import { addComment } from "@/api/editor";
 import type { AskInputItem, Attachment, ChatEvent, EditProposal } from "@/api/types";
 import { cn } from "@/lib/utils";
 
@@ -148,16 +151,16 @@ export function StepTimeline({ events, streaming }: { events: ChatEvent[]; strea
                 ) : st.state === "failed" ? (
                   <XCircle className="h-3.5 w-3.5 text-destructive" />
                 ) : st.state === "done" ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success-ink" />
                 ) : (
                   <CircleDashed className="h-3.5 w-3.5 text-muted-foreground" />
                 )}
               </span>
               <div className="min-w-0">
                 <div className={cn("text-[12px]", st.state === "info" ? "text-muted-foreground" : "text-foreground/85")}>{st.label}</div>
-                {st.detail && <div className="text-[11px] text-muted-foreground">{st.detail}</div>}
+                {st.detail && <div className="text-xs text-muted-foreground">{st.detail}</div>}
                 {st.files && st.files.length > 0 && (
-                  <ul className="mt-0.5 space-y-px text-[11px] text-muted-foreground">
+                  <ul className="mt-0.5 space-y-px text-xs text-muted-foreground">
                     {st.files.slice(0, 5).map((f) => (
                       <li key={f} className="truncate">
                         · {f}
@@ -244,7 +247,7 @@ export function AskInputsCard({
                 value={answers[it.id] ?? ""}
                 onChange={(e) => setAnswers((a) => ({ ...a, [it.id]: e.target.value }))}
                 data-testid="ask-text"
-                className="w-full resize-none rounded-md border border-border bg-card px-2 py-1.5 text-[13px] focus:outline-hidden"
+                className="w-full resize-none rounded-md border border-border bg-card px-2 py-1.5 text-[13px] focus:outline-none"
               />
             )}
             {it.kind === "documents" && (
@@ -276,7 +279,7 @@ export function AskInputsCard({
                   Attach a document
                 </button>
                 {(files[it.id] ?? []).map((f) => (
-                  <span key={f.document_id} className="rounded bg-secondary px-1.5 py-0.5 text-[11px]">
+                  <span key={f.document_id} className="rounded bg-secondary px-1.5 py-0.5 text-xs">
                     {f.filename}
                   </span>
                 ))}
@@ -332,6 +335,33 @@ export function EditProposalsCard({
   const [shown, setShown] = useState(EDITS_PAGE);
   const canSave = Boolean(sessionId && messageId);
   const accepted = edits.filter((e) => e.status === "accepted").length;
+  // A PDF cannot be changed in place, so accepting an edit would change nothing: offer comments instead.
+  const isPdf = group.filename.toLowerCase().endsWith(".pdf");
+  const [commenting, setCommenting] = useState(false);
+  const [commented, setCommented] = useState(0);
+  const addAsComments = async () => {
+    setCommenting(true);
+    let done = 0;
+    try {
+      for (const edit of edits) {
+        if (!edit.original) continue;
+        const what = edit.proposed ? `Suggested wording: ${edit.proposed}` : "Suggest deleting this passage.";
+        await addComment(group.document_id, {
+          body: `${what}${edit.reason ? `\n${edit.reason}` : ""}`,
+          page: edit.page ?? 1,
+          rects: [],
+          quote: edit.original,
+        });
+        done += 1;
+      }
+      setCommented(done);
+      toast.success(`${done} comment${done === 1 ? "" : "s"} added to ${group.filename}`);
+    } catch (err) {
+      toast.error(errorText(err, "Could not add the comments."));
+    } finally {
+      setCommenting(false);
+    }
+  };
 
   const decideAll = async (status: EditProposal["status"]) => {
     if (!canSave) {
@@ -395,65 +425,90 @@ export function EditProposalsCard({
           <span className="truncate">Suggested edits · {group.filename}</span>
           <span className="shrink-0 font-normal text-muted-foreground">({edits.length})</span>
         </div>
-        {edits.length > 1 && (
+        {edits.length > 1 && !isPdf && (
           <div className="ml-auto flex shrink-0 items-center gap-1">
             <button type="button" disabled={busy === "all"} onClick={() => void decideAll("accepted")}
-              className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-secondary" data-testid="edits-accept-all">
+              className="rounded-md border border-border px-2 py-0.5 text-xs hover:bg-secondary" data-testid="edits-accept-all">
               Accept all
             </button>
             <button type="button" disabled={busy === "all"} onClick={() => void decideAll("rejected")}
-              className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-secondary" data-testid="edits-reject-all">
+              className="rounded-md border border-border px-2 py-0.5 text-xs hover:bg-secondary" data-testid="edits-reject-all">
               Reject all
             </button>
           </div>
         )}
-        <button
+        {!isPdf && <button
           type="button"
           disabled={!canSave || accepted === 0 || exporting}
           onClick={() => void exportDocx()}
           data-testid="edits-export"
-          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
         >
           {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-          Word file ({accepted})
-        </button>
+          Apply to Word ({accepted})
+        </button>}
       </div>
+      {isPdf && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-warning-soft px-3 py-2 text-xs text-warning-ink" data-testid="edits-pdf-note">
+          <span className="min-w-0 flex-1">This is a PDF. It cannot be changed in place, so accepting these edits would change nothing.</span>
+          {commented > 0 ? (
+            <Link
+              to={`/documents/${encodeURIComponent(group.document_id)}?panel=comments`}
+              className="shrink-0 rounded-md border border-border bg-card px-2 py-1 font-medium text-foreground hover:bg-secondary"
+            >
+              {commented} comments added. Open
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled={commenting}
+              onClick={() => void addAsComments()}
+              data-testid="edits-as-comments"
+              className="shrink-0 rounded-md bg-primary px-2 py-1 font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {commenting ? "Adding…" : "Add as comments"}
+            </button>
+          )}
+        </div>
+      )}
       <ul className="divide-y divide-border">
         {edits.slice(0, shown).map((edit, i) => (
           <li key={edit.id} className="space-y-1.5 px-3 py-2.5" data-testid="edit-card" data-status={edit.status}>
-            <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <span>
                 Edit {i + 1}
                 {edit.page ? ` · page ${edit.page}` : ""}
-                {!edit.located && <span className="ml-1 text-amber-700 dark:text-amber-400">· passage not found in document</span>}
+                {!edit.located && <span className="ml-1 text-warning-ink">· passage not found in document</span>}
               </span>
               {edit.status !== "pending" && (
-                <span className={cn("font-semibold", edit.status === "accepted" ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground")}>
+                <span className={cn("font-semibold", edit.status === "accepted" ? "text-success-ink" : "text-muted-foreground")}>
                   {edit.status === "accepted" ? "Accepted" : "Rejected"}
                 </span>
               )}
             </div>
             {edit.original && (
-              <p className="rounded bg-red-500/10 px-2 py-1 text-[12.5px] text-red-900 line-through decoration-red-400/70 dark:text-red-200">
+              <p className="rounded bg-destructive/10 px-2 py-1 text-[12.5px] text-destructive line-through decoration-destructive/60">
                 {edit.original}
               </p>
             )}
             {edit.proposed ? (
-              <p className="rounded bg-emerald-500/10 px-2 py-1 text-[12.5px] text-emerald-900 dark:text-emerald-200">{edit.proposed}</p>
+              <p className="rounded bg-success-soft px-2 py-1 text-[12.5px] text-success-ink">{edit.proposed}</p>
             ) : (
-              <p className="text-[11px] italic text-muted-foreground">Delete this passage.</p>
+              <p className="text-xs italic text-muted-foreground">Delete this passage.</p>
             )}
             {edit.reason && <p className="text-[12px] text-muted-foreground">{edit.reason}</p>}
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+              {!isPdf && (
+              <>
               <button
                 type="button"
                 disabled={busy === edit.id}
                 onClick={() => void decide(edit, edit.status === "accepted" ? "pending" : "accepted")}
                 data-testid="edit-accept"
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium",
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium",
                   edit.status === "accepted"
-                    ? "border-emerald-600/40 bg-emerald-600 text-white"
+                    ? "border-success/40 bg-success text-white"
                     : "border-border hover:bg-secondary",
                 )}
               >
@@ -465,18 +520,20 @@ export function EditProposalsCard({
                 onClick={() => void decide(edit, edit.status === "rejected" ? "pending" : "rejected")}
                 data-testid="edit-reject"
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium",
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium",
                   edit.status === "rejected" ? "border-border bg-secondary text-foreground" : "border-border hover:bg-secondary",
                 )}
               >
                 <X className="h-3 w-3" /> Reject
               </button>
+              </>
+              )}
               {edit.located && (
                 <button
                   type="button"
                   onClick={() => onView(edit)}
                   data-testid="edit-view"
-                  className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
                 >
                   <Eye className="h-3 w-3" /> Show in document
                 </button>
@@ -516,16 +573,61 @@ export function FileCard({ documentId, filename, onOpen }: { documentId: string;
     <div className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-secondary/30 px-3 py-2" data-testid="generated-file">
       <FileText className="h-5 w-5 shrink-0 text-wine" />
       <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">{filename}</span>
-      <button type="button" onClick={onOpen} className="rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-secondary hover:text-foreground">
+      <button type="button" onClick={onOpen} className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground">
         Open
       </button>
       <button
         type="button"
         onClick={() => void downloadFile(documentId, filename)}
-        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[11px] font-medium hover:bg-secondary"
+        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium hover:bg-secondary"
       >
         <Download className="h-3 w-3" /> Download
       </button>
+    </div>
+  );
+}
+
+// ── comments the Assistant left ───────────────────────────────────────────────
+
+export type CommentsAddedEvent = {
+  document_id: string;
+  filename: string;
+  comments: { comment_id: string; quote: string; body: string; page?: number | null }[];
+};
+
+export function CommentsAddedCard({ event }: { event: CommentsAddedEvent }) {
+  const [open, setOpen] = useState(false);
+  const shown = open ? event.comments : event.comments.slice(0, 3);
+  return (
+    <div className="mb-3 rounded-lg border border-border" data-testid="comments-added">
+      <div className="flex items-center justify-between gap-2 border-b border-border bg-secondary/40 px-3 py-2">
+        <div className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-ink">
+          <Icon name="add_comment" className="text-wine" style={{ fontSize: 16 }} />
+          <span className="truncate">
+            {event.comments.length} comment{event.comments.length === 1 ? "" : "s"} added to {event.filename}
+          </span>
+        </div>
+        <Link
+          to={`/documents/${encodeURIComponent(event.document_id)}?panel=comments&comment=${encodeURIComponent(event.comments[0]?.comment_id ?? "")}`}
+          className="shrink-0 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium hover:bg-secondary"
+          data-testid="comments-added-open"
+        >
+          Open on the document
+        </Link>
+      </div>
+      <ul className="divide-y divide-border">
+        {shown.map((c) => (
+          <li key={c.comment_id} className="px-3 py-2 text-sm">
+            <p className="line-clamp-2 border-l-2 border-warning/60 pl-2 text-xs italic text-muted-foreground">“{c.quote}”</p>
+            <p className="mt-1">{c.body}</p>
+          </li>
+        ))}
+      </ul>
+      {event.comments.length > 3 && (
+        <button type="button" onClick={() => setOpen((v) => !v)} className="w-full border-t border-border py-2 text-xs text-muted-foreground hover:text-foreground">
+          {open ? "Show fewer" : `Show all ${event.comments.length}`}
+        </button>
+      )}
     </div>
   );
 }

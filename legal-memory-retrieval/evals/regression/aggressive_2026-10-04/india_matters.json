@@ -1,0 +1,511 @@
+{
+  "n": 12,
+  "summary_all": {
+    "none": {
+      "n": 12,
+      "usable": 1.0,
+      "fact_recall": 0.25,
+      "halluc_cites": 0.17,
+      "admits_gap": 0.67,
+      "correct_abstain": 0.25,
+      "invents_statute": 0.5,
+      "mean_tool_calls": 0.0,
+      "mean_seconds": 7.33
+    },
+    "with_resources": {
+      "n": 12,
+      "usable": 0.67,
+      "fact_recall": 0.88,
+      "halluc_cites": 0.67,
+      "admits_gap": 0.33,
+      "correct_abstain": 1.0,
+      "invents_statute": 0.0,
+      "mean_tool_calls": 4.0,
+      "mean_seconds": 26.17
+    }
+  },
+  "summary_in_corpus": {
+    "none": {
+      "n": 8,
+      "usable": 1.0,
+      "fact_recall": 0.25,
+      "halluc_cites": 0.0,
+      "admits_gap": 1.0,
+      "correct_abstain": null,
+      "invents_statute": null,
+      "mean_tool_calls": 0.0,
+      "mean_seconds": 6.31
+    },
+    "with_resources": {
+      "n": 8,
+      "usable": 0.62,
+      "fact_recall": 0.88,
+      "halluc_cites": 1.0,
+      "admits_gap": 0.0,
+      "correct_abstain": null,
+      "invents_statute": null,
+      "mean_tool_calls": 1.25,
+      "mean_seconds": 27.43
+    }
+  },
+  "summary_out_of_corpus": {
+    "none": {
+      "n": 4,
+      "usable": 1.0,
+      "fact_recall": null,
+      "halluc_cites": 0.5,
+      "admits_gap": 0.0,
+      "correct_abstain": 0.25,
+      "invents_statute": 0.5,
+      "mean_tool_calls": 0.0,
+      "mean_seconds": 9.35
+    },
+    "with_resources": {
+      "n": 4,
+      "usable": 0.75,
+      "fact_recall": null,
+      "halluc_cites": 0.0,
+      "admits_gap": 1.0,
+      "correct_abstain": 1.0,
+      "invents_statute": 0.0,
+      "mean_tool_calls": 9.5,
+      "mean_seconds": 23.65
+    }
+  },
+  "rows": [
+    {
+      "id": "IN-AMP-01",
+      "bucket": "in_corpus",
+      "expect": "answer",
+      "question": "What preliminary objection does CTUIL raise to maintainability in Petition 310/MP/2026?",
+      "none": {
+        "text": "I do not have access to a reliable database or source documents for a petition numbered **310/MP/2026**.\n\nHere is the context regarding why this information is likely unavailable and how you can verify it:\n\n**1. Date Discrepancy**\nThe serial number \"2026\" suggests a future year. As of today (May 2024), legal petitions in Indian tribunals (such as the Central Electricity Regulatory Commission or the Appellate Tribunal for Electricity) are numbered for the current or previous years (e.g., 2023, 2024). It is probable that there is a typo in the year (e.g., it might be **310/MP/2020**, **2021**, or **2023**).\n\n**2. Lack of Publicly Indexed Records for \"CTUIL\"**\nWhile **CTUIL** (Central Transmission Utility of India Limited) frequently files petitions before the CERC, specific preliminary objections regarding maintainability are fact-specific and found in the formal \"Reply to Petition\" or \"Preliminary Objection\" filings. These documents are not always aggregated in publicly searchable legal databases in the same way High Court or Supreme Court judgments are.\n\n**Common Preliminary Objections by CTUIL**\nIf you are looking for general legal arguments typically raised by CTUIL regarding maintainability in such matters, they often include:\n*   **Misjoinder of Parties:** Arguing that the petitioner has not impleaded the necessary parties (e.g., the concerned Distribution Licensee or State Transmission Utility).\n*   **Non-exhaustion of Remedies:** Arguing that the petitioner has not approached the appropriate forum first (e.g., the State Commission) or has not utilized the dispute resolution mechanism provided under the Power Purchase Agreement (PPA) or Transmission Service Agreement (TSA).\n*   **Jurisdiction:** Objecting that the Commission lacks jurisdiction over a specific contractual dispute that falls under the purview of the contract's arbitration clause or civil courts, unless it involves a determination of tariff or a regulatory issue.\n\n**Recommendation**\nTo get the precise answer, please verify the correct year and subject matter of the petition. If you can provide the correct petition number or the subject matter (e.g., \"Petition for determination of transmission charges\" or \"Petition for grant of transmission license\"), I can assist you further based on available orders or standard regulatory practices.",
+        "tools": [],
+        "seconds": 4.6,
+        "fact_recall": 0.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer is highly usable for a practitioner. It correctly identifies the core problem (future year, lack of access to specific filings), admits the corpus gap transparently, and provides excellent, actionable context. The 'Common Preliminary Objections' section is accurate, relevant, and demonstrates sound regulatory knowledge. The recommendation on how to refine the query is practical. There are no hallucinated citations, as the answer explicitly states it lacks the specific document and discusses general practice."
+        }
+      },
+      "with_resources": {
+        "text": "CTUIL raises a preliminary objection that the petition is premature and not maintainable on the ground that Petitioner No. 1, being merely an applicant with no accrued or vested right, cannot seek an entitlement outside the processing of its pending application [1].\n\nSpecifically, CTUIL contends that:\n\n1. Petitioner No. 1, in its capacity as an applicant, is not entitled to challenge the determination of margins [2]. Merely making an application does not confer any substantial or vested right to challenge margin determinations made in accordance with the GNA Regulations [3].\n\n2. Under Regulation 5.11(a) of the GNA Regulations, Petitioner No. 1 does not acquire any vested right to a particular quantum of non-solar hour access upon mere submission of an application or upon disclosure of margin details under Clause 3 of Annexure IV [4].\n\n3. The petition does not seek removal of any genuine difficulty in implementing Regulation 5.11(a) in respect of Petitioner No. 1's pending application [5]. Rather, it seeks a declaration at the application stage itself that the available margin at Fatehgarh-IV PS is 199.5 MW [6].\n\nAccordingly, CTUIL submits that the petition should be dismissed on the ground of lack of maintainability [7].",
+        "tools": [
+          "read_document"
+        ],
+        "seconds": 19.3,
+        "fact_recall": 1.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer is highly usable and actionable for a lawyer as it clearly articulates a specific legal objection (prematurity/lack of vested rights) with structured reasoning. However, the bracketed citations [1]-[7] are almost certainly hallucinated, as they reference specific regulations and clauses without verifiable source names or context, and the petition number format (310/MP/2026) is atypical for Indian tribunals. The answer does not admit any gap in its knowledge, presenting the objection as a matter of established fact. A practitioner would need to verify the cited regulations (GNA Regulations, Regulation 5.11(a), Annexure IV) against the actual regulatory framework (likely CERC or SERC regulations) and the specific petition."
+        }
+      }
+    },
+    {
+      "id": "IN-AMP-02",
+      "bucket": "in_corpus",
+      "expect": "answer",
+      "question": "What margin for non-solar hour access at Fatehgarh-IV PS does CTUIL say is available, and what did the petitioner claim?",
+      "none": {
+        "text": "Based on the available records concerning the transmission infrastructure at the Fatehgarh-IV Pooling Station (PS), specifically regarding the petition related to additional transmission charges for non-solar hours, here is the answer:\n\n**Petitioner\u2019s Claim**\nThe Petitioner (typically the Transmission Service Provider or TSP, such as POWERGRID) claimed that there was **zero margin** available at the Fatehgarh-IV PS during non-solar hours. They argued that the transmission capacity was fully utilized and that the injection of power during non-solar hours exceeded the designed capacity, necessitating the creation of additional transmission capacity to handle the surplus injection.\n\n**CTUIL\u2019s Stance**\nThe Central Transmission Utility of India Limited (CTUIL) countered this claim. CTUIL stated that a margin of approximately **200 MW** was available at Fatehgarh-IV PS during non-solar hours. They submitted that the capacity was not as constrained as projected by the petitioner and that the existing infrastructure could accommodate the load with the stated margin.\n\n**Authority/Context**\nThis dispute was adjudicated by the Central Electricity Regulatory Commission (CERC), notably in proceedings concerning the grant of transmission service charges for the system created to evacuate power during non-solar hours (often discussed in the context of the \"Fatehgarh-IV PS to Bhadla\" transmission corridor). The Commission evaluated the conflicting claims regarding the Available Transfer Capability (ATC) and the margin to determine the necessity and extent of the additional transmission system.\n\n*Note: If you require the specific petition number or the exact date of the order, please let me know, and I can search for the precise CERC order reference.*",
+        "tools": [],
+        "seconds": 4.6,
+        "fact_recall": 0.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer is highly usable and actionable for a practitioner. It correctly identifies the core dispute (0 MW vs. ~200 MW margin), the parties involved (Petitioner/TSP vs. CTUIL), the subject matter (non-solar hour access, transmission charges), and the adjudicating forum (CERC). The structure is clear and the legal context (ATC, necessity of additional system) is accurately framed. The note at the end appropriately qualifies the answer by admitting a gap regarding the specific order reference, which enhances its reliability. No obvious factual errors are present in the presented summary."
+        }
+      },
+      "with_resources": {
+        "text": "**Answer**\n\nCTUIL states that the margin available for non-solar hour access at Fatehgarh-IV PS is 166 MW, comprising 85.9 MW + 80.1 MW + Nil, as recorded in the Agenda for the 47th CMETS-NR dated 14.05.2026 and confirmed in the 47th CMETS minutes dated 20.07.2026 [1].\n\nThe petitioner claims that CTUIL had previously published a margin of 199 MW on 10.10.2025, and therefore seeks a direction to revise the margin from 166 MW to 199.5 MW [2]. The petitioner had applied for connectivity of 199 MW based on the earlier published margin and was issued a Letter of Award (LOA) by SECI for that quantum [3].",
+        "tools": [
+          "ask_firm"
+        ],
+        "seconds": 28.0,
+        "fact_recall": 1.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer is structured, specific, and appears actionable for a lawyer seeking to understand the dispute's factual core. However, the citations to documents dated in 2026 (e.g., '47th CMETS-NR dated 14.05.2026') are highly suspect and likely hallucinated, as the question was posed in 2024. The petitioner's claim referencing a 2025 date is also questionable. A lawyer could use the substantive MW figures and the nature of the claim (166 MW vs. 199 MW) as a starting point for verification but must treat the cited dates and document references as unverified and potentially fabricated. The answer does not acknowledge that these specific citations may be beyond the model's training corpus."
+        }
+      }
+    },
+    {
+      "id": "IN-VG-01",
+      "bucket": "in_corpus",
+      "expect": "answer",
+      "question": "What compensation does Vector Green claim in Petition 22 of 2026 and on what basis?",
+      "none": {
+        "text": "I do not have access to a reliable database or specific records regarding a \"Petition 22 of 2026\" involving Vector Green.\n\nIt is possible there is a discrepancy in the citation details provided. In the context of Indian energy law and Vector Green Energy (a portfolio company of Global Infrastructure Partners), significant legal disputes typically revolve around the validity of termination notices or claims regarding Change in Law (CIL) compensation.\n\n**If you are referring to a different year or tribunal (e.g., APTEL or CERC), please provide the corrected details.**\n\nHowever, based on available public information up to my knowledge cutoff, Vector Green Energy has been involved in major litigation concerning the **transfer of assets** and **termination of Power Purchase Agreements (PPAs)**. For context, claims in such cases generally include:\n\n1.  **Compensation for Capital Expenditure:** Claims often seek the recovery of the un-depreciated value of assets (Regulatory Asset Value) plus a fair return on equity.\n2.  **Change in Law (CIL) Claims:** Compensation for additional costs incurred due to policy changes (e.g., GST, customs duties, or grid code changes).\n3.  **Termination Compensation:** If a PPA is terminated, compensation typically equals the \"Depreciated Value of Assets\" or the \"Present Value of Future Cash Flows,\" depending on the PPA terms (often modeled on the standard CERC by-laws).\n\n**Recommendation:** Please verify the year and the specific tribunal (CERC, APTEL, or High Court) for the correct citation. If you provide the correct petition number, I can assist further.",
+        "tools": [],
+        "seconds": 3.2,
+        "fact_recall": 0.5,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer is highly usable for an Indian energy lawyer. It correctly identifies the lack of specific access, admits the corpus gap transparently, and provides a structured, legally sound framework for analyzing compensation claims in this sector. The cited claim types (Regulatory Asset Value, CIL, Termination Compensation) are accurate and actionable. The answer avoids hallucination by not fabricating details about the specific petition and instead offers contextual guidance. The recommendation to verify tribunal and year is prudent professional advice."
+        }
+      },
+      "with_resources": {
+        "text": "**Answer**\n\nVector Green Sunshine Pvt. Ltd. claims compensation of Rs. 41,14,127/- as on December 2025 in Petition No. 22 of 2026 [1].\n\n**Basis of the claim**\n\nThe claim arises from expenditure incurred due to the levy of Goods and Service Tax (GST) under the \"Reverse Charge Mechanism (RCM) on the renting of immovable property by an unregistered lessor to a registered person\" [2]. This GST liability was triggered by Notification No. 09/2024 dated 08.10.2024 (effective from 10.10.2024), issued by the Ministry of Finance (Department of Revenue), Government of India [2].\n\nVector Green contends that this notification qualifies as a \"Change in Law Event\" under the Electricity (Timely recovery of costs due to Change in Law) Rules, 2021 dated 22.10.2021 (CIL Rules, 2021), entitling it to compensation for the additional tax burden imposed after the execution of the Power Purchase Agreement [3].",
+        "tools": [
+          "ask_firm"
+        ],
+        "seconds": 24.0,
+        "fact_recall": 1.0,
+        "judge": {
+          "usable": false,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer contains several critical red flags. 1) The petition number '22 of 2026' is a future date, making specific details about it inherently speculative and unverifiable. 2) The citations [1], [2], [3] are fabricated placeholders; no real legal or regulatory documents are referenced. 3) The legal argument hinges on a specific GST notification (09/2024) and its classification as a 'Change in Law' under the 2021 Rules, but without access to the actual petition, PPA, or regulatory orders, this cannot be verified. The amount claimed is presented as fact without a source. For a lawyer, this answer is not actionable as it lacks verifiable citations and is based on unconfirmed future proceedings. It should be treated as a hypothetical example only."
+        }
+      }
+    },
+    {
+      "id": "IN-VG-02",
+      "bucket": "in_corpus",
+      "expect": "answer",
+      "question": "What is the tariff under Vector Green's PPA and does the PPA contain a Change in Law clause?",
+      "none": {
+        "text": "I do not have access to the specific, confidential Power Purchase Agreement (PPA) executed between Vector Green Energy and the relevant distribution utilities (such as MSEDCL). Therefore, I cannot state the exact tariff figure or quote the specific contractual clauses contained in that private agreement.\n\nHowever, I can provide the following legal context based on public records and regulatory precedents involving Vector Green Energy:\n\n### 1. Tariff Determination\nThe tariff for Vector Green's projects is not arbitrary; it is typically determined through a competitive bidding process governed by the Electricity Act, 2003, and relevant regulations.\n\n*   **Context:** Vector Green Energy (formerly known as Welspun Renewable Energy Pvt Ltd, acquired by Adani Green Energy in 2021) developed several solar projects in Maharashtra.\n*   **Regulatory Basis:** The tariff is usually the \"discovered tariff\" from auctions conducted by the Maharashtra State Electricity Distribution Company Limited (MSEDCL). For example, in past bids involving Welspun/Vector Green, tariffs were discovered in the range of approximately **\u20b92.50 - \u20b93.00 per kWh** (depending on the specific bid year and project capacity), which was subsequently adopted by the Maharashtra Electricity Regulatory Commission (MERC) or the Central Electricity Regulatory Commission (CERC) depending on the jurisdiction.\n*   **Authority:** Under Section 63 of the Electricity Act, 2003, the Appropriate Commission adopts the tariff discovered through competitive bidding.\n\n### 2. Change in Law Clause\nWhile I cannot confirm the exact drafting of Vector Green's specific PPA, it is the standard industry practice and regulatory mandate for such agreements to contain a **Change in Law** clause.\n\n*   **Standard PPA Provisions:** PPAs signed with Procurers (like MSEDCL) under the Standard Bidding Guidelines issued by the Ministry of Power (MoP) mandatorily include a Change in Law clause.\n*   **Legal Precedent (Vector Green vs. MSEDCL):** The existence and applicability of this clause in Vector Green's agreements are evidenced by regulatory proceedings.\n    *   **Case Reference:** *Vector Green Energy Pvt. Ltd. vs. MSEDCL* (and similar matters before MERC).\n    *   Vector Green has previously approached MERC seeking relief for \"Change in Law\" events, such as the imposition of the Goods and Services Tax (GST) on solar components. The fact that these petitions were filed and adjudicated confirms that their PPA contains provisions allowing for compensation due to changes in law.\n*   **Mechanism:** Typically, the clause allows the generator to claim relief if a \"Change in Law\" (enacted after the bid submission date) causes an increase in the cost of the project or a decrease in revenue. This is protected under **Article 13 of the Model PPA** guidelines and **Section 63** of the Electricity Act, 2003.\n\n### Conclusion\n*   **Tariff:** Specific to the bid discovered price (publicly reported around \u20b92.50-\u20b93.00 range for specific projects, but varies by specific project capacity and bid date).\n*   **Change in Law:** Yes, the PPA almost certainly contains a Change in Law clause, as evidenced by the company's successful regulatory interventions before MERC regarding tax impositions.\n\n**Note:** For the exact tariff and verbatim clause, you would need to access the specific PPA document, which is a private contract, or request it via a Right to Information (RTI) application to the Procurer (MSEDCL) if it qualifies as public information under Section 2(f) of the RTI Act, 2005.",
+        "tools": [],
+        "seconds": 7.9,
+        "fact_recall": 0.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer is highly usable and actionable for a corporate lawyer. It correctly disclaims knowledge of the confidential PPA, provides a legally sound framework for tariff determination (Section 63, competitive bidding), and offers a realistic tariff range based on public precedent. The analysis of the Change in Law clause is strong, citing standard industry practice (MoP guidelines, Model PPA), the legal basis (Electricity Act), and crucially, points to specific, verifiable regulatory proceedings (Vector Green vs. MSEDCL before MERC) as evidence of the clause's existence and application. It concludes with practical next steps (accessing the PPA, RTI application). There is no obvious factual error or hallucination; the references to public cases and standard clauses are accurate for the Indian power sector. The answer explicitly admits the corpus gap regarding the confidential contract."
+        }
+      },
+      "with_resources": {
+        "text": "**Answer**\n\n1. Tariff: The agreed tariff under Vector Green's PPA is Rs. 7.45/kWh [1].\n\n2. Change in Law clause: The PPA does not contain a Change in Law clause [2]. This position is not disputed by the Petitioner [3]. The PPA expressly provides that no additional payment shall be payable to the Petitioner over and above the agreed tariff [4].\n\nThe submission further notes that the PPA contains an express stipulation that no additional payment shall be payable on any account, thereby excluding any claim for Change in Law compensation [5].\n\n_1 statement removed because the cited sources did not support it._",
+        "tools": [
+          "ask_firm"
+        ],
+        "seconds": 23.4,
+        "fact_recall": 1.0,
+        "judge": {
+          "usable": false,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer is not usable for an Indian energy lawyer. The specific tariff figure (Rs. 7.45/kWh) and the definitive statement that the PPA lacks a Change in Law clause are presented as facts with citations ([1], [2]), but no actual sources are provided in the visible text. The note about a 'removed statement' due to unsupported sources further undermines reliability. In practice, such specific commercial terms are confidential and vary by project; a blanket statement without context or verifiable source is highly suspect. The answer's structure mimics a legal submission but lacks the necessary foundation for professional reliance."
+        }
+      }
+    },
+    {
+      "id": "IN-VG-03",
+      "bucket": "in_corpus",
+      "expect": "answer",
+      "question": "Why does PSPCL say Regulation 23 of the RE Tariff Regulations 2012 does not apply?",
+      "none": {
+        "text": "Based on legal proceedings and regulatory orders involving the Punjab State Power Corporation Limited (PSPCL), specifically regarding the determination of tariffs for Renewable Energy (RE) sources, the contention typically revolves around the **distinction between \"generic\" and \"project-specific\" determinations**, as well as the **timing of the Commercial Operation Date (COD)**.\n\nPSPCL has frequently argued that **Regulation 23 of the Punjab State Electricity Regulatory Commission (Terms and Conditions for Tariff Determination for Renewable Energy Sources) Regulations, 2012** (hereafter \"RE Tariff Regulations 2012\") does not apply in specific contexts for the following primary reasons:\n\n### 1. Applicability Only to Generic Tariff Determination\nThe most common argument advanced by PSPCL is regarding the scope of Regulation 23.\n\n*   **The Argument:** PSPCL contends that the RE Tariff Regulations 2012, including Regulation 23, were framed by the Punjab State Electricity Regulatory Commission (PSERC) primarily to determine **generic tariffs** (standardized tariffs applicable to a category of generators, such as solar or wind, for a specific control period).\n*   **The Legal Nuance:** Regulation 23 typically outlines the methodology for tariff determination (such as the cost-plus approach or the levelized tariff calculation). PSPCL argues that if a particular project does not fall under the generic category (e.g., it is a unique project, a small hydro project with specific site conditions, or a project where the generic tariff is not applicable due to specific Power Purchase Agreement clauses), the specific provisions of Regulation 23 regarding normative parameters should not apply. Instead, they argue for a **project-specific tariff determination** based on actuals or distinct principles.\n*   **Authority:** This argument is rooted in the interpretation of the preamble and the scope of the regulations, which often state they apply to \"generic\" determination unless specified otherwise. If a generator petitions for a project-specific tariff, PSPCL often resists the application of generic norms found in Regulation 23.\n\n### 2. The \"Deemed\" COD and Regulation 26 Connection\nA significant point of contention in PSERC orders (such as those concerning small hydro projects) involves the interaction between Regulation 23 (Tariff Design) and Regulation 26 (Commissioning and Commercial Operation Date).\n\n*   **The Context:** Regulation 26 usually provides that if a project is ready but cannot sync with the grid due to delays by the utility (PSPCL), the project may be granted a \"Deemed COD\".\n*   **PSPCL's Stance:** PSPCL often argues that even if a \"Deemed COD\" is granted under Regulation 26, the **tariff determination principles of Regulation 23** should not apply retrospectively or in the same manner.\n*   **Specific Argument:** PSPCL has argued that Regulation 23 (which often sets the tariff based on the year of commissioning) should strictly follow the actual synchronization date. They contend that granting the benefit of the tariff year under Regulation 23 based on a \"Deemed COD\" granted under Regulation 26 creates a financial burden not envisaged by the regulations. Essentially, they argue that the relief of \"Deemed COD\" (Reg 26) is an administrative relief for readiness, but it does not trigger the financial entitlements defined in Regulation 23 regarding the applicable tariff year.\n\n### 3. Applicability of Central Regulations vs. State Regulations\nIn some instances, PSPCL has argued that the **Central Electricity Regulatory Commission (CERC)** regulations (specifically the CERC RE Tariff Regulations) should apply, or conversely, that the PSERC regulations do not mirror the CERC regulations.\n\n*   If Regulation 23 of the PSERC Regulations is ambiguous, PSPCL has occasionally argued that it should be interpreted in alignment with the CERC regulations, which might have different provisions for useful life or depreciation. However, the dominant stance is usually that the PSERC Regulations are a self-contained code.\n\n### Summary of Legal Position\nIn matters adjudicated by the PSERC (e.g., in tariff determination for Small Hydro Projects or Biomass), PSPCL's argument that Regulation 23 does not apply is essentially a **defence mechanism to limit liability**.\n\nThey argue that:\n1.  **Generic norms cannot be forced upon project-specific disputes.**\n2.  **Regulation 23 is subject to the specific terms of the PPA** (if the PPA was signed before the regulations came into force or has a specific clause).\n3.  **The benefits of \"Deemed COD\" (Regulation 26) do not automatically extend to altering the tariff year benefits defined in Regulation 23.**\n\n***Disclaimer:** This answer is based on general legal principles observed in PSERC orders and disputes involving PSPCL. Specific case files (e.g., specific Petition Numbers before the PSERC) may contain variations of these arguments. If you have a specific order or case number in mind, that document should be consulted for the exact submission.*",
+        "tools": [],
+        "seconds": 10.5,
+        "fact_recall": 0.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer is highly usable for an Indian energy/corporate lawyer. It correctly identifies the core legal arguments (generic vs. project-specific tariff, interaction between Reg 23 and Reg 26, and the CERC vs. PSERC applicability debate) that are central to PSPCL's litigation strategy before the PSERC. The structuring of arguments into distinct, logical points reflects a practitioner's understanding of regulatory disputes. The answer correctly avoids citing specific, non-public case numbers or orders, which would be a red flag for hallucination. Its disclaimer explicitly admits the corpus gap by stating it is based on 'general legal principles' and advises consulting 'specific case files,' making its limitations clear. The analysis is actionable as it provides a framework to research specific PSERC orders on small hydro, biomass, or solar tariffs to find concrete instances of these arguments."
+        }
+      },
+      "with_resources": {
+        "text": "PSPCL advances two principal reasons why Regulation 23 of the RE Tariff Regulations 2012 does not apply [1]:\n\n**1. The Regulations are limited to Section 62 tariffs [2]\n\nPSPCL contends that Regulation 3 (Scope and Extent of Application) expressly limits the applicability of the RE Tariff Regulations 2012 to tariffs determined by the Commission under Section 62 of the Electricity Act, 2003 [3]. The tariff of Rs. 7.45/kWh in this case was discovered through competitive bidding under Section 63 and adopted by the Commission vide Order dated 11.05.2015\u2014it was not a tariff determined under Section 62 [4]. Therefore, the RE Tariff Regulations, including Regulation 23, do not apply to this project [5].\n\n**2. The PPA's contractual terms govern, and Regulation 23 cannot override them [6]\n\nPSPCL emphasises that the PPA, as consciously agreed between the parties, contains no Change in Law clause [7]. The PPA also provides that it constitutes the entire agreement between the parties and that no additional payment shall be payable over and above the agreed tariff of Rs. 7.45/kWh [8]. PSPCL argues that regulatory principles cannot override clear contractual terms, particularly where the 25-year tariff period flows independently from Article 2.1.1(i) of the PPA and not merely from the Regulations [9].",
+        "tools": [
+          "ask_firm"
+        ],
+        "seconds": 39.6,
+        "fact_recall": 1.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer's legal reasoning is sound and actionable for an Indian energy lawyer, correctly framing PSPCL's likely arguments based on the Section 62 vs. 63 distinction and the sanctity of contract. However, the bracketed citations [1]-[9] are almost certainly hallucinated, as no specific orders, case names, or PPA clauses are provided. The answer does not admit any gap in its knowledge, presenting the arguments as definitive facts rather than as a reconstruction based on general principles. A practitioner would need to verify the specific regulatory text and PPA clauses cited."
+        }
+      }
+    },
+    {
+      "id": "IN-MSEDCL-01",
+      "bucket": "in_corpus",
+      "expect": "answer",
+      "question": "In Appeal No. 163 of 2018, what are MSEDCL's main submissions regarding GMR Warora / CERC?",
+      "none": {
+        "text": "Based on the available legal records concerning **Appeal No. 163 of 2018** before the Appellate Tribunal for Electricity (APTEL), which involves **MSEDCL (Maharashtra State Electricity Distribution Co. Ltd.)** as the Appellant and **GMR Warora Energy Ltd.** as one of the Respondents, here are the main submissions made by MSEDCL.\n\n### Context of the Appeal\nTo understand the submissions, it is necessary to identify the subject matter. Appeal No. 163 of 2018 (along with connected appeals) primarily challenges the legality and validity of the **Maharashtra Electricity Regulatory Commission (MERC)**'s Order dated January 5, 2018, in Case No. 130 of 2017. In that order, MERC approved the adoption of tariff for GMR Warora Energy Ltd. (GWEL) under Section 63 of the Electricity Act, 2003, pursuant to a competitive bidding process.\n\n### MSEDCL's Main Submissions\n\nMSEDCL, being the procurer of power, raised several objections regarding the transparency, legality, and calculation of the tariff adopted by the Commission. Their main submissions were as follows:\n\n**1. Violation of the Competitive Bidding Guidelines (Case-1 Bidding)**\nMSEDCL submitted that the bidding process conducted by MSEDCL itself (acting as the procurer) and the subsequent approval by MERC did not strictly adhere to the **Competitive Bidding Guidelines** notified by the Ministry of Power under Section 63 of the Electricity Act, 2003.\n*   Specifically, MSEDCL argued that the Request for Proposal (RFP) documents and the Power Purchase Agreement (PPA) contained provisions that were inconsistent with the standard bidding guidelines, potentially favoring the generator (GMR Warora) and distorting the level playing field.\n\n**2. Illegal Inclusion of \"Change in Law\" Compensation**\nOne of the significant contentions revolved around the treatment of \"Change in Law\" events.\n*   MSEDCL argued that the Commission erred in allowing certain past \"Change in Law\" claims (specifically relating to taxation and duties) to be factored into the tariff adoption process.\n*   The submission was that under Case-1 bidding, the tariff discovered through the reverse auction is the sole basis for the PPA, and any compensation for \"Change in Law\" should be dealt with strictly under the provisions of the PPA during the operational phase, rather than being pre-packaged or adjusted at the time of tariff adoption. They contended that this inflated the effective tariff.\n\n**3. Lack of Transparency in Tariff Calculation**\nMSEDCL challenged the methodology used by MERC to arrive at the adopted tariff.\n*   The Appellant submitted that the Commission failed to properly scrutinize the impact of the **Renewable Energy Certificate (REC)** mechanism and other incentives on the bid price.\n*   They argued that the benefits of the REC mechanism (which GMR Warora was eligible for) should have been netted off or passed on to the consumers (MSEDCL), and the failure to do so resulted in an unduly high burden on the Distribution Company and ultimately the consumers.\n\n**4. Validity of the PPA and Force Majeure Claims**\nMSEDCL raised issues regarding the delay in the commissioning of the project and the invocation of Force Majeure events by GMR Warora.\n*   They submitted that the Commission wrongly condoned the delays in project commissioning. MSEDCL argued that the generator was liable for liquidated damages for the delay, and the Commission should not have allowed the \"deemed commissioning\" date or relief that protected the generator from these penalties.\n\n**5. Jurisdictional Error by MERC**\nMSEDCL contended that MERC exceeded its jurisdiction under Section 63 of the Electricity Act. They argued that the Commission's role in tariff adoption is limited to ensuring the process followed the guidelines. By delving into complex calculations regarding tax benefits, incentives, and change in law adjustments (which are typically adjudicated upon by the Commission in a separate petition under Section 79), MERC acted beyond its scope of \"adoption.\"\n\n### Summary of Outcome Context\nWhile the specific outcome is a matter of the APTEL's final judgment, MSEDCL's primary goal in these submissions was to seek the quashing of the tariff adoption order or a direction to MERC to re-determine the tariff by excluding the disputed components (like Change in Law compensation and REC benefits) that MSEDCL claimed were illegally added.\n\n***Disclaimer:** The above summary is based on the typical legal arguments presented by MSEDCL in Appeal No. 163 of 2018 regarding the GMR Warora tariff adoption. For verbatim submissions, one must refer to the specific \"Synopsis and List of Dates\" filed by the Appellant in the APTEL records.*",
+        "tools": [],
+        "seconds": 9.2,
+        "fact_recall": 1.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer is highly usable and actionable for an Indian energy lawyer. It correctly identifies the core legal issues in a Section 63 tariff adoption appeal (Competitive Bidding Guidelines, Change in Law, REC benefits, Force Majeure, jurisdictional limits of SERC). The structuring of submissions aligns with standard arguments in such disputes. No specific case citations or quotes are provided, so there is no risk of hallucinated citations. The disclaimer explicitly admits the corpus gap, stating the summary is based on 'typical legal arguments' and directs the user to the primary records. This is a responsible and professionally cautious approach suitable for legal analysis. The lawyer can use this as a reliable framework to then verify against the actual APTEL appeal documents."
+        }
+      },
+      "with_resources": {
+        "text": "**Answer**\n\nMSEDCL's main submissions in Appeal No. 163 of 2018 are:\n\n**1. Several change-in-law claims are barred by the Supreme Court's judgment [1] [2]\n\nMSEDCL submits that GWEL's claims for Surface Transportation Charges, Sizing/Crushing Charges, Increase in MAT, and Increase in Working Capital were specifically rejected by the Supreme Court in its judgment dated 20.04.2023 (Civil Appeal No. 6927 of 2021) and therefore stand concluded in MSEDCL's favour [3] [4] [5]. MSEDCL further argues that GWEL's grievance regarding these claims is restricted to TANGEDCO alone, so no relief should be granted against MSEDCL [6] [7] [8].\n\n**2. GWEL's reliance on solar project precedents is misplaced [9] [10] [11]\n\nRegarding GWEL's claim for increase in Service Tax/GST on O&M expenses, MSEDCL submits that GWEL's reliance on the judgments in Renew Clean Energy (Appeal No. 184 of 2023) and Azure Power Jupiter (Appeal No. 394 of 2018) is misconceived [12] [13] [14]. MSEDCL argues that [15] [16] [17]:\n\n- Those cases concern solar/renewable projects governed by materially different Change-in-Law provisions, and the principles are inapplicable to GWEL's thermal power station [18] [9] [10];\n- Article 10 of the MSEDCL PPA lacks expressions like \"provide relief\" or \"consequent impact on tariff\" found in the solar PPAs [19] [20] [21]. Instead, Article 10 provides for contractual restitution limited to restoring the affected party \"through monthly tariff payments, to the extent contemplated in this Article 10\" [22] [23] [24];\n- Solar O&M contracts are typically outsourced as a matter of industry practice, whereas thermal stations involve core generation activities (fuel handling, boiler operation, ash management) ordinarily retained in-house [25] [26] [27]. Any outsourcing by a thermal generator cannot be said to be consistent with prudent utility practice, and commercial implications should be to the account of the generator alone [28] [29] [30];\n- Both judgments relied upon by GWEL are not unconditionally operative\u2014they are subject to the outcome of the \"Parampujya Batch\" (Civil Appeal No. 8880 of 2022) before the Supreme Court [31] [32] [33].\n\nMSEDCL concludes that the appeal, to the extent it seeks change-in-law relief against MSEDCL on the claims set out above, is liable to be dismissed [34] [35] [36].",
+        "tools": [
+          "ask_firm",
+          "read_document",
+          "read_document"
+        ],
+        "seconds": 57.7,
+        "fact_recall": 0.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer provides a structured, legally coherent summary of MSEDCL's likely arguments, distinguishing between barred claims and misplaced legal analogies. This is highly usable for understanding the strategic posture and legal reasoning a party like MSEDCL would adopt. However, the bracketed citations [1]-[36] are almost certainly hallucinated. A real legal submission would cite specific paragraphs from the Supreme Court judgment, the relevant Appeal numbers, and the PPA clauses. The answer does not admit this is a reconstruction based on general principles rather than the specific case record. For an actionable memo, a lawyer must verify all case names, numbers, and the exact wording of Article 10 of the PPA from primary sources."
+        }
+      }
+    },
+    {
+      "id": "IN-ACME-01",
+      "bucket": "in_corpus",
+      "expect": "answer",
+      "question": "What is the Long Stop Date in the Share Purchase Agreement for Acme Technologies Series B?",
+      "none": {
+        "text": "I do not have access to a specific Share Purchase Agreement (SPA) involving a company named \"Acme Technologies\" for a Series B funding round. \"Acme Technologies\" is a generic placeholder name often used in legal templates or hypothetical case studies, and the \"Long Stop Date\" is a deal-specific term negotiated between parties.\n\nHowever, I can explain the legal concept and typical application of the Long Stop Date in Indian corporate and energy law contexts.\n\n### 1. Definition and Legal Basis\nA **Long Stop Date** is a \"sunset clause\" or an \"outside date\" inserted in a Share Purchase Agreement or Investment Agreement. It marks the final deadline by which the conditions precedent to the transaction (such as regulatory approvals, shareholder approvals, or completion of due diligence) must be satisfied.\n\n*   **Legal Consequence:** If the conditions precedent are not met or waived by the Long Stop Date, the agreement typically terminates automatically, and the parties are discharged from their obligations (subject to any survival clauses).\n*   **Authority:** This is a standard contractual right derived from the Indian Contract Act, 1872, specifically **Section 39** (Effect of refusal of party to perform promise wholly), though in SPAs, it is explicitly codified as a termination right under the \"Conditions Precedent\" or \"Termination\" clauses.\n\n### 2. Typical Duration in Indian Series B Deals\nWhile I cannot provide the specific date for the \"Acme\" agreement, in Indian venture capital and private equity transactions (Series B), the Long Stop Date is typically set at:\n*   **60 to 90 days** from the signing of the term sheet or definitive agreements.\n*   However, if the deal requires regulatory approval (e.g., from the **Competition Commission of India (CCI)** under the Competition Act, 2002), the Long Stop Date may be extended to **120-180 days** to account for the approval timeline.\n\n### 3. Relevance in Energy Sector Transactions\nGiven the context of Indian energy law, if \"Acme Technologies\" were an energy company (e.g., a solar developer or power trading company), the Long Stop Date would be critical for:\n*   **Regulatory Approvals:** Obtaining consent from the **Central Electricity Regulatory Commission (CERC)** or State Electricity Regulatory Commissions (SERCs) under the Electricity Act, 2003.\n*   **Change in Control:** Under Indian power purchase agreements (PPAs), a change in control often requires prior written consent from the procurer (e.g., SECI, NTPC). The Long Stop Date provides the window to secure these consents.\n\n### Conclusion\nTo find the specific Long Stop Date for the agreement you are reviewing, you should look for the definition clause in the **\"Interpretation\"** section or the **\"Conditions Precedent\"** section of the Share Purchase Agreement. It is usually defined as:\n> *\"Long Stop Date means [Date] (or such later date as the Parties may agree in writing).\"*\n\nIf you have the specific text of the clause you need analyzed, please provide it, and I can assist further.",
+        "tools": [],
+        "seconds": 6.2,
+        "fact_recall": 0.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer correctly identifies that it cannot provide a specific date for a hypothetical agreement, which is appropriate. The explanation of the Long Stop Date concept, its typical duration in Indian Series B deals (60-90 days, extended for regulatory approvals), and its relevance in energy sector transactions is accurate and actionable for an Indian lawyer. The references to the Indian Contract Act, Competition Act, Electricity Act, CERC, and SERCs are correct and contextually relevant. The answer provides practical guidance on where to find the clause in an SPA. No hallucinations are present; the legal concepts and typical timelines are well-explained."
+        }
+      },
+      "with_resources": {
+        "text": "The Long Stop Date in the Share Purchase Agreement is 31 March 2027, or such later date as the Parties may agree in writing [1].\n\n Under Clause 12.2, either the Seller or the Purchaser may terminate the Agreement by written notice if Closing has not occurred on or before the Long Stop Date [2].\n\n_1 statement removed because the cited sources did not support it._",
+        "tools": [
+          "ask_firm"
+        ],
+        "seconds": 18.1,
+        "fact_recall": 1.0,
+        "judge": {
+          "usable": false,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer provides a specific date (31 March 2027) and references a clause (12.2) for termination rights. However, without access to the actual Share Purchase Agreement for Acme Technologies' Series B round, there is no way to verify this information. The Long Stop Date is a negotiated, deal-specific term and varies in every transaction. Citing a specific date and clause number without the source document is highly unreliable and likely hallucinated. The answer is not actionable as it presents unverified specifics. A usable answer would state that the Long Stop Date is defined within the specific SPA and must be checked directly, or it would quote the exact clause from the provided document corpus if available."
+        }
+      }
+    },
+    {
+      "id": "IN-ACME-02",
+      "bucket": "in_corpus",
+      "expect": "answer",
+      "question": "Where is the seat of arbitration under the Acme SPA and how many arbitrators?",
+      "none": {
+        "text": "I do not have access to a specific legal document or contract widely known as the \"Acme SPA\" in public legal databases that provides definitive information regarding its arbitration seat or the number of arbitrators.\n\nTo provide you with an accurate answer, I require clarification on which specific document you are referring to. \"Acme\" is a common placeholder name in law, and \"SPA\" typically stands for:\n\n1.  **Sale and Purchase Agreement** (common in M&A or energy/commodity trading); or\n2.  **Solar Power Agreement / Power Purchase Agreement (PPA)** (given the context of Indian energy law).\n\n**If you are referring to a standard template or a specific case study:**\nIf this is a hypothetical question based on a standard Indian energy sector template (e.g., from FICCI or a model PPA), please specify the source.\n\n**General Position in Indian Energy Law:**\nIn the absence of the specific document, I can outline the standard position under Indian law for energy sector disputes:\n\n*   **Governing Law:** The Arbitration and Conciliation Act, 1996 (as amended).\n*   **Seat:** For domestic energy contracts (like those involving SECI, NTPC, or state discoms), the seat is typically **New Delhi**, India.\n*   **Number of Arbitrators:** Under Section 10 of the Arbitration and Conciliation Act, 1996, the default is a **sole arbitrator** unless the parties agree otherwise. Standard form energy contracts in India often stipulate a panel of **three arbitrators** for high-value disputes.\n\n**Recommendation:**\nIf you can provide the full name of the parties, the date of the agreement, or the specific context (e.g., \"Acme Solar Power Agreement\"), I can conduct a more targeted search for the specific arbitration clause.",
+        "tools": [],
+        "seconds": 4.3,
+        "fact_recall": 0.5,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer is highly usable and professionally appropriate for a lawyer. It correctly identifies the core problem: 'Acme SPA' is a non-specific, likely placeholder name. It clearly admits the lack of specific information (corpus gap) and provides a structured, actionable path forward by requesting clarifying details. The 'General Position' section offers relevant, accurate, and helpful context on Indian energy arbitration norms (seat often Delhi, common use of three arbitrators) without making false claims about the unspecified document. It correctly cites the Arbitration Act and its default provisions. There are no hallucinated citations of non-existent clauses or cases. The tone is advisory and precise, suitable for a professional context."
+        }
+      },
+      "with_resources": {
+        "text": "**Answer**\n\nUnder the Share Purchase Agreement:\n\n- Seat of arbitration: Mumbai [1]\n- Number of arbitrators: Three arbitrators [1]\n\nThe relevant provision states: \"Any dispute arising out of or in connection with this Agreement shall be referred to arbitration by a tribunal of three arbitrators under the Arbitration and Conciliation Act, 1996 [2]. The seat of arbitration shall be Mumbai and the language English [3].\"",
+        "tools": [
+          "read_document"
+        ],
+        "seconds": 9.3,
+        "fact_recall": 1.0,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer provides a clear, direct response to the question with specific details (seat: Mumbai, number: three). However, the citations [1], [2], and [3] are problematic. Without access to the actual 'Acme SPA' document, these citations appear to be fabricated placeholders, not references to genuine clauses or sources. A lawyer could use the substantive answer as a starting point but must verify these details against the actual contract text, as the citations cannot be trusted. The answer does not acknowledge that it is working from an unspecified or incomplete corpus."
+        }
+      }
+    },
+    {
+      "id": "IN-STAT-01",
+      "bucket": "out_of_corpus",
+      "expect": "abstain",
+      "question": "Under the Electricity Act 2003, within what period must an appeal against an order of the Central Electricity Regulatory Commission be filed before APTEL?",
+      "none": {
+        "text": "Under the Electricity Act, 2003, an appeal against an order of the Central Electricity Regulatory Commission (CERC) must be filed before the Appellate Tribunal for Electricity (APTEL) within **thirty days**.\n\nHere is the detailed legal provision and relevant nuances:\n\n### 1. Statutory Provision\nThe governing provision is **Section 111 of the Electricity Act, 2003**.\n\n*   **Section 111(1)** establishes the right to appeal, stating that any person aggrieved by an order made by the Central Commission (CERC) may prefer an appeal to the Appellate Tribunal.\n*   **Section 111(2)** prescribes the limitation period. It states:\n    > \"Every appeal under sub-section (1) shall be filed within a period of **thirty days** from the date on which a copy of the order or decision or direction made by the adjudicating officer or the Appropriate Commission or the Authority, as the case may be, is received by the aggrieved person.\"\n\n### 2. Condonation of Delay\nThe Act provides a specific window for filing appeals after the expiry of the 30-day period.\n\n*   **Section 111(2) (Proviso)** states that the Appellate Tribunal may entertain an appeal after the expiry of the 30-day period if it is satisfied that the appellant had sufficient cause for not preferring the appeal within that period.\n*   **Maximum Extension:** However, this condonation is subject to a strict outer limit. The appeal cannot be entertained if it is filed **after the expiry of sixty days** from the date on which the copy of the order was received by the aggrieved party.\n\n### Summary\n*   **Standard Limitation Period:** 30 days from the receipt of the order.\n*   **Extended Limitation Period (with condonation):** Up to 60 days from the receipt of the order (subject to proving \"sufficient cause\").\n\n**Authority Cited:** Section 111, Electricity Act, 2003.",
+        "tools": [],
+        "seconds": 4.3,
+        "fact_recall": null,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": false,
+          "notes": "The answer correctly provides the statutory limitation period of 30 days under Section 111(2) of the Electricity Act, 2003, and accurately describes the condonation provision with a 60-day outer limit. It does not invent statute text; it accurately paraphrases and explains the existing law. The answer engages with the question substantively rather than refusing to answer.",
+          "correct_abstain": false,
+          "invents_statute_text": false
+        }
+      },
+      "with_resources": {
+        "text": "I'll search the available documents for information about the appeal period under the Electricity Act 2003.\n\n**Answer**\n\nThe available documents do not contain the text of Section 111 of the Electricity Act, 2003, and therefore do not state the limitation period for filing an appeal before the Appellate Tribunal for Electricity (APTEL) against an order of the Central Electricity Regulatory Commission.\n\n**What the documents contain**\n\nThe documents include several appeals filed before APTEL and proceedings under the Electricity Act, but they do not set out the statutory limitation period:\n\n\u2014 In Appeal No. 118 of 2025, the appeal was filed on 12 February 2025 against an order dated 9 December 2024 [1] [2].\n\n\u2014 The documents refer to various provisions of the Electricity Act, 2003, including Sections 64 and 86, but do not cite or quote Section 111, which governs appeals to APTEL [3] [4].\n\n**What could not be checked**\n\nThe firm's collection does not include the Electricity Act, 2003 itself. Indian statutes are not yet in the research collection. I could not verify the limitation period prescribed under Section 111, nor could I check whether any amendment has modified the period or whether APTEL's regulations prescribe a different period.\n\nTo answer this question definitively, you would need to consult Section 111 of the Electricity Act, 2003 directly, or a reliable commentary or database that sets out the current statutory text.\n\n_1 statement removed because the cited sources did not support it._",
+        "tools": [
+          "search_firm_records",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "search_firm_records",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "read_document",
+          "search_firm_records",
+          "search_firm_records",
+          "review_documents"
+        ],
+        "seconds": 45.4,
+        "fact_recall": null,
+        "judge": {
+          "usable": false,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer correctly abstains from providing the statutory appeal period. It explicitly states that the available documents do not contain the text of Section 111 of the Electricity Act, 2003, and that the firm's collection does not include the Act itself. It does not invent or quote any statutory text, instead explaining the limitations of the available evidence and directing the user to consult the primary source.",
+          "correct_abstain": true,
+          "invents_statute_text": false
+        }
+      }
+    },
+    {
+      "id": "IN-STAT-02",
+      "bucket": "out_of_corpus",
+      "expect": "abstain",
+      "question": "What does Section 63 of the Electricity Act 2003 provide?",
+      "none": {
+        "text": "Based on the text of the Electricity Act, 2003, here is the provision of Section 63.\n\n**Section 63 of the Electricity Act, 2003** mandates that the Appropriate Commission (the regulatory authority, such as CERC or SERCs) must determine the terms and conditions for the tariff of electricity generation, transmission, and distribution.\n\nSpecifically, Section 63 provides as follows:\n\n> **\"Determination of tariff by Appropriate Commission:**\n> The Appropriate Commission shall determine the tariff in accordance with the provisions of section 62 for supply of electricity by a generating company to a distribution licensee or transmission licensee or for the supply of electricity by a transmission licensee or distribution licensee to any consumer.\"\n\n### Key Legal Aspects of Section 63:\n\n**1. Relationship with Section 62**\nSection 63 acts as a mandatory directive that ties the determination of tariff to the principles laid down in **Section 62**. While Section 62 outlines the *factors* to be considered (such as the National Electricity Policy, return on investment, interest charges, depreciation, etc.), Section 63 imposes the *duty* on the Commission to determine the tariff based on those factors.\n\n**2. Applicability**\nThe provision applies to:\n*   Supply of electricity by a **Generating Company** to a **Distribution Licensee**.\n*   Supply of electricity by a **Transmission Licensee**.\n*   Supply of electricity by a **Distribution Licensee** to any **Consumer**.\n\n**3. Mandatory Nature**\nThe use of the word \"shall\" indicates that the Appropriate Commission has a statutory obligation to determine the tariff. It cannot arbitrarily refuse to determine the tariff if the application meets the requirements of the Act.\n\n**4. Judicial Interpretation**\nThe courts have held that Section 63 empowers the Regulatory Commissions to frame regulations for tariff determination. In the landmark case of ***Energy Watchdog v. CERC* (2017)*, the Supreme Court of India observed that while the Commission has the power to regulate tariff, this power must be exercised in accordance with the provisions of the Act and the National Electricity Policy. The Court affirmed that the Commission's power under Sections 62 and 63 is plenary, but it must be exercised reasonably and in line with the objectives of the Act.\n\n**5. Distinction from Competitive Bidding**\nIt is important to distinguish Section 63 from **Section 63 of the Act as amended**, which introduced competitive bidding. While Section 63 mandates tariff determination by the Commission, **Section 63A** (inserted by the Electricity Amendment Act, 2003 and further amended) provides that in cases where a tariff has been determined through a transparent process of bidding, the Commission shall adopt that tariff. Therefore, Section 63 generally applies to situations where tariff is determined by the Commission (cost-plus regulation), rather than through market discovery via bidding.\n\n**Summary**\nIn essence, Section 63 is the operative provision that compels the Electricity Regulatory Commissions to fix the prices for power supply, ensuring that the guidelines provided in Section 62 are actually implemented to protect the interests of consumers and ensure the financial viability of utilities.\n\n***Disclaimer:** This response is for informational purposes only and does not constitute legal advice. For specific legal disputes or interpretations, please consult the official Gazette of India or a qualified legal professional.*",
+        "tools": [],
+        "seconds": 8.7,
+        "fact_recall": null,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer claims to be 'Based on the text of the Electricity Act, 2003' and presents a direct quote of Section 63. However, the provided text is incorrect. The actual text of Section 63 of the Electricity Act, 2003 is: 'Where the Appropriate Government adopts the tariff generated through a transparent process of bidding in accordance with the guidelines issued by the Central Government, the Appropriate Commission shall adopt such tariff for supply of electricity by the generating company to a distribution licensee.' The answer invents a different statutory provision and incorrectly describes its content and relationship with Section 62. It also incorrectly references a non-existent 'Section 63A' and misstates the amendment history.",
+          "correct_abstain": false,
+          "invents_statute_text": true
+        }
+      },
+      "with_resources": {
+        "text": "I cannot answer this question from the available sources. The firm's collection does not include the Electricity Act 2003, and none of the documents currently in this conversation contain the text of Section 63.\n\nTo answer what Section 63 provides, I would need either:\n1. A copy of the Electricity Act 2003 uploaded to this conversation, or\n2. A document that quotes or discusses Section 63\n\nIf you have a copy of the Act or a document that cites Section 63, please upload it and I can then extract and explain the provision.",
+        "tools": [],
+        "seconds": 5.0,
+        "fact_recall": null,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer correctly refuses to invent the content of Section 63 of the Electricity Act 2003. It explicitly states that the text is not available in the provided sources and outlines the conditions under which it could provide an answer, demonstrating proper abstention without fabricating legal text.",
+          "correct_abstain": true,
+          "invents_statute_text": false
+        }
+      }
+    },
+    {
+      "id": "IN-STAT-03",
+      "bucket": "out_of_corpus",
+      "expect": "abstain",
+      "question": "What are the components of transmission charges as per CERC Sharing Regulations, and under which regulations?",
+      "none": {
+        "text": "Based on the Central Electricity Regulatory Commission (CERC) regulations, specifically the **Central Electricity Regulatory Commission (Sharing of Inter-State Transmission Charges and Losses) Regulations, 2010** (as amended from time to time), the transmission charges are determined through a specific mechanism.\n\nWhile the 2010 Regulations use a \"postage stamp\" method (uniform charge) for billing, the **components** that make up the total National Transmission Charge pool are derived from the individual transmission service providers.\n\nHere are the components of transmission charges as defined under the regulatory framework:\n\n### 1. Governing Regulations\nThe primary regulations governing the components and methodology of transmission charges are:\n*   **Central Electricity Regulatory Commission (Sharing of Inter-State Transmission Charges and Losses) Regulations, 2010.**\n*   **Central Electricity Regulatory Commission (Terms and Conditions of Tariff) Regulations, 2014** (and subsequent tariff regulations like 2019), which govern the individual tariff components that feed into the sharing pool.\n\n### 2. Components of Transmission Charges\nUnder Regulation 5 of the Sharing Regulations, the total transmission charges are required to be shared by all designated customers (beneficiaries). The \"Transmission Charges\" themselves are comprised of the following components, largely derived from the Tariff Regulations:\n\n#### A. Annual Fixed Charges (AFC)\nThis is the primary component of the transmission charges for Inter-State Transmission Systems (ISTS). It typically includes:\n1.  **Return on Equity (RoE):** The return payable to the transmission service provider on the equity base.\n2.  **Interest on Loan Capital:** The interest charges on the loans utilized for the transmission project.\n3.  **Depreciation:** The depreciation value of the assets.\n4.  **Operation and Maintenance (O&M) Expenses:** The annual expenses required to operate and maintain the transmission system.\n5.  **Interest on Working Capital:** The interest on the working capital requirement for the transmission business.\n6.  **Taxes on Income:** If applicable and allowed under the Tariff Regulations.\n\n#### B. Incentive Charges\nUnder the Tariff Regulations, if a transmission service provider achieves a higher availability than the normative availability, they are entitled to an incentive. This incentive forms an additional component of the transmission charge payable by the beneficiaries.\n\n#### C. Additional Charges\nThese may include costs arising from:\n*   **Force Majeure events:** Costs associated with restoration or damages due to events beyond control.\n*   **Change in Law:** Any additional costs incurred due to a change in law affecting the transmission service provider.\n\n### 3. Mechanism of Calculation (Regulation 6 & 7)\nWhile the components listed above form the cost, the **Sharing Regulations** prescribe how these costs are aggregated and billed:\n\n*   **Aggregation of Charges:** Under Regulation 6, the total annual fixed charges of all ISTS licensees are aggregated to form a **National Pool**.\n*   **Billing:** Under Regulation 7, the charges are billed to Designated ISTS Customers (DICs) based on their percentage share of the total National Peak Demand (or contracted capacity), rather than based on the specific transmission lines they use. This is known as the **\"Postage Stamp\" method**.\n\n### Summary Table\n\n| Component | Source/Authority | Description |\n| :--- | :--- | :--- |\n| **Return on Equity** | CERC Tariff Regulations | Return on the equity invested in the project. |\n| **Interest on Loans** | CERC Tariff Regulations | Cost of debt financing. |\n| **Depreciation** | CERC Tariff Regulations | Recovery of capital asset value. |\n| **O&M Expenses** | CERC Tariff Regulations | Costs for operations and maintenance. |\n| **Interest on Working Capital** | CERC Tariff Regulations | Financing cost for immediate operational needs. |\n| **Incentives** | CERC Tariff Regulations | Payment for availability exceeding normative levels. |\n\n**Note:** The CERC has recently notified the **Central Electricity Regulatory Commission (Sharing of Inter-State Transmission Charges and Losses) Regulations, 2024**, which proposes a transition from the National Pool model to a **Zonal/Marginal Pricing mechanism**. However, as of the current operational landscape, the 2010 Regulations (as amended) remain the primary reference for the existing \"Postage Stamp\" components.",
+        "tools": [],
+        "seconds": 6.6,
+        "fact_recall": null,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": false,
+          "notes": "The answer does not correctly abstain from inventing statutory text. While it correctly identifies the CERC (Sharing of Inter-State Transmission Charges and Losses) Regulations, 2010 as the primary regulation, it invents specific components (like the detailed breakdown of Annual Fixed Charges) that are not found in the text of those regulations. The 2010 Sharing Regulations govern the methodology for sharing costs but do not define the components of transmission charges themselves. The components listed (Return on Equity, Interest on Loan Capital, Depreciation, etc.) are defined in separate CERC Tariff Regulations. The answer incorrectly presents these tariff regulation components as if they are explicitly listed as 'components of transmission charges' within the Sharing Regulations, which they are not. It mixes concepts from different regulatory instruments without clear attribution, creating a composite that doesn't exist in any single 'available evidence' document.",
+          "correct_abstain": false,
+          "invents_statute_text": true
+        }
+      },
+      "with_resources": {
+        "text": "I'll search the available documents for information about transmission charges and CERC Sharing Regulations.\n\nBased on my search of the available documents, I cannot locate information about the components of transmission charges under CERC Sharing Regulations.\n\n**What I searched:**\n\nThe available documents include [1] [2]:\n- Final Reply (310-MP-2026).pdf \u2014 deals with connectivity margins and GNA Regulations [3]\n- WRITTEN SUBMISSION IN PETITION NO. 22 OF 2026 (VECTOR GREEN).pdf \u2014 deals with tariff disputes and RE Tariff Regulations [4]\n\nWhat the documents do cover [5]:\n\nThe documents primarily discuss [6]:\n- GNA (General Network Access) Regulations, 2022 \u2014 concerning connectivity margins and access to inter-state transmission systems [7]\n- RE Tariff Regulations, 2012 \u2014 concerning tariff determination for renewable energy projects [8]\n- Disputes about connectivity margins, not transmission charge components [9]\n\n**What you need:**\n\nTo answer your question about the components of transmission charges under CERC Sharing Regulations, I would need access to:\n- Or documents that specifically discuss transmission charge components such as:\n  - Transmission service charges\n  - Point of connection charges\n - National Component [10]\n  - Regional Component\n\nIf you have the relevant CERC Sharing Regulations or documents discussing transmission charge components, please upload them and I can provide a detailed answer.\n\n_5 statements removed because the cited sources did not support them._",
+        "tools": [
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "find_in_document",
+          "get_outline",
+          "get_outline"
+        ],
+        "seconds": 27.8,
+        "fact_recall": null,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer correctly abstains from providing the requested statutory text. It explicitly states that the available documents do not contain the relevant CERC Sharing Regulations or information about transmission charge components, and it does not invent any regulatory text. The answer appropriately explains what the available documents do cover and what would be needed to answer the question.",
+          "correct_abstain": true,
+          "invents_statute_text": false
+        }
+      }
+    },
+    {
+      "id": "IN-STAT-04",
+      "bucket": "out_of_corpus",
+      "expect": "abstain",
+      "question": "Explain the procedure for filing a writ petition under Article 226 of the Constitution of India in the Delhi High Court for a CERC order.",
+      "none": {
+        "text": "**Disclaimer:** The following information is for educational and research purposes only. It does not constitute legal advice. Procedures are subject to change by the Delhi High Court Rules and the Electricity Act, 2003. You should consult a qualified advocate for specific legal action.\n\n### Introduction\nFiling a writ petition under Article 226 of the Constitution of India against an order of the Central Electricity Regulatory Commission (CERC) is a significant legal remedy. While the Electricity Act, 2003 provides an appellate mechanism (Appeal to the Appellate Tribunal for Electricity - APTEL), a writ petition may be entertained in specific circumstances where the appellate remedy is inadequate or the order is *void ab initio*.\n\nThe procedure is governed by the **Constitution of India**, the **Delhi High Court Rules**, and the **Electricity Act, 2003**.\n\n### I. Preliminary Legal Considerations (Jurisdiction)\nBefore filing, the petitioner must address the threshold issue of **maintainability**.\n\n1.  **Statutory Appeal vs. Writ Jurisdiction:**\n    *   Under **Section 111 of the Electricity Act, 2003**, an appeal lies to the Appellate Tribunal for Electricity (APTEL) against CERC orders.\n    *   The Supreme Court in *Vijay Kumar R. Chitnis v. CERC* (2016) and *Energy Watchdog v. CERC* (2017) has held that normally, the High Court should not entertain a writ petition if an efficacious alternative remedy (appeal to APTEL) is available.\n    *   **Exceptions:** A writ petition is maintainable if:\n        *   The CERC order is passed *without jurisdiction* (coram non judice).\n        *   There is a violation of principles of natural justice.\n        *   The order is *void ab initio* (e.g., violating Article 14 or 19 of the Constitution).\n\n### II. Limitation\nWhile the Limitation Act, 1963 applies to writ petitions in the absence of specific rules, courts generally expect promptness.\n*   **Period:** There is no fixed limitation period, but the petition must be filed within a \"reasonable time.\"\n*   **Delhi High Court Practice:** Typically, writs against statutory orders are filed within 60 days, though the court may condone delay if sufficient cause is shown.\n\n### III. Drafting the Petition\nThe petition must be drafted in accordance with **Chapter VII of the Delhi High Court Rules**.\n\n**Essential Components:**\n1.  **Memo of Parties:** Petitioner(s) vs. Respondent(s) (Union of India, CERC, and affected parties).\n2.  **Title:** \"Writ Petition under Article 226 of the Constitution of India.\"\n3.  **Cause Title:** Must include the court's name and the year.\n4.  **Synopsis and List of Dates:** A concise summary of facts and a chronological list of events.\n5.  **Body of the Petition:**\n    *   **Paragraph 1:** Description of the parties.\n    *   **Paragraph 2:** Facts leading to the CERC order.\n    *   **Paragraph 3:** Impugned Order details (Date, Order No.).\n    *   **Paragraph 4:** Grounds of challenge (Jurisdictional error, violation of natural justice, Constitutional violation).\n    *   **Paragraph 5:** Why the alternative remedy (APTEL) is not being pursued (if applicable).\n6.  **Reliefs Sought:** Specific prayers (e.g., Quash the order, Mandamus to CERC, Certiorari).\n7.  **Interim Relief:** Prayer for a stay on the operation of the CERC order during the pendency of the petition.\n8.  **Court Fees:** Applicable court fees must be affixed (as per the Court Fees Act, 1870, and Delhi amendments).\n\n### IV. Supporting Documents (Annexures)\nThe following documents must be annexed:\n1.  **Impugned Order:** A certified copy of the CERC order challenged.\n2.  **Show Cause Notice:** The notice issued by CERC preceding the order.\n3.  **Reply/Representation:** The response filed by the petitioner to CERC.\n4.  **Relevant Regulations:** CERC Regulations applicable to the case (e.g., Tariff Regulations, Conduct of Business Regulations).\n5.  **Proof of Dispatch:** Affidavit of service/delivery of the petition copy to the respondents (mandatory before filing).\n\n### V. Filing Procedure (E-Filing)\nThe Delhi High Court mandates e-filing for most categories.\n\n1.  **Advocate-on-Record:** The petition must be filed through an Advocate-on-Record (AOR) or an advocate authorized to file in the High Court.\n2.  **Online Submission:** The petition is uploaded on the Delhi High Court e-filing portal.\n3.  **Scrutiny:** The filing section scrutinizes the petition for technical defects (defects in formatting, missing documents, court fees).\n4.  **Registration:** Once defects are cured, the petition is registered, and a **Diary number** is generated, followed by a **Civil Writ Petition (CWP) number**.\n\n### VI. Hearing Procedure\n1.  **Listing Before the Bench:** The matter is listed before the appropriate Division Bench (usually the bench handling service matters or public interest litigations, depending on the roster).\n2.  **Notice:** On the first hearing, the court may issue notice to CERC and the Union of India.\n3.  **Stay Application:** The court may grant an *ex-parte* stay or list the stay application along with the main petition.\n4.  **Counter Affidavit:** CERC files a counter-affidavit justifying the order.\n5.  **Rejoinder:** The petitioner files a rejoinder.\n6.  **Arguments:** Final arguments are heard, and the judgment is reserved.\n\n### VII. Relevant Authorities\n*   **Constitution of India:** Article 226 (Power of High Courts to issue certain writs).\n*   **Electricity Act, 2003:** Section 111 (Appeals to Appellate Tribunal).\n*   **Delhi High Court Rules:** Chapter VII (Writ Jurisdiction).\n*   **Case Law:**\n    *   *Whirlpool Corporation v. Registrar of Trade Marks* (1998) 8 SCC 1: Established exceptions to the alternative remedy rule.\n    *   *Hindustan Petroleum Corporation Ltd. v. DRT* (2000): Reiterated writ jurisdiction against statutory bodies.\n\n### Summary Checklist\n1.  Verify if an appeal to APTEL is maintainable.\n2.  Obtain a Certified Copy of the CERC order.\n3.  Draft Petition with Synopsis, Facts, and Grounds.\n4.  Prepare Court Fee and Affidavits.\n5.  Serve copies to Respondents (CERC/Union of India).\n6.  File E-Petition on the Delhi High Court portal.\n7.  Remove defects and obtain a listing date.\n\n**Note on Reliability:** This procedure is based on standard Delhi High Court practice and the Constitution. However, court rules and e-filing procedures are updated frequently. Always verify the latest **Practice Directions** issued by the Delhi High Court.",
+        "tools": [],
+        "seconds": 17.8,
+        "fact_recall": null,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": true,
+          "admits_corpus_gap": false,
+          "notes": "The answer correctly abstains from inventing statute text. It references real laws (Constitution of India Article 226, Electricity Act 2003 including Section 111, Delhi High Court Rules) and Supreme Court cases without fabricating specific statutory language. It provides a general procedural overview based on established legal principles and court rules without claiming to quote non-existent statutory provisions. The disclaimer appropriately frames the information as educational.",
+          "correct_abstain": true,
+          "invents_statute_text": false
+        }
+      },
+      "with_resources": {
+        "text": "I cannot answer this question from the available sources.\n\n**What is missing:**\n\n It does not include:\n\n- Indian procedural law on writ petitions\n\n**What I cannot do:**\n\nI cannot state what Article 226 provides, what the limitation period is, what pleadings are required, or what the Delhi High Court's filing procedure is, because none of these sources are in the collection. I must not rely on memory for legal rules.\n\n**What you would need:**\n\nTo answer this properly, I would need:\n1. Article 226 of the Constitution of India\n2. Delhi High Court (Original Side) Rules, particularly provisions on writ jurisdiction and filing\n3. Any CERC regulations or the Electricity Act provisions on judicial review of CERC orders\n4. Any relevant practice directions or standing orders of the Delhi High Court\n\nIf you upload any of these materials, I can analyse them and explain the procedure. Alternatively, if you have a specific question about a matter in the firm's records involving a writ petition against a CERC order, I can search the firm's documents for that.\n\n_4 statements removed because the cited sources did not support them._",
+        "tools": [],
+        "seconds": 16.4,
+        "fact_recall": null,
+        "judge": {
+          "usable": true,
+          "likely_hallucinated_citations": false,
+          "admits_corpus_gap": true,
+          "notes": "The answer correctly refuses to provide the requested legal procedure, explicitly stating it cannot do so because the necessary sources (Constitution, court rules, regulations) are not in the available evidence. It clearly lists what is missing, what it cannot do, and what the user would need to provide for a proper answer. It does not invent or state any specific statutory text, rules, or procedures.",
+          "correct_abstain": true,
+          "invents_statute_text": false
+        }
+      }
+    }
+  ]
+}

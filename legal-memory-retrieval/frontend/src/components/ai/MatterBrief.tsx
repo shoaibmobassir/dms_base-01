@@ -28,11 +28,11 @@ function StatusPill({ status }: { status?: string | null }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider",
-        open ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-secondary text-muted-foreground",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wider",
+        open ? "bg-success-soft text-success-ink" : "bg-secondary text-muted-foreground",
       )}
     >
-      <span className={cn("h-1.5 w-1.5 rounded-full", open ? "bg-emerald-500" : "bg-muted-foreground")} />
+      <span className={cn("h-1.5 w-1.5 rounded-full", open ? "bg-success" : "bg-muted-foreground")} />
       {status}
     </span>
   );
@@ -42,7 +42,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   if (children == null || children === "") return null;
   return (
     <div className="min-w-0">
-      <dt className="meta-label text-[11px]">{label}</dt>
+      <dt className="meta-label text-xs">{label}</dt>
       <dd className="mt-0.5 text-sm text-foreground">{children}</dd>
     </div>
   );
@@ -124,7 +124,7 @@ function MatterDetail({ card }: { card: MatterCard }) {
                     <span className="block truncate text-sm font-medium text-foreground group-hover:text-wine">
                       {p.name}
                       {p.role_on_matter?.toLowerCase() === "lead" && (
-                        <span className="ml-1.5 rounded bg-wine px-1 py-px align-middle text-[10px] font-semibold uppercase text-primary-foreground">Lead</span>
+                        <span className="ml-1.5 rounded bg-wine px-1 py-px align-middle text-xs font-semibold uppercase text-primary-foreground">Lead</span>
                       )}
                     </span>
                     <span className="block truncate text-xs text-muted-foreground">{[p.role, p.office].filter(Boolean).join(" · ")}</span>
@@ -149,7 +149,7 @@ function MatterDetail({ card }: { card: MatterCard }) {
                     {d.title}
                     {d.court && <span className="text-muted-foreground"> · {d.court}</span>}
                   </span>
-                  <span className={cn("shrink-0 text-xs font-medium", days < 0 ? "text-destructive" : days <= 14 ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground")}>
+                  <span className={cn("shrink-0 text-xs font-medium", days < 0 ? "text-destructive" : days <= 14 ? "text-warning-ink" : "text-muted-foreground")}>
                     {days < 0 ? `${-days} days overdue` : days === 0 ? "Today" : `in ${days} days`}
                   </span>
                 </li>
@@ -174,7 +174,7 @@ function MatterDetail({ card }: { card: MatterCard }) {
                     onClick={() => panel?.openDocument(d.document_id, { title: d.title })}
                     className="flex w-full items-baseline gap-3 px-3 py-2 text-left hover:bg-secondary/60"
                   >
-                    <Icon name="description" className="shrink-0 self-center text-amber-600" style={{ fontSize: 16 }} />
+                    <Icon name="description" className="shrink-0 self-center text-muted-foreground" style={{ fontSize: 16 }} />
                     <span className="min-w-0 flex-1 truncate text-sm text-foreground">{d.title}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">{[d.document_type, formatDate(d.doc_date)].filter(Boolean).join(" · ")}</span>
                   </button>
@@ -221,7 +221,7 @@ function MatterHeading({ card, as = "h2" }: { card: MatterCard; as?: "h2" | "h3"
   return (
     <div className="min-w-0">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono-id text-[11px] text-muted-foreground">{card.matter_code}</span>
+        <span className="font-mono-id text-xs text-muted-foreground">{card.matter_code}</span>
         <StatusPill status={card.status} />
       </div>
       <H className={cn("mt-1 font-display leading-snug text-ink", as === "h2" ? "text-xl" : "text-base")}>{card.title}</H>
@@ -244,7 +244,7 @@ export function MatterBrief({ cards }: { cards: MatterCard[] }) {
     const card = cards[0];
     return (
       <section className="rounded-lg border border-border bg-card p-5" data-testid="matter-brief">
-        <div className="meta-label mb-3 text-[11px] text-wine">The matter</div>
+        <div className="meta-label mb-3 text-xs text-wine">The matter</div>
         <div className="mb-5">
           <MatterHeading card={card} />
         </div>

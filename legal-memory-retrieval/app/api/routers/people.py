@@ -31,6 +31,7 @@ def people_list(caller: str | None = Depends(resolve_member)) -> dict:
                            AND lower(coalesce(m.status, 'open')) = 'open'
                            AND {ACL_CLAUSE}) AS current_matters
                 FROM members mb
+                WHERE mb.active
                 ORDER BY mb.is_lawyer DESC, mb.role, mb.name
                 """,
                 {"member_id": caller},
@@ -69,7 +70,7 @@ def person_detail(
             cur.execute(
                 """
                 SELECT member_id, name, role, practice_areas, specializations,
-                       office, joined_year, is_lawyer
+                       office, joined_year, is_lawyer, active
                 FROM members WHERE member_id = %(mid)s
                 """,
                 {"mid": member_id},

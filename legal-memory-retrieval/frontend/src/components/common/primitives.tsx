@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -6,13 +6,21 @@ export function Icon({
   name,
   className,
   style,
+  ...rest
 }: {
   name: string;
   className?: string;
   style?: CSSProperties;
-}) {
+} & Omit<HTMLAttributes<HTMLSpanElement>, "children" | "className" | "style">) {
+  // Decorative unless the caller names it (then it is an image with that name).
+  const labelled = Boolean((rest as { "aria-label"?: string })["aria-label"]);
   return (
-    <span className={cn("material-symbols-outlined", className)} style={style} aria-hidden="true">
+    <span
+      className={cn("material-symbols-outlined", className)}
+      style={style}
+      {...(labelled ? { role: "img" } : { "aria-hidden": true })}
+      {...rest}
+    >
       {name}
     </span>
   );
@@ -105,7 +113,7 @@ export function StatusLabel({ status, className }: { status: string; className?:
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em]",
+        "inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em]",
         tone,
         className,
       )}
@@ -152,8 +160,8 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-start rounded-lg border border-dashed border-border bg-card px-8 py-12 animate-fade">
-      <Icon name={icon} className="text-muted-foreground" style={{ fontSize: 32 }} />
-      <h3 className="mt-4 eyebrow">{title}</h3>
+      <Icon name={icon} className="text-muted-foreground" style={{ fontSize: 28 }} />
+      <h3 className="mt-3 font-display text-xl text-ink">{title}</h3>
       {description && <p className="mt-3 max-w-md text-sm text-muted-foreground">{description}</p>}
       {tips && (
         <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
@@ -181,8 +189,8 @@ export function ErrorState({
 }) {
   return (
     <div className="rounded-lg border border-border bg-card px-8 py-12 animate-fade">
-      <h3 className="eyebrow text-destructive">{title}</h3>
-      <p className="mt-3 max-w-md text-sm text-muted-foreground">{description}</p>
+      <h3 className="text-base font-semibold text-destructive" role="alert">{title}</h3>
+      <p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
       <div className="mt-6 flex gap-2">
         {onRetry && (
           <button
@@ -229,6 +237,25 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
           <Skeleton className="ml-auto h-4 w-16" />
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Placeholder shaped like a record page: title, a line of facts, then two blocks of text. */
+export function DetailSkeleton() {
+  return (
+    <div className="space-y-8" role="status" aria-label="Loading">
+      <div className="space-y-3">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-9 w-2/3" />
+        <Skeleton className="h-4 w-1/3" />
+      </div>
+      <div className="space-y-3">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-11/12" />
+        <Skeleton className="h-4 w-4/5" />
+      </div>
+      <TableSkeleton rows={3} />
     </div>
   );
 }

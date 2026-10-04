@@ -22,8 +22,8 @@ PAGES = [
 ]
 
 
-def _index(text: str):
-    entry = DocEntry(doc_id="doc-0", document_id="DOC-TEST", filename="Petition.pdf", text=text)
+def _index(text: str, filename: str = "Petition.pdf"):
+    entry = DocEntry(doc_id="doc-0", document_id="DOC-TEST", filename=filename, text=text)
     return {"doc-0": entry}, {"doc-0": text}
 
 
@@ -55,7 +55,7 @@ def test_find_in_document_reports_page():
 
 
 def test_propose_edits_locates_passages_and_pages():
-    index, store = _index(paged_text(PAGES))
+    index, store = _index(paged_text(PAGES), "Petition.docx")  # PDFs are commented on, not edited
     result = propose_edits(
         "doc-0",
         [
@@ -92,7 +92,7 @@ def test_apply_accepted_edits_only_applies_accepted():
 
 
 def test_dispatch_propose_edits_emits_event():
-    index, store = _index(paged_text(PAGES))
+    index, store = _index(paged_text(PAGES), "Petition.docx")
     result, events = dispatch_tool_call(
         "propose_edits",
         {"doc_id": "doc-0", "edits": [{"original": "1.25% per month", "proposed": "1% per month", "reason": "Cap."}]},

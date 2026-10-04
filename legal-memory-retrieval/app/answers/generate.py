@@ -4,18 +4,20 @@ from typing import Literal, Never
 
 from app.answers.extractive import extractive_answer
 from app.answers.llm import (
+    azure_complete,
     bedrock_complete,
     gemini_complete,
     groq_complete,
     parse_model_json,
 )
 from app.config import settings
+from app.llm.azure_openai_client import azure_configured
 from app.llm.bedrock_client import bedrock_configured
 from app.query.understand import understand
 from app.retrieval.engine import retrieve
 from app.sprint import CURRENT_SPRINT, FEATURES
 
-Provider = Literal["extractive", "groq", "gemini", "bedrock"]
+Provider = Literal["extractive", "groq", "gemini", "bedrock", "azure"]
 
 
 def _provider() -> Provider:
@@ -28,6 +30,10 @@ def _provider() -> Provider:
         return "gemini"
     if name == "bedrock":
         return "bedrock"
+    if name in {"azure", "azure_openai", "azure-openai"}:
+        return "azure"
+    if azure_configured():
+        return "azure"
     if bedrock_configured():
         return "bedrock"
     if settings.groq_api_key:
@@ -179,6 +185,24 @@ def _generate(provider: Provider, query: str, hits: list[dict]) -> dict:
             fallback = extractive_answer(query, hits)
             if not fallback.get("abstained"):
                 fallback["provider"] = "extractive_after_bedrock_abstain"
+                return fallback
+        return parsed
+    if provider == "azure":
+        if not azure_configured():
+            return extractive_answer(query, hits)
+        try:
+            raw = azure_complete(settings.azure_openai_deployment, query, hits)
+        except Exception:  # any provider failure degrades to extractive, never a 500
+            fallback = extractive_answer(query, hits)
+            fallback["provider"] = "extractive_after_azure_error"
+            return fallback
+        parsed = parse_model_json(raw, hits)
+        parsed["provider"] = "azure"
+        parsed["model"] = settings.azure_openai_deployment
+        if parsed.get("abstained") and hits:
+            fallback = extractive_answer(query, hits)
+            if not fallback.get("abstained"):
+                fallback["provider"] = "extractive_after_azure_abstain"
                 return fallback
         return parsed
     exhausted: Never = provider

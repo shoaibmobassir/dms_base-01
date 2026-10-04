@@ -13,6 +13,7 @@ import { Icon } from "@/components/common/primitives";
 import { useSearch } from "@/api/resources";
 import type { SearchResult } from "@/api/types";
 import { useDebounced } from "@/lib/use-debounced";
+import { useTheme } from "@/lib/theme";
 
 const QUICK_LINKS = [
   { label: "Home", to: "/", icon: "home" },
@@ -41,6 +42,7 @@ export function CommandPalette({
   setOpen: (v: boolean | ((o: boolean) => boolean)) => void;
 }) {
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [input, setInput] = useState("");
   const q = useDebounced(input.trim(), 200);
   const search = useSearch(q);
@@ -111,6 +113,24 @@ export function CommandPalette({
               <CommandItem value="new assistant conversation" onSelect={() => go("/chat")} data-testid="command-new-conversation">
                 <Icon name="edit_note" className="mr-2 text-wine" style={{ fontSize: 18 }} />
                 New Assistant conversation
+              </CommandItem>
+              <CommandItem value="add documents upload" onSelect={() => go("/documents?add=1")} data-testid="command-add-documents">
+                <Icon name="upload_file" className="mr-2 text-wine" style={{ fontSize: 18 }} />
+                Add documents
+              </CommandItem>
+              <CommandItem value="new matter" onSelect={() => go("/matters?new=1")}>
+                <Icon name="add" className="mr-2 text-wine" style={{ fontSize: 18 }} />
+                New matter
+              </CommandItem>
+              <CommandItem
+                value="toggle theme dark light"
+                onSelect={() => {
+                  setTheme(theme === "dark" ? "light" : "dark");
+                  setOpen(false);
+                }}
+              >
+                <Icon name="contrast" className="mr-2 text-muted-foreground" style={{ fontSize: 18 }} />
+                Switch to {theme === "dark" ? "light" : "dark"} theme
               </CommandItem>
               <CommandItem value="recent conversations history" onSelect={() => go("/chat?history=open")}>
                 <Icon name="history" className="mr-2 text-muted-foreground" style={{ fontSize: 18 }} />

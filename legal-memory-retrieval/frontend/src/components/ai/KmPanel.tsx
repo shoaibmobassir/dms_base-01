@@ -48,7 +48,7 @@ export function KmPanel({
             {panel.matters.map((m) => (
               <li key={m.matter_id} data-testid="km-matter">
                 <Link to={`/matters/${m.matter_id}`} className="group block">
-                  <span className="block font-mono text-[11px] text-muted-foreground">{m.matter_code}</span>
+                  <span className="block font-mono text-xs text-muted-foreground">{m.matter_code}</span>
                   <span className="block text-sm leading-snug group-hover:text-wine">{m.title}</span>
                   <span className="block text-xs text-muted-foreground">
                     {[m.client_name, m.status, m.lead && `Lead: ${m.lead}`].filter(Boolean).join(" · ")}
@@ -56,14 +56,14 @@ export function KmPanel({
                 </Link>
                 <span
                   className={cn(
-                    "mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                    "mt-1 inline-block rounded px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide",
                     m.relation === "asked" ? "bg-wine-soft text-wine" : "bg-secondary text-muted-foreground",
                   )}
                   title={m.why}
                 >
                   {RELATION_LABEL[m.relation] ?? m.relation}
                 </span>
-                {m.why && <span className="ml-1.5 text-[11px] text-muted-foreground">{m.why}</span>}
+                {m.why && <span className="ml-1.5 text-xs text-muted-foreground">{m.why}</span>}
               </li>
             ))}
           </ul>
@@ -81,7 +81,7 @@ export function KmPanel({
                   <span className="block text-xs text-muted-foreground">
                     {[d.document_type, d.doc_date, d.matter_code, d.page_number && `p. ${d.page_number}`].filter(Boolean).join(" · ")}
                   </span>
-                  <span className="block text-[11px] text-muted-foreground">{d.why}</span>
+                  <span className="block text-xs text-muted-foreground">{d.why}</span>
                 </button>
               </li>
             ))}
@@ -95,7 +95,7 @@ export function KmPanel({
                 <Link to={`/people/${p.member_id}`} className="group block">
                   <span className="block text-sm group-hover:text-wine">{p.name}</span>
                   <span className="block text-xs text-muted-foreground">{[p.role, p.office].filter(Boolean).join(" · ")}</span>
-                  <span className="block text-[11px] text-muted-foreground">{p.why}</span>
+                  <span className="block text-xs text-muted-foreground">{p.why}</span>
                 </Link>
               </li>
             ))}

@@ -117,7 +117,19 @@ export function DocumentViewer({
   onMarkClick,
   onSelectText,
   onMarksLocated,
+  startPage,
+  onPageChange,
+  onDocument,
+  hideNav = false,
 }: {
+  /** Open at this page (e.g. keep the reader's place when the version changes). */
+  startPage?: number;
+  /** Called once the pages are known, with their count. */
+  onDocument?: (pages: number) => void;
+  /** Called when the page in view changes. */
+  onPageChange?: (page: number) => void;
+  /** Hide the page controls and find box when the page around the viewer already has them. */
+  hideNav?: boolean;
   src: string;
   /** OCR word boxes for one page; used when a page is a scanned image. */
   wordsUrl?: (page: number) => string;
@@ -136,8 +148,8 @@ export function DocumentViewer({
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const textCache = useRef(new Map<number, Promise<TextContent>>());
   const anchor = useRef({ page: 1, fraction: 0 });
-  const callbacks = useRef({ onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated });
-  callbacks.current = { onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated };
+  const callbacks = useRef({ onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated, onPageChange, onDocument });
+  callbacks.current = { onUnavailable, onLocate, wordsUrl, onSelectText, onMarkClick, onMarksLocated, onPageChange, onDocument };
 
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [sizes, setSizes] = useState<PageSize[]>([]);
@@ -148,6 +160,12 @@ export function DocumentViewer({
   const [current, setCurrent] = useState(1);
   const [pageInput, setPageInput] = useState("1");
   const [highlight, setHighlight] = useState<Highlight | null>(null);
+  // Find in the PDF: the next page that holds the phrase.
+  const [findText, setFindText] = useState("");
+  const [findState, setFindState] = useState<"idle" | "searching" | "found" | "none">("idle");
+  const [findTotal, setFindTotal] = useState<number | null>(null);
+  const findPage = useRef(0);
+  const findRun = useRef(0);
 
   // Load the PDF and every page's natural size (placeholders keep the right height).
   useEffect(() => {
@@ -194,6 +212,7 @@ export function DocumentViewer({
       setCurrent(1);
       setPageInput("1");
       setStatus("ready");
+      callbacks.current.onDocument?.(pdf.numPages);
     })().catch((err: unknown) => {
       if (cancelled) return;
       setError(err instanceof Error ? err.message : "Could not open this document.");
@@ -266,8 +285,18 @@ export function DocumentViewer({
     if (page !== current) {
       setCurrent(page);
       setPageInput(String(page));
+      callbacks.current.onPageChange?.(page);
     }
   };
+
+  // Open where the reader was (a new version keeps their page).
+  const startedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (status !== "ready" || !startPage || startPage < 2 || startedFor.current === src) return;
+    startedFor.current = src;
+    const id = requestAnimationFrame(() => goToPage(Math.min(startPage, pageRefs.current.length || startPage)));
+    return () => cancelAnimationFrame(id);
+  }, [status, startPage, src, goToPage]);
 
   // Jump to a citation: search the cited page first, then its neighbours, then all pages.
   useEffect(() => {
@@ -391,6 +420,38 @@ export function DocumentViewer({
   }, [marks, found]);
 
   const pageCount = doc?.numPages ?? 0;
+  const findNext = async (dir: 1 | -1) => {
+    const q = findText.trim();
+    if (!doc || q.length < 2) return;
+    const run = ++findRun.current;
+    setFindState("searching");
+    const from = findPage.current || current;
+    for (let k = findPage.current === 0 ? 0 : 1; k <= doc.numPages; k++) {
+      const n = ((((from - 1 + dir * k) % doc.numPages) + doc.numPages) % doc.numPages) + 1;
+      const runs = runsOf(await getText(n));
+      if (run !== findRun.current) return;
+      const m = findQuoteInRuns(runs, q);
+      if (m?.exact) {
+        findPage.current = n;
+        setHighlight({ page: n, runs: m.runs, nonce: Date.now() });
+        goToPage(n);
+        setFindState("found");
+        // Count every match in the background so the reader knows how many there are.
+        if (findTotal === null) {
+          const needle = q.toLowerCase();
+          let total = 0;
+          for (let page = 1; page <= doc.numPages; page++) {
+            const text = runsOf(await getText(page)).join(" ").toLowerCase();
+            if (run !== findRun.current) return;
+            for (let at = text.indexOf(needle); at >= 0; at = text.indexOf(needle, at + needle.length)) total += 1;
+          }
+          if (run === findRun.current) setFindTotal(total);
+        }
+        return;
+      }
+    }
+    setFindState("none");
+  };
   const step = (dir: 1 | -1) => {
     const next = [...ZOOM_STEPS].sort((x, y) => (dir === 1 ? x - y : y - x)).find((s) => (dir === 1 ? s > scale + 0.01 : s < scale - 0.01));
     if (next) setZoom({ mode: "custom", scale: next });
@@ -421,6 +482,7 @@ export function DocumentViewer({
   return (
     <div className="flex h-full min-h-0 flex-col outline-none" tabIndex={0} onKeyDown={onKeyDown} data-testid="document-viewer">
       <div className="flex flex-wrap items-center gap-1 border-b border-border bg-card px-2 py-1.5 text-xs">
+        {!hideNav && (<>
         <ToolButton label="Previous page" disabled={current <= 1} onClick={() => goToPage(current - 1)} testId="viewer-prev">
           <ChevronUp className="h-4 w-4" />
         </ToolButton>
@@ -442,6 +504,7 @@ export function DocumentViewer({
           <span className="font-mono" data-testid="viewer-page-count">/ {pageCount || "–"}</span>
         </label>
         <div className="mx-1 h-4 w-px bg-border" />
+        </>)}
         <ToolButton label="Zoom out" onClick={() => step(-1)} testId="viewer-zoom-out">
           <ZoomOut className="h-4 w-4" />
         </ToolButton>
@@ -457,6 +520,41 @@ export function DocumentViewer({
         <ToolButton label="Fit page" active={zoom.mode === "fit-page"} onClick={() => setZoom({ mode: "fit-page" })} testId="viewer-fit-page">
           <Maximize className="h-4 w-4" />
         </ToolButton>
+        {!hideNav && (<>
+        <div className="mx-1 h-4 w-px bg-border" />
+        <label className="flex items-center gap-1">
+          <span className="sr-only">Find in this document</span>
+          <input
+            value={findText}
+            onChange={(e) => {
+              setFindText(e.target.value);
+              findPage.current = 0;
+              findRun.current += 1;
+              setFindTotal(null);
+              setFindState("idle");
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void findNext(e.shiftKey ? -1 : 1);
+              }
+            }}
+            placeholder="Find"
+            aria-label="Find in this document"
+            data-testid="viewer-find"
+            className="w-28 rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground"
+          />
+        </label>
+        <ToolButton label="Previous match" disabled={findText.trim().length < 2} onClick={() => void findNext(-1)} testId="viewer-find-prev">
+          <ChevronUp className="h-4 w-4" />
+        </ToolButton>
+        <ToolButton label="Next match" disabled={findText.trim().length < 2} onClick={() => void findNext(1)} testId="viewer-find-next">
+          <ChevronDown className="h-4 w-4" />
+        </ToolButton>
+        <span className="text-muted-foreground" role="status" data-testid="viewer-find-status">
+          {findState === "searching" ? "Searching…" : findState === "none" ? "No match" : findState === "found" ? `Page ${findPage.current}${findTotal !== null ? ` · ${findTotal} ${findTotal === 1 ? "match" : "matches"}` : ""}` : ""}
+        </span>
+        </>)}
       </div>
 
       <div ref={scrollRef} onScroll={onScroll} onPointerUp={onPointerUp} className="relative min-h-0 flex-1 overflow-auto bg-muted/60" data-testid="viewer-scroll">
@@ -663,7 +761,7 @@ function PdfPage({ doc, number, size, scale, root, getText, highlight, onHighlig
         if (!boxes.length) return null;
         return (
         <div key={m.id}>
-          {boxes.map((b, i) => (
+          {m.active && boxes.map((b, i) => (
             <div
               key={i}
               className={cn("viewer-mark-box", m.active && "is-active", m.muted && "is-muted")}

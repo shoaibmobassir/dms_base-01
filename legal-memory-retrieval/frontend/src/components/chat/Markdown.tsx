@@ -4,12 +4,27 @@ import { Fragment, type ReactNode } from "react";
  * Institutional-grade legal Markdown parser: paragraphs, headings, lists,
  * tables, block quotes, bold, italic, code, and clickable [N] citation markers.
  */
-export function Markdown({ text, renderCitation }: { text: string; renderCitation?: (n: number) => ReactNode }) {
+export function Markdown({
+  text,
+  renderCitation,
+  renderText,
+  paragraphClassName = "my-2 text-[15px] leading-relaxed text-ink",
+  preserveLineBreaks = false,
+}: {
+  text: string;
+  /** How a [n] marker is shown. */
+  renderCitation?: (n: number) => ReactNode;
+  /** How plain text between formatting is shown (Ask turns record ids into links here). */
+  renderText?: (text: string) => ReactNode[];
+  paragraphClassName?: string;
+  /** Keep single line breaks inside a paragraph (Ask answers list "Parties: …" lines). */
+  preserveLineBreaks?: boolean;
+}) {
   const blocks: ReactNode[] = [];
   const lines = text.replace(/\r\n/g, "\n").split("\n");
   let i = 0;
 
-  const inline = (s: string) => renderInline(s, renderCitation);
+  const inline = (s: string) => renderInline(s, renderCitation, renderText);
 
   while (i < lines.length) {
     const line = lines[i];
@@ -54,7 +69,7 @@ export function Markdown({ text, renderCitation }: { text: string; renderCitatio
     const h3Match = line.match(/^###\s+(.*)$/);
     if (h3Match) {
       blocks.push(
-        <h3 key={blocks.length} className="mt-4 mb-2 font-display text-base font-bold tracking-tight text-ink">
+        <h3 key={blocks.length} className="mt-4 mb-2 font-display text-base font-normal tracking-tight text-ink">
           {inline(h3Match[1])}
         </h3>
       );
@@ -76,7 +91,7 @@ export function Markdown({ text, renderCitation }: { text: string; renderCitatio
     const heading = line.match(/^(#{1,2})\s+(.*)$/);
     if (heading) {
       blocks.push(
-        <h3 key={blocks.length} className="mt-4 mb-2 font-display text-lg font-bold text-ink">
+        <h3 key={blocks.length} className="mt-4 mb-2 font-display text-lg font-normal text-ink">
           {inline(heading[2])}
         </h3>
       );
@@ -126,7 +141,7 @@ export function Markdown({ text, renderCitation }: { text: string; renderCitatio
       para.push(lines[i]);
       i++;
     }
-    blocks.push(<p key={blocks.length} className="my-2 text-[15px] leading-relaxed text-ink">{inline(para.join(" "))}</p>);
+    blocks.push(<p key={blocks.length} className={paragraphClassName}>{inline(para.join(preserveLineBreaks ? "\n" : " "))}</p>);
   }
   return <div className="space-y-3">{blocks}</div>;
 }
@@ -153,7 +168,7 @@ function renderTable(lines: string[], key: number, inline: (s: string) => ReactN
         <thead className="border-b border-border bg-muted/60">
           <tr>
             {headerCols.map((col, idx) => (
-              <th key={idx} className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-ink">
+              <th key={idx} className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink">
                 {col}
               </th>
             ))}
@@ -175,13 +190,13 @@ function renderTable(lines: string[], key: number, inline: (s: string) => ReactN
   );
 }
 
-function renderInline(s: string, renderCitation?: (n: number) => ReactNode): ReactNode[] {
+function renderInline(s: string, renderCitation?: (n: number) => ReactNode, renderText?: (text: string) => ReactNode[]): ReactNode[] {
   return s.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|`[^`]+`|\[\d+\])/g).map((part, k) => {
     if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={k} className="font-semibold text-ink">{part.slice(2, -2)}</strong>;
     if (/^\*[^*]+\*$/.test(part)) return <em key={k} className="italic text-ink">{part.slice(1, -1)}</em>;
     if (/^`[^`]+`$/.test(part)) return <code key={k} className="rounded bg-secondary px-1.5 py-0.5 font-mono-id text-[0.88em] text-ink">{part.slice(1, -1)}</code>;
     const cite = part.match(/^\[(\d+)\]$/);
     if (cite && renderCitation) return <Fragment key={k}>{renderCitation(Number(cite[1]))}</Fragment>;
-    return <Fragment key={k}>{part}</Fragment>;
+    return <Fragment key={k}>{renderText ? renderText(part) : part}</Fragment>;
   });
 }

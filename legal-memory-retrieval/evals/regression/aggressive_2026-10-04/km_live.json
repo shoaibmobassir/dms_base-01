@@ -1,0 +1,4161 @@
+{
+  "summary": {
+    "n": 109,
+    "pass_rate": 0.9083,
+    "p50_s": 7.46,
+    "p95_s": 19.97,
+    "mean_s": 8.27,
+    "scope_mode": "structured",
+    "categories": {
+      "client_matters": {
+        "n": 7,
+        "pass_rate": 1.0,
+        "panel": {
+          "panel_matters_recall": 1.0
+        },
+        "check_fail_counts": {
+          "grounded": 0,
+          "http_200": 0,
+          "matters_recall": 0,
+          "no_slow_channel": 0
+        }
+      },
+      "ethical_wall": {
+        "n": 4,
+        "pass_rate": 1.0,
+        "panel": {},
+        "check_fail_counts": {
+          "http_200": 0,
+          "no_leak": 0,
+          "no_slow_channel": 0
+        }
+      },
+      "lead_unscoped": {
+        "n": 19,
+        "pass_rate": 0.8947,
+        "panel": {
+          "panel_matter_hit": 1.0,
+          "panel_people_recall": 1.0,
+          "people_in_answer": 0.947
+        },
+        "check_fail_counts": {
+          "grounded": 0,
+          "http_200": 0,
+          "matter": 0,
+          "no_slow_channel": 2,
+          "people": 0
+        }
+      },
+      "negative": {
+        "n": 3,
+        "pass_rate": 0.3333,
+        "panel": {},
+        "check_fail_counts": {
+          "clean_negative": 0,
+          "http_200": 0,
+          "no_dump": 0,
+          "no_slow_channel": 2
+        }
+      },
+      "paraphrase_lowercase": {
+        "n": 6,
+        "pass_rate": 1.0,
+        "panel": {
+          "panel_matter_hit": 1.0
+        },
+        "check_fail_counts": {
+          "grounded": 0,
+          "http_200": 0,
+          "matter": 0,
+          "no_slow_channel": 0
+        }
+      },
+      "people_expertise": {
+        "n": 19,
+        "pass_rate": 0.8947,
+        "panel": {
+          "panel_people_recall": 0.895,
+          "people_in_answer": 0.895
+        },
+        "check_fail_counts": {
+          "grounded": 2,
+          "http_200": 2,
+          "no_slow_channel": 0,
+          "people": 2
+        }
+      },
+      "people_on_matter": {
+        "n": 19,
+        "pass_rate": 0.9474,
+        "panel": {
+          "panel_matter_hit": 1.0,
+          "panel_people_recall": 1.0,
+          "people_in_answer": 1.0
+        },
+        "check_fail_counts": {
+          "grounded": 0,
+          "http_200": 0,
+          "matter": 0,
+          "no_slow_channel": 1,
+          "people": 0
+        }
+      },
+      "scoped_fact": {
+        "n": 13,
+        "pass_rate": 0.7692,
+        "panel": {
+          "panel_matter_hit": 1.0
+        },
+        "check_fail_counts": {
+          "facts_all": 0,
+          "grounded": 0,
+          "http_200": 0,
+          "matter": 0,
+          "no_slow_channel": 3
+        }
+      },
+      "scoped_overview": {
+        "n": 19,
+        "pass_rate": 1.0,
+        "panel": {
+          "panel_matter_hit": 1.0
+        },
+        "check_fail_counts": {
+          "facts_any": 0,
+          "grounded": 0,
+          "http_200": 0,
+          "matter": 0,
+          "no_slow_channel": 0
+        }
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "OVR-PIL/HAG/0025/1931",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1931-00025"
+      ],
+      "top_matters": [
+        "MTR-1931-00025",
+        "MTR-1925-00004",
+        "MTR-1927-00012",
+        "MTR-1927-00013",
+        "MTR-1928-00015"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 22.2,
+        "evidence_ms": 3013.7,
+        "panel_ms": 20.8,
+        "llm_ms": 5539.4,
+        "total_ms": 12769.6
+      },
+      "answer": "This matter concerns the Permanent Court of International Justice's Advisory Opinion on Access to German Minority Schools in Upper Silesia (PCIJ Series AB No. 40), with Germany as applicant and Poland as respondent [1] (MTR-1931-00025). This matter is a Permanent Court of International Justice advisory opinion proceeding, code PIL/HAG/0025/1931, concerning German Minority Schools in Upper Silesia ",
+      "seconds": 0.35
+    },
+    {
+      "id": "TEAM-PIL/HAG/0025/1931",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1931-00025"
+      ],
+      "top_matters": [
+        "MTR-1931-00025",
+        "MTR-1925-00004",
+        "MTR-1927-00012",
+        "MTR-1927-00013",
+        "MTR-1928-00015"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 19.9,
+        "evidence_ms": 2982.6,
+        "panel_ms": 35.7,
+        "llm_ms": 3855.5,
+        "total_ms": 11544.9
+      },
+      "answer": "The matter team consists of Helena Voss (Partner, Lead), Ingrid Bergström (Counsel, Associate), Priya Menon (Senior Associate, Junior), and Noah Patel (Paralegal, Paralegal) (MTR-1931-00025). The team working on matter PIL/HAG/0025/1931 (German Minority Schools) is (MTR-1931-00025):\n- Helena Voss — Partner, Lead (MTR-1931-00025)\n- Ingrid Bergström — Counsel, Associate (MTR-1931-00025)\n- Priya Meno",
+      "seconds": 0.35
+    },
+    {
+      "id": "LEAD-PIL/HAG/0025/1931",
+      "category": "lead_unscoped",
+      "query": "who led our work on German Minority Schools?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": false
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1931-00025"
+      ],
+      "top_matters": [
+        "MTR-1931-00025",
+        "MTR-1928-00015",
+        "MTR-1935-00049",
+        "MTR-1925-00004",
+        "MTR-1927-00012"
+      ],
+      "slow_channels": [
+        "evidence_ms"
+      ],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 7.8,
+        "evidence_ms": 7240.2,
+        "panel_ms": 11.7,
+        "llm_ms": 3064.8,
+        "total_ms": 12271.2
+      },
+      "answer": "Helena Voss (Partner) led the work on German Minority Schools (MTR-1931-00025). ",
+      "seconds": 12.31
+    },
+    {
+      "id": "RESP-PIL/HAG/0025/1931",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1931-00025"
+      ],
+      "top_matters": [
+        "MTR-1931-00025",
+        "MTR-1925-00004",
+        "MTR-1927-00012",
+        "MTR-1927-00013",
+        "MTR-1928-00015"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 21.4,
+        "evidence_ms": 3028.9,
+        "panel_ms": 8.8,
+        "llm_ms": 3323.5,
+        "total_ms": 8709.2
+      },
+      "answer": "The other side in this matter was Poland (MTR-1931-00025). The other side in matter PIL/HAG/0025/1931 (German Minority Schools) was Poland (MTR-1931-00025). The matter record lists the counterparty as Poland (MTR-1931-00025). The documents also refer to the Polish Government as the opposing party, for example in the annex listing documents filed by the Agent of the Polish Government and in referen",
+      "seconds": 0.03
+    },
+    {
+      "id": "PARA-PIL/HAG/0025/1931",
+      "category": "paraphrase_lowercase",
+      "query": "the case where germany went against poland over german minority schools",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1931-00025"
+      ],
+      "top_matters": [
+        "MTR-1931-00025",
+        "MTR-1928-00015",
+        "MTR-1926-00007",
+        "MTR-1925-00006",
+        "MTR-1935-00049"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.3,
+        "resolver_ms": 1067.6,
+        "evidence_ms": 4514.3,
+        "panel_ms": 6.7,
+        "llm_ms": 5201.4,
+        "total_ms": 14406.3
+      },
+      "answer": "The matter PIL/HAG/0025/1931 concerns Germany's request for an advisory opinion from the Permanent Court of International Justice against Poland regarding German minority schools in Upper Silesia [1] (MTR-1931-00025). This is the Permanent Court of International Justice advisory opinion matter coded PIL/HAG/0025/1931, titled 'German Minority Schools' (PCIJ Series AB No. 40) (MTR-1931-00025). Germa",
+      "seconds": 0.03
+    },
+    {
+      "id": "OVR-PIL/HAG/0078/1926",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1926-00078"
+      ],
+      "top_matters": [
+        "MTR-1926-00078",
+        "MTR-1923-00073",
+        "MTR-1924-00074",
+        "MTR-1925-00004",
+        "MTR-1925-00075"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 10.8,
+        "evidence_ms": 2814.8,
+        "panel_ms": 26.6,
+        "llm_ms": 4469.0,
+        "total_ms": 13313.2
+      },
+      "answer": "This is a closed 1926 advisory proceeding before the Permanent Court of International Justice (PCIJ Series B No. 13) concerning the competence of the International Labour Organization to regulate, incidentally, the personal work of the employer [1] [2] (MTR-1926-00078). This matter, PIL/HAG/0078/1926, is a closed advisory proceeding before the Permanent Court of International Justice, docketed as ",
+      "seconds": 0.01
+    },
+    {
+      "id": "TEAM-PIL/HAG/0078/1926",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1926-00078"
+      ],
+      "top_matters": [
+        "MTR-1926-00078",
+        "MTR-1923-00073",
+        "MTR-1924-00074",
+        "MTR-1925-00004",
+        "MTR-1925-00075"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 150.2,
+        "evidence_ms": 863.2,
+        "panel_ms": 18.9,
+        "llm_ms": 2772.6,
+        "total_ms": 9920.7
+      },
+      "answer": "The matter team consists of Tomás Ribeiro (Associate, Lead), Helena Voss (Partner, Junior), Mei Lin (Junior, Associate), and Clara Dufour (Knowledge Manager, Knowledge Manager) (MTR-1926-00078). The following people are working on matter PIL/HAG/0078/1926 (MTR-1926-00078):\n- Tomás Ribeiro (Associate, Lead) (MTR-1926-00078)\n- Helena Voss (Partner, Junior) (MTR-1926-00078)\n- Mei Lin (Junior, Associa",
+      "seconds": 0.01
+    },
+    {
+      "id": "LEAD-PIL/HAG/0078/1926",
+      "category": "lead_unscoped",
+      "query": "who led our work on I L O Competence Employer?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1926-00078"
+      ],
+      "top_matters": [
+        "MTR-1926-00078",
+        "MTR-1922-00068",
+        "MTR-1923-00073",
+        "MTR-1924-00074",
+        "MTR-1925-00004"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 260.4,
+        "evidence_ms": 993.9,
+        "panel_ms": 30.9,
+        "llm_ms": 2535.7,
+        "total_ms": 5908.4
+      },
+      "answer": "Tomás Ribeiro (Associate) led the work on I L O Competence Employer [1] (MTR-1926-00078). Tomás Ribeiro led the work on I L O Competence Employer as the Lead Associate (MTR-1926-00078). The team also included Helena Voss as a Junior Partner, Mei Lin as a Junior Associate, and Clara Dufour as a Knowledge Manager (MTR-1926-00078).",
+      "seconds": 0.01
+    },
+    {
+      "id": "OVR-PIL/HAG/0034/1932",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00034"
+      ],
+      "top_matters": [
+        "MTR-1932-00034",
+        "MTR-1922-00066",
+        "MTR-1922-00068",
+        "MTR-1922-00069",
+        "MTR-1923-00001"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.6,
+        "evidence_ms": 1534.4,
+        "panel_ms": 5.0,
+        "llm_ms": 4269.6,
+        "total_ms": 11712.7
+      },
+      "answer": "This is a closed Permanent Court of International Justice matter (PIL/HAG/0034/1932) concerning the interpretation of the Memel Statute, with the United Kingdom, France, Italy and Japan as applicants and Lithuania as respondent (MTR-1932-00034). This matter concerns the interpretation of the Statute of the Memel Territory, annexed to the Convention of Paris of 1924 [1] [2]. The applicants (United ",
+      "seconds": 0.01
+    },
+    {
+      "id": "TEAM-PIL/HAG/0034/1932",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": false
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00034"
+      ],
+      "top_matters": [
+        "MTR-1932-00034",
+        "MTR-1922-00066",
+        "MTR-1922-00068",
+        "MTR-1922-00069",
+        "MTR-1923-00001"
+      ],
+      "slow_channels": [
+        "evidence_ms"
+      ],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 7.8,
+        "evidence_ms": 8667.0,
+        "panel_ms": 17.2,
+        "llm_ms": 3949.3,
+        "total_ms": 16596.2
+      },
+      "answer": "The team on matter PIL/HAG/0034/1932 consists of Mei Lin (Junior, Lead), Helena Voss (Partner, Associate), Ingrid Bergström (Counsel, Junior), and Clara Dufour (Knowledge Manager, Knowledge Manager) (MTR-1932-00034). The team working on matter PIL/HAG/0034/1932 (Interpretation Memel Statute) is listed in the matter record (MTR-1932-00034):\n- Mei Lin — Junior, Lead (MTR-1932-00034)\n- Helena Voss — ",
+      "seconds": 0.02
+    },
+    {
+      "id": "LEAD-PIL/HAG/0034/1932",
+      "category": "lead_unscoped",
+      "query": "who led our work on Interpretation Memel Statute — PCIJ Series AB No. 49?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": false
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00034"
+      ],
+      "top_matters": [
+        "MTR-1932-00034",
+        "MTR-1932-00032",
+        "MTR-1925-00004",
+        "MTR-1922-00066",
+        "MTR-1922-00068"
+      ],
+      "slow_channels": [
+        "evidence_ms"
+      ],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 3438.8,
+        "evidence_ms": 8693.7,
+        "panel_ms": 12.2,
+        "llm_ms": 2619.5,
+        "total_ms": 14697.1
+      },
+      "answer": "The work on Interpretation Memel Statute — PCIJ Series AB No. 49 was led by Mei Lin (Junior, Lead) and Helena Voss (Partner, Associate) (MTR-1932-00034). The matter was led by Mei Lin (Junior, Lead) and Helena Voss (Partner, Associate) (MTR-1932-00034).\n- The team also included Ingrid Bergström (Counsel, Junior) and Clara Dufour (Knowledge Manager, Knowledge Manager) (MTR-1932-00034).\n- The client",
+      "seconds": 0.01
+    },
+    {
+      "id": "RESP-PIL/HAG/0034/1932",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": false
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00034"
+      ],
+      "top_matters": [
+        "MTR-1932-00034",
+        "MTR-1922-00066",
+        "MTR-1922-00068",
+        "MTR-1922-00069",
+        "MTR-1923-00001"
+      ],
+      "slow_channels": [
+        "evidence_ms"
+      ],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 16.3,
+        "evidence_ms": 8056.5,
+        "panel_ms": 5.0,
+        "llm_ms": 2549.6,
+        "total_ms": 13274.9
+      },
+      "answer": "The counterparty in matter PIL/HAG/0034/1932 was Lithuania (MTR-1932-00034). The other side in this matter was Lithuania (MTR-1932-00034). The matter record lists the counterparty as Lithuania (MTR-1932-00034). The judgment documents also refer to Lithuania as the respondent and the opposing party, e.g., 'the Lithuanian Government' and 'the other side' [1] [2] [3] (MTR-1932-00034).",
+      "seconds": 48.09
+    },
+    {
+      "id": "PARA-PIL/HAG/0034/1932",
+      "category": "paraphrase_lowercase",
+      "query": "the case where united kingdom went against lithuania over interpretation memel statute",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00032",
+        "MTR-1932-00034"
+      ],
+      "top_matters": [
+        "MTR-1932-00032",
+        "MTR-1932-00034",
+        "MTR-1922-00066",
+        "MTR-1922-00068",
+        "MTR-1922-00069"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 476.3,
+        "evidence_ms": 1214.5,
+        "panel_ms": 4.6,
+        "llm_ms": 8109.6,
+        "total_ms": 18737.3
+      },
+      "answer": "The United Kingdom, together with France, Italy and Japan, brought a case against Lithuania before the Permanent Court of International Justice concerning the interpretation of the Memel Statute [1] [2] [3] (MTR-1932-00032, MTR-1932-00034). The case where the United Kingdom went against Lithuania over the interpretation of the Memel Statute is recorded in two matters: PIL/HAG/0032/1932 and PIL/HAG",
+      "seconds": 37.09
+    },
+    {
+      "id": "OVR-PIL/HAG/0072/1923",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1923-00072"
+      ],
+      "top_matters": [
+        "MTR-1923-00072",
+        "MTR-1922-00068",
+        "MTR-1922-00069",
+        "MTR-1923-00070",
+        "MTR-1923-00071"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 19.0,
+        "evidence_ms": 2495.2,
+        "panel_ms": 7.0,
+        "llm_ms": 5346.9,
+        "total_ms": 11317.8
+      },
+      "answer": "This is an advisory opinion (PCIJ Series B No. 7) on the acquisition of Polish nationality, requested by the League of Nations Council and decided on 15 September 1923 [1] (MTR-1923-00072). This matter is an advisory proceeding before the Permanent Court of International Justice (PCIJ), code PIL/HAG/0072/1923, concerning the acquisition of Polish nationality [2] (MTR-1923-00072).\n\n- Client: League",
+      "seconds": 1.05
+    },
+    {
+      "id": "TEAM-PIL/HAG/0072/1923",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1923-00072"
+      ],
+      "top_matters": [
+        "MTR-1923-00072",
+        "MTR-1922-00068",
+        "MTR-1922-00069",
+        "MTR-1923-00070",
+        "MTR-1923-00071"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 10.9,
+        "evidence_ms": 2485.5,
+        "panel_ms": 7.0,
+        "llm_ms": 2980.3,
+        "total_ms": 8202.5
+      },
+      "answer": "The team on matter PIL/HAG/0072/1923 consists of Priya Menon (Senior Associate, Lead), Tomás Ribeiro (Associate), Mei Lin (Junior), and Clara Dufour (Knowledge Manager) (MTR-1923-00072). The team working on matter PIL/HAG/0072/1923 (Acquisition Polish Nationality) is listed in the matter record (MTR-1923-00072):\n- Priya Menon — Senior Associate, Lead (MTR-1923-00072)\n- Tomás Ribeiro — Associate (M",
+      "seconds": 0.02
+    },
+    {
+      "id": "LEAD-PIL/HAG/0072/1923",
+      "category": "lead_unscoped",
+      "query": "who led our work on Acquisition Polish Nationality?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1923-00072"
+      ],
+      "top_matters": [
+        "MTR-1923-00072",
+        "MTR-1932-00029",
+        "MTR-1922-00068",
+        "MTR-1922-00069",
+        "MTR-1923-00070"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.3,
+        "resolver_ms": 955.9,
+        "evidence_ms": 1698.7,
+        "panel_ms": 5.0,
+        "llm_ms": 2807.5,
+        "total_ms": 7735.8
+      },
+      "answer": "The work on Acquisition Polish Nationality (PIL/HAG/0072/1923) was led by Senior Associate Priya Menon (MTR-1923-00072). The matter was led by Priya Menon, Senior Associate, as the Lead on the matter (MTR-1923-00072). The team also included Tomás Ribeiro (Associate, Associate), Mei Lin (Junior, Junior), and Clara Dufour (Knowledge Manager, Knowledge Manager) (MTR-1923-00072). The matter was an adv",
+      "seconds": 0.01
+    },
+    {
+      "id": "OVR-PIL/HAG/0003/1924",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1924-00003"
+      ],
+      "top_matters": [
+        "MTR-1924-00003",
+        "MTR-1925-00004"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.7,
+        "evidence_ms": 534.4,
+        "panel_ms": 3.1,
+        "llm_ms": 4183.9,
+        "total_ms": 8565.2
+      },
+      "answer": "This is a Permanent Court of International Justice matter (PCIJ Series A No. 3) concerning the interpretation of paragraph 4 of the Annex following Article 179 of the Treaty of Neuilly, between Bulgaria (applicant) and Greece (respondent), decided on 12 September 1924 [1] (MTR-1924-00003). This matter, coded PIL/HAG/0003/1924, is a closed PCIJ case from 1924, opened and closed on 12 September 1924",
+      "seconds": 8.59
+    },
+    {
+      "id": "TEAM-PIL/HAG/0003/1924",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1924-00003"
+      ],
+      "top_matters": [
+        "MTR-1924-00003",
+        "MTR-1925-00004"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.6,
+        "evidence_ms": 600.6,
+        "panel_ms": 11.9,
+        "llm_ms": 2974.4,
+        "total_ms": 6742.2
+      },
+      "answer": "The team on matter PIL/HAG/0003/1924 consists of Tomás Ribeiro (Associate, Lead), Helena Voss (Partner, Junior), Mei Lin (Junior, Associate), and Noah Patel (Paralegal, Paralegal) (MTR-1924-00003). The team working on matter PIL/HAG/0003/1924 (Neuilly) is (MTR-1924-00003):\n- Tomás Ribeiro (Associate, Lead) (MTR-1924-00003)\n- Helena Voss (Partner, Junior) (MTR-1924-00003)\n- Mei Lin (Junior, Associa",
+      "seconds": 6.77
+    },
+    {
+      "id": "LEAD-PIL/HAG/0003/1924",
+      "category": "lead_unscoped",
+      "query": "who led our work on Neuilly?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1924-00003"
+      ],
+      "top_matters": [
+        "MTR-1924-00003",
+        "MTR-1925-00004"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 362.7,
+        "evidence_ms": 536.3,
+        "panel_ms": 3.7,
+        "llm_ms": 3343.9,
+        "total_ms": 8051.3
+      },
+      "answer": "Tomás Ribeiro (Associate) led our work on Neuilly (MTR-1924-00003). Tomás Ribeiro led our work on Neuilly as the Associate and Lead on the matter (MTR-1924-00003). The team also included:\n- Helena Voss (Partner, Junior) (MTR-1924-00003)\n- Mei Lin (Junior, Associate) (MTR-1924-00003)\n- Noah Patel (Paralegal, Paralegal) (MTR-1924-00003)\n\nThe matter, coded PIL/HAG/0003/1924, was a Permanent Court of ",
+      "seconds": 8.09
+    },
+    {
+      "id": "RESP-PIL/HAG/0003/1924",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1924-00003"
+      ],
+      "top_matters": [
+        "MTR-1924-00003",
+        "MTR-1925-00004"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.9,
+        "evidence_ms": 187.2,
+        "panel_ms": 6.7,
+        "llm_ms": 2549.7,
+        "total_ms": 5419.0
+      },
+      "answer": "The counterparty in matter PIL/HAG/0003/1924 (Neuilly) was Greece (MTR-1924-00003). The other side in matter PIL/HAG/0003/1924 (Neuilly) was Greece (MTR-1924-00003).\n- The matter record lists Bulgaria as the client and Greece as the counterparty (MTR-1924-00003).\n- The judgment refers to the Government of the Greek Republic as the opposing party [1].",
+      "seconds": 5.45
+    },
+    {
+      "id": "PARA-PIL/HAG/0003/1924",
+      "category": "paraphrase_lowercase",
+      "query": "the case where bulgaria went against greece over neuilly",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1924-00003"
+      ],
+      "top_matters": [
+        "MTR-1924-00003",
+        "MTR-1925-00004",
+        "MTR-1930-00082",
+        "MTR-1940-00065",
+        "MTR-1939-00064"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 23.9,
+        "evidence_ms": 184.7,
+        "panel_ms": 7.9,
+        "llm_ms": 4451.1,
+        "total_ms": 10540.4
+      },
+      "answer": "The case is PCIJ Series A No. 3 (Neuilly), where Bulgaria (applicant) brought a dispute against Greece (respondent) concerning the interpretation of paragraph 4 of the Annex to Section IV, Part IX of the Treaty of Neuilly of 1919 [1] (MTR-1924-00003). The matter is PIL/HAG/0003/1924, known as PCIJ Series A No. 3 (Neuilly) (MTR-1924-00003). Bulgaria was the applicant and Greece the respondent (MTR-",
+      "seconds": 10.57
+    },
+    {
+      "id": "OVR-PIL/HAG/0052/1936",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1936-00052"
+      ],
+      "top_matters": [
+        "MTR-1936-00052",
+        "MTR-1925-00004",
+        "MTR-1932-00032",
+        "MTR-1932-00034",
+        "MTR-1936-00054"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.8,
+        "evidence_ms": 210.5,
+        "panel_ms": 7.8,
+        "llm_ms": 4853.7,
+        "total_ms": 9830.6
+      },
+      "answer": "This is a Permanent Court of International Justice case (PCIJ Series AB No. 67) between Switzerland and Yugoslavia concerning a construction contract dispute, with a preliminary objection on jurisdiction joined to the merits by order of 27 June 1936 [1] (MTR-1936-00052). This matter, coded PIL/HAG/0052/1936, is the Losinger case before the Permanent Court of International Justice (PCIJ Series AB N",
+      "seconds": 9.89
+    },
+    {
+      "id": "TEAM-PIL/HAG/0052/1936",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1936-00052"
+      ],
+      "top_matters": [
+        "MTR-1936-00052",
+        "MTR-1925-00004",
+        "MTR-1932-00032",
+        "MTR-1932-00034",
+        "MTR-1936-00054"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.4,
+        "evidence_ms": 260.7,
+        "panel_ms": 9.4,
+        "llm_ms": 3264.3,
+        "total_ms": 7102.2
+      },
+      "answer": "The team on matter PIL/HAG/0052/1936 (Losinger) consists of Priya Menon (Senior Associate, Lead), Tomás Ribeiro (Associate), Mei Lin (Junior), and Clara Dufour (Knowledge Manager) (MTR-1936-00052). The team working on matter PIL/HAG/0052/1936 (Losinger) is (MTR-1936-00052):\n- Priya Menon (Senior Associate, Lead) (MTR-1936-00052)\n- Tomás Ribeiro (Associate, Associate) (MTR-1936-00052)\n- Mei Lin (Ju",
+      "seconds": 7.14
+    },
+    {
+      "id": "LEAD-PIL/HAG/0052/1936",
+      "category": "lead_unscoped",
+      "query": "who led our work on Losinger — PCIJ Series AB No. 67?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1936-00052"
+      ],
+      "top_matters": [
+        "MTR-1936-00052",
+        "MTR-1936-00054",
+        "MTR-1925-00004",
+        "MTR-1932-00032",
+        "MTR-1932-00034"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 0.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 42.1,
+        "evidence_ms": 224.6,
+        "panel_ms": 6.8,
+        "llm_ms": 2783.1,
+        "total_ms": 6345.2
+      },
+      "answer": "67 [1] (MTR-1936-00052). She was the Senior Associate and Lead on the matter (MTR-1936-00052). The team also included:\n- Tomás Ribeiro, Associate (MTR-1936-00052)\n- Mei Lin, Junior (MTR-1936-00052)\n- Clara Dufour, Knowledge Manager (MTR-1936-00052) 67 [1] (MTR-1936-00052). She was the Senior Associate and Lead on the matter (MTR-1936-00052). The team also included:\n- Tomás Ribeiro, Associate (MTR-",
+      "seconds": 6.39
+    },
+    {
+      "id": "RESP-PIL/HAG/0052/1936",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1936-00052"
+      ],
+      "top_matters": [
+        "MTR-1936-00052",
+        "MTR-1925-00004",
+        "MTR-1932-00032",
+        "MTR-1932-00034",
+        "MTR-1936-00054"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.0,
+        "evidence_ms": 244.1,
+        "panel_ms": 8.9,
+        "llm_ms": 2416.6,
+        "total_ms": 7395.0
+      },
+      "answer": "The counterparty in matter PIL/HAG/0052/1936 (Losinger) was Yugoslavia (MTR-1936-00052). The other side in this matter was Yugoslavia (MTR-1936-00052). The matter record lists the client as Switzerland and the counterparty as Yugoslavia (MTR-1936-00052). The PCIJ order refers to the 'Yugoslav Government' as the respondent and describes a contract between the firm Losinger & Co. and the 'Royal Yugo",
+      "seconds": 7.43
+    },
+    {
+      "id": "PARA-PIL/HAG/0052/1936",
+      "category": "paraphrase_lowercase",
+      "query": "the case where switzerland went against yugoslavia over losinger",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1936-00054",
+        "MTR-1936-00052"
+      ],
+      "top_matters": [
+        "MTR-1936-00054",
+        "MTR-1936-00052",
+        "MTR-1931-00031",
+        "MTR-1925-00004",
+        "MTR-1932-00032"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 15.7,
+        "evidence_ms": 297.4,
+        "panel_ms": 9.5,
+        "llm_ms": 6376.6,
+        "total_ms": 14016.7
+      },
+      "answer": "The case is the Losinger & Co. case (PCIJ Series AB No. 67 and No. 69), where Switzerland (applicant) brought proceedings against Yugoslavia (respondent) concerning an arbitration clause in a construction contract [1] [2] (MTR-1936-00054, MTR-1936-00052). case before the Permanent Court of International Justice, with Switzerland as the applicant and Yugoslavia as the respondent (MTR-1936-00054, MT",
+      "seconds": 14.06
+    },
+    {
+      "id": "OVR-PIL/HAG/0005/1925",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1925-00005"
+      ],
+      "top_matters": [
+        "MTR-1925-00005",
+        "MTR-1924-00002",
+        "MTR-1925-00004",
+        "MTR-1927-00011"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 4.5,
+        "evidence_ms": 1341.8,
+        "panel_ms": 2.8,
+        "llm_ms": 3898.8,
+        "total_ms": 9943.0
+      },
+      "answer": "This is a closed Permanent Court of International Justice case (PCIJ Series A No. 5) concerning the Mavrommatis Jerusalem concessions, with Greece as applicant and the United Kingdom as respondent, decided on 26 March 1925 [1] (MTR-1925-00005). This matter, coded PIL/HAG/0005/1925, is the PCIJ Series A No. 5 case known as Mavrommatis Jerusalem (MTR-1925-00005). It was a dispute between Greece (cli",
+      "seconds": 9.98
+    },
+    {
+      "id": "TEAM-PIL/HAG/0005/1925",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1925-00005"
+      ],
+      "top_matters": [
+        "MTR-1925-00005",
+        "MTR-1924-00002",
+        "MTR-1925-00004",
+        "MTR-1927-00011"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.1,
+        "evidence_ms": 763.4,
+        "panel_ms": 9.0,
+        "llm_ms": 2979.8,
+        "total_ms": 8148.4
+      },
+      "answer": "The matter team consists of Helena Voss (Partner, Lead), Ingrid Bergström (Counsel, Associate), Priya Menon (Senior Associate, Junior), and Noah Patel (Paralegal, Paralegal) (MTR-1925-00005). The team working on matter PIL/HAG/0005/1925 (Mavrommatis Jerusalem) is (MTR-1925-00005):\n- Helena Voss — Partner, Lead (MTR-1925-00005)\n- Ingrid Bergström — Counsel, Associate (MTR-1925-00005)\n- Priya Menon ",
+      "seconds": 8.19
+    },
+    {
+      "id": "LEAD-PIL/HAG/0005/1925",
+      "category": "lead_unscoped",
+      "query": "who led our work on Mavrommatis Jerusalem?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1925-00005"
+      ],
+      "top_matters": [
+        "MTR-1925-00005",
+        "MTR-1927-00011",
+        "MTR-1924-00002",
+        "MTR-1925-00004"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 55.5,
+        "evidence_ms": 738.5,
+        "panel_ms": 12.3,
+        "llm_ms": 3444.6,
+        "total_ms": 10530.4
+      },
+      "answer": "Helena Voss (Partner) led the firm's work on Mavrommatis Jerusalem (PIL/HAG/0005/1925) (MTR-1925-00005). The matter team also included (MTR-1925-00005):\n- Ingrid Bergström (Counsel, Associate) (MTR-1925-00005)\n- Priya Menon (Senior Associate, Junior) (MTR-1925-00005)\n- Noah Patel (Paralegal, Paralegal) (MTR-1925-00005)\n\nThe matter was a Permanent Court of International Justice case (PCIJ Series A ",
+      "seconds": 10.56
+    },
+    {
+      "id": "RESP-PIL/HAG/0005/1925",
+      "category": "scoped_fact",
+      "query": "who was the other side in this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1925-00005"
+      ],
+      "top_matters": [
+        "MTR-1925-00005",
+        "MTR-1924-00002",
+        "MTR-1925-00004",
+        "MTR-1927-00011"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.5,
+        "evidence_ms": 802.0,
+        "panel_ms": 8.9,
+        "llm_ms": 2282.9,
+        "total_ms": 5041.5
+      },
+      "answer": "The counterparty in this matter was the United Kingdom (MTR-1925-00005). The other side in this matter was the United Kingdom (MTR-1925-00005).\n\n- The matter record lists the client as Greece and the counterparty as the United Kingdom (MTR-1925-00005).",
+      "seconds": 5.08
+    },
+    {
+      "id": "PARA-PIL/HAG/0005/1925",
+      "category": "paraphrase_lowercase",
+      "query": "the case where greece went against united kingdom over mavrommatis jerusalem",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1925-00005"
+      ],
+      "top_matters": [
+        "MTR-1925-00005",
+        "MTR-1927-00011",
+        "MTR-1924-00002",
+        "MTR-1925-00004"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 54.4,
+        "evidence_ms": 1182.2,
+        "panel_ms": 5.9,
+        "llm_ms": 4381.9,
+        "total_ms": 10405.7
+      },
+      "answer": "The case is Mavrommatis Jerusalem (PCIJ Series A No. 5), where Greece (applicant) brought a claim against the United Kingdom (respondent) concerning concessions held by M (MTR-1925-00005). Mavrommatis in Jerusalem [1]. The matter is PIL/HAG/0005/1925, Mavrommatis Jerusalem, a Permanent Court of International Justice case (PCIJ Series A No. 5) (MTR-1925-00005). Greece was the applicant and the Unit",
+      "seconds": 10.45
+    },
+    {
+      "id": "OVR-PIL/HAG/0029/1932",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00029"
+      ],
+      "top_matters": [
+        "MTR-1932-00029",
+        "MTR-1922-00066",
+        "MTR-1925-00004",
+        "MTR-1931-00026",
+        "MTR-1931-00027"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.2,
+        "evidence_ms": 1063.1,
+        "panel_ms": 18.8,
+        "llm_ms": 4296.3,
+        "total_ms": 9732.0
+      },
+      "answer": "This is an advisory proceeding before the Permanent Court of International Justice (PCIJ) concerning the treatment of Polish nationals in Danzig, opened and closed on 4 February 1932 [1] (MTR-1932-00029). This matter, coded PIL/HAG/0029/1932, is an advisory proceeding before the Permanent Court of International Justice (PCIJ) regarding the treatment of Polish nationals in Danzig (MTR-1932-00029). ",
+      "seconds": 9.77
+    },
+    {
+      "id": "TEAM-PIL/HAG/0029/1932",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00029"
+      ],
+      "top_matters": [
+        "MTR-1932-00029",
+        "MTR-1922-00066",
+        "MTR-1925-00004",
+        "MTR-1931-00026",
+        "MTR-1931-00027"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.2,
+        "evidence_ms": 442.7,
+        "panel_ms": 7.6,
+        "llm_ms": 2863.5,
+        "total_ms": 7106.9
+      },
+      "answer": "The team on matter PIL/HAG/0029/1932 consists of Mei Lin (Junior, Lead), Helena Voss (Partner, Associate), Ingrid Bergström (Counsel, Junior), and Noah Patel (Paralegal, Paralegal) (MTR-1932-00029). The team working on matter PIL/HAG/0029/1932 (Treatment Polish Nationals) is listed in the matter record (MTR-1932-00029):\n- Mei Lin — Junior, Lead (MTR-1932-00029)\n- Helena Voss — Partner, Associate (",
+      "seconds": 7.15
+    },
+    {
+      "id": "LEAD-PIL/HAG/0029/1932",
+      "category": "lead_unscoped",
+      "query": "who led our work on Treatment Polish Nationals?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1932-00029"
+      ],
+      "top_matters": [
+        "MTR-1932-00029",
+        "MTR-1923-00072",
+        "MTR-1922-00066",
+        "MTR-1925-00004",
+        "MTR-1931-00026"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 17.2,
+        "evidence_ms": 496.2,
+        "panel_ms": 7.6,
+        "llm_ms": 4070.1,
+        "total_ms": 7396.0
+      },
+      "answer": "The work on Treatment Polish Nationals (PIL/HAG/0029/1932) was led by Mei Lin as Junior Lead, with Helena Voss as Partner Associate, Ingrid Bergström as Counsel Junior, and Noah Patel as Paralegal (MTR-1932-00029). The matter Treatment Polish Nationals (PIL/HAG/0029/1932) was led by Mei Lin as Junior (Lead) (MTR-1932-00029). The team also included Helena Voss as Partner (Associate), Ingrid Bergstr",
+      "seconds": 7.43
+    },
+    {
+      "id": "OVR-REG/NYC/0158/2020",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2020-00158"
+      ],
+      "top_matters": [
+        "MTR-2020-00158",
+        "MTR-2015-00153",
+        "MTR-2016-00154",
+        "MTR-2017-00155",
+        "MTR-2018-00156"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.7,
+        "evidence_ms": 1597.3,
+        "panel_ms": 7.3,
+        "llm_ms": 5969.5,
+        "total_ms": 15058.2
+      },
+      "answer": "Matter REG/NYC/0158/2020 is a closed 2020 matter for the United Nations covering 57 Security Council resolutions on international peace and security, with a team led by Owen Blake and Rafael Okonkwo (MTR-2020-00158). This matter, code REG/NYC/0158/2020, is a closed 2020 matter for the United Nations covering 57 Security Council resolutions adopted that year (MTR-2020-00158). The client is the Unit",
+      "seconds": 15.11
+    },
+    {
+      "id": "TEAM-REG/NYC/0158/2020",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2020-00158"
+      ],
+      "top_matters": [
+        "MTR-2020-00158",
+        "MTR-2015-00153",
+        "MTR-2016-00154",
+        "MTR-2017-00155",
+        "MTR-2018-00156"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 3.6,
+        "evidence_ms": 1516.5,
+        "panel_ms": 12.9,
+        "llm_ms": 3230.4,
+        "total_ms": 8832.1
+      },
+      "answer": "The team on matter REG/NYC/0158/2020 consists of Owen Blake (Junior, Lead), Rafael Okonkwo (Partner, Associate), Jonas Kruk (Senior Associate, Junior), and Clara Dufour (Knowledge Manager, Knowledge Manager) (MTR-2020-00158). The team working on matter REG/NYC/0158/2020 is listed in the matter record (MTR-2020-00158):\n- Owen Blake (Junior, Lead) (MTR-2020-00158)\n- Rafael Okonkwo (Partner, Associat",
+      "seconds": 16.89
+    },
+    {
+      "id": "LEAD-REG/NYC/0158/2020",
+      "category": "lead_unscoped",
+      "query": "who led our work on UN Security Council resolutions — 2020?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2020-00158"
+      ],
+      "top_matters": [
+        "MTR-2020-00158",
+        "MTR-2019-00157",
+        "MTR-2018-00156",
+        "MTR-2017-00155",
+        "MTR-2015-00153"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 256.8,
+        "evidence_ms": 1341.9,
+        "panel_ms": 7.8,
+        "llm_ms": 3331.7,
+        "total_ms": 8894.1
+      },
+      "answer": "Owen Blake (Junior) led the work on UN Security Council resolutions in 2020, supported by Rafael Okonkwo (Partner, Associate), Jonas Kruk (Senior Associate, Junior), and Clara Dufour (Knowledge Manager, Knowledge Manager) (MTR-2020-00158). Owen Blake (Junior, Lead) led the work on UN Security Council resolutions in 2020 (MTR-2020-00158).\n\nThe team also included:\n- Rafael Okonkwo (Partner, Associat",
+      "seconds": 9.95
+    },
+    {
+      "id": "NRES-REG/NYC/0158/2020",
+      "category": "scoped_fact",
+      "query": "how many resolutions were adopted?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2020-00158"
+      ],
+      "top_matters": [
+        "MTR-2020-00158",
+        "MTR-2015-00153",
+        "MTR-2016-00154",
+        "MTR-2017-00155",
+        "MTR-2018-00156"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.9,
+        "evidence_ms": 732.4,
+        "panel_ms": 7.1,
+        "llm_ms": 3441.4,
+        "total_ms": 6048.0
+      },
+      "answer": "57 Security Council resolutions were adopted in 2020 under matter REG/NYC/0158/2020 (MTR-2020-00158). ",
+      "seconds": 11.11
+    },
+    {
+      "id": "OVR-REG/NYC/0091/1953",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1953-00091"
+      ],
+      "top_matters": [
+        "MTR-1953-00091",
+        "MTR-1948-00086",
+        "MTR-1949-00087",
+        "MTR-1950-00088",
+        "MTR-1951-00089"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 3.3,
+        "evidence_ms": 309.4,
+        "panel_ms": 6.7,
+        "llm_ms": 4362.3,
+        "total_ms": 9274.2
+      },
+      "answer": "MTR-1953-00091 is a closed United Nations matter covering five Security Council resolutions adopted in 1953 on topics including ICJ elections, Israel-Jordan armistice violations, and conditions for Japan and San Marino to join the ICJ Statute [1] (MTR-1953-00091). This matter, code REG/NYC/0091/1953, is a closed United Nations Security Council resolution matter from 1953 (MTR-1953-00091). The clie",
+      "seconds": 22.43
+    },
+    {
+      "id": "TEAM-REG/NYC/0091/1953",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1953-00091"
+      ],
+      "top_matters": [
+        "MTR-1953-00091",
+        "MTR-1948-00086",
+        "MTR-1949-00087",
+        "MTR-1950-00088",
+        "MTR-1951-00089"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.7,
+        "evidence_ms": 131.0,
+        "panel_ms": 7.6,
+        "llm_ms": 3062.0,
+        "total_ms": 5919.9
+      },
+      "answer": "The matter team consists of Jonas Kruk (Senior Associate, Lead), Rafael Okonkwo (Partner, Junior), Owen Blake (Junior, Associate), and Noah Patel (Paralegal, Paralegal) (MTR-1953-00091). The team working on matter REG/NYC/0091/1953 is listed in the matter record (MTR-1953-00091):\n- Jonas Kruk — Senior Associate, Lead (MTR-1953-00091)\n- Rafael Okonkwo — Partner, Junior (MTR-1953-00091)\n- Owen Blake",
+      "seconds": 7.0
+    },
+    {
+      "id": "LEAD-REG/NYC/0091/1953",
+      "category": "lead_unscoped",
+      "query": "who led our work on UN Security Council resolutions — 1953?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1953-00091"
+      ],
+      "top_matters": [
+        "MTR-1953-00091",
+        "MTR-2010-00148",
+        "MTR-1954-00092",
+        "MTR-1950-00088",
+        "MTR-1959-00097"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 23.6,
+        "evidence_ms": 87.6,
+        "panel_ms": 7.2,
+        "llm_ms": 2817.0,
+        "total_ms": 5666.5
+      },
+      "answer": "The matter was led by Jonas Kruk (Senior Associate, Lead) (MTR-1953-00091). The team also included Rafael Okonkwo (Partner, Junior), Owen Blake (Junior, Associate), and Noah Patel (Paralegal, Paralegal) (MTR-1953-00091). The matter was led by Jonas Kruk (Senior Associate, Lead) (MTR-1953-00091). The team also included Rafael Okonkwo (Partner, Junior), Owen Blake (Junior, Associate), and Noah Patel",
+      "seconds": 13.77
+    },
+    {
+      "id": "NRES-REG/NYC/0091/1953",
+      "category": "scoped_fact",
+      "query": "how many resolutions were adopted?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1953-00091"
+      ],
+      "top_matters": [
+        "MTR-1953-00091",
+        "MTR-1948-00086",
+        "MTR-1949-00087",
+        "MTR-1950-00088",
+        "MTR-1951-00089"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.5,
+        "evidence_ms": 156.6,
+        "panel_ms": 6.3,
+        "llm_ms": 3090.9,
+        "total_ms": 4969.8
+      },
+      "answer": "Five Security Council resolutions were adopted in 1953 under matter REG/NYC/0091/1953 (MTR-1953-00091). ",
+      "seconds": 5.07
+    },
+    {
+      "id": "OVR-REG/NYC/0148/2010",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2010-00148"
+      ],
+      "top_matters": [
+        "MTR-2010-00148",
+        "MTR-2005-00143",
+        "MTR-2006-00144",
+        "MTR-2007-00145",
+        "MTR-2008-00146"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.2,
+        "evidence_ms": 1582.1,
+        "panel_ms": 9.5,
+        "llm_ms": 4632.3,
+        "total_ms": 10934.6
+      },
+      "answer": "Matter REG/NYC/0148/2010 is a closed 2010 matter for the United Nations covering 59 Security Council resolutions on peacekeeping, sanctions, and international justice, led by Jonas Kruk [1] (MTR-2010-00148). This matter, code REG/NYC/0148/2010, is a closed 2010 engagement for the United Nations covering 59 Security Council resolutions adopted that year (MTR-2010-00148). The practice area is Regula",
+      "seconds": 10.96
+    },
+    {
+      "id": "TEAM-REG/NYC/0148/2010",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2010-00148"
+      ],
+      "top_matters": [
+        "MTR-2010-00148",
+        "MTR-2005-00143",
+        "MTR-2006-00144",
+        "MTR-2007-00145",
+        "MTR-2008-00146"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.2,
+        "evidence_ms": 714.9,
+        "panel_ms": 6.6,
+        "llm_ms": 3130.3,
+        "total_ms": 7440.2
+      },
+      "answer": "The team on matter REG/NYC/0148/2010 consists of Jonas Kruk (Senior Associate, Lead), Rafael Okonkwo (Partner, Junior), Owen Blake (Junior, Associate), and Clara Dufour (Knowledge Manager, Knowledge Manager) (MTR-2010-00148). The team working on matter REG/NYC/0148/2010 is listed in the matter record (MTR-2010-00148):\n- Jonas Kruk (Senior Associate, Lead) (MTR-2010-00148)\n- Rafael Okonkwo (Partner",
+      "seconds": 7.48
+    },
+    {
+      "id": "LEAD-REG/NYC/0148/2010",
+      "category": "lead_unscoped",
+      "query": "who led our work on UN Security Council resolutions — 2010?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2010-00148"
+      ],
+      "top_matters": [
+        "MTR-2010-00148",
+        "MTR-2015-00153",
+        "MTR-2012-00150",
+        "MTR-2016-00154",
+        "MTR-2014-00152"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 45.0,
+        "evidence_ms": 921.1,
+        "panel_ms": 17.5,
+        "llm_ms": 3466.0,
+        "total_ms": 7568.4
+      },
+      "answer": "Jonas Kruk (Senior Associate) led the work on UN Security Council resolutions in 2010, as shown in the matter record for REG/NYC/0148/2010 (MTR-2010-00148). The team also included Rafael Okonkwo (Partner, Junior), Owen Blake (Junior, Associate), and Clara Dufour (Knowledge Manager) (MTR-2010-00148). Jonas Kruk (Senior Associate) led the work on UN Security Council resolutions in 2010, as shown in ",
+      "seconds": 7.59
+    },
+    {
+      "id": "NRES-REG/NYC/0148/2010",
+      "category": "scoped_fact",
+      "query": "how many resolutions were adopted?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2010-00148"
+      ],
+      "top_matters": [
+        "MTR-2010-00148",
+        "MTR-2005-00143",
+        "MTR-2006-00144",
+        "MTR-2007-00145",
+        "MTR-2008-00146"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.9,
+        "evidence_ms": 1291.2,
+        "panel_ms": 6.5,
+        "llm_ms": 2699.7,
+        "total_ms": 7409.4
+      },
+      "answer": "59 Security Council resolutions were adopted in 2010 under matter REG/NYC/0148/2010 (MTR-2010-00148). 59 resolutions were adopted (MTR-2010-00148). This is stated in the matter record for REG/NYC/0148/2010, which lists 59 Security Council resolutions adopted in 2010 (MTR-2010-00148). The matter record also lists 59 associated documents, each corresponding to a resolution, and provides examples of ",
+      "seconds": 7.43
+    },
+    {
+      "id": "OVR-REG/NYC/0111/1973",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1973-00111"
+      ],
+      "top_matters": [
+        "MTR-1973-00111",
+        "MTR-1968-00106",
+        "MTR-1969-00107",
+        "MTR-1970-00108",
+        "MTR-1971-00109"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.6,
+        "evidence_ms": 293.5,
+        "panel_ms": 5.0,
+        "llm_ms": 5046.8,
+        "total_ms": 10057.3
+      },
+      "answer": "MTR-1973-00111 is a closed regulatory matter for the United Nations covering 20 Security Council resolutions adopted in 1973 on topics including Southern Rhodesia, the Middle East, Latin America, and Cyprus, led by Partner Rafael Okonkwo (MTR-1973-00111). This matter, code REG/NYC/0111/1973, is a closed United Nations Security Council resolution matter opened on 26 January 1973 and closed on 15 De",
+      "seconds": 10.08
+    },
+    {
+      "id": "TEAM-REG/NYC/0111/1973",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1973-00111"
+      ],
+      "top_matters": [
+        "MTR-1973-00111",
+        "MTR-1968-00106",
+        "MTR-1969-00107",
+        "MTR-1970-00108",
+        "MTR-1971-00109"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.7,
+        "evidence_ms": 587.0,
+        "panel_ms": 7.0,
+        "llm_ms": 7646.7,
+        "total_ms": 14365.3
+      },
+      "answer": "The matter team consists of Rafael Okonkwo (Partner, Lead), Jonas Kruk (Senior Associate, Associate), Owen Blake (Junior, Junior), and Noah Patel (Paralegal, Paralegal) (MTR-1973-00111). The team working on matter REG/NYC/0111/1973 is listed in the matter record (MTR-1973-00111):\n- Rafael Okonkwo — Partner, Lead (MTR-1973-00111)\n- Jonas Kruk — Senior Associate, Associate (MTR-1973-00111)\n- Owen Bl",
+      "seconds": 14.39
+    },
+    {
+      "id": "LEAD-REG/NYC/0111/1973",
+      "category": "lead_unscoped",
+      "query": "who led our work on UN Security Council resolutions — 1973?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1973-00111"
+      ],
+      "top_matters": [
+        "MTR-1973-00111",
+        "MTR-2014-00152",
+        "MTR-2015-00153",
+        "MTR-2011-00149",
+        "MTR-1970-00108"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 38.7,
+        "evidence_ms": 416.0,
+        "panel_ms": 13.1,
+        "llm_ms": 2598.4,
+        "total_ms": 4837.7
+      },
+      "answer": "The work on UN Security Council resolutions in 1973 was led by Partner Rafael Okonkwo (MTR-1973-00111). The matter REG/NYC/0111/1973, covering 20 Security Council resolutions adopted in 1973, was led by Partner Rafael Okonkwo as the Lead (MTR-1973-00111). The team also included Senior Associate Jonas Kruk, Junior Owen Blake, and Paralegal Noah Patel (MTR-1973-00111).",
+      "seconds": 4.88
+    },
+    {
+      "id": "NRES-REG/NYC/0111/1973",
+      "category": "scoped_fact",
+      "query": "how many resolutions were adopted?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1973-00111"
+      ],
+      "top_matters": [
+        "MTR-1973-00111",
+        "MTR-1968-00106",
+        "MTR-1969-00107",
+        "MTR-1970-00108",
+        "MTR-1971-00109"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.8,
+        "evidence_ms": 382.9,
+        "panel_ms": 6.2,
+        "llm_ms": 3379.7,
+        "total_ms": 6628.5
+      },
+      "answer": "20 Security Council resolutions were adopted in 1973 under matter REG/NYC/0111/1973 (MTR-1973-00111). The matter record states that 20 Security Council resolutions were adopted that year (MTR-1973-00111). The documents list includes 20 resolutions, numbered 325 through 344, covering topics such as the Panama meetings, Southern Rhodesia/Zambia sanctions, the Middle East cease-fire, and admissions o",
+      "seconds": 6.68
+    },
+    {
+      "id": "OVR-REG/DEL/0166/2018",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2018-00166"
+      ],
+      "top_matters": [
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2025-00168",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.4,
+        "evidence_ms": 179.5,
+        "panel_ms": 14.3,
+        "llm_ms": 5240.4,
+        "total_ms": 12349.6
+      },
+      "answer": "This is an electricity appeal (Appeal 163 of 2018) before the Appellate Tribunal for Electricity, in which GMR Warora Energy Limited challenges a CERC order on change-in-law compensation, and MSEDCL is the client/respondent [1] (MTR-2018-00166). This matter is an electricity appeal (Appeal 163 of 2018) before the Appellate Tribunal for Electricity, opened on 1 January 2018 [2] (MTR-2018-00166). Th",
+      "seconds": 12.42
+    },
+    {
+      "id": "TEAM-REG/DEL/0166/2018",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2018-00166"
+      ],
+      "top_matters": [
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2025-00168",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.0,
+        "evidence_ms": 252.0,
+        "panel_ms": 16.2,
+        "llm_ms": 3902.0,
+        "total_ms": 7117.3
+      },
+      "answer": "The matter team consists of Rhea Kapoor (Senior Associate, Lead), Clara Dufour (Knowledge Manager), Ananya Deshmukh (Partner, Junior), and Arjun Nair (Associate) (MTR-2018-00166). The following people are working on matter REG/DEL/0166/2018 (MTR-2018-00166):\n- Rhea Kapoor — Senior Associate, Lead (MTR-2018-00166)\n- Clara Dufour — Knowledge Manager, Knowledge Manager (MTR-2018-00166)\n- Ananya Deshm",
+      "seconds": 7.18
+    },
+    {
+      "id": "LEAD-REG/DEL/0166/2018",
+      "category": "lead_unscoped",
+      "query": "who led our work on GMR Warora Energy v CERC?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2018-00166"
+      ],
+      "top_matters": [
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2025-00168",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 21.3,
+        "evidence_ms": 650.6,
+        "panel_ms": 18.0,
+        "llm_ms": 3416.4,
+        "total_ms": 7559.5
+      },
+      "answer": "Rhea Kapoor (Senior Associate) led the firm's work on GMR Warora Energy v CERC (MTR-2018-00166). Rhea Kapoor led the work as Senior Associate (Lead) on matter REG/DEL/0166/2018 (MTR-2018-00166). The team also included:\n- Ananya Deshmukh (Partner, Junior) (MTR-2018-00166)\n- Arjun Nair (Associate, Associate) (MTR-2018-00166)\n- Clara Dufour (Knowledge Manager, Knowledge Manager) (MTR-2018-00166)\n\nThe",
+      "seconds": 7.66
+    },
+    {
+      "id": "OVR-REG/DEL/0165/2025",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00165"
+      ],
+      "top_matters": [
+        "MTR-2025-00165",
+        "MTR-2018-00166",
+        "MTR-2025-00168",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 4.5,
+        "evidence_ms": 901.4,
+        "panel_ms": 13.8,
+        "llm_ms": 3902.5,
+        "total_ms": 10318.8
+      },
+      "answer": "This is a civil appeal by MSEDCL before the Supreme Court of India challenging an order of the Maharashtra Electricity Regulatory Commission, with an additional affidavit filed on 10 August 2026 [1] (MTR-2025-00165). This matter is a Civil Appeal (No. 10046 of 2025) filed by Maharashtra State Electricity Distribution Company Limited (MSEDCL) against the Maharashtra Electricity Regulatory Commissio",
+      "seconds": 11.26
+    },
+    {
+      "id": "TEAM-REG/DEL/0165/2025",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00165"
+      ],
+      "top_matters": [
+        "MTR-2025-00165",
+        "MTR-2018-00166",
+        "MTR-2025-00168",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 9.3,
+        "evidence_ms": 4009.1,
+        "panel_ms": 28.5,
+        "llm_ms": 2750.1,
+        "total_ms": 11103.5
+      },
+      "answer": "The team working on matter REG/DEL/0165/2025 (MSEDCL v MERC) is listed in the matter record (MTR-2025-00165):\n- Vikram Sethi — Counsel, Lead (MTR-2025-00165)\n- Noah Patel — Paralegal (MTR-2025-00165)\n- Rhea Kapoor — Senior Associate, Associate (MTR-2025-00165)\n- Arjun Nair — Associate, Junior (MTR-2 The team working on matter REG/DEL/0165/2025 (MSEDCL v MERC) is listed in the matter record (MTR-20",
+      "seconds": 12.34
+    },
+    {
+      "id": "LEAD-REG/DEL/0165/2025",
+      "category": "lead_unscoped",
+      "query": "who led our work on MSEDCL v MERC?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00165"
+      ],
+      "top_matters": [
+        "MTR-2025-00165",
+        "MTR-2018-00166",
+        "MTR-2025-00168",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 281.8,
+        "evidence_ms": 1263.6,
+        "panel_ms": 15.3,
+        "llm_ms": 2438.4,
+        "total_ms": 6866.4
+      },
+      "answer": "The work on MSEDCL v MERC (REG/DEL/0165/2025) is led by Vikram Sethi as Counsel (Lead) (MTR-2025-00165). The team also includes Rhea Kapoor as Senior Associate (Associate), Arjun Nair as Associate (Junior), and Noah Patel as Paralegal (Paralegal) (MTR-2025-00165). The work on MSEDCL v MERC (REG/DEL/0165/2025) is led by Vikram Sethi as Counsel (Lead) (MTR-2025-00165). The team also includes Rhea Ka",
+      "seconds": 7.06
+    },
+    {
+      "id": "OVR-REG/DEL/0168/2025",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00168"
+      ],
+      "top_matters": [
+        "MTR-2025-00168",
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.7,
+        "evidence_ms": 2837.5,
+        "panel_ms": 10.4,
+        "llm_ms": 4319.6,
+        "total_ms": 11755.9
+      },
+      "answer": "This is an impleadment application by Damodar Valley Corporation (DVC) in Appeal 118 of 2025 before the Appellate Tribunal for Electricity, where WBSEDCL has appealed against WBERC [1] (MTR-2025-00168). This matter, code REG/DEL/0168/2025, is an impleadment application by Damodar Valley Corporation (DVC) in Appeal 118 of 2025 before the Appellate Tribunal for Electricity (APTEL) [2] (MTR-2025-0016",
+      "seconds": 11.82
+    },
+    {
+      "id": "TEAM-REG/DEL/0168/2025",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00168"
+      ],
+      "top_matters": [
+        "MTR-2025-00168",
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 4.5,
+        "evidence_ms": 2570.1,
+        "panel_ms": 11.8,
+        "llm_ms": 2964.4,
+        "total_ms": 8995.5
+      },
+      "answer": "The matter team comprises Ananya Deshmukh (Partner, Lead), Clara Dufour (Knowledge Manager), Vikram Sethi (Counsel, Associate), and Rhea Kapoor (Senior Associate, Junior) (MTR-2025-00168). The team working on matter REG/DEL/0168/2025 (WBSEDCL v WBERC — DVC impleadment) is (MTR-2025-00168):\n- Ananya Deshmukh — Partner, Lead (MTR-2025-00168)\n- Clara Dufour — Knowledge Manager (MTR-2025-00168)\n- Vikr",
+      "seconds": 9.05
+    },
+    {
+      "id": "LEAD-REG/DEL/0168/2025",
+      "category": "lead_unscoped",
+      "query": "who led our work on WBSEDCL v WBERC?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00168"
+      ],
+      "top_matters": [
+        "MTR-2025-00168",
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 40.9,
+        "evidence_ms": 321.6,
+        "panel_ms": 8.2,
+        "llm_ms": 3474.1,
+        "total_ms": 5711.6
+      },
+      "answer": "The matter was led by Partner Ananya Deshmukh (MTR-2025-00168). The work on WBSEDCL v WBERC (Appeal 118 of 2025, DVC impleadment) was led by Partner Ananya Deshmukh (MTR-2025-00168). The team also includes Clara Dufour (Knowledge Manager), Vikram Sethi (Counsel, Associate), and Rhea Kapoor (Senior Associate, Junior) (MTR-2025-00168).",
+      "seconds": 5.73
+    },
+    {
+      "id": "OVR-REG/DEL/0167/2026",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00167"
+      ],
+      "top_matters": [
+        "MTR-2026-00167",
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2025-00168",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.8,
+        "evidence_ms": 280.1,
+        "panel_ms": 1.9,
+        "llm_ms": 4101.4,
+        "total_ms": 9468.0
+      },
+      "answer": "This is an open CERC petition (310/MP/2026) where AMPIN Energy Utility Nine Pvt. Ltd. is challenging CTUIL's determination of non-solar access margins under the GNA Regulations, and CTUIL has filed a reply arguing the petition is not maintainable and that the relevant regulation is mandatory [1] (MTR-2026-00167). This matter is a regulatory petition before the Central Electricity Regulatory Commis",
+      "seconds": 9.49
+    },
+    {
+      "id": "TEAM-REG/DEL/0167/2026",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00167"
+      ],
+      "top_matters": [
+        "MTR-2026-00167",
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2025-00168",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.2,
+        "evidence_ms": 307.3,
+        "panel_ms": 7.1,
+        "llm_ms": 2910.6,
+        "total_ms": 7621.0
+      },
+      "answer": "The matter team consists of Arjun Nair (Associate, Lead), Noah Patel (Paralegal), Ananya Deshmukh (Partner, Associate), and Vikram Sethi (Counsel, Junior) (MTR-2026-00167). The team working on matter REG/DEL/0167/2026 (AMPIN Energy Utility Nine v CTUIL) is listed in the matter record (MTR-2026-00167):\n- Arjun Nair — Associate, Lead (MTR-2026-00167)\n- Noah Patel — Paralegal, Paralegal (MTR-2026-001",
+      "seconds": 7.66
+    },
+    {
+      "id": "LEAD-REG/DEL/0167/2026",
+      "category": "lead_unscoped",
+      "query": "who led our work on AMPIN Energy Utility Nine v CTUIL?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00167"
+      ],
+      "top_matters": [
+        "MTR-2026-00167",
+        "MTR-CI-OPEN-001",
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2025-00168"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 49.1,
+        "evidence_ms": 541.6,
+        "panel_ms": 9.9,
+        "llm_ms": 4554.1,
+        "total_ms": 9005.1
+      },
+      "answer": "The matter was led by Arjun Nair (Associate, Lead) as per the matter record (MTR-2026-00167). The work on AMPIN Energy Utility Nine v CTUIL (REG/DEL/0167/2026) was led by Arjun Nair (Associate, Lead) (MTR-2026-00167). The team also includes:\n- Noah Patel (Paralegal, Paralegal) (MTR-2026-00167)\n- Ananya Deshmukh (Partner, Associate) (MTR-2026-00167)\n- Vikram Sethi (Counsel, Junior) (MTR-2026-00167)",
+      "seconds": 9.04
+    },
+    {
+      "id": "OVR-REG/DEL/0170/2026",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00170"
+      ],
+      "top_matters": [
+        "MTR-2026-00170",
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2025-00168",
+        "MTR-2026-00167"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.3,
+        "evidence_ms": 295.4,
+        "panel_ms": 4.6,
+        "llm_ms": 840.3,
+        "total_ms": 1164.2
+      },
+      "answer": "Vector Green Sunshine v PSPCL — Petition 22 of 2026 (MTR-2026-00170) — REG/DEL/0170/2026, client Punjab State Power Corporation Limited, status Open. Vector Green Sunshine Pvt. Ltd. petitioned PSERC for GST-RCM compensation. PSPCL filed written submissions dated 31 July 2026. Vector Green Sunshine v PSPCL — Petition 22 of 2026 (MTR-2026-00170) — REG/DEL/0170/2026, client Punjab State Power Corpora",
+      "seconds": 1.2
+    },
+    {
+      "id": "TEAM-REG/DEL/0170/2026",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00170"
+      ],
+      "top_matters": [
+        "MTR-2026-00170",
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2025-00168",
+        "MTR-2026-00167"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.2,
+        "evidence_ms": 146.9,
+        "panel_ms": 5.0,
+        "llm_ms": 878.3,
+        "total_ms": 1031.7
+      },
+      "answer": "Team on Vector Green Sunshine v PSPCL — Petition 22 of 2026 (MTR-2026-00170): Team on Vector Green Sunshine v PSPCL — Petition 22 of 2026 (MTR-2026-00170):\n- Rhea Kapoor — Senior Associate, Lead (MEM-00015)\n- Clara Dufour — Knowledge Manager, Knowledge Manager (MEM-00011)\n- Ananya Deshmukh — Partner, Junior (MEM-00013)\n- Arjun Nair — Associate, Associate (MEM-00016)\n\nVector Green Sunshine v PSPCL ",
+      "seconds": 1.06
+    },
+    {
+      "id": "LEAD-REG/DEL/0170/2026",
+      "category": "lead_unscoped",
+      "query": "who led our work on Vector Green Sunshine v PSPCL?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00170"
+      ],
+      "top_matters": [
+        "MTR-2026-00170",
+        "MTR-2018-00166",
+        "MTR-2025-00165",
+        "MTR-2025-00168",
+        "MTR-2026-00167"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 47.8,
+        "evidence_ms": 197.4,
+        "panel_ms": 4.6,
+        "llm_ms": 800.1,
+        "total_ms": 1002.4
+      },
+      "answer": "Team on Vector Green Sunshine v PSPCL — Petition 22 of 2026 (MTR-2026-00170): Team on Vector Green Sunshine v PSPCL — Petition 22 of 2026 (MTR-2026-00170):\n- Rhea Kapoor — Senior Associate, Lead (MEM-00015)\n- Clara Dufour — Knowledge Manager, Knowledge Manager (MEM-00011)\n- Ananya Deshmukh — Partner, Junior (MEM-00013)\n- Arjun Nair — Associate, Associate (MEM-00016)\n\nVector Green Sunshine v PSPCL ",
+      "seconds": 2.05
+    },
+    {
+      "id": "OVR-CORP/BLR/0901/2026",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 1.7,
+        "evidence_ms": 159.1,
+        "panel_ms": 6.8,
+        "llm_ms": 4626.2,
+        "total_ms": 8771.6
+      },
+      "answer": "This is an open corporate transaction matter for Acme Technologies Private Limited, involving the acquisition of 1,240,000 Series A CCPS from Horizon Seed Partners LLP by Northbridge Growth Fund II, with a Long Stop Date of 31 March 2027 [1] [2] (MTR-2026-00901). This matter (CORP/BLR/0901/2026) is a Series B financing transaction for client Acme Technologies Private Limited (MTR-2026-00901). The ",
+      "seconds": 9.83
+    },
+    {
+      "id": "TEAM-CORP/BLR/0901/2026",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 2.9,
+        "evidence_ms": 161.3,
+        "panel_ms": 2.3,
+        "llm_ms": 806.7,
+        "total_ms": 973.3
+      },
+      "answer": "Team on Acme Technologies — Series B Financing (MTR-2026-00901): Team on Acme Technologies — Series B Financing (MTR-2026-00901):\n- Helena Voss — Partner, Lead (MEM-00001)\n- Priya Menon — Senior Associate, Associate (MEM-00005)\n- Amina El-Sayed — Associate, Associate (MEM-00007)\n- Clara Dufour — Knowledge Manager, Knowledge Manager (MEM-00011)\n\nAcme Technologies — Series B Financing (MTR-2026-0090",
+      "seconds": 3.03
+    },
+    {
+      "id": "LEAD-CORP/BLR/0901/2026",
+      "category": "lead_unscoped",
+      "query": "who led our work on Acme Technologies?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 17.1,
+        "evidence_ms": 154.7,
+        "panel_ms": 5.2,
+        "llm_ms": 2721.8,
+        "total_ms": 5025.5
+      },
+      "answer": "Helena Voss (Partner) led the firm's work on the Acme Technologies matter (MTR-2026-00901). Helena Voss led the firm's work on the Acme Technologies Series B Financing matter (MTR-2026-00901). She is listed as the Partner and Lead on the matter record (MTR-2026-00901). The team also includes Priya Menon (Senior Associate), Amina El-Sayed (Associate), and Clara Dufour (Knowledge Manager) (MTR-2026-",
+      "seconds": 8.66
+    },
+    {
+      "id": "OVR-CI-OPEN-001",
+      "category": "scoped_overview",
+      "query": "explain this",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_any": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-CI-OPEN-001"
+      ],
+      "top_matters": [
+        "MTR-CI-OPEN-001"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 5.6,
+        "evidence_ms": 3075.6,
+        "panel_ms": 18.0,
+        "llm_ms": 873.2,
+        "total_ms": 4087.4
+      },
+      "answer": "CI Open Tariff Dispute (MTR-CI-OPEN-001) — CI-OPEN-001, client CI Energy Utility Ltd, status Open. CI Open Tariff Dispute (MTR-CI-OPEN-001) — CI-OPEN-001, client CI Energy Utility Ltd, status Open.\n\nRejoinder to reply of IA.pdf (DOC-F5E089EA53): 3 3. At the outset, it is stated that the averments in the Reply are denied in their entirety save insofar as those facts/averments that are expressly adm",
+      "seconds": 7.54
+    },
+    {
+      "id": "TEAM-CI-OPEN-001",
+      "category": "people_on_matter",
+      "query": "who is working on this matter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-CI-OPEN-001"
+      ],
+      "top_matters": [
+        "MTR-CI-OPEN-001"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 8.0,
+        "evidence_ms": 1332.8,
+        "panel_ms": 50.7,
+        "llm_ms": 1003.6,
+        "total_ms": 2403.3
+      },
+      "answer": "Team on CI Open Tariff Dispute (MTR-CI-OPEN-001): Team on CI Open Tariff Dispute (MTR-CI-OPEN-001):\n- Arjun Nair — Associate, Lead (MEM-00016)\n- Helena Voss — Partner, Counsel (MEM-00001)\n\nCI Open Tariff Dispute (MTR-CI-OPEN-001) — CI-OPEN-001, client CI Energy Utility Ltd, status Open.\n\nAffidavit - CA 10046 of 2025.pdf (DOC-C666DB26B4): STATE: MATTER LISTED ON 11.08.2026 SECTION: XVII IN THE SUPR",
+      "seconds": 7.46
+    },
+    {
+      "id": "LEAD-CI-OPEN-001",
+      "category": "lead_unscoped",
+      "query": "who led our work on CI Open Tariff Dispute?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-CI-OPEN-001"
+      ],
+      "top_matters": [
+        "MTR-CI-OPEN-001"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0,
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 503.5,
+        "evidence_ms": 1620.1,
+        "panel_ms": 33.0,
+        "llm_ms": 869.3,
+        "total_ms": 2527.3
+      },
+      "answer": "Team on CI Open Tariff Dispute (MTR-CI-OPEN-001): Team on CI Open Tariff Dispute (MTR-CI-OPEN-001):\n- Arjun Nair — Associate, Lead (MEM-00016)\n- Helena Voss — Partner, Counsel (MEM-00001)\n\nCI Open Tariff Dispute (MTR-CI-OPEN-001) — CI-OPEN-001, client CI Energy Utility Ltd, status Open.\n\nBRIEF NOTE OF SUBMISSIONS ON BEHALF OF RESPONDENT NO. 2, MSEDCL.pdf (DOC-3573587540): 1 BEFORE THE HON’BLE APPE",
+      "seconds": 13.67
+    },
+    {
+      "id": "ACME-LSD",
+      "category": "scoped_fact",
+      "query": "what is the long stop date?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 33.6,
+        "evidence_ms": 1993.0,
+        "panel_ms": 56.3,
+        "llm_ms": 968.7,
+        "total_ms": 3926.7
+      },
+      "answer": "Acme Technologies — Series B Financing (MTR-2026-00901) — CORP/BLR/0901/2026, client Acme Technologies Private Limited, status Open. Northbridge Growth Fund II is acquiring 1,240,000 Series A CCPS from Horizon Seed Partners LLP. Acme Technologies is the confirming party; the Board approved the transfer on 12 September 2026. Long Stop Date is 31 March 2027. Acme Technologies — Series B Financing (M",
+      "seconds": 5.43
+    },
+    {
+      "id": "ACME-SHARES",
+      "category": "scoped_fact",
+      "query": "how many shares are being transferred?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": false
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [
+        "evidence_ms"
+      ],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 41.8,
+        "evidence_ms": 5419.3,
+        "panel_ms": 24.8,
+        "llm_ms": 2940.7,
+        "total_ms": 11168.1
+      },
+      "answer": "Northbridge Growth Fund II is acquiring 1,240,000 Series A CCPS from Horizon Seed Partners LLP [1] (MTR-2026-00901). The number of shares being transferred is 1,240,000 Series A compulsorily convertible preference shares (CCPS) [2] (MTR-2026-00901). This is stated in the matter record and confirmed by the Board Resolution dated 12 September 2026 [3] (MTR-2026-00901). The transfer is from Horizon S",
+      "seconds": 18.75
+    },
+    {
+      "id": "ACME-BUYER",
+      "category": "scoped_fact",
+      "query": "who is the purchaser?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": false
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [
+        "evidence_ms"
+      ],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 301.7,
+        "evidence_ms": 6644.7,
+        "panel_ms": 42.0,
+        "llm_ms": 835.4,
+        "total_ms": 7959.6
+      },
+      "answer": "Acme Technologies — Series B Financing (MTR-2026-00901) — CORP/BLR/0901/2026, client Acme Technologies Private Limited, status Open. Northbridge Growth Fund II is acquiring 1,240,000 Series A CCPS from Horizon Seed Partners LLP. Acme Technologies is the confirming party; the Board approved the transfer on 12 September 2026. Long Stop Date is 31 March 2027. Acme Technologies — Series B Financing (M",
+      "seconds": 11.12
+    },
+    {
+      "id": "ACME-BOARD",
+      "category": "scoped_fact",
+      "query": "when did the board approve the transfer?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "facts_all": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 6.0,
+        "evidence_ms": 568.8,
+        "panel_ms": 47.2,
+        "llm_ms": 4397.7,
+        "total_ms": 8690.9
+      },
+      "answer": "The board approved the transfer on 12 September 2026 [1] (MTR-2026-00901). - The Board Resolution dated 12 September 2026 records that the Board of Directors of Acme Technologies Private Limited, at a meeting held on that date, resolved to accord consent to the transfer of 1,240,000 Series A compulsorily convertible preference shares from Horizon Seed Partners LLP to Northbridge Growth Fund II [2]",
+      "seconds": 10.86
+    },
+    {
+      "id": "ACME-CLIENT",
+      "category": "client_matters",
+      "query": "what work have we done for Acme Technologies?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matters_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 594.0,
+        "evidence_ms": 2286.5,
+        "panel_ms": 17.9,
+        "llm_ms": 5442.9,
+        "total_ms": 11818.6
+      },
+      "answer": "The firm is advising Acme Technologies Private Limited on a Series B financing transaction involving the transfer of 1,240,000 Series A CCPS from Horizon Seed Partners LLP to Northbridge Growth Fund II [1] [2] (MTR-2026-00901). The firm is handling matter CORP/BLR/0901/2026, a Series B financing for Acme Technologies Private Limited (MTR-2026-00901). The work involves advising on the share transfe",
+      "seconds": 13.69
+    },
+    {
+      "id": "ACME-CLIENT-SCOPE",
+      "category": "client_matters",
+      "query": "what deals have we done for them?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matters_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 9.3,
+        "evidence_ms": 11.2,
+        "panel_ms": 12.6,
+        "llm_ms": 858.5,
+        "total_ms": 956.7
+      },
+      "answer": "Acme Technologies — Series B Financing (MTR-2026-00901) — CORP/BLR/0901/2026, client Acme Technologies Private Limited, status Open. Northbridge Growth Fund II is acquiring 1,240,000 Series A CCPS from Horizon Seed Partners LLP. Acme Technologies is the confirming party; the Board approved the transfer on 12 September 2026. Long Stop Date is 31 March 2027. Acme Technologies — Series B Financing (M",
+      "seconds": 1.27
+    },
+    {
+      "id": "ACME-PARA",
+      "category": "paraphrase_lowercase",
+      "query": "the series b deal where a seed investor sold its preference shares to a growth fund",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "matter": true,
+        "grounded": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-2026-00901"
+      ],
+      "top_matters": [
+        "MTR-2026-00901"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matter_hit": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 25.2,
+        "evidence_ms": 1857.2,
+        "panel_ms": 22.0,
+        "llm_ms": 864.8,
+        "total_ms": 2810.8
+      },
+      "answer": "Acme Technologies — Series B Financing (MTR-2026-00901) — CORP/BLR/0901/2026, client Acme Technologies Private Limited, status Open. Northbridge Growth Fund II is acquiring 1,240,000 Series A CCPS from Horizon Seed Partners LLP. Acme Technologies is the confirming party; the Board approved the transfer on 12 September 2026. Long Stop Date is 31 March 2027. Acme Technologies — Series B Financing (M",
+      "seconds": 6.38
+    },
+    {
+      "id": "CLIENT-United Kingdom",
+      "category": "client_matters",
+      "query": "which matters have we handled for United Kingdom?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-1934-00048",
+        "MTR-1932-00034",
+        "MTR-1932-00032",
+        "MTR-1929-00023",
+        "MTR-1923-00001"
+      ],
+      "top_matters": [
+        "MTR-1934-00048",
+        "MTR-1932-00034",
+        "MTR-1932-00032",
+        "MTR-1929-00023",
+        "MTR-1923-00001"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matters_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "evidence_ms": 31.6,
+        "panel_ms": 19.8,
+        "llm_ms": 917.6,
+        "total_ms": 1092.5
+      },
+      "answer": "Oscar Chinn — PCIJ Series AB No. 63 (MTR-1934-00048) — PIL/HAG/0048/1934, client United Kingdom, status Closed. PCIJ Series AB No. 63: Oscar Chinn. Applicant(s): United Kingdom. Respondent(s): Belgium. Oscar Chinn — PCIJ Series AB No. 63 (MTR-1934-00048) — PIL/HAG/0048/1934, client United Kingdom, status Closed. PCIJ Series AB No. 63: Oscar Chinn. Applicant(s): United Kingdom. Respondent(s): Belgi",
+      "seconds": 1.21
+    },
+    {
+      "id": "CLIENT-Greece",
+      "category": "client_matters",
+      "query": "which matters have we handled for Greece?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1927-00011",
+        "MTR-1925-00005",
+        "MTR-1924-00002"
+      ],
+      "top_matters": [
+        "MTR-1927-00011",
+        "MTR-1925-00005",
+        "MTR-1924-00002",
+        "MTR-1925-00004"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matters_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "evidence_ms": 57.3,
+        "panel_ms": 35.1,
+        "llm_ms": 3252.8,
+        "total_ms": 8973.2
+      },
+      "answer": "The firm has handled three matters for Greece: Mavrommatis Palestine, Mavrommatis Jerusalem, and Mavrommatis Jerusalem Readaptation (MTR-1927-00011, MTR-1925-00005, MTR-1924-00002). The firm has handled three matters for Greece, all closed disputes against the United Kingdom before the Permanent Court of International Justice (MTR-1927-00011, MTR-1925-00005, MTR-1924-00002):\n- Mavrommatis Palestin",
+      "seconds": 9.07
+    },
+    {
+      "id": "CLIENT-Denmark",
+      "category": "client_matters",
+      "query": "which matters have we handled for Denmark?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-1933-00040",
+        "MTR-1933-00038",
+        "MTR-1932-00033"
+      ],
+      "top_matters": [
+        "MTR-1933-00040",
+        "MTR-1933-00038",
+        "MTR-1932-00033",
+        "MTR-1925-00004",
+        "MTR-1932-00032"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matters_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "evidence_ms": 61.0,
+        "panel_ms": 20.5,
+        "llm_ms": 897.1,
+        "total_ms": 1056.4
+      },
+      "answer": "Eastern Greenland — PCIJ Series AB No. 55 (MTR-1933-00040) — PIL/HAG/0040/1933, client Denmark, status Closed. PCIJ Series AB No. 55: Eastern Greenland. Applicant(s): Denmark. Respondent(s): Norway. Eastern Greenland — PCIJ Series AB No. 55 (MTR-1933-00040) — PIL/HAG/0040/1933, client Denmark, status Closed. PCIJ Series AB No. 55: Eastern Greenland. Applicant(s): Denmark. Respondent(s): Norway.\n\nE",
+      "seconds": 1.27
+    },
+    {
+      "id": "CLIENT-Switzerland",
+      "category": "client_matters",
+      "query": "which matters have we handled for Switzerland?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [
+        "MTR-1936-00054",
+        "MTR-1936-00052"
+      ],
+      "top_matters": [
+        "MTR-1936-00054",
+        "MTR-1936-00052",
+        "MTR-1925-00004",
+        "MTR-1932-00032",
+        "MTR-1932-00034"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matters_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "evidence_ms": 287.6,
+        "panel_ms": 29.7,
+        "llm_ms": 845.1,
+        "total_ms": 1392.3
+      },
+      "answer": "Losinger — PCIJ Series AB No. 69 (MTR-1936-00054) — PIL/HAG/0054/1936, client Switzerland, status Closed. PCIJ Series AB No. 69: Losinger. Applicant(s): Switzerland. Respondent(s): Yugoslavia. Losinger — PCIJ Series AB No. 69 (MTR-1936-00054) — PIL/HAG/0054/1936, client Switzerland, status Closed. PCIJ Series AB No. 69: Losinger. Applicant(s): Switzerland. Respondent(s): Yugoslavia.\n\nLosinger — PC",
+      "seconds": 5.72
+    },
+    {
+      "id": "CLIENT-Maharashtra State El",
+      "category": "client_matters",
+      "query": "which matters have we handled for Maharashtra State Electricity Distribution Company Limited?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "matters_recall": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-2025-00165",
+        "MTR-2018-00166"
+      ],
+      "top_matters": [
+        "MTR-2025-00165",
+        "MTR-2018-00166",
+        "MTR-2025-00168",
+        "MTR-2026-00167",
+        "MTR-2026-00170"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "panel_matters_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "evidence_ms": 74.3,
+        "panel_ms": 18.7,
+        "llm_ms": 4077.5,
+        "total_ms": 10622.9
+      },
+      "answer": "The firm has handled two matters for Maharashtra State Electricity Distribution Company Limited: MTR-2025-00165 (MSEDCL v MERC) and MTR-2018-00166 (GMR Warora Energy v CERC) (MTR-2018-00166, MTR-2025-00165). The firm has handled two matters for Maharashtra State Electricity Distribution Company Limited (MSEDCL) (MTR-2025-00165, MTR-2018-00166):\n\n- MTR-2025-00165 — *MSEDCL v MERC*, Civil Appeal 100",
+      "seconds": 17.29
+    },
+    {
+      "id": "SPEC-MEM-00001",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in pcij jurisprudence?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 11.9,
+        "evidence_ms": 71.6,
+        "panel_ms": 0.1,
+        "llm_ms": 835.0,
+        "total_ms": 907.1
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Helena Voss — Partner, The Hague (MEM-00001)\n- Ingrid Bergström — Counsel, The Hague (MEM-00003)\n- Priya Menon — Senior Associate, The Hague (MEM-00005)\n- Tomás Ribeiro — Associate, The Hague (MEM-00008)\n- Mei Lin — Junior, The Hague (MEM-00009)\n- Clara Dufour — Knowledge Manager, The Hague (MEM-00011)",
+      "seconds": 6.31
+    },
+    {
+      "id": "SPEC-MEM-00002",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in un charter?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 644.3,
+        "evidence_ms": 725.8,
+        "panel_ms": 0.1,
+        "llm_ms": 2991.9,
+        "total_ms": 22703.4
+      },
+      "answer": "Rafael Okonkwo, a Partner in the New York office, is the firm's expert in the UN Charter, with a specialisation in UN Charter and Peacekeeping mandates (MEM-00002). His practice areas include Regulatory and Disputes, and his specialisations are UN Charter and Peacekeeping mandates (MEM-00002). He has worked on matters involving UN Security Council resolutions, including as Lead on REG/NYC/0093/195",
+      "seconds": 23.82
+    },
+    {
+      "id": "SPEC-MEM-00003",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in advisory opinions?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1922-00069",
+        "MTR-1924-00074",
+        "MTR-1925-00075",
+        "MTR-1925-00076",
+        "MTR-1925-00077"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 95.9,
+        "evidence_ms": 499.5,
+        "panel_ms": 97.3,
+        "llm_ms": 4259.4,
+        "total_ms": 9171.9
+      },
+      "answer": "Ingrid Bergström, Counsel in The Hague office, is the firm's expert in advisory opinions, with specialisations in Advisory opinions and Treaty interpretation (MEM-00003). Her practice areas are Disputes and Arbitration, and her specialisations include Advisory opinions and Treaty interpretation (MEM-00003). She has worked on multiple advisory opinion matters before the PCIJ, including as Lead on P",
+      "seconds": 11.02
+    },
+    {
+      "id": "SPEC-MEM-00004",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in sanctions?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 135.8,
+        "evidence_ms": 191.9,
+        "panel_ms": 0.1,
+        "llm_ms": 2736.5,
+        "total_ms": 6136.5
+      },
+      "answer": "Sami Haddad, Counsel in the Geneva office, is the only firm member explicitly listed with a specialisation in sanctions (MEM-00004, MEM-00002, MEM-00006, MEM-00010). Sami Haddad, Counsel in the Geneva office, is the firm's expert in sanctions (MEM-00004).\n- Sami Haddad: Counsel, Geneva office; practice areas: Regulatory, Disputes; specialisations: Sanctions, Chapter VII (MEM-00004).\n\n Other member",
+      "seconds": 11.94
+    },
+    {
+      "id": "SPEC-MEM-00005",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in historical awards?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 184.6,
+        "evidence_ms": 250.8,
+        "panel_ms": 0.0,
+        "llm_ms": 905.1,
+        "total_ms": 1156.2
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Priya Menon — Senior Associate, The Hague (MEM-00005)",
+      "seconds": 6.7
+    },
+    {
+      "id": "SPEC-MEM-00006",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in mandate renewals?",
+      "pass": false,
+      "checks": {
+        "http_200": false,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 0.0,
+        "panel_people_recall": 0.0
+      },
+      "latency": {},
+      "answer": " ",
+      "seconds": 10.44
+    },
+    {
+      "id": "SPEC-MEM-00007",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in documentary annexes?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 39.9,
+        "evidence_ms": 100.1,
+        "panel_ms": 0.0,
+        "llm_ms": 889.3,
+        "total_ms": 989.7
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Amina El-Sayed — Associate, Geneva (MEM-00007)",
+      "seconds": 2.15
+    },
+    {
+      "id": "SPEC-MEM-00008",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in compensation?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 42.4,
+        "evidence_ms": 110.1,
+        "panel_ms": 0.1,
+        "llm_ms": 2341.9,
+        "total_ms": 6560.7
+      },
+      "answer": "Tomás Ribeiro is the only firm member listed with a specialisation in Compensation (MEM-00008). Tomás Ribeiro, an Associate in The Hague office, is the only person in the firm whose specialisations include Compensation (MEM-00008). He also specialises in the Factory at Chorzów line (MEM-00008). No other member in the provided records lists compensation as a specialisation.",
+      "seconds": 10.61
+    },
+    {
+      "id": "SPEC-MEM-00009",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in case chronology?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1997-00135",
+        "MTR-1928-00019",
+        "MTR-2025-00163",
+        "MTR-2002-00140",
+        "MTR-1994-00132"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 173.7,
+        "evidence_ms": 3591.6,
+        "panel_ms": 16.9,
+        "llm_ms": 1001.1,
+        "total_ms": 4610.5
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Mei Lin — Junior, The Hague (MEM-00009)\n- Rafael Okonkwo — Partner, New York (MEM-00002)\n- Jonas Kruk — Senior Associate, New York (MEM-00006)\n- Owen Blake — Junior, New York (MEM-00010)\n- Clara Dufour — Knowledge Manager, The Hague (MEM-00011)\n\nOrder — Chorzow Factory Indemnities (1928-12-15) (DOC-00064): ased to fulfil any",
+      "seconds": 4.41
+    },
+    {
+      "id": "SPEC-MEM-00010",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in resolution citators?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 1347.4,
+        "evidence_ms": 1638.3,
+        "panel_ms": 0.1,
+        "llm_ms": 4544.6,
+        "total_ms": 9513.1
+      },
+      "answer": "Owen Blake is the firm's expert in resolution citators, with a specialisation in that area and lead roles on multiple UN Security Council resolutions matters (MEM-00010). Owen Blake, a Junior in the New York office, is the firm's expert in resolution citators, as listed under his specialisations (MEM-00010). He has held lead roles on matters REG/NYC/0164/2026 and REG/NYC/0161/2023, and associate o",
+      "seconds": 0.2
+    },
+    {
+      "id": "SPEC-MEM-00011",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in corpus cataloguing?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 209.1,
+        "evidence_ms": 269.2,
+        "panel_ms": 0.0,
+        "llm_ms": 835.9,
+        "total_ms": 1105.4
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Clara Dufour — Knowledge Manager, The Hague (MEM-00011)",
+      "seconds": 1.2
+    },
+    {
+      "id": "SPEC-MEM-00012",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in pdf splitting?",
+      "pass": false,
+      "checks": {
+        "http_200": false,
+        "grounded": false,
+        "people": false,
+        "no_slow_channel": true
+      },
+      "provider": "",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 0.0,
+        "panel_people_recall": 0.0
+      },
+      "latency": {},
+      "answer": " ",
+      "seconds": 12.54
+    },
+    {
+      "id": "SPEC-MEM-00013",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in electricity regulation?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-2025-00165"
+      ],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 152.4,
+        "evidence_ms": 216.9,
+        "panel_ms": 35.5,
+        "llm_ms": 3630.6,
+        "total_ms": 8311.9
+      },
+      "answer": "Ananya Deshmukh, a Partner in the Delhi office, is the firm's expert in electricity regulation, with a specialisation in that area and lead roles on related matters (MEM-00013). The firm's expert in electricity regulation is Ananya Deshmukh, a Partner in the Delhi office (MEM-00013). Her practice areas are Regulatory and Disputes, and her specialisations include Electricity regulation and Change i",
+      "seconds": 19.91
+    },
+    {
+      "id": "SPEC-MEM-00014",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in aptel appeals?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 82.4,
+        "evidence_ms": 133.4,
+        "panel_ms": 0.1,
+        "llm_ms": 817.8,
+        "total_ms": 951.5
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Vikram Sethi — Counsel, Delhi (MEM-00014)\n- Rhea Kapoor — Senior Associate, Delhi (MEM-00015)\n- Clara Dufour — Knowledge Manager, The Hague (MEM-00011)\n- Ananya Deshmukh — Partner, Delhi (MEM-00013)\n- Arjun Nair — Associate, Delhi (MEM-00016)\n- Noah Patel — Paralegal, The Hague (MEM-00012)",
+      "seconds": 0.05
+    },
+    {
+      "id": "SPEC-MEM-00015",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in ppa disputes?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 44.1,
+        "evidence_ms": 97.3,
+        "panel_ms": 0.1,
+        "llm_ms": 838.7,
+        "total_ms": 936.6
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Priya Menon — Senior Associate, The Hague (MEM-00005)\n- Rhea Kapoor — Senior Associate, Delhi (MEM-00015)\n- Helena Voss — Partner, The Hague (MEM-00001)\n- Ingrid Bergström — Counsel, The Hague (MEM-00003)\n- Mei Lin — Junior, The Hague (MEM-00009)\n- Clara Dufour — Knowledge Manager, The Hague (MEM-00011)",
+      "seconds": 1.07
+    },
+    {
+      "id": "SPEC-MEM-00016",
+      "category": "people_expertise",
+      "query": "who in the firm is an expert in affidavits?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 46.2,
+        "evidence_ms": 116.2,
+        "panel_ms": 0.1,
+        "llm_ms": 893.7,
+        "total_ms": 1010.2
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Arjun Nair — Associate, Delhi (MEM-00016)\n- Noah Patel — Paralegal, The Hague (MEM-00012)\n- Vikram Sethi — Counsel, Delhi (MEM-00014)\n- Rhea Kapoor — Senior Associate, Delhi (MEM-00015)",
+      "seconds": 2.1
+    },
+    {
+      "id": "PARTNER-The Hague",
+      "category": "people_expertise",
+      "query": "which partner sits in our The Hague office?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 266.1,
+        "evidence_ms": 285.4,
+        "panel_ms": 0.0,
+        "llm_ms": 866.3,
+        "total_ms": 1152.9
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Helena Voss — Partner, The Hague (MEM-00001)",
+      "seconds": 5.08
+    },
+    {
+      "id": "PARTNER-New York",
+      "category": "people_expertise",
+      "query": "which partner sits in our New York office?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 149.3,
+        "evidence_ms": 195.1,
+        "panel_ms": 0.3,
+        "llm_ms": 864.9,
+        "total_ms": 1060.5
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Rafael Okonkwo — Partner, New York (MEM-00002)",
+      "seconds": 3.1
+    },
+    {
+      "id": "PARTNER-Delhi",
+      "category": "people_expertise",
+      "query": "which partner sits in our Delhi office?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "grounded": true,
+        "people": true,
+        "no_slow_channel": true
+      },
+      "provider": "records",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [],
+      "slow_channels": [],
+      "panel": {
+        "people_in_answer": 1.0,
+        "panel_people_recall": 1.0
+      },
+      "latency": {
+        "scope_ms": 0.3,
+        "resolver_ms": 50.2,
+        "evidence_ms": 80.4,
+        "panel_ms": 0.1,
+        "llm_ms": 855.5,
+        "total_ms": 936.6
+      },
+      "answer": "Firm members matching the question: Firm members matching the question:\n- Ananya Deshmukh — Partner, Delhi (MEM-00013)",
+      "seconds": 6.17
+    },
+    {
+      "id": "NEG-0",
+      "category": "negative",
+      "query": "what was the case where acme challenged the bank?",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "clean_negative": true,
+        "no_dump": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": "no_matching_matter",
+      "resolved": [],
+      "top_matters": [
+        "MTR-1929-00021",
+        "MTR-1929-00020",
+        "MTR-1937-00055",
+        "MTR-2016-00154",
+        "MTR-1939-00063"
+      ],
+      "slow_channels": [],
+      "panel": {},
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 108.7,
+        "evidence_ms": 1980.7,
+        "panel_ms": 17.2,
+        "llm_ms": 3153.5,
+        "total_ms": 8324.8
+      },
+      "answer": "No matter in the available records involves Acme challenging a bank. No matter in the records available to you matches a case where Acme challenged a bank. The closest candidate matters are (MTR-2026-00901) (Acme Technologies — Series B Financing, a corporate matter with counterparty Horizon Seed Partners LLP, not a bank) and (MTR-1953-00091) (UN Security Council resolutions, unrelated). The evide",
+      "seconds": 2.1
+    },
+    {
+      "id": "NEG-1",
+      "category": "negative",
+      "query": "what did we advise Zephyrine Robotics on in its dispute with Obelisk Bank?",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "clean_negative": true,
+        "no_dump": true,
+        "no_slow_channel": false
+      },
+      "provider": "azure",
+      "reason": "no_matching_matter",
+      "resolved": [],
+      "top_matters": [
+        "MTR-2009-00147",
+        "MTR-1976-00114",
+        "MTR-2015-00153",
+        "MTR-2025-00163",
+        "MTR-1924-00002"
+      ],
+      "slow_channels": [
+        "evidence_ms"
+      ],
+      "panel": {},
+      "latency": {
+        "scope_ms": 0.3,
+        "resolver_ms": 1936.8,
+        "evidence_ms": 5695.9,
+        "panel_ms": 23.2,
+        "llm_ms": 2756.3,
+        "total_ms": 13605.7
+      },
+      "answer": "No matter or document in the evidence concerns Zephyrine Robotics or Obelisk Bank. The records available do not contain any matter, document, or person related to Zephyrine Robotics or Obelisk Bank. The evidence includes only United Nations Security Council resolutions (e.g., DOC-02121, DOC-00654, DOC-02490, DOC-03047) and historical PCIJ judgments (e.g., DOC-00008, DOC-00012, DOC-00009, DOC-00006",
+      "seconds": 21.08
+    },
+    {
+      "id": "NEG-2",
+      "category": "negative",
+      "query": "the arbitration between Norland Shipping and Kestrel Insurance over a sunk tanker",
+      "pass": false,
+      "checks": {
+        "http_200": true,
+        "clean_negative": true,
+        "no_dump": true,
+        "no_slow_channel": false
+      },
+      "provider": "azure",
+      "reason": "no_matching_matter",
+      "resolved": [],
+      "top_matters": [
+        "MTR-2015-00153",
+        "MTR-1984-00122",
+        "MTR-1979-00117",
+        "MTR-1980-00118",
+        "MTR-1981-00119"
+      ],
+      "slow_channels": [
+        "evidence_ms"
+      ],
+      "panel": {},
+      "latency": {
+        "scope_ms": 0.2,
+        "resolver_ms": 2104.3,
+        "evidence_ms": 5299.1,
+        "panel_ms": 52.8,
+        "llm_ms": 2668.6,
+        "total_ms": 12493.1
+      },
+      "answer": "No matter in the records matches an arbitration between Norland Shipping and Kestrel Insurance over a sunk tanker. No matter in the records available to the user matches an arbitration between Norland Shipping and Kestrel Insurance over a sunk tanker. The closest candidate matters are REG/NYC/0153/2015 (a UN Security Council resolution on Iran's nuclear programme, listing many entities including i",
+      "seconds": 19.21
+    },
+    {
+      "id": "WALL-MTR-1922-00066",
+      "category": "ethical_wall",
+      "query": "summarise Workers Delegate I L O",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "no_leak": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-1926-00078",
+        "MTR-1930-00083",
+        "MTR-1922-00068",
+        "MTR-1927-00079",
+        "MTR-1932-00035"
+      ],
+      "slow_channels": [],
+      "panel": {},
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 91.6,
+        "evidence_ms": 1773.7,
+        "panel_ms": 90.0,
+        "llm_ms": 3621.9,
+        "total_ms": 10956.9
+      },
+      "answer": "The term 'workers' in the International Labour Organization context refers to wage-earners, as distinct from employers, and the ILO's competence includes regulating their working conditions, with separate representation for workers in the Conference and Governing Body [1]. The 'Workers Delegate I L O' refers to the representation of workers (wage-earners) within the International Labour Organizati",
+      "seconds": 0.07
+    },
+    {
+      "id": "WALL-MTR-1922-00067",
+      "category": "ethical_wall",
+      "query": "summarise I L O Competence Persons Agriculture",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "no_leak": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [
+        "MTR-1922-00068"
+      ],
+      "top_matters": [
+        "MTR-1922-00068",
+        "MTR-1922-00069",
+        "MTR-1923-00070",
+        "MTR-1923-00071",
+        "MTR-1923-00072"
+      ],
+      "slow_channels": [],
+      "panel": {},
+      "latency": {
+        "scope_ms": 0.0,
+        "resolver_ms": 920.6,
+        "evidence_ms": 3401.5,
+        "panel_ms": 16.4,
+        "llm_ms": 3524.7,
+        "total_ms": 13497.4
+      },
+      "answer": "The matter concerns an advisory opinion on whether the International Labour Organisation has competence to examine proposals for the organisation and development of methods of agricultural production [1] [2] (MTR-1922-00068). This is a Permanent Court of International Justice advisory proceeding (PCIJ Series B No. 3) opened on 18 July 1922 and closed on 12 August 1922 [3] [4] (MTR-1922-00068). The",
+      "seconds": 0.05
+    },
+    {
+      "id": "WALL-MTR-2026-00169",
+      "category": "ethical_wall",
+      "query": "summarise CI Restricted Matter",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "no_leak": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-CI-OPEN-001",
+        "MTR-1995-00133",
+        "MTR-1951-00089",
+        "MTR-1990-00128",
+        "MTR-1991-00129"
+      ],
+      "slow_channels": [],
+      "panel": {},
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 14.9,
+        "evidence_ms": 469.7,
+        "panel_ms": 19.9,
+        "llm_ms": 9147.6,
+        "total_ms": 19907.0
+      },
+      "answer": "CI Restricted Matter (CI-OPEN-001) is an Indian electricity regulatory appeal concerning GMR Warora Energy Limited's Change in Law claims against MSEDCL, with the Supreme Court having already rejected certain claims in the GMR Warora SC Judgment [1] [2]. The appellant is GMR Warora Energy Limited (GWEL), challenging the CERC Order dated 16.03.2018 that disallowed certain Change in Law (CIL) compen",
+      "seconds": 19.97
+    },
+    {
+      "id": "WALL-MTR-2026-00170",
+      "category": "ethical_wall",
+      "query": "summarise Vector Green Sunshine v PSPCL",
+      "pass": true,
+      "checks": {
+        "http_200": true,
+        "no_leak": true,
+        "no_slow_channel": true
+      },
+      "provider": "azure",
+      "reason": null,
+      "resolved": [],
+      "top_matters": [
+        "MTR-CI-OPEN-001",
+        "MTR-2013-00151",
+        "MTR-2008-00146",
+        "MTR-2026-00167",
+        "MTR-1933-00038"
+      ],
+      "slow_channels": [],
+      "panel": {},
+      "latency": {
+        "scope_ms": 0.1,
+        "resolver_ms": 13.2,
+        "evidence_ms": 457.4,
+        "panel_ms": 14.7,
+        "llm_ms": 4122.1,
+        "total_ms": 9373.4
+      },
+      "answer": "Vector Green Sunshine Pvt. Ltd. filed Petition No. 22 of 2026 before the Punjab State Electricity Regulatory Commission seeking compensation of Rs. 41,14,127 from Punjab State Power Corporation Limited (PSPCL) for GST levied under Reverse Charge Mechanism, which it claims is a Change in Law event [1]. The petitioner, Vector Green Sunshine Pvt. Ltd., seeks compensation of Rs. 41,14,127 as on Decemb",
+      "seconds": 9.43
+    }
+  ]
+}

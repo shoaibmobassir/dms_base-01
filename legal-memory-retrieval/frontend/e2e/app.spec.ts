@@ -226,7 +226,7 @@ test("history docks beside the thread, is searchable, pins, renames and deletes"
 test("starter cards fill the message box and the mode menu explains each mode", async ({ page }) => {
   await page.goto("/ui/chat");
   const card = page.getByTestId("chat-starter").first();
-  const prompt = (await card.locator("p").innerText()).replace(/^“|”$/g, "");
+  const prompt = (await card.getAttribute("title"))!; // the starter chip carries its prompt as its title
   await card.click();
   await expect(page.getByTestId("chat-input")).toHaveValue(prompt);
   await expect(page).toHaveURL(/\/ui\/chat$/); // nothing was sent
@@ -309,7 +309,7 @@ test("attached PDF opens beside the chat with page and zoom controls", async ({ 
   test.skip(!pdf, "no PDF original in the seeded corpus");
 
   await page.goto("/ui/chat");
-  await page.getByTitle("Attach").click();
+  await page.getByTestId("composer-add").click();
   await page.getByRole("menuitem", { name: "Choose firm documents" }).click();
   await page.getByTestId("document-picker-search").fill(pdf!.document_id);
   await page.getByTestId("document-picker-item").filter({ hasText: pdf!.document_id }).click();
@@ -492,7 +492,8 @@ test("Acme sample matter was ingested through the upload pipeline", async ({ pag
   await page.getByTestId("matter-tab-documents").click();
   await expect(page.getByTestId("matter-documents")).toContainText("Share Purchase Agreement.docx");
   await page.getByTestId("matter-documents").getByText("Share Purchase Agreement.docx").click();
-  // Current version = v2. The body is shown page by page; the amended clause is on page 2.
+  // Current version = v2. The plain text view shows the body page by page; the amended clause is on page 2.
+  await page.getByTestId("document-view-text").click();
   await expect(page.getByTestId("document-body")).not.toBeEmpty();
   await page.getByTestId("document-page-input").fill("2");
   await page.getByTestId("document-page-input").press("Enter");

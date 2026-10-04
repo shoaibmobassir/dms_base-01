@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { DataTable } from "@/components/common/DataTable";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { DataTable, type TableSort } from "@/components/common/DataTable";
+import { BulkBar } from "@/components/common/BulkBar";
+import { useQueryClient } from "@tanstack/react-query";
+import { useApp } from "@/context/AppContext";
 import { Action, EmptyState, PageHeader, SearchField, StatusLabel } from "@/components/common/primitives";
 import { can, useMyAccess } from "@/api/access";
 import { NewMatterDialog } from "@/components/matter/MatterEditors";
 import { Pager, QueryState } from "@/components/common/QueryState";
-import { PAGE_SIZE, useMatters } from "@/api/resources";
+import { PAGE_SIZE, setPinned, useMatters } from "@/api/resources";
+import type { Matter } from "@/api/types";
 import { formatDate } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
 import { cn } from "@/lib/utils";
@@ -15,14 +19,65 @@ const PILLS = ["All", "Open", "Closed"];
 export function MattersPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("All");
   const [page, setPage] = useState(0);
+  // Status, "my matters" and the sort live in the URL: they survive a reload and can be shared.
+  const [params, setParams] = useSearchParams();
+  const status = params.get("status") ?? "All";
+  const mine = params.get("mine") === "1";
+  const sort: TableSort | undefined = params.get("sort")
+    ? { key: params.get("sort")!, dir: params.get("dir") === "asc" ? "asc" : "desc" }
+    : undefined;
+  const update = (patch: Record<string, string | null>) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (v === null) next.delete(k);
+          else next.set(k, v);
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  const setStatus = (v: string) => update({ status: v === "All" ? null : v });
   const q = useDebounced(query.trim());
-  const matters = useMatters({ q, status: status === "All" ? undefined : status, page });
+  const matters = useMatters({ q, status: status === "All" ? undefined : status, mine, sort, page });
   const myAccess = useMyAccess();
-  const [creating, setCreating] = useState(false);
+  // "New matter" in the command palette arrives as ?new=1.
+  const { identityKey, toast } = useApp();
+  const queryClient = useQueryClient();
+  const [chosen, setChosen] = useState<Map<string, Matter>>(new Map());
+  const [busy, setBusy] = useState(false);
+  const pinAll = async (pinned: boolean) => {
+    setBusy(true);
+    let failed = 0;
+    for (const m of chosen.values()) {
+      try {
+        await setPinned(m.matter_id, pinned);
+      } catch {
+        failed += 1;
+      }
+    }
+    await queryClient.invalidateQueries({ queryKey: [identityKey, "pinned-matters"] });
+    setBusy(false);
+    toast(failed ? `${failed} could not be ${pinned ? "pinned" : "unpinned"}` : `${chosen.size} ${pinned ? "pinned" : "unpinned"}`);
+    setChosen(new Map());
+  };
+  const [creating, setCreating] = useState(params.get("new") === "1");
+  useEffect(() => {
+    if (params.get("new") === "1")
+      setParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("new");
+        return next;
+      }, { replace: true });
+  }, [params, setParams]);
 
-  useEffect(() => setPage(0), [q, status]);
+  useEffect(() => {
+    setPage(0);
+    setChosen(new Map());
+  }, [q, status, mine]);
+  useEffect(() => setPage(0), [params.get("sort"), params.get("dir")]);
 
   return (
     <div className="space-y-8">
@@ -39,7 +94,7 @@ export function MattersPage() {
           ) : undefined
         }
       />
-      {creating && (
+      {creating && can(myAccess.data, "matters.create") && (
         <NewMatterDialog open onClose={() => setCreating(false)} onCreated={(id) => { setCreating(false); navigate(`/matters/${id}`); }} />
       )}
 
@@ -48,6 +103,18 @@ export function MattersPage() {
           <SearchField value={query} onChange={setQuery} placeholder="Search by title, code or client…" testId="matters-search" />
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => update({ mine: mine ? null : "1" })}
+            aria-pressed={mine}
+            data-testid="matters-mine"
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              mine ? "border-wine bg-wine-soft text-wine" : "border-border text-muted-foreground hover:bg-secondary",
+            )}
+          >
+            My matters
+          </button>
           {PILLS.map((s) => (
             <button
               key={s}
@@ -64,6 +131,14 @@ export function MattersPage() {
         </div>
       </div>
 
+      <BulkBar count={chosen.size} noun="matter" onClear={() => setChosen(new Map())}>
+        <Action icon="push_pin" onClick={() => void pinAll(true)} testId="bulk-pin">
+          {busy ? "Working…" : "Pin to sidebar"}
+        </Action>
+        <Action icon="keep_off" onClick={() => void pinAll(false)} testId="bulk-unpin">
+          Unpin
+        </Action>
+      </BulkBar>
       <QueryState
         query={matters}
         isEmpty={(d) => d.items.length === 0}
@@ -80,12 +155,31 @@ export function MattersPage() {
             <DataTable
               testId="matters-table"
               getRowKey={(m) => m.matter_id}
+              getRowHref={(m) => `/matters/${m.matter_id}`}
               onRowClick={(m) => navigate(`/matters/${m.matter_id}`)}
               rows={d.items}
+              selection={{
+                selected: new Set(chosen.keys()),
+                label: (m) => m.title,
+                onChange: (next) => {
+                  const rows = new Map(d.items.map((x) => [x.matter_id, x] as const));
+                  setChosen((prev) => {
+                    const out = new Map<string, Matter>();
+                    for (const id of next as Set<string>) {
+                      const row = rows.get(id) ?? prev.get(id);
+                      if (row) out.set(id, row);
+                    }
+                    return out;
+                  });
+                },
+              }}
+              sort={sort}
+              onSort={(next) => update({ sort: next.key, dir: next.dir })}
               columns={[
                 {
                   key: "matter",
                   header: "Matter",
+                  sortKey: "title",
                   render: (m) => (
                     <div>
                       <div className="font-mono-id text-xs text-muted-foreground">{m.matter_code}</div>
@@ -96,6 +190,7 @@ export function MattersPage() {
                 {
                   key: "client",
                   header: "Client",
+                  sortKey: "client",
                   render: (m) => (
                     <div className="text-sm">
                       <div>{m.client_name || "—"}</div>
@@ -108,6 +203,7 @@ export function MattersPage() {
                   key: "next",
                   secondary: true,
                   header: "Next deadline",
+                  sortKey: "deadline",
                   render: (m) =>
                     m.next_deadline_date ? (
                       <div className="text-sm" title={m.next_deadline_title ?? undefined}>
@@ -121,10 +217,11 @@ export function MattersPage() {
                 {
                   key: "status",
                   header: "Status",
+                  sortKey: "status",
                   render: (m) => <StatusLabel status={m.restricted ? "Restricted" : m.status || "Open"} />,
                 },
-                { key: "docs", secondary: true, header: "Documents", align: "right", render: (m) => <span className="text-sm tabular-nums">{m.document_count ?? "—"}</span> },
-                { key: "opened", secondary: true, header: "Opened", align: "right", render: (m) => <span className="whitespace-nowrap text-sm tabular-nums">{formatDate(m.opened_date)}</span> },
+                { key: "docs", secondary: true, header: "Documents", sortKey: "documents", align: "right", render: (m) => <span className="text-sm tabular-nums">{m.document_count ?? "—"}</span> },
+                { key: "opened", secondary: true, header: "Opened", sortKey: "opened", align: "right", render: (m) => <span className="whitespace-nowrap text-sm tabular-nums">{formatDate(m.opened_date)}</span> },
               ]}
             />
             <Pager page={page} total={d.total} pageSize={PAGE_SIZE} onPage={setPage} />

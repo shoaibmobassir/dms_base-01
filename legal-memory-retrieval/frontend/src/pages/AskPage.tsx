@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteAskHistory, listAskHistory, useAskStream } from "@/api/ask";
+import { deleteAskHistory, listAskHistory, useAskStream, useQuestionIdeas } from "@/api/ask";
 import type { AskScopeType } from "@/api/resources";
 import type { AskHistoryItem, AskResult } from "@/api/types";
-import { AIAnswer, AIAssembling, AIStreaming, AnswerContext } from "@/components/ai/AIAnswer";
+import { AIAnswer, AIAssembling, AIStreaming, AnswerActions, AnswerContext } from "@/components/ai/AIAnswer";
 import { AskComposer } from "@/components/ai/AskComposer";
 import { DocumentPanelProvider, useDocumentPanel } from "@/components/ai/DocumentPanelDrawer";
 import { KmPanel } from "@/components/ai/KmPanel";
@@ -12,13 +12,6 @@ import { MatterBrief } from "@/components/ai/MatterBrief";
 import { ErrorState, Eyebrow, Icon, SectionLabel } from "@/components/common/primitives";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
-
-const EXAMPLES = [
-  "What did we argue on maintainability before the Appellate Tribunal for Electricity?",
-  "Which matters concern transmission charges under the CERC sharing regulations?",
-  "Summarise the PCIJ's approach to reparation in our historical corpus.",
-  "Which Security Council resolutions did we advise on in 2025?",
-];
 
 export function AskPage() {
   return (
@@ -49,6 +42,7 @@ function RecentQuestions({
   const { identityKey } = useApp();
   const queryClient = useQueryClient();
   const key = [identityKey, "ask-history"];
+  const [confirmClear, setConfirmClear] = useState(false);
   const history = useQuery({ queryKey: key, queryFn: () => listAskHistory(), enabled: !!identityKey });
   const items = (history.data?.items ?? []).slice(0, limit);
   const refresh = () => queryClient.invalidateQueries({ queryKey: key });
@@ -58,14 +52,34 @@ function RecentQuestions({
     <div data-testid="ask-history">
       <div className="flex items-baseline justify-between gap-2">
         <SectionLabel>Recent questions</SectionLabel>
-        <button
-          type="button"
-          onClick={() => void deleteAskHistory().then(refresh)}
-          className="text-[11px] text-muted-foreground hover:text-destructive"
-          data-testid="ask-history-clear"
-        >
-          Clear
-        </button>
+        {confirmClear ? (
+          <span className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">Delete all?</span>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmClear(false);
+                void deleteAskHistory().then(refresh);
+              }}
+              className="font-semibold text-destructive hover:underline"
+              data-testid="ask-history-clear-confirm"
+            >
+              Delete
+            </button>
+            <button type="button" onClick={() => setConfirmClear(false)} className="text-muted-foreground hover:text-foreground">
+              Keep
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmClear(true)}
+            className="text-xs text-muted-foreground hover:text-destructive"
+            data-testid="ask-history-clear"
+          >
+            Clear all
+          </button>
+        )}
       </div>
       <ul className="space-y-0.5">
         {items.map((h) => {
@@ -83,7 +97,7 @@ function RecentQuestions({
                 className="min-w-0 flex-1 px-3 py-2 text-left"
               >
                 <span className={cn("line-clamp-2 text-sm", active ? "font-medium text-wine" : "text-foreground/85")}>{h.query}</span>
-                <span className="mt-0.5 block truncate font-mono text-[11px] text-muted-foreground">
+                <span className="mt-0.5 block truncate font-mono text-xs text-muted-foreground">
                   {[askedWhen(h.asked_at), h.scope].filter(Boolean).join(" · ")}
                 </span>
               </button>
@@ -110,8 +124,10 @@ function AskView() {
   const [params] = useSearchParams();
   const q = params.get("q");
   const scope = params.get("scope");
+  const follow = params.get("follow");
   const rawType = params.get("scopeType");
   const scopeType: AskScopeType = rawType === "matter" || rawType === "client" ? rawType : "auto";
+  const ideas = useQuestionIdeas();
   const [runKey, setRunKey] = useState(0);
   const panel = useDocumentPanel();
   const { identityKey } = useApp();
@@ -131,6 +147,7 @@ function AskView() {
     // Only stream from ``?q=`` when there is no answer id yet.
     query: answerId ? null : q,
     scope: scope ? { type: scopeType, value: scope } : null,
+    followUpOf: answerId ? null : follow,
     runKey,
     onSaved,
   });
@@ -168,7 +185,7 @@ function AskView() {
             Answers are drawn only from matters and documents you are authorised to access, and every claim links to its source.
           </p>
         </div>
-        <AskComposer large examples={EXAMPLES} scopeLabel={scope ?? undefined} scopeType={scopeType} />
+        <AskComposer large examples={ideas} scopeLabel={scope ?? undefined} scopeType={scopeType} />
         <div className="mt-10">
           <RecentQuestions onPick={pick} limit={5} />
         </div>
@@ -198,7 +215,18 @@ function AskView() {
             </div>
           )}
           <header className="mb-8 animate-rise">
-            <Eyebrow className="mb-3">Ask the Firm</Eyebrow>
+            {ask.result?.follow_up_of && ask.result.follow_up_query ? (
+              <Link
+                to={`/ask/${ask.result.follow_up_of}`}
+                className="mb-3 inline-flex max-w-full items-center gap-1.5 text-xs text-muted-foreground hover:text-wine"
+                data-testid="ask-follows"
+              >
+                <Icon name="subdirectory_arrow_right" style={{ fontSize: 15 }} />
+                <span className="truncate">In reply to: {ask.result.follow_up_query}</span>
+              </Link>
+            ) : (
+              <Eyebrow className="mb-3">Ask the Firm</Eyebrow>
+            )}
             <h1 className="max-w-2xl text-balance font-display text-2xl leading-tight text-ink sm:text-[32px]" data-testid="ask-question">
               {questionText || "…"}
             </h1>
@@ -230,6 +258,11 @@ function AskView() {
                 </div>
               )}
               <AIAnswer result={ask.result} />
+              {!ask.result.abstained && (
+                <div className="mt-6">
+                  <AnswerActions result={ask.result} question={questionText} />
+                </div>
+              )}
             </div>
           )}
           {km && (km.matters.length > 0 || km.people.length > 0) && ask.phase !== "error" && (
@@ -249,7 +282,12 @@ function AskView() {
           )}
           <div className="mt-10">
             <SectionLabel>Ask a follow-up</SectionLabel>
-            <AskComposer scopeLabel={scopeLabel ?? undefined} scopeType={scopeType} placeholder="Ask a follow-up question…" />
+            <AskComposer
+              scopeLabel={scopeLabel ?? undefined}
+              scopeType={scopeType}
+              followUpOf={ask.phase === "done" ? (ask.result?.saved_id as string | undefined) ?? answerId ?? null : null}
+              placeholder="Ask a follow-up question. The earlier question and scope carry over."
+            />
           </div>
         </div>
 

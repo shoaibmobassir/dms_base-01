@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import time
 
 from fastapi import Header, HTTPException, Request, status
 
@@ -42,6 +43,39 @@ def _audit_denied(reason: str, member_id: str | None = None) -> None:
     audit.record("auth.request", member_id=member_id, outcome="denied", detail={"reason": reason})
 
 
+_ACTIVE: dict[str, tuple[float, bool]] = {}
+_ACTIVE_TTL = 15.0
+
+
+def forget_active(member_id: str) -> None:
+    """Drop the cached "is this person active" answer (after a deactivation or reactivation)."""
+    _ACTIVE.pop(member_id, None)
+
+
+def _is_active(member_id: str) -> bool:
+    """False for a deactivated person. Cached briefly; an unreachable database does not lock everyone out."""
+    now = time.monotonic()
+    hit = _ACTIVE.get(member_id)
+    if hit and now - hit[0] < _ACTIVE_TTL:
+        return hit[1]
+    from app.db.connection import connect
+
+    try:
+        with connect() as conn:
+            row = conn.execute("SELECT active FROM members WHERE member_id = %s", (member_id,)).fetchone()
+    except Exception:
+        return True
+    active = True if row is None else bool(row["active"])
+    _ACTIVE[member_id] = (now, active)
+    return active
+
+
+def _refuse_inactive(member_id: str | None) -> None:
+    if member_id and not _is_active(member_id):
+        _audit_denied("deactivated account", member_id=member_id)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account has been deactivated")
+
+
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 _LOOPBACK = {"127.0.0.1", "::1", "localhost", "testclient"}
 
@@ -71,6 +105,7 @@ def resolve_member(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Sign-in is disabled on this server; it only accepts local requests",
             )
+        _refuse_inactive(x_member_id)
         return x_member_id
 
     from app.auth import sessions
@@ -108,4 +143,5 @@ def resolve_member(
             detail="X-Member-Id does not match the signed-in identity",
         )
 
+    _refuse_inactive(member_id)
     return member_id

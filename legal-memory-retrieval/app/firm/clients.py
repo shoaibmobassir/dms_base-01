@@ -193,3 +193,114 @@ def create_client(conn, actor: str | None, data: dict) -> dict:
                  detail={"name": name, "status": status, "check_id": check["check_id"]})
     return one(conn, "SELECT client_id, name, industry, headquarters, status, intake_check_id FROM clients WHERE client_id = %s",
                (client_id,))
+
+
+# ── keeping a client up to date ──────────────────────────────────────────────
+
+CHANGEABLE_STATUS = ("active", "on_hold", "inactive")
+NOTE_KINDS = ("prefers", "avoid", "terms")
+
+
+def _client(conn, client_id: str) -> dict:
+    row = one(conn, "SELECT * FROM clients WHERE client_id = %s", (client_id,))
+    if row is None:
+        raise FirmError(404, "Client not found")
+    return row
+
+
+def _short_list(value: Any, field: str) -> list[str]:
+    if not isinstance(value, list):
+        raise FirmError(422, f"{field} must be a list")
+    return [str(x).strip()[:200] for x in value if str(x).strip()][:30]
+
+
+@guard
+def update_client(conn, actor: str | None, client_id: str, data: dict) -> dict:
+    """Edit a client's details, or put it on hold / make it inactive (not while it has open matters)."""
+    access.require_permission(conn, actor, "clients.create")
+    before = _client(conn, client_id)
+    clean: dict[str, Any] = {}
+    for key in ("industry", "size", "headquarters"):
+        if key in data:
+            clean[key] = (str(data[key] or "").strip()[:100]) or None
+    for key in ("aliases", "locations", "subsidiaries"):
+        if key in data:
+            clean[key] = _short_list(data[key], key)
+    if "name" in data:
+        name = str(data["name"] or "").strip()
+        if not name or len(name) > 300:
+            raise FirmError(422, "name is required (at most 300 characters)")
+        if one(conn, "SELECT 1 AS ok FROM clients WHERE lower(name) = lower(%s) AND client_id <> %s", (name, client_id)):
+            raise FirmError(409, f"{name} is already a client")
+        clean["name"] = name
+    if "status" in data and data["status"] != before["status"]:
+        status = data["status"]
+        if status not in CHANGEABLE_STATUS:
+            raise FirmError(422, f"status must be one of {', '.join(CHANGEABLE_STATUS)}")
+        if before["status"] in ("prospective", "declined"):
+            raise FirmError(409, "This client is still going through intake; its conflict check decides its status")
+        if status == "inactive":
+            n = one(conn, "SELECT count(*) AS n FROM matters WHERE client_id = %s AND status IN ('Open', 'On hold')", (client_id,))["n"]
+            if n:
+                raise FirmError(409, f"{n} matter(s) for this client are still open: close them first", {"open_matters": n})
+        clean["status"] = status
+    if not clean:
+        return _client(conn, client_id)
+    sets = ", ".join(f"{k} = %({k})s" for k in clean)
+    conn.execute(f"UPDATE clients SET {sets} WHERE client_id = %(cid)s", {**clean, "cid": client_id})
+    if "name" in clean:  # matters carry the client's name for lists and search
+        conn.execute("UPDATE matters SET client_name = %s WHERE client_id = %s", (clean["name"], client_id))
+    changed = {k: {"from": str(before.get(k)), "to": str(v)} for k, v in clean.items() if before.get(k) != v}
+    emit(conn, "client.updated", "client", client_id, actor=actor, payload={"fields": sorted(changed)})
+    conn.commit()
+    audit.record("client.update", member_id=actor, object_type="client", object_id=client_id, detail=changed)
+    return _client(conn, client_id)
+
+
+def _may_note(conn, actor: str | None, client_id: str) -> bool:
+    if actor is None:
+        return False
+    if access.has_permission(conn, actor, "clients.create"):
+        return True
+    return bool(one(
+        conn,
+        "SELECT 1 AS ok FROM matter_members mm JOIN matters m USING (matter_id) WHERE m.client_id = %s AND mm.member_id = %s",
+        (client_id, actor),
+    ))
+
+
+@guard
+def add_client_note(conn, actor: str | None, client_id: str, kind: str, text: str, source_matter_id: str | None = None) -> dict:
+    """A note about how the client likes to work, traceable to the matter it came from."""
+    _client(conn, client_id)
+    if not _may_note(conn, actor, client_id):
+        raise FirmError(403, "Only partners and people staffed on this client's matters can add notes")
+    if kind not in NOTE_KINDS:
+        raise FirmError(422, f"kind must be one of {', '.join(NOTE_KINDS)}")
+    text = (text or "").strip()
+    if not text or len(text) > 2000:
+        raise FirmError(422, "Write the note (at most 2000 characters)")
+    if source_matter_id and not one(conn, "SELECT 1 AS ok FROM matters WHERE matter_id = %s AND client_id = %s", (source_matter_id, client_id)):
+        raise FirmError(422, "That matter does not belong to this client")
+    note_id = new_id("NOTE")
+    conn.execute(
+        "INSERT INTO client_notes (note_id, client_id, kind, text, source_matter_id, author_member_id) VALUES (%s, %s, %s, %s, %s, %s)",
+        (note_id, client_id, kind, text, source_matter_id, actor),
+    )
+    emit(conn, "client.note", "client", client_id, actor=actor, payload={"kind": kind})
+    conn.commit()
+    audit.record("client.note.add", member_id=actor, object_type="client", object_id=client_id, detail={"kind": kind, "note_id": note_id})
+    return one(conn, "SELECT note_id, client_id, kind, text, source_matter_id, author_member_id, created_at FROM client_notes WHERE note_id = %s", (note_id,))
+
+
+@guard
+def delete_client_note(conn, actor: str | None, client_id: str, note_id: str) -> None:
+    row = one(conn, "SELECT * FROM client_notes WHERE note_id = %s AND client_id = %s", (note_id, client_id))
+    if row is None:
+        raise FirmError(404, "Note not found")
+    if row["author_member_id"] != actor and not access.has_permission(conn, actor, "clients.create"):
+        raise FirmError(403, "Only the author or a partner can remove a note")
+    conn.execute("DELETE FROM client_notes WHERE note_id = %s", (note_id,))
+    emit(conn, "client.note", "client", client_id, actor=actor, payload={"removed": True})
+    conn.commit()
+    audit.record("client.note.delete", member_id=actor, object_type="client", object_id=client_id, detail={"note_id": note_id})

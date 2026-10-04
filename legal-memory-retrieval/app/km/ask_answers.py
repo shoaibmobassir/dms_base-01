@@ -19,7 +19,7 @@ _RESULT_KEYS = (
     "answer", "key_finding", "status", "provider", "model", "abstained", "reason",
     "citations", "span_citations", "panel", "matter_cards", "sources", "people",
     "resolved_scope", "grounding", "structured_citations", "matchedMatters", "tags",
-    "docket", "docket_copies", "latency_ms", "service",
+    "docket", "docket_copies", "latency_ms", "service", "follow_up_of", "follow_up_query", "retrieval_query",
 )
 
 
@@ -85,14 +85,14 @@ def save(conn, member_id: str | None, query: str, scope: dict | None, result: di
             id, member_id, query, scope, scope_type, asked_at, answered_at,
             answer, key_finding, status, provider, model, abstained, reason,
             citations, span_citations, panel, matter_cards, sources, people,
-            resolved_scope, grounding, payload
+            resolved_scope, grounding, payload, follow_up_of
         ) VALUES (
             %s, %s, %s, %s, %s, now(), now(),
             %s, %s, %s, %s, %s, %s, %s,
             %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
-            %s::jsonb, %s::jsonb, %s::jsonb
+            %s::jsonb, %s::jsonb, %s::jsonb, %s
         )
-        ON CONFLICT (member_id, query, coalesce(scope, ''), coalesce(scope_type, ''))
+        ON CONFLICT (member_id, query, coalesce(scope, ''), coalesce(scope_type, ''), coalesce(follow_up_of, ''))
         DO UPDATE SET
             answered_at = now(),
             asked_at = now(),
@@ -128,6 +128,7 @@ def save(conn, member_id: str | None, query: str, scope: dict | None, result: di
             _json(result.get("resolved_scope")),
             _json(result.get("grounding")),
             _json(payload),
+            result.get("follow_up_of") or None,
         ),
     ).fetchone()
     conn.commit()
@@ -153,6 +154,8 @@ def _row_to_payload(conn, member_id: str | None, row: dict) -> dict[str, Any] | 
     payload["scope_type"] = row.get("scope_type")
     payload["saved"] = True
     payload["saved_id"] = row["id"]
+    if row.get("follow_up_of"):
+        payload["follow_up_of"] = row["follow_up_of"]
     payload["answered_at"] = row["answered_at"].isoformat() if row.get("answered_at") else None
     payload["service"] = payload.get("service") or "answers"
     payload["hits"] = payload.get("hits") or []
@@ -162,7 +165,7 @@ def _row_to_payload(conn, member_id: str | None, row: dict) -> dict[str, Any] | 
 _SELECT = """
     SELECT id, query, scope, scope_type, payload, panel, matter_cards, sources, resolved_scope,
            answer, key_finding, status, provider, model, abstained, reason,
-           citations, span_citations, people, grounding, answered_at
+           citations, span_citations, people, grounding, answered_at, follow_up_of
     FROM ask_answers
 """
 
@@ -178,6 +181,7 @@ def load(conn, member_id: str | None, query: str, scope: dict | None) -> dict[st
         WHERE member_id = %s AND query = %s
           AND coalesce(scope, '') = coalesce(%s, '')
           AND coalesce(scope_type, '') = coalesce(%s, '')
+          AND follow_up_of IS NULL
         """,
         (member_id, q, scope_value, scope_type),
     ).fetchone()
@@ -228,6 +232,7 @@ def drop(conn, member_id: str | None, query: str, scope: dict | None) -> int:
         WHERE member_id = %s AND query = %s
           AND coalesce(scope, '') = coalesce(%s, '')
           AND coalesce(scope_type, '') = coalesce(%s, '')
+          AND follow_up_of IS NULL
         """,
         (member_id, q, scope_value, scope_type),
     )

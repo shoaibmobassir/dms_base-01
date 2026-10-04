@@ -41,8 +41,11 @@
   display: contents;
 }
 
+/* The text layer sits over the rendered glyphs: its selection is a light band and its own text stays
+   invisible, so selected words are not drawn twice. */
 .viewer-page .textLayer ::selection {
-  background: color-mix(in oklab, var(--primary) 30%, transparent);
+  background: color-mix(in oklab, var(--primary) 22%, transparent);
+  color: transparent;
 }
 
 /* Cited words: a translucent amber box over the rendered glyphs. */

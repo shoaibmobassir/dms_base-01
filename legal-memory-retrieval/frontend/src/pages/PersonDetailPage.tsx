@@ -7,9 +7,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { usePerson } from "@/api/resources";
 import { DataTable } from "@/components/common/DataTable";
 import { PersonAvatar } from "@/components/common/EntityLink";
-import { Action, EmptyState, PageHeader, SectionLabel, StatusLabel } from "@/components/common/primitives";
+import { Action, EmptyState, PageHeader, SectionLabel, StatusLabel, DetailSkeleton } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
 import { initials, useApp } from "@/context/AppContext";
+import { can, useMyAccess } from "@/api/access";
+import { DeactivatePersonDialog, EditPersonDialog, useReactivate } from "@/components/people/PersonEditors";
+import type { Person } from "@/api/types";
 
 export function PersonDetailPage() {
   const { id = "" } = useParams();
@@ -17,15 +20,25 @@ export function PersonDetailPage() {
   const person = usePerson(id);
   const { me } = useApp();
   const [editing, setEditing] = useState(false);
+  const [adminEditing, setAdminEditing] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
+  const access = useMyAccess();
+  const isAdmin = can(access.data, "users.manage");
 
   return (
-    <QueryState query={person} loading={<p className="text-sm text-muted-foreground">Loading…</p>}>
+    <QueryState query={person} loading={<DetailSkeleton />}>
       {({ person: p, matters }) => (
         <div className="space-y-10">
-          <PageHeader eyebrow={p.role} title={p.name} subtitle={[p.practice_areas.join(", "), p.office].filter(Boolean).join(" · ")}
-            actions={me?.member_id === p.member_id ? (
-              <Action icon="edit" onClick={() => setEditing(true)} testId="person-edit-me">Edit my expertise</Action>
-            ) : undefined}>
+          <PageHeader eyebrow={p.active === false ? `${p.role} (deactivated)` : p.role} title={p.name} subtitle={[p.practice_areas.join(", "), p.office].filter(Boolean).join(" · ")}
+            actions={
+              <>
+                {me?.member_id === p.member_id && <Action icon="edit" onClick={() => setEditing(true)} testId="person-edit-me">Edit my expertise</Action>}
+                {isAdmin && <Action icon="manage_accounts" onClick={() => setAdminEditing(true)} testId="person-edit">Edit</Action>}
+                {isAdmin && me?.member_id !== p.member_id && (
+                  p.active === false ? <ReactivateAction person={p} /> : <Action icon="person_off" onClick={() => setDeactivating(true)} testId="person-deactivate">Deactivate</Action>
+                )}
+              </>
+            }>
             <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <PersonAvatar person={{ name: p.name, initials: initials(p.name) }} size={44} />
               {p.joined_year && <span>Joined {p.joined_year}</span>}
@@ -57,6 +70,8 @@ export function PersonDetailPage() {
               ]}
             />
           </section>
+          {adminEditing && <EditPersonDialog person={p} onClose={() => setAdminEditing(false)} />}
+          {deactivating && <DeactivatePersonDialog person={p} onClose={() => setDeactivating(false)} />}
           {editing && (
             <ExpertiseDialog practiceAreas={p.practice_areas} specializations={p.specializations} personId={p.member_id}
               onClose={() => setEditing(false)} />
@@ -119,5 +134,14 @@ function ExpertiseDialog({ practiceAreas, specializations, personId, onClose }: 
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ReactivateAction({ person }: { person: Person }) {
+  const { reactivate, busy } = useReactivate(person);
+  return (
+    <Action icon="person_check" onClick={busy ? undefined : () => void reactivate()} testId="person-reactivate">
+      Reactivate
+    </Action>
   );
 }

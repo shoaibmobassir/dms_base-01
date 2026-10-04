@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useDocument,
   useDocumentBlocks,
@@ -11,6 +11,7 @@ import type { DocumentDetail, DocumentOutlineItem, DocVersion } from "@/api/type
 import { Icon, MonoId, SectionLabel } from "@/components/common/primitives";
 import { QueryState } from "@/components/common/QueryState";
 import { PrivacyControl } from "@/components/editor/PrivacyControl";
+import { ArchiveDocument } from "@/components/document-workspace/ArchiveDocument";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,13 +20,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { downloadDocument, useVersionDiff } from "@/api/resources";
+import { useApp } from "@/context/AppContext";
+import { FindInDocument } from "@/components/document-workspace/FindInDocument";
+import { CommentsPanel, SelectionComment, useDocComments } from "@/components/comments/DocComments";
+import type { ViewerTarget } from "@/components/viewer/DocumentViewer";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** Chunks (or blocks) shown as one reader "part" when there is no real page count. */
 export const PART_SIZE = 5;
 
-type RightTab = "versions" | "info" | "ai";
+const DocumentViewer = lazy(() => import("@/components/viewer/DocumentViewer").then((m) => ({ default: m.DocumentViewer })));
+
+type RightTab = "comments" | "versions" | "info" | "ai";
 type LeftTab = "outline" | "thumbnails";
 
 type Address = {
@@ -74,6 +84,7 @@ export function DocumentWorkspace({ documentId }: { documentId: string }) {
           address={address}
           setParams={setParams}
           panelParam={params.get("panel")}
+          commentParam={params.get("comment")}
           highlightChunk={address.chunkId}
         />
       )}
@@ -86,12 +97,15 @@ function WorkspaceFrame({
   address,
   setParams,
   panelParam,
+  commentParam,
   highlightChunk,
 }: {
   doc: DocumentDetail;
   address: Address;
   setParams: ReturnType<typeof useSearchParams>[1];
   panelParam: string | null;
+  /** A comment to open (a link from the Assistant's "comments added" card). */
+  commentParam?: string | null;
   highlightChunk?: string;
 }) {
   const versions = useDocumentVersions(doc.document_id);
@@ -102,9 +116,15 @@ function WorkspaceFrame({
 
   const chunkCount = doc.chunk_count ?? 0;
   const pageCountFromVersion = openVersion?.page_count ?? doc.page_count ?? null;
-  // Real page numbers only when an original/rendition exists; otherwise label as Parts.
+  // The page as filed (rendered pages, comments) is the default; "Text" is the plain reading view.
+  const [viewMode, setViewMode] = useState<"pages" | "text">("pages");
+  const [pagesOff, setPagesOff] = useState(false); // the file could not be rendered as pages
+  const [renderedPages, setRenderedPages] = useState<number | null>(null);
+  const [jump, setJump] = useState<ViewerTarget | null>(null);
+  const pagesMode = Boolean(doc.has_original) && viewMode === "pages" && !pagesOff;
+  // Real page numbers only when pages are shown or an original/rendition exists; otherwise label as Parts.
   const usePages =
-    Boolean(doc.has_original) && typeof pageCountFromVersion === "number" && pageCountFromVersion > 0;
+    pagesMode || (Boolean(doc.has_original) && typeof pageCountFromVersion === "number" && pageCountFromVersion > 0);
   const unitLabel = usePages ? "Page" : "Part";
 
   // Probe the open version for a total without loading the whole document.
@@ -119,9 +139,11 @@ function WorkspaceFrame({
       : null) ??
     (doc.block_count && doc.block_count > 0 ? doc.block_count : null) ??
     chunkCount;
-  const unitTotal = usePages
-    ? pageCountFromVersion
-    : Math.max(1, Math.ceil(readerUnits / PART_SIZE) || 1);
+  const unitTotal = pagesMode
+    ? (renderedPages ?? pageCountFromVersion ?? Math.max(1, address.part))
+    : usePages
+      ? (pageCountFromVersion ?? 1)
+      : Math.max(1, Math.ceil(readerUnits / PART_SIZE) || 1);
 
   const part = Math.min(Math.max(1, address.part), unitTotal);
 
@@ -154,22 +176,30 @@ function WorkspaceFrame({
       if ((floor < 1 || floor > unitTotal) && !opts?.allowClamp) return false;
       const clamped = Math.min(Math.max(1, floor), unitTotal);
       setAddress({ part: clamped, clearBlock: true, clearChunk: true }, opts?.replace);
+      if (pagesMode) setJump({ page: clamped, quote: "", nonce: Date.now() });
       return true;
     },
-    [setAddress, unitTotal],
+    [setAddress, unitTotal, pagesMode],
   );
 
   const [leftTab, setLeftTab] = useState<LeftTab>("outline");
-  const [rightTab, setRightTab] = useState<RightTab>(panelParam === "versions" ? "versions" : "info");
+  const [rightTab, setRightTab] = useState<RightTab>(panelParam === "versions" ? "versions" : "comments");
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  // Below these widths the rails are drawers, opened from the toolbar.
+  const isMd = useMediaQuery("(min-width: 768px)");
+  const isLg = useMediaQuery("(min-width: 1024px)");
+  const [leftSheet, setLeftSheet] = useState(false);
+  const [rightSheet, setRightSheet] = useState(false);
   const [goOpen, setGoOpen] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
   const workspaceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (panelParam === "versions") {
-      setRightTab("versions");
+    if (panelParam === "versions" || panelParam === "comments") {
+      setRightTab(panelParam);
       setRightOpen(true);
+      setRightSheet(true);
     }
   }, [panelParam]);
 
@@ -181,6 +211,11 @@ function WorkspaceFrame({
     const onKey = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target)) return;
       const meta = e.metaKey || e.ctrlKey;
+      if (e.key === "/" && !meta) {
+        e.preventDefault();
+        setFindOpen(true);
+        return;
+      }
       if (e.key === "g" || e.key === "G" || (meta && (e.key === "g" || e.key === "G"))) {
         e.preventDefault();
         setGoOpen(true);
@@ -227,6 +262,129 @@ function WorkspaceFrame({
 
   const newerAvailable =
     Boolean(currentVersionId) && Boolean(openVersionId) && currentVersionId !== openVersionId;
+  // Comments are made on the current version, on pages as filed.
+  const dc = useDocComments({ documentId: doc.document_id, versionId: address.versionId, canAdd: pagesMode && !newerAvailable });
+  const viewerTarget = jump && (!dc.target || jump.nonce > dc.target.nonce) ? jump : dc.target;
+
+  // Arriving from a link to one comment: open the comments, and mark that thread's text.
+  const openedComment = useRef<string | null>(null);
+  useEffect(() => {
+    if (!commentParam || openedComment.current === commentParam || !pagesMode) return;
+    const thread = dc.threads.find((t) => t.comment_id === commentParam);
+    if (!thread) return;
+    openedComment.current = commentParam;
+    setRightTab("comments");
+    setRightOpen(true);
+    dc.focusThread(thread);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commentParam, dc.threads, pagesMode]);
+
+  const leftRail = (
+    <>
+      <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
+        {hasOutline && (
+          <RailTab active={railTab === "outline"} onClick={() => setLeftTab("outline")}>
+            Outline
+          </RailTab>
+        )}
+        <RailTab active={railTab === "thumbnails"} onClick={() => setLeftTab("thumbnails")}>
+          {unitLabel}s
+        </RailTab>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {railTab === "outline" ? (
+          <OutlineList
+            items={outline.data?.outline ?? []}
+            loading={outline.isPending}
+            currentPart={part}
+            usePages={usePages}
+            onJump={(item) => {
+              setAddress({
+                part: item.page_number || 1,
+                blockId: item.block_id,
+              });
+              if (pagesMode) setJump({ page: item.page_number || 1, quote: "", nonce: Date.now() });
+            }}
+          />
+        ) : (
+          <ThumbnailList
+            total={unitTotal}
+            current={part}
+            unitLabel={unitLabel}
+            onJump={(n) => goToPart(n, { allowClamp: true })}
+          />
+        )}
+      </div>
+    </>
+  );
+  const openThreads = dc.threads.filter((t) => t.status === "open").length;
+  const rightRail = (
+    <>
+      <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
+        <RailTab active={rightTab === "comments"} onClick={() => setRightTab("comments")}>
+          Comments{openThreads > 0 ? ` ${openThreads}` : ""}
+        </RailTab>
+        <RailTab active={rightTab === "versions"} onClick={() => setRightTab("versions")}>
+          Versions
+        </RailTab>
+        <RailTab active={rightTab === "info"} onClick={() => setRightTab("info")}>
+          Info
+        </RailTab>
+        <RailTab active={rightTab === "ai"} onClick={() => setRightTab("ai")}>
+          Assistant
+        </RailTab>
+      </div>
+      <div className={cn("min-h-0 flex-1", rightTab === "comments" ? "flex flex-col overflow-hidden" : "overflow-y-auto p-4")}>
+        {rightTab === "comments" && (
+          <CommentsPanel
+            dc={dc}
+            onViewVersion={(versionId) => setAddress({ versionId })}
+            note={
+              !pagesMode
+                ? "Switch to Pages to comment on the document as filed."
+                : newerAvailable
+                  ? "You are reading an earlier version. Comments are added on the current one."
+                  : undefined
+            }
+          />
+        )}
+        {rightTab === "versions" && (
+          <VersionsList
+            documentId={doc.document_id}
+            versions={versionRows}
+            currentVersionId={currentVersionId}
+            openVersionId={openVersionId}
+            loading={versions.isPending}
+            onOpen={(v) => setAddress({ versionId: v.version_id })}
+          />
+        )}
+        {rightTab === "info" && (
+          <InfoPanel doc={doc} openVersion={openVersion} unitTotal={unitTotal} unitLabel={unitLabel} />
+        )}
+        {rightTab === "ai" && (
+          <div className="space-y-4 text-sm" data-testid="document-ai">
+            <p className="text-muted-foreground">
+              The Assistant reads this document and can add comments, suggest edits and draft changes. It opens with the document attached.
+            </p>
+            <AssistantAsk doc={doc} />
+            <div className="flex flex-col gap-1.5">
+              {AI_TASKS.map((t) => (
+                <Link
+                  key={t.label}
+                  to={assistantLink(doc, t.prompt)}
+                  data-testid="document-ai-task"
+                  className="flex items-center gap-2 rounded-md border border-border px-3 py-2 hover:bg-secondary"
+                >
+                  <Icon name={t.icon} className="text-wine" style={{ fontSize: 18 }} />
+                  {t.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div
@@ -248,115 +406,111 @@ function WorkspaceFrame({
         onNext={() => goToPart(part + 1, { allowClamp: true })}
         onJump={(n) => goToPart(n)}
         onOpenGo={() => setGoOpen(true)}
-        onShowCurrent={() => currentVersionId && setAddress({ versionId: currentVersionId, part: 1 })}
-        onToggleLeft={() => setLeftOpen((v) => !v)}
-        onToggleRight={() => setRightOpen((v) => !v)}
-        leftOpen={leftOpen}
-        rightOpen={rightOpen}
+        onOpenFind={() => setFindOpen((v) => !v)}
+        viewMode={pagesMode ? "pages" : "text"}
+        onViewMode={doc.has_original && !pagesOff ? setViewMode : undefined}
+        onShowCurrent={() => currentVersionId && setAddress({ versionId: currentVersionId })}
+        onToggleLeft={() => (isMd ? setLeftOpen((v) => !v) : setLeftSheet((v) => !v))}
+        onToggleRight={() => (isLg ? setRightOpen((v) => !v) : setRightSheet((v) => !v))}
+        leftOpen={isMd ? leftOpen : leftSheet}
+        rightOpen={isLg ? rightOpen : rightSheet}
       />
 
+      {findOpen && (
+        <FindInDocument
+          documentId={doc.document_id}
+          versionId={openVersionId}
+          onClose={() => setFindOpen(false)}
+          onPick={(m) => {
+            const target = Math.min(Math.max(1, usePages ? m.page_number || 1 : Math.floor(m.index / PART_SIZE) + 1), unitTotal);
+            setAddress({ part: target, blockId: m.block_id, clearChunk: true });
+            if (pagesMode) setJump({ page: target, quote: "", nonce: Date.now() });
+          }}
+        />
+      )}
+
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {leftOpen && (
+        {isMd && leftOpen && (
           <aside
-            className="hidden w-64 shrink-0 flex-col border-r border-border bg-card md:flex"
+            className="flex w-64 shrink-0 flex-col border-r border-border bg-card"
             data-testid="document-left-rail"
           >
-            <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
-              {hasOutline && (
-                <RailTab active={railTab === "outline"} onClick={() => setLeftTab("outline")}>
-                  Outline
-                </RailTab>
-              )}
-              <RailTab active={railTab === "thumbnails"} onClick={() => setLeftTab("thumbnails")}>
-                {unitLabel}s
-              </RailTab>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {railTab === "outline" ? (
-                <OutlineList
-                  items={outline.data?.outline ?? []}
-                  loading={outline.isPending}
-                  currentPart={part}
-                  usePages={usePages}
-                  onJump={(item) => {
-                    setAddress({
-                      part: item.page_number || 1,
-                      blockId: item.block_id,
-                    });
-                  }}
-                />
-              ) : (
-                <ThumbnailList
-                  total={unitTotal}
-                  current={part}
-                  unitLabel={unitLabel}
-                  onJump={(n) => goToPart(n, { allowClamp: true })}
-                />
-              )}
-            </div>
+            {leftRail}
           </aside>
         )}
 
-        <ReaderCanvas
-          documentId={doc.document_id}
-          versionId={openVersionId}
-          part={part}
-          partSize={PART_SIZE}
-          usePages={usePages}
-          unitLabel={unitLabel}
-          unitTotal={unitTotal}
-          highlightChunk={highlightChunk}
-          highlightBlock={address.blockId}
-        />
+        {pagesMode ? (
+          <section
+            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-secondary/30"
+            data-testid="document-canvas"
+            aria-label={`${unitLabel} ${part} of ${unitTotal}`}
+          >
+            <Suspense fallback={<p className="p-6 text-sm text-muted-foreground">Opening the pages…</p>}>
+              <DocumentViewer
+                key={openVersionId ?? "current"}
+                src={`/api/documents/${encodeURIComponent(doc.document_id)}/render${openVersionId ? `?version_id=${encodeURIComponent(openVersionId)}` : ""}`}
+                startPage={address.part}
+                hideNav
+                target={viewerTarget}
+                marks={dc.marks}
+                onMarkClick={(cid) => {
+                  dc.setActive(cid);
+                  setRightTab("comments");
+                  setRightOpen(true);
+                  document.getElementById(`comment-${cid}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                }}
+                onMarksLocated={dc.setLocated}
+                onSelectText={dc.onSelectText}
+                onPageChange={(p) => {
+                  if (p !== address.part) setAddress({ part: p }, true);
+                }}
+                onDocument={(n) => setRenderedPages(n)}
+                onUnavailable={() => setPagesOff(true)}
+              />
+            </Suspense>
+          </section>
+        ) : (
+          <ReaderCanvas
+            documentId={doc.document_id}
+            versionId={openVersionId}
+            part={part}
+            partSize={PART_SIZE}
+            usePages={usePages}
+            unitLabel={unitLabel}
+            unitTotal={unitTotal}
+            highlightChunk={highlightChunk}
+            highlightBlock={address.blockId}
+          />
+        )}
 
-        {rightOpen && (
+        {isLg && rightOpen && (
           <aside
-            className="hidden w-72 shrink-0 flex-col border-l border-border bg-card lg:flex"
+            className="flex w-80 shrink-0 flex-col border-l border-border bg-card"
             data-testid="document-right-rail"
           >
-            <div className="flex shrink-0 gap-1 border-b border-border px-2 py-1.5">
-              <RailTab active={rightTab === "versions"} onClick={() => setRightTab("versions")}>
-                Versions
-              </RailTab>
-              <RailTab active={rightTab === "info"} onClick={() => setRightTab("info")}>
-                Info
-              </RailTab>
-              <RailTab active={rightTab === "ai"} onClick={() => setRightTab("ai")}>
-                AI
-              </RailTab>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              {rightTab === "versions" && (
-                <VersionsList
-                  versions={versionRows}
-                  currentVersionId={currentVersionId}
-                  openVersionId={openVersionId}
-                  loading={versions.isPending}
-                  onOpen={(v) => setAddress({ versionId: v.version_id, part: 1 })}
-                />
-              )}
-              {rightTab === "info" && (
-                <InfoPanel doc={doc} openVersion={openVersion} unitTotal={unitTotal} unitLabel={unitLabel} />
-              )}
-              {rightTab === "ai" && (
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <p>Ask about this document in the Assistant, or ask the firm about its matter.</p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={doc.matter_id ? `/chat?matter=${doc.matter_id}` : "/chat"}>Open Assistant</Link>
-                    </Button>
-                    {doc.matter_code && (
-                      <Button asChild variant="outline" size="sm">
-                        <Link to={`/ask?scope=${encodeURIComponent(doc.matter_code)}&scopeType=matter`}>Ask the Firm</Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            {rightRail}
           </aside>
         )}
       </div>
+
+      <Sheet open={!isMd && leftSheet} onOpenChange={setLeftSheet}>
+        <SheetContent side="left" className="flex w-[320px] max-w-[90vw] flex-col gap-0 p-0" aria-describedby={undefined}>
+          <SheetTitle className="sr-only">Outline</SheetTitle>
+          <div className="flex min-h-0 flex-1 flex-col pt-10" data-testid="document-left-sheet">
+            {leftRail}
+          </div>
+        </SheetContent>
+      </Sheet>
+      <Sheet open={!isLg && rightSheet} onOpenChange={setRightSheet}>
+        <SheetContent side="right" className="flex w-[360px] max-w-[92vw] flex-col gap-0 p-0" aria-describedby={undefined}>
+          <SheetTitle className="sr-only">Versions and details</SheetTitle>
+          <div className="flex min-h-0 flex-1 flex-col pt-10" data-testid="document-right-sheet">
+            {rightRail}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <SelectionComment dc={dc} />
 
       <GoToDialog
         open={goOpen}
@@ -374,6 +528,63 @@ function WorkspaceFrame({
   );
 }
 
+/** Ask the Assistant anything about this document: it opens with the document attached and answers at once. */
+function AssistantAsk({ doc }: { doc: DocumentDetail }) {
+  const navigate = useNavigate();
+  const [text, setText] = useState("");
+  const go = () => {
+    const q = text.trim();
+    if (!q) return;
+    navigate(assistantLink(doc, q, true));
+  };
+  return (
+    <div className="rounded-2xl border border-border bg-card p-2 focus-within:border-wine/50 focus-within:ring-2 focus-within:ring-wine/10" data-testid="document-ai-ask">
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            go();
+          }
+        }}
+        rows={2}
+        placeholder="Ask about this document, or tell the Assistant what to change…"
+        aria-label="Ask the Assistant about this document"
+        data-testid="document-ai-input"
+        className="w-full resize-none bg-transparent px-2 py-1 text-sm focus:outline-none"
+      />
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={go}
+          disabled={!text.trim()}
+          aria-label="Send to the Assistant"
+          data-testid="document-ai-send"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:bg-secondary disabled:text-muted-foreground"
+        >
+          <Icon name="arrow_upward" style={{ fontSize: 18 }} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const AI_TASKS = [
+  { label: "Review and add comments", icon: "add_comment", prompt: "Review this document and add comments on the key risks, ambiguities and anything I should confirm. Quote the exact wording each comment is about." },
+  { label: "Suggest edits", icon: "edit_note", prompt: "Suggest edits that improve this document. Show them as tracked changes I can accept or reject." },
+  { label: "Summarise this document", icon: "summarize", prompt: "Summarise this document: the parties, what it does and anything that needs attention." },
+  { label: "List obligations and deadlines", icon: "checklist", prompt: "List every obligation, deadline and condition in this document, with the clause that creates each." },
+];
+
+/** An Assistant conversation limited to the document's matter, with the document attached and a starting prompt. */
+function assistantLink(doc: DocumentDetail, prompt: string, send = false) {
+  const q = new URLSearchParams({ doc: doc.document_id, docTitle: doc.title, q: prompt });
+  if (send) q.set("send", "1"); // a question typed here is sent at once; a starter prompt only fills the box
+  if (doc.matter_id) q.set("matter", doc.matter_id);
+  return `/chat?${q.toString()}`;
+}
+
 function Toolbar({
   doc,
   openVersion,
@@ -387,6 +598,9 @@ function Toolbar({
   onNext,
   onJump,
   onOpenGo,
+  onOpenFind,
+  viewMode,
+  onViewMode,
   onShowCurrent,
   onToggleLeft,
   onToggleRight,
@@ -405,12 +619,17 @@ function Toolbar({
   onNext: () => void;
   onJump: (n: number) => boolean | void;
   onOpenGo: () => void;
+  onOpenFind: () => void;
+  viewMode: "pages" | "text";
+  /** Present when the file can be shown as pages: switches between Pages and Text. */
+  onViewMode?: (mode: "pages" | "text") => void;
   onShowCurrent: () => void;
   onToggleLeft: () => void;
   onToggleRight: () => void;
   leftOpen: boolean;
   rightOpen: boolean;
 }) {
+  const { toast } = useApp();
   const [draft, setDraft] = useState(String(part));
   useEffect(() => setDraft(String(part)), [part]);
 
@@ -440,14 +659,14 @@ function Toolbar({
     >
       <button
         type="button"
-        className="hidden rounded-md p-1.5 text-muted-foreground hover:bg-secondary md:inline-flex"
+        className="inline-flex rounded-md p-2 text-muted-foreground hover:bg-secondary"
         aria-label={leftOpen ? "Hide outline" : "Show outline"}
         onClick={onToggleLeft}
       >
         <Icon name="view_sidebar" style={{ fontSize: 20 }} />
       </button>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-[calc(100%-3rem)] sm:basis-0">
         <div className="flex flex-wrap items-baseline gap-2">
           <h1 className="truncate font-display text-lg text-ink" data-testid="document-title">
             {doc.title}
@@ -525,12 +744,48 @@ function Toolbar({
         >
           <Icon name="chevron_right" style={{ fontSize: 20 }} />
         </Button>
+        <Button type="button" variant="ghost" size="icon" aria-label="Find in document (/)" onClick={onOpenFind} data-testid="document-find">
+          <Icon name="search" style={{ fontSize: 20 }} />
+        </Button>
         <Button type="button" variant="ghost" size="sm" onClick={onOpenGo} data-testid="document-go-to">
           Go to
         </Button>
       </div>
 
+      {onViewMode && (
+        <div className="inline-flex overflow-hidden rounded-md border border-border text-xs" role="tablist" aria-label="View" data-testid="document-view-mode">
+          {(["pages", "text"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={viewMode === m}
+              onClick={() => onViewMode(m)}
+              data-testid={`document-view-${m}`}
+              className={cn("px-2.5 py-1.5 font-medium capitalize", viewMode === m ? "bg-wine-soft text-wine" : "text-muted-foreground hover:bg-secondary")}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      )}
+      {doc.has_original && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            void downloadDocument(doc.document_id, openVersionId).catch((err) =>
+              toast(err instanceof Error ? err.message : "The download failed"),
+            )
+          }
+          data-testid="document-download"
+        >
+          <Icon name="download" style={{ fontSize: 16 }} /> Download
+        </Button>
+      )}
       <PrivacyControl documentId={doc.document_id} />
+      {doc.matter_id && <ArchiveDocument documentId={doc.document_id} matterId={doc.matter_id} title={doc.title} />}
       <Button asChild size="sm" variant="outline" data-testid="document-edit">
         <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>
           <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit
@@ -539,7 +794,7 @@ function Toolbar({
 
       <button
         type="button"
-        className="hidden rounded-md p-1.5 text-muted-foreground hover:bg-secondary lg:inline-flex"
+        className="inline-flex rounded-md p-2 text-muted-foreground hover:bg-secondary"
         aria-label={rightOpen ? "Hide panel" : "Show panel"}
         onClick={onToggleRight}
       >
@@ -616,7 +871,7 @@ function ReaderCanvas({
             <span>
               {unitLabel} {part.toLocaleString()} of {unitTotal.toLocaleString()}
             </span>
-            {!usePages && <span>Reader · no page rendition yet</span>}
+            {!usePages && <span>Text view</span>}
           </div>
 
           {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
@@ -674,8 +929,10 @@ function OutlineList({
     <nav className="py-2" aria-label="Document outline" data-testid="document-outline">
       <div className="meta-label px-4 pb-2">Document structure</div>
       <ul className="space-y-0.5 px-2">
-        {items.map((item) => {
-          const active = usePages && (item.page_number || 1) === currentPart;
+        {items.map((item, idx) => {
+          // Only the section the reader is in: the last heading that starts on or before this page.
+          const activeIdx = usePages ? items.reduce((acc, it, i) => ((it.page_number || 1) <= currentPart ? i : acc), -1) : -1;
+          const active = idx === activeIdx;
           return (
             <li key={item.block_id}>
               <button
@@ -690,7 +947,7 @@ function OutlineList({
                   {item.section_id ? `${item.section_id} ` : ""}
                   {item.section_title}
                 </div>
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   {usePages ? `Page ${item.page_number}` : "Jump"}
                 </div>
               </button>
@@ -743,7 +1000,7 @@ function ThumbnailList({
             n === current ? "border-wine bg-wine-soft text-wine" : "bg-card hover:bg-secondary",
           )}
         >
-          <span className="flex h-10 w-8 items-center justify-center rounded border border-dashed border-border bg-secondary text-[10px]">
+          <span className="flex h-10 w-8 items-center justify-center rounded border border-dashed border-border bg-secondary text-xs">
             {n}
           </span>
           {unitLabel} {n}
@@ -763,12 +1020,14 @@ function ThumbnailList({
 }
 
 function VersionsList({
+  documentId,
   versions,
   currentVersionId,
   openVersionId,
   loading,
   onOpen,
 }: {
+  documentId: string;
   versions: DocVersion[];
   currentVersionId?: string | null;
   openVersionId?: string;
@@ -795,6 +1054,8 @@ function VersionsList({
               <button
                 type="button"
                 onClick={() => onOpen(v)}
+                data-testid="version-row"
+                aria-current={isOpen ? "true" : undefined}
                 className={cn(
                   "w-full rounded-md border border-transparent px-3 py-2 text-left text-sm",
                   isOpen ? "border-border bg-wine-soft text-wine" : "hover:bg-secondary",
@@ -802,7 +1063,7 @@ function VersionsList({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{v.version_label || `Version ${v.version_number ?? ""}`}</span>
-                  {isCurrent && <span className="text-[10px] uppercase tracking-wide">Current</span>}
+                  {isCurrent && <span className="text-xs uppercase tracking-wide">Current</span>}
                 </div>
                 <div className="mt-0.5 text-xs text-muted-foreground">
                   {[v.author_name, v.version_status, v.created_at ? formatDate(v.created_at) : null].filter(Boolean).join(" · ")}
@@ -811,10 +1072,79 @@ function VersionsList({
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{v.change_summary}</p>
                 )}
               </button>
+              <VersionChanges documentId={documentId} version={v} previous={previousOf(versions, v)} />
             </li>
           );
         })}
       </ol>
+    </div>
+  );
+}
+
+/** The version just before this one, by version number. */
+function previousOf(versions: DocVersion[], v: DocVersion): DocVersion | undefined {
+  const n = v.version_number ?? 0;
+  return versions
+    .filter((x) => (x.version_number ?? 0) < n)
+    .sort((a, b) => (b.version_number ?? 0) - (a.version_number ?? 0))[0];
+}
+
+/** What this version changed against the one before it: lines added and removed, in the text. */
+function VersionChanges({ documentId, version, previous }: { documentId: string; version: DocVersion; previous?: DocVersion }) {
+  const [open, setOpen] = useState(false);
+  const [all, setAll] = useState(false);
+  const diff = useVersionDiff(documentId, version.version_id, previous?.version_id, open);
+  if (!previous) return null;
+  const lines = (diff.data?.diff ?? []).filter((l) => !l.startsWith("+++") && !l.startsWith("---") && !l.startsWith("@@"));
+  const shown = all ? lines : lines.slice(0, 24);
+  return (
+    <div className="px-3 pb-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        data-testid="version-changes-toggle"
+        className="text-xs font-medium text-wine hover:underline"
+      >
+        {open ? "Hide changes" : `What changed since v${previous.version_number ?? "?"}`}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-md border border-border bg-card text-xs" data-testid="version-changes">
+          {diff.isPending && <p className="p-2 text-muted-foreground">Comparing…</p>}
+          {diff.isError && <p className="p-2 text-destructive">The comparison could not be made.</p>}
+          {diff.data && (
+            <>
+              <p className="border-b border-border px-2 py-1.5 text-muted-foreground">
+                <span className="font-medium text-success-ink">+{diff.data.added_lines}</span>{" "}
+                <span className="font-medium text-destructive">−{diff.data.removed_lines}</span> lines
+              </p>
+              {lines.length === 0 ? (
+                <p className="p-2 text-muted-foreground">No change in the text.</p>
+              ) : (
+                <ul className="max-h-72 overflow-y-auto font-mono-id leading-relaxed">
+                  {shown.map((l, i) => (
+                    <li
+                      key={i}
+                      className={cn(
+                        "whitespace-pre-wrap break-words px-2 py-0.5",
+                        l.startsWith("+") && "bg-success-soft text-success-ink",
+                        l.startsWith("-") && "bg-destructive/10 text-destructive",
+                      )}
+                    >
+                      {l}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {lines.length > shown.length && (
+                <button type="button" onClick={() => setAll(true)} className="w-full border-t border-border py-1.5 text-muted-foreground hover:text-foreground">
+                  Show all {lines.length} lines
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

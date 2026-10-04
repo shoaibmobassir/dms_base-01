@@ -46,6 +46,7 @@ from app.chat.tools.document_tools import (
     search_firm_records,
 )
 from app.chat.tools.batch_tools import review_documents_tool
+from app.chat.tools.comment_tools import comment_on_document_tool
 from app.chat.tools.edit_tools import edit_document_tool
 from app.chat.context import carried_documents, fit_context, working_set, working_set_note
 from app.chat.tools.firm_tools import (
@@ -61,7 +62,7 @@ from app.chat.verify_citations import verify_document_citation
 from app.config import settings
 from app.grounding import Source, ground_answer, verifier_llms
 from app.db.connection import connect
-from app.llm.bedrock_client import bedrock_configured, chat_complete
+from app.llm.chat_gateway import chat_complete, chat_configured, preferred_provider, writer_model
 from app.observability.metrics import (
     CHAT_CITATION_RESULTS,
     CHAT_TOOL_CALLS,
@@ -77,6 +78,7 @@ _RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 _DB_TOOLS = frozenset({
     "review_documents",
     "edit_document",
+    "comment_on_document",
     "ask_firm",
     "resolve_matter",
     "get_matter_profile",
@@ -220,6 +222,11 @@ def dispatch_tool_call(
     elif name == "edit_document":
         result, edit_events = edit_document_tool(arguments, doc_index, conn, member_id)
         events.extend(edit_events)
+        return result, events
+
+    elif name == "comment_on_document":
+        result, comment_events = comment_on_document_tool(arguments, doc_index, conn, member_id)
+        events.extend(comment_events)
         return result, events
 
     elif name == "review_documents":
@@ -413,6 +420,8 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
         return f"Opening the contents of {doc_name}"
     if name == "edit_document":
         return f"Planning edits to {doc_name}"
+    if name == "comment_on_document":
+        return f"Adding comments to {doc_name}"
     if name == "review_documents":
         n = len(arguments.get("doc_ids") or [])
         what = f"{n} documents" if n else (f"the documents of {arguments['matter']}" if arguments.get("matter") else "the documents")
@@ -704,10 +713,10 @@ def _call_llm(
 ) -> dict[str, Any]:
     """
     Call the LLM with tool support.
-    Preference: Bedrock → Gemini → Groq → local stub.
+    Preference: Azure → Bedrock → Gemini → Groq → local stub.
     """
-    if bedrock_configured():
-        return _call_bedrock(messages, tools, model)
+    if chat_configured():
+        return _call_gateway(messages, tools, model)
     if settings.gemini_api_key:
         return _call_gemini(messages, tools, model)
     if settings.groq_api_key:
@@ -718,15 +727,14 @@ def _call_llm(
     }
 
 
-def _call_bedrock(
+def _call_gateway(
     messages: list[dict[str, Any]],
     tools: list[dict[str, Any]],
     model: str | None = None,
 ) -> dict[str, Any]:
-    """Call Amazon Bedrock Mantle with OpenAI-compatible tool calling."""
-    model_id = model or settings.bedrock_model or "zai.glm-5"
-    # Mantle expects OpenAI-style messages; drop unsupported fields carefully but
-    # keep the tool-calling linkage, or the round after a tool call is rejected (400).
+    """Call Azure OpenAI or Bedrock Mantle with OpenAI-compatible tool calling."""
+    model_id = model or writer_model()
+    # OpenAI-compatible backends need tool-calling linkage preserved across rounds.
     clean_messages: list[dict[str, Any]] = []
     for msg in messages:
         role = str(msg.get("role") or "user")
@@ -761,7 +769,11 @@ def _call_bedrock(
         # the endpoint rejects as a 400. Sampling again usually produces a valid one.
         if exc.response is None or exc.response.status_code != 400 or "Unterminated" not in exc.response.text:
             raise
-        logger.warning("[chat/agent] malformed tool call from %s; retrying once", model_id)
+        logger.warning(
+            "[chat/agent] malformed tool call from %s (%s); retrying once",
+            model_id,
+            preferred_provider(),
+        )
         result = call()
     return {
         "content": result.get("content") or "",
