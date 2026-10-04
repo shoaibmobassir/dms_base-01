@@ -17,6 +17,12 @@ venv/
 # OS / editor
 .DS_Store
 .code-review-graph/
+.claude/worktrees/
+
+# Local docs + data — keep on disk, do not push for now
+legal-memory-retrieval/docs/
+legal-memory-retrieval/data/
+docs/
 
 # Local model / embedding caches (re-download on setup)
 .cache/

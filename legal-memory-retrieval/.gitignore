@@ -2,6 +2,8 @@ __pycache__/
 .venv/
 .env
 evals/last_retrieval_run.json
+evals/last_harbour_retrieval.json
+evals/last_harbour_retrieval.md
 evals/dataset.jsonl
 evals/runs/
 # Added by code-review-graph
@@ -16,7 +18,10 @@ frontend/playwright-report/
 secrets/
 backups/
 frontend/public/pdfjs/
-data/object_store/render_cache/
+
+# Local docs + object store — keep on disk, do not push for now
+docs/
+data/
 
 # External benchmark data (licence-gated, never committed; plan 14)
 data/benchmarks/
