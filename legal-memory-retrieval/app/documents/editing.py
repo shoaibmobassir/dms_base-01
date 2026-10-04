@@ -783,11 +783,11 @@ def _version_paragraphs(conn, doc: dict, version_id: str) -> tuple[list[str], by
 
 
 def _word_diff(a: str, b: str) -> list[dict]:
-    import re
+    from app.documents.tokens import tokenize, word_ops
 
-    ta, tb = re.findall(r"\s+|[^\s]+", a), re.findall(r"\s+|[^\s]+", b)
+    ta, tb = tokenize(a), tokenize(b)
     out: list[dict] = []
-    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, ta, tb, autojunk=False).get_opcodes():
+    for tag, i1, i2, j1, j2 in word_ops(ta, tb):
         if tag == "equal":
             out.append({"t": "eq", "text": "".join(ta[i1:i2])})
         else:

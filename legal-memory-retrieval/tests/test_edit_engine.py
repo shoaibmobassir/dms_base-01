@@ -77,7 +77,8 @@ def test_verifier_sees_exact_changes_including_a_corrupted_number():
     from app.editing.engine import show_changes
 
     shown = show_changes("99.9 Subject to Clause 9, the Supplier", "910.9 Subject to Clause 10, the Supplier")
-    assert "[-99.9-]{+910.9+}" in shown and "[-9,-]{+10,+}" in shown
+    # The number is shown whole and the comma beside it is not part of the change (it used to read "[-9,-]{+10,+}").
+    assert "[-99.9-]{+910.9+}" in shown and "[-9-]{+10+}," in shown
 
 
 def test_lowercase_twin_of_a_defined_term_is_never_substituted():

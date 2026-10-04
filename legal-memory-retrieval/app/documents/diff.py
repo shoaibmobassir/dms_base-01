@@ -74,13 +74,14 @@ class VersionDiffResult:
 
 def compute_word_redline(text_a: str, text_b: str) -> List[RedlineToken]:
     """Compute word-level visual redline tokens between two texts."""
-    words_a = re.findall(r"\S+|\s+", text_a)
-    words_b = re.findall(r"\S+|\s+", text_b)
+    from app.documents.tokens import tokenize, word_ops
 
-    matcher = difflib.SequenceMatcher(None, words_a, words_b)
+    words_a = tokenize(text_a)
+    words_b = tokenize(text_b)
+
     tokens: List[RedlineToken] = []
 
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+    for tag, i1, i2, j1, j2 in word_ops(words_a, words_b):
         if tag == "equal":
             tokens.append(RedlineToken("equal", "".join(words_a[i1:i2])))
         elif tag == "delete":

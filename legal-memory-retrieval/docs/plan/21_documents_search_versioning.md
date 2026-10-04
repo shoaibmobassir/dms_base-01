@@ -52,7 +52,19 @@ PyMuPDF (AGPL).
 - [ ] normalize known OCR glue for **search** only
 
 ## C1 — token-aware diff
-- [ ] tokenizer for numbers/dates, merge del+ins, visible gap, golden tests
+- [x] 2026-10-04 `app/documents/tokens.py`: one tokenizer (whole numbers/dates, words, punctuation apart) and
+      `word_ops` (changes separated only by a space are one change), used by the tracked-change writer
+      (`docx_tracked._replace`), the editor compare (`_word_diff`), the redline and the engine's change summary
+- [x] 2026-10-04 `tests/test_diff_tokens.py` (22): lossless tokens, `INR 1,20,00,000.` marks only the number, `1`→`7`
+      and `17`→`7` are whole-number replaces, accept/reject round trip, docx XML has exactly one del and one ins
+- [x] 2026-10-04 one existing expectation updated on purpose: the verifier summary reads `[-9-]{+10+},` (comma
+      untouched) instead of `[-9,-]{+10,+}`. `evals/editor_roundtrip_eval.py` gates unchanged (all checks OK, save
+      p95 1.39 s < 3 s, LibreOffice render OK)
+- **Finding that changes C3:** the file we write is correct (`<w:del>1,20,00,000</w:del><w:ins>1,50,00,000</w:ins>`,
+  which rejects to the old text and accepts to the new). The "glued" look is only how LibreOffice/Word draw adjacent
+  del+ins, and a visible gap cannot be put in the file (it would change the text on accept/reject). The user's
+  `~~1~~7` is simply `1` replaced by `7`. So the fix for the look is rendering: clean view by default and our own
+  diff view with a gap (C3).
 
 ## C2 — clean-HEAD commit model
 - [ ] migration, history, diff, restore, blame, two-commit Word import, backfill
