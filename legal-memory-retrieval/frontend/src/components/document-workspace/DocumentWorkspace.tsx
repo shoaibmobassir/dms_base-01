@@ -29,6 +29,19 @@ import { cn } from "@/lib/utils";
 /** Chunks (or blocks) shown as one reader "part" when there is no real page count. */
 export const PART_SIZE = 5;
 
+/** The page (or, without real pages, the reader part) an outline item is on. */
+function unitOf(item: DocumentOutlineItem, usePages: boolean) {
+  if (usePages || !item.sequence) return item.page_number || 1;
+  return Math.max(1, Math.ceil(item.sequence / PART_SIZE));
+}
+
+/** "5 Remuneration" for a numbered section; an unnumbered heading's internal id (a slug) is not shown. */
+function outlineLabel(item: DocumentOutlineItem) {
+  const id = item.section_id ?? "";
+  const numbered = /^(?:\d+(?:\.\d+)*|[IVXLCDM]+|[A-Z])$/.test(id);
+  return numbered && !item.section_title.startsWith(id) ? `${id}. ${item.section_title}` : item.section_title;
+}
+
 type RightTab = "versions" | "info" | "ai";
 type LeftTab = "outline" | "thumbnails";
 
@@ -223,13 +236,14 @@ function WorkspaceFrame({
   const sectionLabel = useMemo(() => {
     const items = outline.data?.outline ?? [];
     if (!items.length) return null;
-    const match = [...items].reverse().find((o) => (o.page_number || 1) <= part);
+    // The first section that starts on this part, else the one still running from before it.
+    const match = items.find((o) => unitOf(o, usePages) === part) ?? [...items].reverse().find((o) => unitOf(o, usePages) < part);
     return match
       ? match.section_id
         ? `${match.section_id} — ${match.section_title}`
         : match.section_title
       : null;
-  }, [outline.data, part]);
+  }, [outline.data, part, usePages]);
 
   const newerAvailable =
     Boolean(currentVersionId) && Boolean(openVersionId) && currentVersionId !== openVersionId;
@@ -292,7 +306,7 @@ function WorkspaceFrame({
                   usePages={usePages}
                   onJump={(item) => {
                     setAddress({
-                      part: item.page_number || 1,
+                      part: unitOf(item, usePages),
                       blockId: item.block_id,
                     });
                   }}
@@ -621,7 +635,7 @@ function ReaderCanvas({
     ? pageBlocks.map((b) => ({
         id: b.block_id,
         text: b.text,
-        heading: b.block_type === "heading" || Boolean(b.section_title),
+        heading: b.block_type === "heading",
         title: b.section_title,
       }))
     : (chunksQuery.data?.chunks ?? []).map((c) => ({
@@ -682,7 +696,7 @@ function ReaderCanvas({
                   p.id === highlightId && "-mx-3 rounded-md bg-wine-soft px-3 py-2",
                 )}
               >
-                {p.heading && p.title && p.title !== p.text && (
+                {p.heading && p.title && !p.text.toLowerCase().includes(p.title.toLowerCase()) && (
                   <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">{p.title}</div>
                 )}
                 <p className="whitespace-pre-wrap text-[15px] leading-[1.8] text-foreground/90">{p.text}</p>
@@ -721,7 +735,7 @@ function OutlineList({
       <div className="meta-label px-4 pb-2">Document structure</div>
       <ul className="space-y-0.5 px-2">
         {items.map((item) => {
-          const active = usePages && (item.page_number || 1) === currentPart;
+          const active = unitOf(item, usePages) === currentPart;
           return (
             <li key={item.block_id}>
               <button
@@ -732,12 +746,9 @@ function OutlineList({
                   active ? "bg-wine-soft text-wine" : "hover:bg-secondary",
                 )}
               >
-                <div className="truncate font-medium">
-                  {item.section_id ? `${item.section_id} ` : ""}
-                  {item.section_title}
-                </div>
+                <div className="truncate font-medium">{outlineLabel(item)}</div>
                 <div className="text-[11px] text-muted-foreground">
-                  {usePages ? `Page ${item.page_number}` : "Jump"}
+                  {usePages ? `Page ${item.page_number}` : `Part ${unitOf(item, false)}`}
                 </div>
               </button>
             </li>

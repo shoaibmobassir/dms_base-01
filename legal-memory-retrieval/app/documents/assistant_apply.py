@@ -7,6 +7,7 @@ passage in exactly one paragraph; anything else is reported as not applied, neve
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.chat.verify_citations import locate_quote
@@ -33,6 +34,24 @@ def _place(paragraphs: list[str], edit: dict[str, Any]) -> tuple[int, str | None
     # Placed by the passage itself: it must sit in exactly one paragraph.
     if not original:
         return None
+    placed = _place_passage(paragraphs, original, proposed)
+    if placed is None:
+        # Text indexed before 2026-10-04 carried a "SECTION " label on Word headings that is not in the file, and cards
+        # made from it quote the label ("SECTION 5. Remuneration" → "SECTION 3. Remuneration"). Without the label the
+        # passage is the heading itself; the label is dropped from the new text too, so it is never written in.
+        label = _STALE_LABEL.match(original)
+        if label:
+            new_label = _STALE_LABEL.match(proposed)
+            placed = _place_passage(paragraphs, original[label.end():],
+                                    proposed[new_label.end():] if new_label else proposed)
+    return placed
+
+
+# The heading label the old DOCX extraction wrote into the text (never present in the Word file).
+_STALE_LABEL = re.compile(r"^SECTION\s+")
+
+
+def _place_passage(paragraphs: list[str], original: str, proposed: str) -> tuple[int, str | None] | None:
     hits = [i for i, p in enumerate(paragraphs) if original in p]
     if not hits:
         hits = [i for i, p in enumerate(paragraphs) if locate_quote(p, original) is not None]

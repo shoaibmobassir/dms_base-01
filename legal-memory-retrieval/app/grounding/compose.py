@@ -29,7 +29,14 @@ _ABBREV_END = re.compile(
     re.I,
 )
 # A clause number quoted inside a sentence ("3. Remuneration", "(2.1. Term") is not the end of that sentence.
-_QUOTED_NUMBER_END = re.compile(r"(?:^|[\"“‘'(\[])\s*\d{1,3}(?:\.\d{1,3})*\.$")
+_QUOTED_NUMBER_END = re.compile(r"(?:^|[\"“‘'(\[*_]|→|->)\s*\d{1,3}(?:\.\d{1,3})*\.$")
+# "Section 5. Remuneration → 3. Remuneration": on a line describing a change, "Section 5." is a heading number too. In
+# ordinary prose "…set by Clause 8. The Company may…" it ends the sentence, so this applies only to arrow lines.
+_NAMED_NUMBER_END = re.compile(
+    r"\b(?:Section|Sections|Clause|Clauses|Article|Schedule|Part|Para|Paragraph|Rule|Annex|Annexure)\s+\d{1,3}(?:\.\d{1,3})*\.$",
+    re.IGNORECASE,
+)
+_ARROW = re.compile(r"→|->|⇒")
 _LEAD_REF = re.compile(r"^(?:\s*(?:\[\d+\]|\((?:[^()]*(?:DOC|MTR|MEM)-[^()]*)\)))+")
 _BULLET = re.compile(r"^(\s*(?:[-*•]|\d+[.)])\s+)")
 
@@ -82,7 +89,8 @@ def _pieces(line: str) -> list[tuple[int, int]]:
     pos = body_start
     for m in _SENT_SPLIT.finditer(line, body_start):
         before = line[pos:m.start()].rstrip()
-        if _ABBREV_END.search(before) or _QUOTED_NUMBER_END.search(before):
+        if _ABBREV_END.search(before) or _QUOTED_NUMBER_END.search(before) or (
+                _NAMED_NUMBER_END.search(before) and _ARROW.search(line)):
             continue
         ranges.append((pos, m.start()))
         pos = m.end()

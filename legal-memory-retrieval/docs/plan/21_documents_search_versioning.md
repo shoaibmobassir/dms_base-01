@@ -125,11 +125,54 @@ Causes found by reading the code and a live run:
   "In the document · v4", no struck text left, History + Review changes); live model: `evals/page_reference_live.py`
   (reads the dragged page and proposes the edit without asking; 1 of 2 runs still lost one prediction sentence before the
   last regex tweak, not re-measured).
-- [ ] accepted edits are not yet visible in a document open in another tab until it refetches (queries are invalidated
-  in the same tab only)
+- [x] accepted edits show in a document open in another tab when that tab regains focus
 - [ ] a model that ignores the page and asks anyway: not seen in 3 live runs, no counter-measure built
 
+## E — "I did the changes but the document is not edited" (2026-10-04, second report on the CTO agreement)
+
+Found by replaying the reported conversation on a copy of the real document (`evals/cto_live_flow.py`):
+0. **The fixes were not running.** The app on :8000/:5173 serves the main checkout (`new_frontend_v2`); D lives on
+   `docs-search-versioning`. The paste still shows the old "Apply to Word" button.
+1. **Invented heading text.** The DOCX extractor stored every Heading-style paragraph as `SECTION <text>`; the reader,
+   search and the Assistant showed and quoted "SECTION 5. Remuneration", which is not in the file, so edits to headings
+   could never be placed ("the tool couldn't find the exact text").
+2. **"Change of Control" counted as a tracked change.** `has_revisions` matched a bare `Change ` anywhere in
+   document.xml, so this agreement always looked tracked: saves kept their markup and it never became clean.
+3. **The Assistant worked from memory.** Later turns described sections it had not read ("sections 1 to 27"), handed the
+   planner an invented number mapping, changed legal substance when only asked to "fix" (double → single trigger), and
+   said "Done" for proposals; leaked `</think>` text reached the answer.
+4. **Edit summaries cut up.** "Section 5. Remuneration → 3." split after "5."; change lines, questions and sentences
+   about how cards work were judged as claims and removed.
+5. **Reader**: every paragraph in a section was styled as a heading with the section name above it; outline showed
+   internal slugs and jumped to Part 1; the toolbar named the last section of the document.
+
+- [x] Extractor keeps the document's words; headings come from the Word styles (`stored_headings`, passed to the parser
+      at indexing) or, in plain text, numbered/capital heading lines (`numbered_heading`, `caps_heading`).
+- [x] Re-indexed the 5 Word documents carrying the label (`scripts/reindex_docx_text.py`, backup
+      `data/backups/reindex_docx_20261004_203511.json`; files untouched, no new versions).
+- [x] `has_revisions` matches revision elements only; the CTO agreement and Disclosure Schedule history cleaned
+      (`scripts/clean_versions.py --apply` on those two; files backed up in `data/backups/object_store_2026-10-04/`).
+- [x] Cards quoting the old label still apply, without writing it in.
+- [x] Each turn carries the current headings of the documents in play; rules: read before describing or editing, plain
+      instructions to edit_document, "fix" = evident defects only, proposals are not "done", no cards talked about
+      unless made; reasoning tags stripped.
+- [x] Renumbering reaches every heading whatever the planner searched for.
+- [x] Questions, product statements and change lines are not judged; a read document's headings are one source.
+- [x] Reader: only heading blocks look like headings; outline labels and part jumps; toolbar section of the part.
+- [x] Measured: 4 live replays of the conversation (+ "renumber the sections 1 to 6"): 4/4 proposed exactly the right
+      cards (one also fixed the cross-reference "Clause 8" → "Clause 5"), 4/4 Accept all changed the file with no
+      tracked markup, 0/4 invented legal changes (was 1/1). Browser: accept in the chat card and reader/outline checks
+      (`evals/assistant_drag_check.cjs`, `evals/reader_outline_check.cjs`).
+- [x] Found while testing: the running app held two read transactions open for 4 h (an Ask the Firm stream abandoned
+      mid-answer keeps its generator inside `with connect()`); a migration's ALTER queued behind them and every query on
+      `documents` queued behind the ALTER. Ask now ends its read transaction before calling the model
+      (`km/answer.py _end_reads`, test in `tests/test_ask_the_firm.py`); the two stale sessions were terminated.
+- [ ] "N statements removed" still appears on some first-turn remarks ("a short agreement with one page")
+- [ ] merge `docs-search-versioning` into the branch the app runs from
+
 ## Log
+- **2026-10-04** E: real heading text, revision detection, re-index + clean history of the real documents, Assistant
+  grounded on current headings, renumbering complete, reader fixes; 4/4 live replays correct end to end.
 - **2026-10-04** D: accept writes a clean version; drag a page to the Assistant; edit-turn reports no longer cut as
   unsupported claims; Review changes button. 1003 passed / 5 skipped, typecheck clean, Chrome + live runs.
 - **2026-10-04** C3: History panel, diff dialog with arrow, blame, restore; typecheck clean, 988 passed / 5 skipped, Chrome check clean.

@@ -248,15 +248,26 @@ def delete_chat_session(session_id: str, member_id: str | None = Depends(resolve
 # SSE streaming message endpoint
 # ---------------------------------------------------------------------------
 
-def _page_note(conn, files, member_id: str | None) -> str | None:
-    """The text of any page the lawyer dragged in, for the system prompt (None when nothing was pointed at)."""
-    from app.chat.page_reference import reference_note, resolve_references
+def _page_note(conn, files, member_id: str | None, history: list[ChatMessage] | None = None) -> str | None:
+    """For the system prompt: the text of any page the lawyer dragged in, and the current headings of the documents
+    in play (attached in this conversation or worked on in recent turns). None when there is neither."""
+    from app.chat.context import carried_documents
+    from app.chat.page_reference import outline_note, reference_note, resolve_references
 
+    note = ""
     try:
-        return reference_note(resolve_references(conn, files, member_id)) or None
+        note += reference_note(resolve_references(conn, files, member_id))
     except Exception as exc:  # a failed lookup must not stop the answer
         logger.warning("[chat] page reference failed: %s", exc)
-        return None
+    try:
+        ids = [f.document_id for f in files or [] if f.document_id]
+        for msg in reversed(history or []):
+            ids += [f.document_id for f in msg.files or [] if f.document_id]
+        ids += [d["document_id"] for d in carried_documents(history or [])]
+        note += outline_note(conn, ids, member_id)
+    except Exception as exc:
+        logger.warning("[chat] document outline failed: %s", exc)
+    return note or None
 
 
 def _with_attachments(conn, index: DocIndex, history: list[ChatMessage], member_id: str | None) -> DocIndex:
@@ -333,7 +344,7 @@ def send_message(
         # Build document index from retrieval hits
         doc_index = _with_attachments(conn, build_doc_index_from_hits(hits), history, session.member_id)
         matter = _matter_scope(conn, session)
-        page_note = _page_note(conn, req.files, session.member_id)
+        page_note = _page_note(conn, req.files, session.member_id, history)
 
         # Reserve assistant message ID
         assistant_msg = append_message(
@@ -487,7 +498,7 @@ def ask_sync(
             mode=req.mode.value if req.mode else None,
             hit_count=len(doc_index),
             matter=_matter_scope(conn, session),
-            page_note=_page_note(conn, req.files, session.member_id),
+            page_note=_page_note(conn, req.files, session.member_id, history),
         )
 
         # Save assistant response

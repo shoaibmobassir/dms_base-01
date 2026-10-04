@@ -95,6 +95,36 @@ def delete(doc_id: str) -> None:
         conn.commit()
 
 
+def copy(source_id: str, member: str) -> dict:
+    """A throwaway copy of an existing Word document (its current file, same matter), so a live test never changes the
+    real one. Indexed like an upload, through the same extractor."""
+    from app.ingest.extractors.dispatch import extract_from_bytes
+
+    with connect() as conn:
+        src = conn.execute(
+            "SELECT d.matter_id, d.client_id, d.title, v.storage_uri FROM documents d "
+            "JOIN document_versions v ON v.version_id = d.current_version_id WHERE d.document_id = %s", (source_id,)).fetchone()
+    data = get_object_store().get(src["storage_uri"])
+    doc_id = f"DOC-{uuid.uuid4().hex[:10].upper()}"
+    title = f"{Path(src['title']).stem} (test copy).docx"
+    uri = get_object_store().put(f"tests/{doc_id}/v1.docx", data, content_type=DOCX)
+    extracted = extract_from_bytes(title, data)
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO documents (document_id, matter_id, client_id, title, document_type, body, mime_type, source_uri) "
+            "VALUES (%s, %s, %s, %s, 'Agreement', '', %s, %s)", (doc_id, src["matter_id"], src["client_id"], title, DOCX, uri))
+        conn.commit()
+    create_version(document_id=doc_id, body=extracted.text, author_name="Test", source="upload", version_status="draft",
+                   storage_uri=uri, change_summary="Copy for a live test", page_spans=extracted.pages)
+    with connect() as conn:
+        conn.execute("UPDATE document_versions SET mime_type = %s WHERE document_id = %s", (DOCX, doc_id))
+        conn.commit()
+    from app.embeddings.pending import embed_pending_chunks
+
+    embed_pending_chunks([doc_id])
+    return {"document_id": doc_id, "member": member, "title": title}
+
+
 def chat_edits(doc_id: str, member: str, base: str) -> dict:
     """A conversation whose answer proposes two renumbering edits to the document (the pasted report's case), as the
     Assistant's cards would show them. Returns the session to open at /chat/<session_id>."""
@@ -108,7 +138,7 @@ def chat_edits(doc_id: str, member: str, base: str) -> dict:
         "instruction": "Renumber the sections", "edits": [
             {"id": "n1", "original": "5. Remuneration", "proposed": "3. Remuneration", "reason": "Renumber to sequential order.",
              "page": 1, "located": True, "status": "pending"},
-            {"id": "n2", "original": "2. Appointment and Term", "proposed": "1. Appointment and Term",
+            {"id": "n2", "original": "7. Non-Solicitation", "proposed": "4. Non-Solicitation",
              "reason": "Renumber to sequential order.", "page": 1, "located": True, "status": "pending"}]}
     with connect() as conn:
         append_message(conn, session["id"], MessageRole.user, "fix the numbering on this page")
@@ -127,13 +157,15 @@ def delete_session(session_id: str) -> None:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("action", choices=["create", "delete", "chat-edits", "delete-session"])
+    ap.add_argument("action", choices=["create", "delete", "chat-edits", "delete-session", "copy"])
     ap.add_argument("document_id", nargs="?")
     ap.add_argument("--member", default="")
     ap.add_argument("--base", default="http://127.0.0.1:8021")
     a = ap.parse_args()
     if a.action == "create":
         print(json.dumps(create(a.base)))
+    elif a.action == "copy":
+        print(json.dumps(copy(a.document_id, a.member)))
     elif a.action == "chat-edits":
         print(json.dumps(chat_edits(a.document_id, a.member, a.base)))
     elif a.action == "delete-session":

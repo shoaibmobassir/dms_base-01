@@ -20,7 +20,7 @@ import re
 from dataclasses import dataclass
 from functools import lru_cache
 
-from app.documents.canonical import _RE_HEADING, _RE_MD_SECTION, _RE_UNNUMBERED_HEADING
+from app.documents.canonical import _RE_HEADING, _RE_MD_SECTION, _RE_UNNUMBERED_HEADING, caps_heading
 
 _PAGE_RE = re.compile(r"^\[Page (\d+)\]$", re.MULTILINE)
 _TOP_CLAUSE = re.compile(r"^(\d{1,3})\.\s+([A-Z][^\n]{2,120})$")  # "12. Termination" (level-1 only)
@@ -70,6 +70,8 @@ def _heading(line: str) -> str | None:
     m = _TOP_CLAUSE.match(line)
     if m:
         return f"{m.group(1)}. {m.group(2).strip()}"
+    if caps_heading(line):
+        return line
     return None
 
 

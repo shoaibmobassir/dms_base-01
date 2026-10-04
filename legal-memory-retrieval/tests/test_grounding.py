@@ -401,3 +401,45 @@ def test_the_sentences_a_live_edit_turn_produced_are_all_reports():
               'The edit card shows the change from "3. Remuneration" to "2. Remuneration", to correct the sequence.',
               "Accept the card to apply the change directly to the document."):
         assert is_report(s), s
+
+
+def test_leaked_reasoning_is_not_shown():
+    from app.chat.agent import strip_reasoning
+
+    assert strip_reasoning("<think>plan the edit</think>I've proposed the renumbering.") == "I've proposed the renumbering."
+    assert strip_reasoning("Do not change titles.</think>I see the issue.") == "I see the issue."
+    assert strip_reasoning("A plain answer.") == "A plain answer."
+    assert strip_reasoning("<think>only thinking</think>") == ""
+
+
+def test_change_lines_from_live_edit_turns_stay_whole_and_are_reports():
+    from app.chat.agent import edit_report_detector
+
+    edits = [{"original": "5. Remuneration", "proposed": "3. Remuneration"}]
+    is_report = edit_report_detector(edits)
+    for line in ("- Section 5. Remuneration → 3. Remuneration", "- **5. Remuneration** → **3. Remuneration**",
+                 "Section 9 (Change of Control) → Section 6"):
+        units = split(line, "markers")
+        assert len(units) == 1, (line, [u.text for u in units])
+        assert is_report(units[0].text), line
+
+
+def test_questions_and_product_statements_are_never_judged_in_any_answer():
+    from app.chat.agent import edit_report_detector
+
+    no_edits = edit_report_detector([])
+    assert no_edits("Single-trigger: vest on Change of Control itself (no termination required)?")
+    assert no_edits("When you accept the edit card, it will write the new text directly into the document with no tracked changes.")
+    assert not no_edits("The Executive may terminate on three months' notice.")
+    assert not no_edits("I've changed the notice period to 60 days.")  # only an answer that made cards may report edits
+
+
+def test_the_headings_of_a_read_document_are_one_source():
+    from app.chat.agent import grounding_sources
+    from app.chat.tools.document_tools import DocEntry
+
+    text = "[Page 1]\nEMPLOYMENT AGREEMENT\n\n1. Parties\n\nThe Company and the Executive.\n\n5. Remuneration\n\nINR 2,50,00,000."
+    sources = grounding_sources({"doc-0": DocEntry("doc-0", "DOC-X", "CTO.docx")}, {"doc-0": text}, [])
+    heads = next(s for s in sources if s.key == "doc-0#headings")
+    assert heads.text.split("\n") == ["EMPLOYMENT AGREEMENT", "1. Parties", "5. Remuneration"]
+    assert all(line in text for line in heads.text.split("\n"))  # every line is verbatim from the document

@@ -51,6 +51,19 @@ def _next_version_number(cur, document_id: str) -> int:
     return cur.fetchone()["mx"] + 1
 
 
+def stored_headings(storage_uri: str | None) -> list[str] | None:
+    """Heading paragraphs of a stored Word file (its Heading styles), for the block parser; None for other files."""
+    if not storage_uri or not str(storage_uri).lower().split("?")[0].endswith(".docx"):
+        return None
+    try:
+        from app.ingest.extractors.docx import docx_heading_texts
+        from app.storage.object_store import get_object_store
+
+        return docx_heading_texts(get_object_store().get(storage_uri))
+    except Exception:  # noqa: BLE001 — headings refine the outline; the text still parses without them
+        return None
+
+
 def create_version(
     document_id: str,
     body: str,
@@ -160,7 +173,7 @@ def create_version(
     chunk_count = 0
     try:
         blocks = parse_canonical_blocks(
-            body, document_id, version_id, page_spans=page_spans
+            body, document_id, version_id, page_spans=page_spans, headings=stored_headings(storage_uri)
         )
         block_count = save_canonical_blocks(blocks)
         sync_page_count(version_id)
@@ -215,7 +228,7 @@ def reindex_current_version(document_id: str) -> dict:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-                SELECT d.matter_id, d.folder_path, v.version_id, v.body
+                SELECT d.matter_id, d.folder_path, v.version_id, v.body, v.storage_uri
                 FROM documents d JOIN document_versions v ON v.version_id = d.current_version_id
                 WHERE d.document_id = %(doc_id)s
                 """,
@@ -224,7 +237,7 @@ def reindex_current_version(document_id: str) -> dict:
             row = cur.fetchone()
     if not row:
         raise ValueError(f"Document {document_id} has no current version")
-    blocks = parse_canonical_blocks(row["body"], document_id, row["version_id"])
+    blocks = parse_canonical_blocks(row["body"], document_id, row["version_id"], headings=stored_headings(row["storage_uri"]))
     block_count = save_canonical_blocks(blocks)
     sync_page_count(row["version_id"])
     chunks = build_hierarchical_chunks(

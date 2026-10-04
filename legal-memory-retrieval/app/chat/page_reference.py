@@ -64,6 +64,42 @@ def resolve_references(conn, files: list[FileAttachment] | None, member_id: str 
     return out
 
 
+MAX_OUTLINE_DOCS = 3
+MAX_OUTLINE_HEADINGS = 60
+
+
+def outline_note(conn, document_ids: list[str], member_id: str | None) -> str:
+    """The current headings of the documents in play, read fresh each turn.
+
+    A later turn does not have the document text in front of it; without this the model described and renumbered
+    sections from memory ("sections 1 to 27" of a six-section agreement). Headings are short and exact, so they
+    ground any talk of numbering or structure in what the current version says.
+    """
+    lines: list[str] = []
+    for doc_id in list(dict.fromkeys(document_ids))[:MAX_OUTLINE_DOCS]:
+        row = conn.execute(
+            f"""
+            SELECT d.document_id, d.title FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
+            WHERE d.document_id = %(id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
+            """,
+            {"id": doc_id, "member_id": member_id},
+        ).fetchone()
+        if not row:
+            continue
+        heads = [r["text"] for r in conn.execute(
+            """SELECT b.text FROM document_blocks b JOIN documents d ON d.current_version_id = b.version_id
+               WHERE b.document_id = %s AND b.block_type = 'heading' ORDER BY b.sequence LIMIT %s""",
+            (doc_id, MAX_OUTLINE_HEADINGS + 1))]
+        if not heads:
+            continue
+        more = len(heads) > MAX_OUTLINE_HEADINGS
+        lines.append(f"- {row['title']}: " + " | ".join(h[:120] for h in heads[:MAX_OUTLINE_HEADINGS]) + (" | …" if more else ""))
+    if not lines:
+        return ""
+    return ("\n\nCURRENT HEADINGS OF THE DOCUMENTS IN THIS CONVERSATION (exact, from the current version; use these for "
+            "any numbering or structure, and read the document for anything else):\n" + "\n".join(lines))
+
+
 def reference_note(refs: list[dict[str, Any]]) -> str:
     """System-prompt text naming what the user pointed at and quoting it."""
     if not refs:

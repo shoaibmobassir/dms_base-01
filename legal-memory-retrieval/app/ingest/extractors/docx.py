@@ -30,6 +30,28 @@ def style_namer(document):
     return name
 
 
+def heading_texts(document) -> list[str]:
+    """The text of every paragraph styled as a heading (Title, Heading 1-9), in order."""
+    style_of = style_namer(document)
+    out = []
+    for p in document.paragraphs:
+        text = (p.text or "").strip()
+        style = style_of(p).lower()
+        if text and (style.startswith("heading") or style == "title"):
+            out.append(text)
+    return out
+
+
+def docx_heading_texts(data: bytes) -> list[str]:
+    """``heading_texts`` of a stored Word file; [] when it cannot be read."""
+    try:
+        from docx import Document
+
+        return heading_texts(Document(io.BytesIO(data)))
+    except Exception:  # noqa: BLE001 — headings are a refinement; text parsing still works without them
+        return []
+
+
 class DocxExtractor:
     """Extract structured text from DOCX, preserving paragraphs and headings."""
 
@@ -41,20 +63,12 @@ class DocxExtractor:
         from docx import Document
 
         document = Document(path)
-        style_of = style_namer(document)
-        paragraphs: list[str] = []
-        for p in document.paragraphs:
-            text = (p.text or "").strip()
-            if not text:
-                continue
-            style = style_of(p)
-            if style.lower().startswith("heading"):
-                # Normalize toward legal heading patterns for the block parser
-                paragraphs.append(text if text.upper().startswith(
-                    ("ARTICLE", "SECTION", "CLAUSE", "SCHEDULE", "EXHIBIT", "PART")
-                ) else f"SECTION {text}")
-            else:
-                paragraphs.append(text)
+        paragraphs = [(p.text or "").strip() for p in document.paragraphs]
+        paragraphs = [t for t in paragraphs if t]
+        # The text is the document's own words. Headings are passed to the block parser separately: writing a label
+        # into the text ("SECTION 5. Remuneration") made the reader, search and the Assistant quote words that are
+        # not in the file, so edits to them could not be placed.
+        headings = heading_texts(document)
 
         # Tables as pipe-separated blocks
         for table in document.tables:
@@ -87,6 +101,7 @@ class DocxExtractor:
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
         extracted.source_format = "docx"
+        extracted.headings = headings
         return extracted
 
     def extract_bytes(self, data: bytes) -> ExtractedDocument:

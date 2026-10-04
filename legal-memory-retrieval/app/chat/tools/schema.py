@@ -85,7 +85,9 @@ EDIT_DOCUMENT = {
             "12.4 insert: ...'). It finds every paragraph concerned without you reading the whole document, and "
             "returns the edits as cards the lawyer accepts or rejects. Prefer it over propose_edits for any change "
             "that may touch more than a few places, inserts or deletes paragraphs, or concerns a long document. "
-            "Quote exact wording to insert; say what must NOT change."
+            "Quote exact wording to insert; say what must NOT change. It reads the paragraphs itself: state the change "
+            "in plain terms (e.g. 'renumber the top-level headings consecutively from 1'), not a list of numbers or "
+            "wording you have not read in this turn."
         ),
         "parameters": {
             "type": "object",

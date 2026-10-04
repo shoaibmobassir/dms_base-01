@@ -74,6 +74,17 @@ def test_accept_all_is_one_version_and_places_edits_by_paragraph_or_by_passage(c
     assert _model(client, doc, people["editor"])["version_number"] == 2
 
 
+def test_cards_quoting_the_old_section_label_still_apply_without_writing_it(client, doc, people):
+    """Cards made from text indexed with the old "SECTION " heading label (the reported CTO agreement case)."""
+    edits = [_edit("e1", "SECTION Article 2 — Fees", "SECTION Article 3 — Fees"),
+             _edit("e2", "SECTION Article 1 — Term", "Article 1 — Duration")]
+    url, h = _message(client, doc, people["editor"], edits)
+    r = client.patch(url, json={"status": "accepted", "document_id": doc}, headers=h)
+    assert r.status_code == 200 and r.json()["failed"] == {}, r.text
+    text = _text(_file(doc))
+    assert "Article 3 — Fees" in text and "Article 1 — Duration" in text and "SECTION" not in text
+
+
 def test_an_edit_whose_passage_is_gone_stays_pending_and_changes_nothing(client, doc, people):
     url, h = _message(client, doc, people["editor"], [_edit("e1", "a clause that is not in this document", "x")])
     r = client.patch(f"{url}/e1", json={"status": "accepted"}, headers=h)
@@ -167,3 +178,20 @@ def test_no_references_means_no_note():
     assert reference_note([]) == ""
     with connect() as conn:
         assert resolve_references(conn, [FileAttachment(filename="a.docx", document_id="DOC-X")], None) == []
+
+
+def test_the_current_headings_of_documents_in_play_reach_the_prompt(doc, people):
+    from app.chat.page_reference import outline_note
+    from app.documents import reindex_current_version
+
+    editing.wait_for_indexing()
+    with connect() as conn:  # the fixture stores its text one line per paragraph; extraction separates them by a blank line
+        conn.execute("UPDATE document_versions SET body = %s WHERE document_id = %s",
+                     ("\n\n".join(t for _, t, _ in PARAS), doc))
+        conn.commit()
+    reindex_current_version(doc)
+    with connect() as conn:
+        note = outline_note(conn, [doc, doc], people["editor"])
+    assert "CURRENT HEADINGS" in note and "Services Agreement.docx" in note
+    assert "Article 1 — Term" in note and "Article 2 — Fees" in note
+    assert note.count("Services Agreement.docx") == 1  # each document once

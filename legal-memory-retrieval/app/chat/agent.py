@@ -345,12 +345,20 @@ def _record_text(value: Any, indent: str = "") -> str:
 
 
 def grounding_sources(doc_index: DocIndex, doc_store: DocStore, records: list[str]) -> list[Source]:
+    from app.chat.doc_nav import _heading
+
     sources = []
     for slug, text in doc_store.items():
         entry = doc_index.get(slug)
         if entry is None or not text or text == "Document could not be read.":
             continue
         sources.append(Source(key=slug, document_id=entry.document_id, title=entry.filename, text=text))
+        # The document's headings together, each line verbatim: a statement about its structure ("sections 1, 2, 5,
+        # 7, 8 and 9") is stated by the headings as a set, which no single retrieved passage holds.
+        heads = [line.strip() for line in text.split("\n") if _heading(line)][:80]
+        if len(heads) >= 2:
+            sources.append(Source(key=f"{slug}#headings", document_id=entry.document_id, title=entry.filename,
+                                  text="\n".join(heads)))
     for i, text in enumerate(records):
         sources.append(Source(key=f"record:{i}", document_id=None, title="Firm records", text=text))
     return sources
@@ -376,14 +384,36 @@ _ACTION_ANYWHERE = re.compile(
 )
 
 
+# About the product, not a document: how edit cards, accepting and tracked changes work.
+_APP_STATEMENT = re.compile(
+    r"\b(?:edit cards?|the cards?|accept(?:ing|s)? (?:the|a|an|each|these|all)\b.{0,20}\bcards?|tracked changes|"
+    r"crossed[- ]out|struck[- ]through)\b",
+    re.IGNORECASE,
+)
+_CHANGE_ARROW = re.compile(r"→|->|⇒")
+
+
+def is_question(text: str) -> bool:
+    return text.rstrip(" *_)\"'”").endswith("?")
+
+
 def edit_report_detector(edits: list[dict[str, Any]]):
-    """For a turn that produced edit cards: true for a sentence that reports the Assistant's actions or restates one
-    of the proposed edits (it quotes the new wording), so it is kept as written instead of being checked."""
+    """True for a sentence that is not a statement about the documents, so it is kept as written instead of checked.
+
+    In every answer: a question to the lawyer, and a sentence about how edit cards or tracked changes work. In an
+    answer that made edit cards, also: the Assistant reporting its actions, and a line describing one of the proposed
+    changes (it quotes the new wording, or shows the change with an arrow).
+    """
     proposed = [str(e.get("proposed") or "").strip() for e in edits]
     proposed = [p for p in proposed if len(p) >= 6]
 
     def is_report(text: str) -> bool:
-        return bool(_ACTION_REPORT.search(text) or _ACTION_ANYWHERE.search(text)) or any(p in text for p in proposed)
+        if is_question(text) or _APP_STATEMENT.search(text):
+            return True
+        if not edits:
+            return False
+        return bool(_ACTION_REPORT.search(text) or _ACTION_ANYWHERE.search(text) or _CHANGE_ARROW.search(text)) \
+            or any(p in text for p in proposed)
 
     return is_report
 
@@ -409,7 +439,7 @@ def ground_chat_text(
         offered_quotes=lambda u: [q.quote for c in refs(u) for q in (getattr(c, "quotes", None) or [])],
         sources=grounding_sources(doc_index, doc_store, records),
         llm=verifier_llms(),
-        non_claim=edit_report_detector(edits) if edits else None,
+        non_claim=edit_report_detector(edits or []),
     )
     citations = []
     for c in grounded.citations:
@@ -839,9 +869,22 @@ def _call_bedrock(
         logger.warning("[chat/agent] malformed tool call from %s; retrying once", model_id)
         result = call()
     return {
-        "content": result.get("content") or "",
+        "content": strip_reasoning(result.get("content") or ""),
         "tool_calls": result.get("tool_calls") or [],
     }
+
+
+_THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
+
+
+def strip_reasoning(text: str) -> str:
+    """Drop a model's reasoning that leaked into its answer: whole <think>…</think> blocks, and everything before a
+    closing </think> whose opening tag was not sent (the reasoning then starts the text)."""
+    text = _THINK_BLOCK.sub("", text)
+    end = text.lower().rfind("</think>")
+    if end >= 0:
+        text = text[end + len("</think>"):]
+    return text.lstrip() if text.strip() else ""
 
 
 def _call_gemini(
