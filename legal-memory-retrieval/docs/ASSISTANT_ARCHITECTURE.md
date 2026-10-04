@@ -2,7 +2,7 @@
 
 How the **Assistant** (multi-turn tool agent) is built, how every layer connects, and how a single lawyer message becomes a grounded, cited answer with optional edits, batch review, and artifacts.
 
-> Companion docs: high-level platform map in [`SYSTEM_ARCHITECTURE.md`](SYSTEM_ARCHITECTURE.md); Ask the Firm deep dive in [`ASK_THE_FIRM_ARCHITECTURE.md`](ASK_THE_FIRM_ARCHITECTURE.md); Ask-vs-Assistant product plan in [`plan/15_km_desk_and_assistant_scale.md`](plan/15_km_desk_and_assistant_scale.md); older Mike gap checklist in [`assistant_chatbot_deep_gap_analysis.md`](assistant_chatbot_deep_gap_analysis.md) (partially obsolete — SPA chat UI already ships).
+> Companion docs: high-level platform map in [`SYSTEM_ARCHITECTURE.md`](SYSTEM_ARCHITECTURE.md); Ask the Firm deep dive in [`ASK_THE_FIRM_ARCHITECTURE.md`](ASK_THE_FIRM_ARCHITECTURE.md) (includes `ask_answers`, docket pin, follow-ups); Ask-vs-Assistant product plan in [`plan/15_km_desk_and_assistant_scale.md`](plan/15_km_desk_and_assistant_scale.md); future Run-runtime proposal in [`plan/assistant-design.md`](plan/assistant-design.md) (not shipped); older Mike gap checklist in [`assistant_chatbot_deep_gap_analysis.md`](assistant_chatbot_deep_gap_analysis.md) (partially obsolete — SPA chat UI already ships).
 
 ---
 
@@ -14,10 +14,10 @@ How the **Assistant** (multi-turn tool agent) is built, how every layer connects
 | UI | `/ask` → `AskPage` | `/chat` (alias `/assistant`) → `ChatPage` |
 | API | `POST /api/answers` (+ `/stream`) | `POST /api/chat/sessions/{id}/messages` (SSE) |
 | Loop | One pipeline: scope → evidence → one LLM answer | Multi-round **tool-calling agent** (≤ 10 rounds) |
-| Persistence | Ask history (`app/km/ask_history.py`) | `chat_sessions` / `chat_messages` |
-| Bridge | — | Tool `ask_firm` **calls** `ask_the_firm(...)` |
+| Persistence | **`ask_answers`** (full grounded payload; reopen by `/ask/{id}`) + legacy `ask_history` index | `chat_sessions` / `chat_messages` |
+| Bridge | — | Tool `ask_firm` **calls** `ask_the_firm(...)` (sync; does **not** use Ask’s saved-answer cache) |
 
-They share: ACL-before-retrieve, hybrid retrieval, Bedrock/Groq/Gemini gateway, claim grounding libraries, and the SPA shell. They are **not** the same code path.
+They share: ACL-before-retrieve, hybrid retrieval, Azure/Bedrock/Groq/Gemini gateway, claim grounding libraries, and the SPA shell. They are **not** the same code path.
 
 **North star for both:** retrieve the correct institutional knowledge under permissions, then produce evidence-backed prose — not “can an LLM talk about these PDFs?”
 
@@ -28,16 +28,17 @@ They share: ACL-before-retrieve, hybrid retrieval, Bedrock/Groq/Gemini gateway, 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────┐
 │  Browser SPA                                                               │
-│  ChatPage · HistoryPane · MatterScopePicker · MessageParts · ReviewTable   │
-│  EditProposalsCard · CitationDocumentPanel · Markdown citation pills       │
+│  ChatPage · EmptyThread · HistoryPane · MatterScopePicker · MessageParts   │
+│  ReviewTable · EditProposalsCard · CommentsAddedCard · CitationDocumentPanel│
 │  frontend/src/api/chat.ts  →  streamMessage() SSE client                   │
 └───────────────────────────────┬────────────────────────────────────────────┘
                                 │ POST /api/chat/sessions/{id}/messages
-                                │ SSE: text_delta | text_final | tool_* | …
+                                │ SSE: text_delta | text_final | tool_* | comments_added | …
 ┌───────────────────────────────▼────────────────────────────────────────────┐
 │  chat_router.send_message                                                  │
 │  rate limit → own session → persist user msg → seed DocIndex → agent       │
 │  finally: persist assistant content/events/citations (incl. Stop abort)    │
+│  also: GET .../export.docx → conversation Word export                      │
 └───────────────────────────────┬────────────────────────────────────────────┘
                                 │
 ┌───────────────────────────────▼────────────────────────────────────────────┐
@@ -49,8 +50,9 @@ They share: ACL-before-retrieve, hybrid retrieval, Bedrock/Groq/Gemini gateway, 
     ▼          ▼          ▼          ▼          ▼          ▼
  retrieval   app.km    documents  app.review  app.editing  grounding
  engine      Ask/desk  text/ACL   batch map   paragraph    + citations
- + passages            object     review      ops → DOCX   verify
-                       store      table       redlines
+ + passages  (no Ask   comments   review      ops → DOCX   verify
+             cache)    + object   table       redlines
+                       store
 ```
 
 Infrastructure (shared with the rest of the product): Postgres+pgvector, Redis, Gotenberg, object store, LLM providers. The Assistant does **not** run as a separate process.
@@ -75,6 +77,7 @@ Infrastructure (shared with the rest of the product): Postgres+pgvector, Redis, 
 | `DELETE` | `/sessions/{id}` | Soft-archive |
 | `POST` | `/sessions/{id}/messages` | **Primary path — SSE agent turn** |
 | `POST` | `/sessions/{id}/ask` | Sync JSON (tests / simple clients) |
+| `GET` | `/sessions/{id}/export.docx` | Conversation → Word (`app/chat/export.py`); audit `chat.export` |
 | `PATCH` | `.../messages/{mid}/edits/{edit_id}` | Accept/reject one edit |
 | `PATCH` | `.../messages/{mid}/edits` | Bulk accept/reject by document |
 | `POST` | `.../messages/{mid}/edits/export` | Tracked-changes Word + optional new version |
@@ -182,12 +185,12 @@ Dispatch: `dispatch_tool_call` / `dispatch_tool_call_bounded` in `agent.py`.
 
 | Tool | Implementation | Behavior | Typical SSE |
 |------|----------------|----------|-------------|
-| `ask_firm` | `firm_tools` → `ask_the_firm` | Full Ask pipeline; registers returned docs as `doc-N` | `firm_answer` |
+| `ask_firm` | `firm_tools` → `ask_the_firm` | Full Ask pipeline (sync); registers returned docs as `doc-N`. Does **not** read/write `ask_answers`. | `firm_answer` |
 | `resolve_matter` | resolver | Ranked matter candidates + confidence | `matter_resolution` |
 | `get_matter_profile` | profiles / directory | Card, team, deadlines, docs | `matter_profile` |
 | `find_people` | directory | Matter team or expertise search | `people_results` |
 
-This is the deliberate product split: **Ask is the KM desk; Assistant calls it as a tool** when it needs institutional facts, then continues with document reads, edits, or prose.
+This is the deliberate product split: **Ask is the KM desk; Assistant calls it as a tool** when it needs institutional facts, then continues with document reads, edits, comments, or prose.
 
 ### 5.2 Document tools → text + retrieval + ACL
 
@@ -220,7 +223,15 @@ UI: `ReviewTableCard`. Results also feed grounding as record sources.
 
 Planner model: `edit_model` or fall back to the chat model.
 
-### 5.5 Generation & UX
+### 5.5 Comments → `app/chat/tools/comment_tools.py` + `app/documents/comments`
+
+| Tool / API | Behavior | SSE / outcome |
+|------------|----------|---------------|
+| `comment_on_document` | Quote-anchored review comments (≤25). Locates each quote in canonical version blocks; persists via `comments.add_comment`. Prefer this for “flag / annotate / review” when wording should not change; use `edit_document` to change text. | `comments_added` |
+
+UI: `CommentsAddedCard` in `MessageParts` / `AssistantMessage`. Comments show on the document for anyone who can read it (same path as editor comments). Documents without readable version blocks cannot be commented yet; quote locate fails closed (verbatim quotes required).
+
+### 5.6 Generation & UX
 
 | Tool | Behavior | SSE |
 |------|----------|-----|
@@ -289,6 +300,7 @@ Client: `frontend/src/api/chat.ts` → `streamMessage`. Lines are `data: {json}`
 | `edit_proposals` | Edit / propose | `EditProposalsCard` |
 | `doc_created` | generate_* | Download card |
 | `ask_inputs` | Clarification | Interactive form |
+| `comments_added` | `comment_on_document` | `CommentsAddedCard` |
 | `citation_data` | Verified quotes | Pills + panel |
 | `grounding` | Claim report | Debug / trust |
 | `chat_title` | First-turn title gen | History label |
@@ -297,7 +309,7 @@ Client: `frontend/src/api/chat.ts` → `streamMessage`. Lines are `data: {json}`
 | `working_set` | End of turn (persisted, not streamed) | Next-turn carry |
 | `[DONE]` | End marker | Close stream |
 
-`models.SSEEventType` in code is a subset; treat the table above as authoritative.
+`models.SSEEventType` in code is a **subset** of what the agent actually emits; treat the table above as authoritative for runtime events.
 
 **Stop button:** Aborting the fetch closes the generator; router `finally` still saves partial `full_text` + events with `stopped`.
 
@@ -313,7 +325,7 @@ Client: `frontend/src/api/chat.ts` → `streamMessage`. Lines are `data: {json}`
 | `app/chat/title_generator.py` | Auto-title after first user turn |
 | `app/chat/session_doc_cache.py` | In-process text cache (not durable across restarts) |
 
-Ask history is **separate** (`/api/answers/history`). Deep links like “Continue in the Assistant” open `/chat?matter=…&q=…` and create a **new** chat session, they do not morph an Ask row into a chat thread.
+Ask persistence is **separate**: `/api/answers/history` indexes **`ask_answers`** (saved answer ids for `/ask/{id}` reopen). Deep links like “Continue in the Assistant” open `/chat?matter=…&q=…` and create a **new** chat session; they do not morph an Ask row into a chat thread. The Assistant’s `ask_firm` tool runs a fresh `ask_the_firm` call and does not hit Ask’s saved-answer cache.
 
 ---
 
@@ -321,16 +333,19 @@ Ask history is **separate** (`/api/answers/history`). Deep links like “Continu
 
 | Piece | Path | Role |
 |-------|------|------|
-| Page | `frontend/src/pages/ChatPage.tsx` | Session chrome, composer, streaming state |
+| Page | `frontend/src/pages/ChatPage.tsx` | Session chrome, composer, streaming state, export menu |
+| Empty state | `components/chat/EmptyThread.tsx` | Composer + starter cards (generic + matter-scoped review); inserts into composer (unlike Ask’s one-shot navigate) |
 | API | `frontend/src/api/chat.ts` | Session CRUD + `streamMessage` |
-| Timeline | `components/chat/MessageParts.tsx` | Steps, ask_inputs, edit cards, files |
+| Timeline | `components/chat/MessageParts.tsx` | Steps, ask_inputs, edit cards, comments, files |
 | Review | `components/chat/ReviewTableCard.tsx` | Batch review table |
+| Comments | `CommentsAddedCard` (in MessageParts) | Quote-anchored comments from the agent |
 | History | `components/chat/HistoryPane.tsx` | Session list |
 | Matter pin | `MatterScopePicker` | Conversation matter |
 | Citations | `CitationDocumentPanel` + Markdown pills | Jump-to-quote |
+| Export | ChatPage menu | `GET .../export.docx` + client-side Markdown download |
 | Entry | `useStartConversation` / Home / Matter / KM panel | Navigate into `/chat` |
 
-Ask UI (`AskPage`, `AIAnswer`, `KmPanel`) is adjacent: same design language, different API.
+Ask UI (`AskPage`, `AskComposer`, `AIAnswer`, `KmPanel`) is adjacent: same design language, different API. Home’s Ask composer and Chat starters may share suggestion helpers; product jobs stay split (KM desk vs tool agent).
 
 ---
 
@@ -341,17 +356,20 @@ Assistant
   ├─ Identity / ACL ──── resolve_member → SQL permissions on every retrieve/read
   ├─ Retrieval ───────── seed hits; search_firm_records; same fusion policy as Ask
   ├─ KM desk ─────────── ask_firm / resolve / profile / people → app.km.*
+  │                      (fresh ask_the_firm; not Ask saved-answer cache)
   ├─ Passages ────────── matter-scoped seed when session.matter_id set
   ├─ Documents ───────── shared text/PDF/download paths the editor uses
+  ├─ Comments ────────── comment_on_document → app.documents.comments
   ├─ Batch review ────── app.review.batch (+ Redis cache)
   ├─ Editing ─────────── app.editing.* → accept/reject → tracked DOCX export
   ├─ Drafting ────────── generate_docx / generate_excel artifacts
+  ├─ Export ──────────── conversation_to_docx (session-level Word)
   ├─ Grounding ───────── app.grounding (claim gate); verify_citations (quote gate)
   ├─ Spotlight ───────── nonce fences on user + tool document text
   ├─ Redis ───────────── rate limits; review map cache
   ├─ Object store ────── generated files; DOCX originals for edit export
-  ├─ Postgres ────────── sessions, messages, firm records, chunks, ACL
-  └─ LLM gateway ─────── Bedrock preferred → Gemini → Groq for chat_complete
+  ├─ Postgres ────────── sessions, messages, firm records, chunks, ACL, comments
+  └─ LLM gateway ─────── Azure preferred → Bedrock → Gemini → Groq for chat_complete
                          separate verifier model for grounding
 ```
 
@@ -362,15 +380,15 @@ Assistant
 ## 11. LLM and model routing
 
 ```text
-Chat generation ──► Bedrock (preferred) → Gemini → Groq
-Grounding ────────► grounding_verifier_model (default kimi-k2.5 on Bedrock)
+Chat generation ──► Azure OpenAI (preferred, default DeepSeek-V4-Flash) → Bedrock → Gemini → Groq
+Grounding ────────► grounding_verifier_model (default kimi-k2.5 on Bedrock; must differ from writer)
 Batch review map ─► review_map_model (default kimi-k2.5)
 Edit planner ─────► edit_model or chat model
 Embeddings ───────► MiniLM 384-d (retrieval only; not inside the agent loop)
 Rerank ───────────► local CE (retrieval seed / search_firm_records)
 ```
 
-Provider selection lives in `_call_llm` / Bedrock-Gemini-Groq helpers inside `agent.py`, sharing credentials with Ask via `app/llm` helpers and settings.
+Provider selection lives in `_call_llm` / Azure-Bedrock-Gemini-Groq helpers inside `agent.py`, sharing credentials with Ask via `app/llm/chat_gateway.py` and settings (`AZURE_OPENAI_*`, `ANSWER_PROVIDER=azure`).
 
 ---
 
@@ -444,9 +462,12 @@ app/chat/tools/
   firm_tools.py                    # ask_firm + KM
   batch_tools.py                   # review_documents
   edit_tools.py                    # edit_document
+  comment_tools.py                 # comment_on_document → comments_added
   review_tools.py                  # propose_edits
   generation_tools.py              # docx / excel
-app/km/*                           # Ask pipeline used as tools
+app/chat/export.py                 # conversation_to_docx
+app/km/*                           # Ask pipeline used as tools (no ask_answers cache)
+app/documents/comments.py          # Persisted document comments
 app/retrieval/*                    # Seed + search_firm_records
 app/review/batch.py                # Multi-doc map
 app/editing/*                      # Paragraph edit engine
@@ -468,6 +489,8 @@ frontend/src/components/chat/*
 | Long-doc edit | `evals/long_doc_edit_eval.py` + experiment notes |
 | Agent rounds / deadlines | `tests/test_agent_rounds.py` |
 | Doc nav | `tests/test_doc_nav.py` |
+| Document comments | `tests/test_comment_tool.py` |
+| Conversation export | `tests/test_chat_export.py` |
 | Chat e2e | `frontend/e2e/` (chat, editor, privacy, …) |
 
 Retrieval quality remains a **separate** gate (`evals/retrieval_eval.py`). A bad Assist answer that cites the wrong matter is often a retrieval/ACL/scope bug, not “the LLM forgot.”
@@ -480,7 +503,14 @@ Retrieval quality remains a **separate** gate (`evals/retrieval_eval.py`). A bad
 2. **DocIndex aliases (`doc-N`) are the currency** between retrieval, tools, citations, and the UI.
 3. **ACL is in SQL before ranking and before every read** — never post-hoc redaction by the model.
 4. **Grounding (default) replaces raw streaming of the final answer** with a verified `text_final`.
-5. **Scale features (outline reads, batch review, paragraph edits, deadlines)** exist so the agent can work across hundreds of docs and 100–400 page agreements without stuffing full text into one prompt.
-6. **Everything durable for the lawyer lives on the message** (events + citations); Redis caches and process caches are accelerators only.
+5. **Scale features (outline reads, batch review, paragraph edits, quote comments, deadlines)** exist so the agent can work across hundreds of docs and 100–400 page agreements without stuffing full text into one prompt.
+6. **Everything durable for the lawyer lives on the message** (events + citations); Redis caches and process caches are accelerators only. Session export (`export.docx`) is a derived artifact, not a second source of truth.
+7. **Annotate vs rewrite:** `comment_on_document` for review flags; `edit_document` / `propose_edits` for wording changes.
 
 When extending the Assistant, add a tool schema + dispatcher branch + SSE event the SPA already understands (or a new card), keep ACL on the data path, and add an eval that fails if the behavior regresses.
+
+---
+
+## 18. Not yet shipped (see design proposal)
+
+[`plan/assistant-design.md`](plan/assistant-design.md) proposes a durable **Run** worker, resumable SSE (`Last-Event-Id`), and related runtime changes. **Production today** remains in-process: `send_message` → SSE → `run_chat_agent` as documented above. Treat that plan as future work, not current behavior.

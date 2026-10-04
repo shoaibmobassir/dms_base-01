@@ -105,9 +105,9 @@ def default_llm(model: str | None = None) -> LLM:
     import httpx
 
     from app.config import settings
-    from app.llm.bedrock_client import chat_complete
+    from app.llm.chat_gateway import chat_complete, writer_model
 
-    chosen = model or settings.edit_model or settings.bedrock_model
+    chosen = model or settings.edit_model or writer_model()
 
     def call(messages: list[dict[str, str]]) -> str:
         for attempt in (1, 2):  # one retry on a provider 5xx

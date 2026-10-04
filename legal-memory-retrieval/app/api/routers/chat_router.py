@@ -55,7 +55,7 @@ from app.chat.tools.review_tools import EDIT_STATUSES, apply_accepted_edits, str
 from pydantic import BaseModel
 from app.config import settings
 from app.db.connection import connect
-from app.llm.bedrock_client import bedrock_configured
+from app.llm.chat_gateway import chat_configured, preferred_provider, writer_model
 from app.observability.request_id import current_request_id
 from app.resilience.rate_limit import check_rate_limit
 from app.retrieval.engine import retrieve
@@ -81,12 +81,12 @@ def chat_health() -> dict:
 def available_models() -> list[dict[str, Any]]:
     """Models the chat agent can actually call.
 
-    The agent picks the provider by configuration (Bedrock → Gemini → Groq), so only
+    The agent picks the provider by configuration (Azure → Bedrock → Gemini → Groq), so only
     the active provider's model is offered — a model id from another provider would
     be sent to the wrong API.
     """
-    if bedrock_configured():
-        provider, model = "bedrock", settings.bedrock_model
+    if chat_configured():
+        provider, model = preferred_provider(), writer_model()
     elif settings.gemini_api_key:
         provider, model = "gemini", settings.gemini_model
     elif settings.groq_api_key:

@@ -62,7 +62,7 @@ from app.chat.verify_citations import verify_document_citation
 from app.config import settings
 from app.grounding import Source, ground_answer, verifier_llms
 from app.db.connection import connect
-from app.llm.bedrock_client import bedrock_configured, chat_complete
+from app.llm.chat_gateway import chat_complete, chat_configured, preferred_provider, writer_model
 from app.observability.metrics import (
     CHAT_CITATION_RESULTS,
     CHAT_TOOL_CALLS,
@@ -713,10 +713,10 @@ def _call_llm(
 ) -> dict[str, Any]:
     """
     Call the LLM with tool support.
-    Preference: Bedrock → Gemini → Groq → local stub.
+    Preference: Azure → Bedrock → Gemini → Groq → local stub.
     """
-    if bedrock_configured():
-        return _call_bedrock(messages, tools, model)
+    if chat_configured():
+        return _call_gateway(messages, tools, model)
     if settings.gemini_api_key:
         return _call_gemini(messages, tools, model)
     if settings.groq_api_key:
@@ -727,15 +727,14 @@ def _call_llm(
     }
 
 
-def _call_bedrock(
+def _call_gateway(
     messages: list[dict[str, Any]],
     tools: list[dict[str, Any]],
     model: str | None = None,
 ) -> dict[str, Any]:
-    """Call Amazon Bedrock Mantle with OpenAI-compatible tool calling."""
-    model_id = model or settings.bedrock_model or "zai.glm-5"
-    # Mantle expects OpenAI-style messages; drop unsupported fields carefully but
-    # keep the tool-calling linkage, or the round after a tool call is rejected (400).
+    """Call Azure OpenAI or Bedrock Mantle with OpenAI-compatible tool calling."""
+    model_id = model or writer_model()
+    # OpenAI-compatible backends need tool-calling linkage preserved across rounds.
     clean_messages: list[dict[str, Any]] = []
     for msg in messages:
         role = str(msg.get("role") or "user")
@@ -770,7 +769,11 @@ def _call_bedrock(
         # the endpoint rejects as a 400. Sampling again usually produces a valid one.
         if exc.response is None or exc.response.status_code != 400 or "Unterminated" not in exc.response.text:
             raise
-        logger.warning("[chat/agent] malformed tool call from %s; retrying once", model_id)
+        logger.warning(
+            "[chat/agent] malformed tool call from %s (%s); retrying once",
+            model_id,
+            preferred_provider(),
+        )
         result = call()
     return {
         "content": result.get("content") or "",
