@@ -150,3 +150,12 @@ MIT AND Zlib 1, OFL-1.1 8 (bundled document fonts: Arimo, Caladea, Carlito, Cous
 Source Sans 3, Tinos — permissive font licence), dual-licensed `dompurify` (MPL-2.0 OR Apache-2.0 → we use Apache-2.0)
 and `jszip` (MIT OR GPL-3.0-or-later → we use MIT). No copyleft-only licence. No server-side code is added; nothing is
 linked into the Python backend.
+
+## External audit / evaluation tools
+
+Tools used externally for auditing, testing or evaluation that are not installed, bundled, linked or shipped as
+project dependencies are recorded here for provenance only. They are not production or dev dependencies.
+
+| Tool | Licence | Usage | Shipped? | Approved |
+|------|---------|-------|----------|----------|
+| axe-core | MPL-2.0 | External accessibility audit (`evals/a11y_audit.cjs` loads a copy fetched outside the repo via `AXE_PATH`) | No | ✅ owner, 2026-10-08 (scope: external audit only, never imported, bundled or installed in the repo) |

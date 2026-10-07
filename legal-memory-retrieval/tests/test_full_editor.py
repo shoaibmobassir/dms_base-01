@@ -58,6 +58,32 @@ def test_new_changes_are_credited_to_the_signed_in_member_not_the_browser(client
     assert commits[0]["message"] == "full editor" and commits[0]["kind"] == "editor"
 
 
+def test_a_word_editor_save_is_timed_and_replaces_the_documents_chunks_in_one_batch(client, doc, people):
+    from app.observability.metrics import WORKBENCH_SAVE_SECONDS
+
+    def saves() -> float:
+        return WORKBENCH_SAVE_SECONDS.labels(path="word_editor")._sum.get()
+
+    before = saves()
+    base = _model(client, doc, people["editor"])["base_version_id"]
+    edited = _with_tracked_insert(_file(doc), "Anyone", "a batch-inserted clause")
+    r = client.post(f"/api/editor/documents/{doc}/save-docx", headers=as_member(people["editor"]),
+                    files={"file": ("x.docx", edited, DOCX)}, data={"base_version_id": base, "note": "timed"})
+    assert r.status_code == 201, r.text
+    assert saves() > before
+    with connect() as conn:
+        rows = conn.execute("SELECT version_id, chunk_index, text FROM chunks WHERE document_id = %s ORDER BY chunk_index",
+                            (doc,)).fetchall()
+        blocks = conn.execute("SELECT count(*) AS n, count(DISTINCT sequence) AS d FROM document_blocks WHERE version_id = %s",
+                              (r.json()["version_id"],)).fetchone()
+    assert rows and {x["version_id"] for x in rows} == {r.json()["version_id"]}  # only the current version is indexed
+    assert [x["chunk_index"] for x in rows] == sorted({x["chunk_index"] for x in rows})  # no duplicates
+    with connect() as conn:
+        body = conn.execute("SELECT body FROM document_versions WHERE version_id = %s", (r.json()["version_id"],)).fetchone()["body"]
+    assert "a batch-inserted clause" in body
+    assert blocks["n"] == blocks["d"] > 0  # one block per sequence, ids written back
+
+
 def test_existing_changes_keep_their_author_and_new_ones_are_restamped():
     from docx import Document
 

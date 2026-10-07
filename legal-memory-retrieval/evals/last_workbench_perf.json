@@ -1,0 +1,25 @@
+{
+  "tabs_open": 20,
+  "heap_mb": {
+    "baseline": 6.9,
+    "after_open": 13.9,
+    "after_cycling": 12.6
+  },
+  "open_each_ms_p95": 291,
+  "switch_ms": {
+    "p50": 34,
+    "p95": 49
+  },
+  "frame_ms": {
+    "p50": 16.69999998807907,
+    "p95": 19.2,
+    "max": 20.8,
+    "scrolled_px_height": 319612
+  },
+  "gate": {
+    "heap_mb": 700,
+    "switch_p95_ms": 600,
+    "frame_p95_ms": 50
+  },
+  "pass": true
+}

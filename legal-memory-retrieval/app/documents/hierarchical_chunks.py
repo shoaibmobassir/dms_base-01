@@ -189,8 +189,8 @@ def save_version_chunks(chunks: list[HierarchicalChunk]) -> int:
                 return 0
             # Replace whatever the document had indexed (older version or legacy chunks).
             cur.execute("DELETE FROM chunks WHERE document_id = %(did)s", {"did": doc_id})
-            for c in chunks:
-                cur.execute(
+            # one pipelined batch: a 400-page file is ~2,700 rows, and a round trip per row dominated the save
+            cur.executemany(
                     """
                     INSERT INTO chunks (
                         chunk_id, document_id, matter_id, chunk_index, text, tsv,
@@ -210,6 +210,7 @@ def save_version_chunks(chunks: list[HierarchicalChunk]) -> int:
                         block_ids = EXCLUDED.block_ids,
                         is_parent = EXCLUDED.is_parent
                     """,
+                    [
                     {
                         "cid": c.chunk_id,
                         "did": c.document_id,
@@ -224,7 +225,9 @@ def save_version_chunks(chunks: list[HierarchicalChunk]) -> int:
                         "parent": c.parent_chunk_id,
                         "bids": c.block_ids,
                         "is_parent": c.is_parent,
-                    },
+                    }
+                    for c in chunks
+                    ],
                 )
             conn.commit()
     return len(chunks)

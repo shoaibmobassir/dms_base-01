@@ -276,8 +276,7 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
 
     with connect() as conn:
         with conn.cursor() as cur:
-            for b in blocks:
-                cur.execute(
+            cur.executemany(
                     """
                     INSERT INTO document_blocks (
                         block_id, version_id, document_id, page_number, sequence,
@@ -303,6 +302,7 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
                         metadata = EXCLUDED.metadata
                     RETURNING block_id
                     """,
+                    [
                     {
                         "bid": b.block_id,
                         "vid": b.version_id,
@@ -317,11 +317,17 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
                         "soff": b.start_offset,
                         "eoff": b.end_offset,
                         "meta": json.dumps(b.metadata),
-                    },
+                    }
+                    for b in blocks
+                    ],
+                    returning=True,
                 )
+            # one result set per block, in order: the stored id is kept (an existing row keeps its id)
+            for b in blocks:
                 row = cur.fetchone()
                 if row:
                     b.block_id = row["block_id"] if isinstance(row, dict) else row[0]
+                cur.nextset()
             conn.commit()
     return len(blocks)
 

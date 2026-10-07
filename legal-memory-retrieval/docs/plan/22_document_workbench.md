@@ -278,10 +278,9 @@ W2b — engine (after X1)
       **Done 2026-10-07:** Folio adopted: `/documents/:id/write` and the workbench "Edit (Word)" tab (`FullWordEditor.tsx`, tracked changes on by default, lock + heartbeat, take-over, save with note); `POST /api/editor/documents/{id}/save-docx` re-stamps new revisions with the session member (`docx_restamp.py`) and stores the clean version. The paragraph editor stays at `/edit`.
 - [x] W2b.2 Draft autosave stores the engine's native draft; recovery after crash tested.
       **Done 2026-10-08:** the browser sends the edited .docx every 30 s while there are unsaved edits (`PUT …/draft-docx`, one per person per document, object store, migration `20261008a`); reopening offers "restore / discard" only when the draft sits on the current version; saving a version clears it. Tests `test_full_editor.py` (+2), e2e "keeps unsaved changes and offers them back after a reload".
-- [~] W2b.3 `editor_roundtrip_eval` extended: tables edited, footnote edited, headers untouched, existing
+- [x] W2b.3 `editor_roundtrip_eval` extended: tables edited, footnote edited, headers untouched, existing
       tracked changes from others preserved (plan 18 R4); gate 100 % on all checks, 400-page save p95 < 3 s.
-      **Partly done 2026-10-07:** `tests/test_full_editor.py` (spoofed author re-stamped, existing changes keep their author, stale/unauthorised/non-Word refused) and e2e "the Word editor tracks a change…"; the bake-off harness covers tables, footnotes and headers. Extending `editor_roundtrip_eval.py` itself to the Word editor is open.
-
+      **Done 2026-10-08:** `evals/word_editor_roundtrip_eval.py` drives the real Word editor (Folio) in a browser on generated 10/100/400-page contracts, clean and carrying another author's tracked changes: types in a paragraph and a table cell, saves, then checks the stored file. 54/54 checks (edits, authorship, others' changes kept, untouched paragraphs, tables, headers, LibreOffice render, version). 400-page save request 2.4 s (gate 3 s); browser end to end 3.5 s. Found and fixed on the way: a save re-created every chunk with one round trip per row and a vector-reuse query planned on stale statistics (5.5 s of a 7 s save) — now batched, 9.1 s → 2.4 s. New metric `precentis_workbench_save_seconds`. Known: the older paragraph-editor eval `editor_roundtrip_eval.py` fails its `reject_ok`/`format_reject_ok` checks since plan 21 stores clean versions (fails identically without these changes); it needs rewriting for that model.
 ## Phase W3 — Assistant inside the workbench
 
 - [x] W3.1 Chat sessions gain a scope: `chat_sessions.scope jsonb` {matter_id, document_ids, active_document_id,
@@ -291,11 +290,11 @@ W2b — engine (after X1)
 - [x] W3.2 Assistant panel in the side bar / right group; "Ask about selection" and "Redraft selection" in the
       editor context menu and palette; open tabs offered as attachable context chips.
       **Done 2026-10-07:** Assistant side view in the workbench (`AssistantView.tsx`): open tabs attached by default (each can be left out), pages dragged in as page references, starters, `/` for playbooks, sources open as tabs.
-- [~] W3.3 Inline suggestions (W-R13): edit proposals (`edit_proposals` part) render as suggested changes in the
+- [x] W3.3 Inline suggestions (W-R13): edit proposals (`edit_proposals` part) render as suggested changes in the
       open editor tab with per-hunk accept/reject and "Accept all"; accepting goes through the normal save path
       with `kind=assistant_edit` and coalescing (W2a.2). Proposals against an old version are re-located by
       quote or marked stale.
-      **Partly done 2026-10-07:** edit proposals appear as the existing accept/reject cards in the workbench Assistant and accepting writes one version per turn (W2a.2); open tabs refresh. Rendering them inside the Word editor as suggestions (Folio's suggested mode) is open.
+      **Done 2026-10-08:** an edit card has "Suggest in editor" while the Word editor is open on that document: the change enters the editor as a tracked suggestion (`wordEditorBridge.ts`, `FullWordEditor.tsx`); e2e "an Assistant edit card can suggest its change inside the open Word editor". Accepting still goes through the normal save path.
 - [~] W3.4 "Compare with firm precedent" action: `ask_firm` restricted to precedent/template folders + the
       selection; answer cites firm documents that open in the split.
       **Partly done 2026-10-07:** starter "compare the open document with the firm's precedents" (the Assistant uses ask_firm); a selection-scoped action from inside the editor is open.
@@ -380,19 +379,19 @@ Replace the in-memory store; keep the public routes where they fit, version the 
       `derived_from (document_id, version_id)`); optional fill of named fields via the Assistant; the template is
       never opened for editing from drafting flows.
       **Done 2026-10-07:** "New from template" in every workspace's explorer (copy with provenance; templates cannot be moved out). Filling named fields with the Assistant is open.
-- [~] W6.4 Explorer roots: current workspace · My library · Firm templates; the Assistant can attach library files.
-      **Partly done 2026-10-07:** explorer roots are per workspace (sidebar: Projects, My library, Templates); a combined multi-root tree is open.
+- [x] W6.4 Explorer roots: current workspace · My library · Firm templates; the Assistant can attach library files.
+      **Done 2026-10-08:** the explorer shows the current workspace, My library and Firm templates together; dragging a document across roots adds a link; template fill-in hands the new document to the Assistant. e2e: "the explorer shows My library and the firm templates beside the workspace…", "a document made from a firm template is handed to the Assistant to fill in".
 - [x] W6.5 Tests: library privacy across every read surface, template copy provenance, retrieval excludes
       personal docs.
       **Done 2026-10-07:** `test_firm_templates_…` in `tests/test_workspaces.py`; library privacy across read surfaces in W0 tests.
 
 ## Phase W7 — Hardening and rollout
 
-- [~] W7.1 Performance: 20 open tabs, 400-page doc in one group + table in the other; memory and frame budget;
+- [x] W7.1 Performance: 20 open tabs, 400-page doc in one group + table in the other; memory and frame budget;
       lazy-load engine bundles per tab type.
-      **Partly done 2026-10-07:** Word editor (2.1 MB) and every page lazy-loaded; explorer at 10k documents measured (X4). A 20-tab memory/frame budget was not measured.
-- [~] W7.2 Accessibility: full keyboard path (tabs, tree, grid), focus order, screen-reader labels on cells.
-      **Partly done 2026-10-07:** tree/tab/grid roles and labels, everything reachable by keyboard shortcuts and buttons; no screen-reader audit yet.
+      **Done 2026-10-08:** `evals/workbench_perf_audit.cjs` — 20 open tabs including a 400-page file: JS heap 7 → 14 MB (13 MB after cycling three times), tab switch p50 34 ms / p95 49 ms, 60 fps while scrolling 320,000 px (frame p95 19 ms). Gates 700 MB / 600 ms / 50 ms. Only the active tab renders, which is why memory stays flat.
+- [x] W7.2 Accessibility: full keyboard path (tabs, tree, grid), focus order, screen-reader labels on cells.
+      **Done 2026-10-08:** `evals/a11y_audit.cjs` runs axe over 14 workbench views in a real browser: 0 serious/critical (was 5 rule failures: tab semantics, explorer roles, scroll regions, grid, picker name, send-button label). Tabs are buttons in a labelled group, not ARIA tabs (a close button cannot sit inside a tablist). Not covered: a screen-reader listening pass. axe-core is an external audit tool (see DEPENDENCY_AUDIT).
 - [x] W7.3 Audit coverage for every new write; metrics (tab open time, save p95, cell fill rate/failures).
       **Done 2026-10-07:** every new write audited; metrics `precentis_tabular_cells_total`, `precentis_tabular_row_seconds`, `precentis_workbench_saves_total`.
 - [x] W7.4 Docs: `docs/ASSISTANT_ARCHITECTURE.md`, a new `docs/WORKBENCH_ARCHITECTURE.md`, CHANGELOG, IP record

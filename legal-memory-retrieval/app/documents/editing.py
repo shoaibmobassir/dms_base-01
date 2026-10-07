@@ -581,17 +581,24 @@ def _index_vectors(conn, document_id: str, version_id: str) -> None:
     The rest are embedded on a background worker; full-text search covers them meanwhile
     and the embedding backfill retries anything that fails.
     """
-    # The new chunks are hashed once and joined by hash (the planner's statistics predate
-    # these rows, so without this it compares every pair); document_id keeps it on the index.
-    conn.execute("ANALYZE pg_temp.edit_prev_vectors")
+    # The new chunks are hashed once into a temp table and joined to the previous vectors by hash. Both sides are
+    # temp tables analysed here: a save deletes and re-inserts every chunk of the document, so the planner's
+    # statistics for ``chunks`` itself are stale right after one (a 400-page save took 5 s on that plan).
+    conn.execute("DROP TABLE IF EXISTS pg_temp.edit_new_chunks")
     conn.execute(
-        """UPDATE chunks c SET embedding = p.embedding
-           FROM (SELECT chunk_id, md5(text) AS h FROM chunks
-                 WHERE document_id = %s AND version_id = %s AND embedding IS NULL) n
-           JOIN pg_temp.edit_prev_vectors p ON p.h = n.h
-           WHERE c.chunk_id = n.chunk_id""",
+        """CREATE TEMP TABLE edit_new_chunks AS
+           SELECT chunk_id, md5(text) AS h FROM chunks
+           WHERE document_id = %s AND version_id = %s AND embedding IS NULL""",
         (document_id, version_id),
     )
+    conn.execute("ANALYZE pg_temp.edit_prev_vectors")
+    conn.execute("ANALYZE pg_temp.edit_new_chunks")
+    conn.execute(
+        """UPDATE chunks c SET embedding = p.embedding
+           FROM pg_temp.edit_new_chunks n JOIN pg_temp.edit_prev_vectors p ON p.h = n.h
+           WHERE c.chunk_id = n.chunk_id""",
+    )
+    conn.execute("DROP TABLE IF EXISTS pg_temp.edit_new_chunks")
     conn.execute("DROP TABLE IF EXISTS pg_temp.edit_prev_vectors")
     conn.commit()
     _embedder_pool.submit(_embed_rest, document_id, version_id)
@@ -864,6 +871,26 @@ def save_edits(conn, document_id: str, member_id: str | None, base_version_id: s
             "amended": bool(head)}
 
 
+def _timed_save(path: str):
+    """Record how long a save takes on the server (``precentis_workbench_save_seconds``)."""
+    import functools
+    import time
+
+    def deco(fn):
+        @functools.wraps(fn)
+        def run(*args, **kwargs):
+            t0 = time.perf_counter()
+            try:
+                return fn(*args, **kwargs)
+            finally:
+                from app.observability.metrics import WORKBENCH_SAVE_SECONDS
+
+                WORKBENCH_SAVE_SECONDS.labels(path=path).observe(time.perf_counter() - t0)
+        return run
+    return deco
+
+
+@_timed_save("word_editor")
 def save_docx(conn, document_id: str, member_id: str | None, base_version_id: str, data: bytes, note: str = "",
               token: str | None = None) -> dict:
     """The full Word editor's save (plan 22, W2b): the edited .docx becomes the next version.

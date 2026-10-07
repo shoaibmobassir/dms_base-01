@@ -2,6 +2,16 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-08 — Workbench hardening
+
+- Word editor: Assistant edit cards can suggest their change inside the open editor; explorer shows workspace, My
+  library and firm templates together; a document made from a template is handed to the Assistant to fill in.
+- Saving a Word-editor version of a 400-page file takes 2.4 s on the server (was 7–9 s): chunk and block rows are
+  written in one batch and the vector-reuse query no longer depends on stale table statistics. New metric
+  `precentis_workbench_save_seconds`.
+- Accessibility: axe audit of 14 views, 0 serious/critical. Performance: 20 tabs, 14 MB heap, 60 fps.
+- Evals: `word_editor_roundtrip_eval.py`, `workbench_perf_audit.cjs`, `a11y_audit.cjs`.
+
 ## 2026-10-07 — Document Workbench (plan 22)
 
 - Workspaces: projects anyone can start (members by role), personal library, firm template library, beside matters.

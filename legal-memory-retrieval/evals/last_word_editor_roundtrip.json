@@ -1,0 +1,174 @@
+{
+  "rows": [
+    {
+      "pages": 10,
+      "tracked_base": false,
+      "document_id": "DOC-3C1DFFDECB",
+      "driver": {
+        "open_ms": 694,
+        "para_clicked": true,
+        "cell_clicked": true,
+        "save_ms": 1062,
+        "save_request_ms": 205,
+        "save_bytes": 0
+      },
+      "checks": {
+        "edits_ok": true,
+        "cell_ok": true,
+        "authorship_ok": true,
+        "others_kept": true,
+        "untouched_ok": true,
+        "tables_ok": true,
+        "headers_ok": true,
+        "render_ok": true,
+        "version_ok": true
+      },
+      "new_revision_authors": [],
+      "table_cells_changed": 1
+    },
+    {
+      "pages": 10,
+      "tracked_base": true,
+      "document_id": "DOC-3063075DB9",
+      "driver": {
+        "open_ms": 678,
+        "para_clicked": true,
+        "cell_clicked": true,
+        "save_ms": 1053,
+        "save_request_ms": 198,
+        "save_bytes": 0
+      },
+      "checks": {
+        "edits_ok": true,
+        "cell_ok": true,
+        "authorship_ok": true,
+        "others_kept": true,
+        "untouched_ok": true,
+        "tables_ok": true,
+        "headers_ok": true,
+        "render_ok": true,
+        "version_ok": true
+      },
+      "new_revision_authors": [
+        "Helena Voss"
+      ],
+      "table_cells_changed": 1
+    },
+    {
+      "pages": 100,
+      "tracked_base": false,
+      "document_id": "DOC-1A3F6FF860",
+      "driver": {
+        "open_ms": 860,
+        "para_clicked": true,
+        "cell_clicked": true,
+        "save_ms": 2156,
+        "save_request_ms": 1186,
+        "save_bytes": 0
+      },
+      "checks": {
+        "edits_ok": true,
+        "cell_ok": true,
+        "authorship_ok": true,
+        "others_kept": true,
+        "untouched_ok": true,
+        "tables_ok": true,
+        "headers_ok": true,
+        "render_ok": true,
+        "version_ok": true
+      },
+      "new_revision_authors": [],
+      "table_cells_changed": 1
+    },
+    {
+      "pages": 100,
+      "tracked_base": true,
+      "document_id": "DOC-84D78A7BEE",
+      "driver": {
+        "open_ms": 879,
+        "para_clicked": true,
+        "cell_clicked": true,
+        "save_ms": 2655,
+        "save_request_ms": 1580,
+        "save_bytes": 0
+      },
+      "checks": {
+        "edits_ok": true,
+        "cell_ok": true,
+        "authorship_ok": true,
+        "others_kept": true,
+        "untouched_ok": true,
+        "tables_ok": true,
+        "headers_ok": true,
+        "render_ok": true,
+        "version_ok": true
+      },
+      "new_revision_authors": [
+        "Helena Voss"
+      ],
+      "table_cells_changed": 1
+    },
+    {
+      "pages": 400,
+      "tracked_base": false,
+      "document_id": "DOC-EA22366370",
+      "driver": {
+        "open_ms": 1554,
+        "para_clicked": true,
+        "cell_clicked": true,
+        "save_ms": 2994,
+        "save_request_ms": 1867,
+        "save_bytes": 0
+      },
+      "checks": {
+        "edits_ok": true,
+        "cell_ok": true,
+        "authorship_ok": true,
+        "others_kept": true,
+        "untouched_ok": true,
+        "tables_ok": true,
+        "headers_ok": true,
+        "render_ok": true,
+        "version_ok": true
+      },
+      "new_revision_authors": [],
+      "table_cells_changed": 1
+    },
+    {
+      "pages": 400,
+      "tracked_base": true,
+      "document_id": "DOC-E3DB9B9A80",
+      "driver": {
+        "open_ms": 1793,
+        "para_clicked": true,
+        "cell_clicked": true,
+        "save_ms": 3523,
+        "save_request_ms": 2378,
+        "save_bytes": 0
+      },
+      "checks": {
+        "edits_ok": true,
+        "cell_ok": true,
+        "authorship_ok": true,
+        "others_kept": true,
+        "untouched_ok": true,
+        "tables_ok": true,
+        "headers_ok": true,
+        "render_ok": true,
+        "version_ok": true
+      },
+      "new_revision_authors": [
+        "Helena Voss"
+      ],
+      "table_cells_changed": 1
+    }
+  ],
+  "checks_passed": 54,
+  "checks_total": 54,
+  "errors": [],
+  "save_request_s_p95": 2.378,
+  "save_request_s_largest": 2.378,
+  "save_s_end_to_end": 3.523,
+  "median_open_s": 0.8695,
+  "pass": true
+}

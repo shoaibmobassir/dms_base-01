@@ -75,5 +75,11 @@ their place kept per tab and laid out by pane width.
 ## Operations
 
 `WORKBENCH_ENABLED` (default true), `TABULAR_WORKERS` (default 4). Metrics: `precentis_tabular_cells_total{status}`,
-`precentis_tabular_row_seconds`, `precentis_workbench_saves_total{path}`. Evals: `evals/editor_engine/`,
-`evals/tabular_review_eval.py`, `evals/workbench_load_eval.py`.
+`precentis_tabular_row_seconds`, `precentis_workbench_saves_total{path}`, `precentis_workbench_save_seconds{path}` (Word editor).
+Evals: `evals/editor_engine/`, `evals/tabular_review_eval.py`, `evals/workbench_load_eval.py`,
+`evals/word_editor_roundtrip_eval.py` (+ `word_editor_driver.cjs`), `evals/workbench_perf_audit.cjs` (20 tabs),
+`evals/a11y_audit.cjs` (axe, external tool; see `docs/legal/DEPENDENCY_AUDIT.md`).
+
+Save cost: a version save replaces the document's chunk and block rows in one pipelined batch and reuses vectors of
+unchanged chunks through two analysed temp tables, so its time no longer depends on the planner's statistics for
+`chunks` (which a save leaves stale).
