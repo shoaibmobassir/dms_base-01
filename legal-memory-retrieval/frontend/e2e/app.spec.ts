@@ -44,11 +44,12 @@ test("shell shows the firm from the database and only wired sections", async ({ 
   await expect(page.getByTestId("firm-identity")).toContainText(firm.name);
 
   const nav = page.getByTestId("sidebar");
-  for (const label of ["Home", "Assistant", "Ask the Firm", "Matters", "Documents", "Calendar", "Arguments", "Clients", "People", "Settings"]) {
+  for (const label of ["Home", "Assistant", "Ask the Firm", "Matters", "Projects", "Documents", "My library", "Calendar", "Arguments", "Clients", "People", "Settings"]) {
     await expect(nav.getByRole("link", { name: label, exact: true })).toBeVisible();
   }
   await expect(nav).toContainText("Precentis");
-  for (const removed of ["Projects", "Activity", "Strategy", "Precedents", "Due Diligence", "Knowledge Gaps", "Audit", "Teams", "Deadlines"]) {
+  // Projects came back as workspaces anyone can start (plan 22); the old matter-bound projects page stays gone.
+  for (const removed of ["Activity", "Strategy", "Precedents", "Due Diligence", "Knowledge Gaps", "Audit", "Teams", "Deadlines"]) {
     await expect(nav.getByRole("link", { name: removed, exact: true })).toHaveCount(0);
   }
 });

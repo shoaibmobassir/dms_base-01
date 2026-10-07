@@ -39,3 +39,24 @@ def purge_upload_batches(batch_ids: list[str]) -> int:
         removed = purge_documents(conn, docs)
         conn.execute("DELETE FROM upload_batches WHERE batch_id = ANY(%s)", (ids,))
     return removed
+
+
+def purge_projects(project_ids: list[str]) -> int:
+    """Delete projects with the documents whose home they are, their links, folders and members (tests and
+    demo clean-up only; projects in normal use are archived). Returns documents removed."""
+    ids = [p for p in project_ids if p]
+    if not ids:
+        return 0
+    with connect() as conn, conn.transaction():
+        docs = [r["document_id"] for r in conn.execute(
+            "SELECT document_id FROM documents WHERE home_kind = 'project' AND home_id = ANY(%s)", (ids,)).fetchall()]
+        removed = purge_documents(conn, docs)
+        conn.execute("DELETE FROM document_links WHERE container_kind = 'project' AND container_id = ANY(%s)", (ids,))
+        conn.execute("DELETE FROM workspace_folders WHERE container_kind = 'project' AND container_id = ANY(%s)", (ids,))
+        batches = [r["batch_id"] for r in conn.execute(
+            "SELECT batch_id FROM upload_batches WHERE container_kind = 'project' AND container_id = ANY(%s)", (ids,))]
+        conn.execute("UPDATE upload_batch_files SET document_id = NULL WHERE batch_id = ANY(%s)", (batches,))
+        conn.execute("DELETE FROM upload_batches WHERE batch_id = ANY(%s)", (batches,))
+        conn.execute("DELETE FROM project_members WHERE project_id = ANY(%s)", (ids,))
+        conn.execute("DELETE FROM projects WHERE project_id = ANY(%s)", (ids,))
+    return removed

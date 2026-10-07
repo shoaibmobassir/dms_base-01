@@ -81,7 +81,8 @@ def test_workflow_tools_dispatch():
     if listed["workflows"]:
         wf_id = listed["workflows"][0]["id"]
         read, _ = _call("read_workflow", {"workflow_id": wf_id}, {})
-        assert read["id"] == wf_id and "steps" in read
+        # Workflows are playbooks now (plan 22, W5): instructions fenced as user-selected, or review columns.
+        assert read["id"] == wf_id and ("instructions" in read or "columns" in read)
 
 
 def test_step_labels_hide_tool_names():

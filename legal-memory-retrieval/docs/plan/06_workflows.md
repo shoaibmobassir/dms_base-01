@@ -1,5 +1,7 @@
 # Feature: Legal Workflows — Reusable Structured AI Tasks
 
+> **Superseded by plan 22** (`22_document_workbench.md`, 2026-10-07): the requirements below still stand; the design and the PM gate are replaced there.
+
 **Sprint:** 10  
 **Priority:** P1  
 **Mike observation (product level):** Legal platforms let lawyers run named, pre-built AI task sequences (like "Draft Position Paper" or "Matter Summary") so the same quality of AI-guided work is available to everyone on the team without each person crafting their own prompts.  

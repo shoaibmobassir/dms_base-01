@@ -1,0 +1,35 @@
+{
+  "seed": 23,
+  "documents": 20,
+  "cells": 120,
+  "accuracy": 0.983,
+  "per_column": {
+    "Parties": 0.95,
+    "Effective date": 0.95,
+    "Governing law": 1.0,
+    "Termination notice": 1.0,
+    "Liability cap": 1.0,
+    "Change of control": 1.0
+  },
+  "cited": 108,
+  "verified_quotes": 108,
+  "fill_seconds": 32.7,
+  "misses": [
+    {
+      "column": "Parties",
+      "gold": [
+        "Saffron Textiles Limited",
+        "Quorum Health Services"
+      ],
+      "answer": null,
+      "status": "not_found"
+    },
+    {
+      "column": "Effective date",
+      "gold": "2025-06-21",
+      "answer": null,
+      "status": "not_found"
+    }
+  ],
+  "project": "PRJ-00141"
+}

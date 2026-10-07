@@ -1,5 +1,7 @@
 # Feature: Tabular Review — Bulk Extraction into Table
 
+> **Superseded by plan 22** (`22_document_workbench.md`, 2026-10-07): the requirements below still stand; the design and the PM gate are replaced there.
+
 **Sprint:** 11  
 **Priority:** P2  
 **Mike observation (product level):** Legal platforms let users apply a structured extraction task to a set of documents and see the results as a comparison table — useful for due diligence when reading many contracts of the same type.  

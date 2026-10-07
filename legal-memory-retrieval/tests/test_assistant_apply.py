@@ -210,3 +210,33 @@ def test_a_page_dragged_in_pages_mode_is_the_rendered_page(doc, people):
         assert rendered_page_text(conn, doc, None, 99) is None  # past the last page
     assert "Services Agreement" in text and "Article 2" in text
     assert refs[0]["text"] == text[:6000]
+
+
+def test_edits_accepted_one_by_one_from_one_turn_make_one_version(client, doc, people):
+    """Plan 22 W-R9: one Assistant turn makes one version, however its cards are accepted."""
+    edits = [_edit("e1", "forty-five (45) days", "sixty (60) days"), _edit("e2", "thirty (30) days", "ninety (90) days")]
+    url, h = _message(client, doc, people["editor"], edits)
+    first = client.patch(f"{url}/e1", json={"status": "accepted"}, headers=h).json()
+    second = client.patch(f"{url}/e2", json={"status": "accepted"}, headers=h).json()
+    assert first["applied_version_number"] == second["applied_version_number"] == 2
+    assert first["applied_version_id"] == second["applied_version_id"]
+    text = _text(_file(doc))
+    assert "sixty (60) days" in text and "ninety (90) days" in text
+    items = client.get(f"/api/editor/documents/{doc}/commits", headers=h).json()["items"]
+    assert len(items) == 2  # the upload and this one turn
+    with connect() as conn:
+        v = conn.execute("SELECT origin, source_turn_id FROM document_versions WHERE version_id = %s",
+                         (second["applied_version_id"],)).fetchone()
+        chunks = conn.execute("SELECT string_agg(text, ' ') AS t FROM chunks WHERE document_id = %s", (doc,)).fetchone()
+    assert v["origin"] == "assistant" and v["source_turn_id"]
+    assert "ninety (90) days" in chunks["t"]  # the index follows the amended text
+
+
+def test_a_new_turn_or_someone_elses_save_makes_a_new_version(client, doc, people):
+    url, h = _message(client, doc, people["editor"], [_edit("e1", "forty-five (45) days", "sixty (60) days"),
+                                                      _edit("e2", "thirty (30) days", "ninety (90) days")])
+    assert client.patch(f"{url}/e1", json={"status": "accepted"}, headers=h).json()["applied_version_number"] == 2
+    other_url, _ = _message(client, doc, people["editor"], [_edit("e9", "sixty (60) days", "seventy (70) days")])
+    assert client.patch(f"{other_url}/e9", json={"status": "accepted"}, headers=h).json()["applied_version_number"] == 3
+    # back to the first turn: its version is no longer the newest, so this is a new version too
+    assert client.patch(f"{url}/e2", json={"status": "accepted"}, headers=h).json()["applied_version_number"] == 4

@@ -25,7 +25,6 @@ from app.caselaw.citation_parser import get_citation_parser
 from app.caselaw.courtlistener_client import get_courtlistener_client
 from app.drafting.clause_diff_service import get_clause_diff_service
 from app.drafting.docx_redline_generator import DocxRedlineGenerator
-from app.review.spreadsheet_exporter import SpreadsheetExporter
 from app.workflows.catalog_loader import get_catalog_loader
 from app.workflows.engine import get_workflow_engine
 
@@ -59,59 +58,7 @@ def test_key_vault_tamper_detection():
 # -----------------------------------------------------------------------------
 # 2. Tabular Reviews & Excel Export
 # -----------------------------------------------------------------------------
-def test_spreadsheet_exporter():
-    columns = [
-        {"id": "c1", "label": "Governing Law"},
-        {"id": "c2", "label": "Liability Cap"},
-    ]
-    rows = [{"document_id": "DOC-001", "title": "Master NDA"}]
-    cells = {
-        "DOC-001": {
-            "c1": {"value": "English Law", "confidence": 0.95, "citations": ["CHK-01"], "reasoning": "Clause 14.1"},
-            "c2": {"value": "£1,000,000", "confidence": 0.90, "citations": ["CHK-02"], "reasoning": "Clause 9.2"},
-        }
-    }
-    xlsx_bytes = SpreadsheetExporter.export_xlsx("Test DD Review", columns, rows, cells)
-    assert len(xlsx_bytes) > 0
-
-    # Verify openpyxl can load and read sheets
-    wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
-    assert "Review Matrix" in wb.sheetnames
-    assert "Evidence & Citations" in wb.sheetnames
-    ws = wb["Review Matrix"]
-    assert ws["A1"].value.startswith("FirmOS Legal Intelligence")
-    assert ws["C4"].value == "English Law"
-
-
-def test_tabular_review_api_workflow(client):
-    create_payload = {
-        "title": "Vendor Contract Audit",
-        "document_ids": ["DOC-00001", "DOC-00002"],
-        "columns": [
-            {"id": "col_law", "label": "Governing Law", "prompt": "Identify governing law"},
-            {"id": "col_cap", "label": "Liability Cap", "prompt": "Extract liability cap", "data_type": "currency"},
-        ],
-    }
-    resp = client.post("/api/tabular/reviews", json=create_payload)
-    assert resp.status_code == 200
-    data = resp.json()
-    review_id = data["review_id"]
-    assert data["title"] == "Vendor Contract Audit"
-    assert "DOC-00001" in data["cells"]
-
-    # Test override
-    patch_resp = client.patch(
-        f"/api/tabular/reviews/{review_id}/cells/DOC-00001/col_law",
-        json={"value": "New York Law", "reasoning": "Senior Partner review"},
-    )
-    assert patch_resp.status_code == 200
-    assert patch_resp.json()["value"] == "New York Law"
-    assert patch_resp.json()["is_overridden"] is True
-
-    # Test Excel download
-    export_resp = client.get(f"/api/tabular/reviews/{review_id}/export/xlsx")
-    assert export_resp.status_code == 200
-    assert export_resp.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+# Tabular reviews moved to app/tabular (plan 22, W4); see tests/test_tabular.py.
 
 
 # -----------------------------------------------------------------------------

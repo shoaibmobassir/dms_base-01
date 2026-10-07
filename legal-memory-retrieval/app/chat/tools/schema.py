@@ -494,8 +494,9 @@ LIST_WORKFLOWS = {
     "function": {
         "name": "list_workflows",
         "description": (
-            "List all workflows available to the user. Returns each workflow's "
-            "ID and title."
+            "List the playbooks available to the user (the firm's ways of doing a job: shipped, published by the "
+            "firm, and the user's own). Each has an id, title, summary and kind (instructions, or a set of review "
+            "columns)."
         ),
         "parameters": {"type": "object", "properties": {}},
     },
@@ -506,12 +507,13 @@ READ_WORKFLOW = {
     "function": {
         "name": "read_workflow",
         "description": (
-            "Read the full instructions (prompt) of a workflow by its ID."
+            "Read a playbook by its id before doing the job it describes, then follow it: ask for missing inputs, "
+            "open its reference documents, and do the steps. A columns playbook is a set of review questions."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "workflow_id": {"type": "string", "description": "The workflow ID to read."},
+                "workflow_id": {"type": "string", "description": "The playbook id (PBK-…) to read."},
             },
             "required": ["workflow_id"],
         },
@@ -661,6 +663,46 @@ VERIFY_CITATIONS = {
     },
 }
 
+SEARCH_WORKSPACE = {
+    "type": "function",
+    "function": {
+        "name": "search_workspace",
+        "description": (
+            "Find words inside the documents of this conversation's workspace (a project, matter or the user's "
+            "library), including documents that firm-wide search does not cover. Returns documents with the page "
+            "and passage that matched; read them with read_document."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Words or a phrase to find."},
+                "limit": {"type": "integer", "description": "At most this many documents (default 10)."},
+            },
+            "required": ["query"],
+        },
+    },
+}
+
+READ_REVIEW_CELLS = {
+    "type": "function",
+    "function": {
+        "name": "read_review_cells",
+        "description": (
+            "Read a tabular review (documents × questions) the user has open or names: each answer with its quoted "
+            "passage and page. Use it to summarise, compare or find gaps across the documents instead of re-reading them."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "review_id": {"type": "string", "description": "The review's id (TRV-…)."},
+                "row_ids": {"type": "array", "items": {"type": "string"}, "description": "Only these rows (optional)."},
+                "column_ids": {"type": "array", "items": {"type": "string"}, "description": "Only these columns (optional)."},
+            },
+            "required": ["review_id"],
+        },
+    },
+}
+
 # ---------------------------------------------------------------------------
 # Composite tool sets
 # ---------------------------------------------------------------------------
@@ -695,4 +737,6 @@ RESEARCH_TOOLS = [
     VERIFY_CITATIONS,
 ]
 
-ALL_TOOLS = CORE_TOOLS + RESEARCH_TOOLS + WORKFLOW_TOOLS
+WORKSPACE_TOOLS = [SEARCH_WORKSPACE, READ_REVIEW_CELLS]
+
+ALL_TOOLS = CORE_TOOLS + RESEARCH_TOOLS + WORKFLOW_TOOLS + WORKSPACE_TOOLS

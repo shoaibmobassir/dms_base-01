@@ -6,6 +6,7 @@ import {
   editErrorMessage,
   getBlame,
   listCommits,
+  purgeVersion,
   restoreVersion,
   type BlameParagraph,
   type Commit,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Icon, SectionLabel } from "@/components/common/primitives";
 import { VersionDiff } from "@/components/document-workspace/VersionDiff";
+import { useDocumentPlaces } from "@/api/workspaces";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,7 @@ const KIND: Record<string, string> = {
   restore: "Restore",
   review: "Review",
   assistant: "Assistant",
+  copy: "Copy",
 };
 
 const sizeChange = (delta: number | null) =>
@@ -56,6 +59,9 @@ export function HistoryPanel({
   });
   const [changes, setChanges] = useState<Commit | null>(null);
   const [restoring, setRestoring] = useState<Commit | null>(null);
+  const [purging, setPurging] = useState<Commit | null>(null);
+  const places = useDocumentPlaces(documentId);
+  const canManage = places.data?.my_level === "manage";
   const rows = commits.data ?? [];
   const head = rows.find((c) => c.is_current);
   useEffect(() => {
@@ -73,7 +79,19 @@ export function HistoryPanel({
     <div data-testid="document-versions">
       <SectionLabel>History</SectionLabel>
       <ol className="mt-3 space-y-2" data-testid="commit-log">
-        {rows.map((c) => (
+        {rows.map((c) => c.deleted ? (
+          <li key={c.version_id} data-testid="commit-deleted" data-version={c.version_number}
+            className="rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium line-through">{c.version_label || `Version ${c.version_number}`}</span>
+              <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] uppercase tracking-wide">Deleted</span>
+            </div>
+            <p className="mt-1 text-xs">
+              Content deleted{c.deleted_by_name ? ` by ${c.deleted_by_name}` : ""}{c.delete_reason ? ` — ${c.delete_reason}` : ""}. It cannot be
+              opened, compared or restored.
+            </p>
+          </li>
+        ) : (
           <li key={c.version_id} data-testid="commit" data-version={c.version_number}
             className={cn("rounded-md border px-3 py-2 text-sm", c.version_id === openVersionId ? "border-border bg-wine-soft" : "border-transparent hover:bg-secondary")}>
             <div className="flex items-center justify-between gap-2">
@@ -102,12 +120,18 @@ export function HistoryPanel({
                   Restore
                 </Button>
               )}
+              {!c.is_current && canManage && (
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px] text-destructive" onClick={() => setPurging(c)} data-testid="commit-purge">
+                  Delete…
+                </Button>
+              )}
             </div>
           </li>
         ))}
       </ol>
 
       {changes && <ChangesDialog documentId={documentId} commit={changes} onClose={() => setChanges(null)} />}
+      {purging && <PurgeDialog documentId={documentId} target={purging} onClose={() => setPurging(null)} />}
       {restoring && head && (
         <RestoreDialog documentId={documentId} target={restoring} head={head} onClose={() => setRestoring(null)}
           onDone={(versionId) => { setRestoring(null); onOpen(versionId); }} />
@@ -237,6 +261,52 @@ function RestoreDialog({ documentId, target, head, onClose, onDone }: {
           <Button variant="outline" size="sm" onClick={onClose} disabled={busy}>Cancel</Button>
           <Button size="sm" onClick={() => void restore()} disabled={busy} data-testid="restore-confirm">
             {busy ? "Restoring…" : "Restore"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Delete an earlier version's content for good (a client's instruction, a file that should never have been filed). */
+function PurgeDialog({ documentId, target, onClose }: { documentId: string; target: Commit; onClose: () => void }) {
+  const { toast } = useApp();
+  const queryClient = useQueryClient();
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const purge = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await purgeVersion(documentId, target.version_id, reason.trim());
+      await queryClient.invalidateQueries({ predicate: (q) => JSON.stringify(q.queryKey).includes(documentId) });
+      toast(`Version ${target.version_number} deleted`);
+      onClose();
+    } catch (err) {
+      setError(editErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
+      <DialogContent className="max-w-md" data-testid="purge-dialog">
+        <DialogHeader>
+          <DialogTitle>Delete version {target.version_number} for good?</DialogTitle>
+          <DialogDescription>
+            Its text, file, comments and search index are removed and cannot be brought back. The history keeps an entry saying
+            who deleted it and why. Other versions are not affected.
+          </DialogDescription>
+        </DialogHeader>
+        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} maxLength={500} placeholder="Why is it being deleted?"
+          className="w-full resize-y rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+          data-testid="purge-reason" />
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button variant="destructive" size="sm" onClick={() => void purge()} disabled={busy || reason.trim().length < 3} data-testid="purge-confirm">
+            {busy ? "Deleting…" : "Delete version"}
           </Button>
         </div>
       </DialogContent>

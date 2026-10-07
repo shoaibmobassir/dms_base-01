@@ -1,5 +1,7 @@
 # Feature: Document Library & Folders — Firm Precedent Vault
 
+> **Superseded by plan 22** (`22_document_workbench.md`, 2026-10-07): the requirements below still stand; the design and the PM gate are replaced there.
+
 **Sprint:** 12  
 **Priority:** P2  
 **Mike observation (product level):** Legal platforms provide a library area separate from matter-specific folders, where a firm stores and organises reusable precedents, standard templates, and research memos that are not tied to a single client engagement.  

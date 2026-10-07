@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from psycopg.rows import dict_row
 
 from app.api.sorting import order_by
-from app.api.acl import ACL_CLAUSE, doc_acl
+from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 from app.api.documents import (
     document_detail_enriched,
     document_diff,
@@ -263,7 +263,7 @@ def _check_doc_access(document_id: str, member_id: str | None) -> None:
     access_sql = f"""
         SELECT d.visible_to FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
+        WHERE d.document_id = %(doc_id)s AND {doc_read('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -381,7 +381,7 @@ def document_chunks_endpoint(
     access_sql = f"""
         SELECT 1 FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
+        WHERE d.document_id = %(doc_id)s AND {doc_read('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -760,11 +760,14 @@ def _original_file(
     if vid:
         with connect() as conn:
             ver = conn.execute(
-                "SELECT storage_uri, mime_type FROM document_versions WHERE version_id = %s AND document_id = %s",
+                "SELECT storage_uri, mime_type, deleted_at FROM document_versions WHERE version_id = %s AND document_id = %s",
                 (vid, document_id),
             ).fetchone()
         if ver is None and version_id:
             raise HTTPException(status_code=404, detail="Version not found")
+        if ver and ver["deleted_at"] is not None:
+            # Never fall back to the document's first upload: for a deleted first version that is the purged file.
+            raise HTTPException(status_code=410, detail="This version was deleted and its file is gone")
         if ver and ver["storage_uri"]:
             uri, mime = ver["storage_uri"], ver["mime_type"] or mime
     if not uri:

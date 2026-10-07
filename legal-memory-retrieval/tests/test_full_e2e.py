@@ -19,7 +19,6 @@ from app.caselaw.citation_parser import get_citation_parser
 from app.caselaw.courtlistener_client import get_courtlistener_client
 from app.drafting.clause_diff_service import get_clause_diff_service
 from app.drafting.docx_redline_generator import DocxRedlineGenerator
-from app.review.spreadsheet_exporter import SpreadsheetExporter
 from app.workflows.catalog_loader import get_catalog_loader
 from app.workflows.engine import get_workflow_engine
 
@@ -96,64 +95,7 @@ class TestFullEndToEndLawyerJourney:
         assert "abstained" in data
         assert isinstance(data["citations"], list)
 
-    def test_05_tabular_due_diligence_matrix_review(self, client):
-        """E2E test of high-throughput Tabular Document Review, cell override, and Excel export."""
-        create_payload = {
-            "title": "M&A Due Diligence - NDA & Vendor Portfolio",
-            "document_ids": ["DOC-00001", "DOC-00002", "DOC-00003"],
-            "columns": [
-                {
-                    "id": "col_law",
-                    "label": "Governing Law",
-                    "prompt": "Identify the governing law and jurisdiction clause",
-                    "data_type": "text",
-                },
-                {
-                    "id": "col_cap",
-                    "label": "Liability Cap",
-                    "prompt": "Extract the financial limitation of liability cap amount",
-                    "data_type": "currency",
-                },
-                {
-                    "id": "col_indemnity",
-                    "label": "Indemnity Scope",
-                    "prompt": "Determine if indemnity covers third-party IP claims",
-                    "data_type": "boolean",
-                },
-            ],
-        }
-        resp = client.post("/api/tabular/reviews", json=create_payload)
-        assert resp.status_code == 200
-        review_data = resp.json()
-        review_id = review_data["review_id"]
-        assert review_data["title"] == "M&A Due Diligence - NDA & Vendor Portfolio"
-        assert len(review_data["document_ids"]) == 3
-        assert "DOC-00001" in review_data["cells"]
-
-        # Human lawyer overrides one cell
-        patch_payload = {
-            "value": "Delaware Law with New York Venue",
-            "reasoning": "Counsel verified per Clause 18.2 amendment",
-        }
-        patch_resp = client.patch(
-            f"/api/tabular/reviews/{review_id}/cells/DOC-00001/col_law",
-            json=patch_payload,
-        )
-        assert patch_resp.status_code == 200
-        patched_cell = patch_resp.json()
-        assert patched_cell["value"] == "Delaware Law with New York Venue"
-        assert patched_cell["is_overridden"] is True
-
-        # Export to Excel (.xlsx)
-        export_resp = client.get(f"/api/tabular/reviews/{review_id}/export/xlsx")
-        assert export_resp.status_code == 200
-        assert export_resp.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        
-        # Verify valid Excel structure
-        wb = openpyxl.load_workbook(io.BytesIO(export_resp.content))
-        assert "Review Matrix" in wb.sheetnames
-        ws = wb["Review Matrix"]
-        assert ws["C4"].value is not None
+    # test_05 (tabular review) moved to tests/test_tabular.py with the durable reviews of plan 22.
 
     def test_06_declarative_legal_playbooks(self, client):
         """E2E execution of multi-step declarative YAML legal workflows."""

@@ -2,6 +2,24 @@
 
 Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.jsonl` (n=445).
 
+## 2026-10-07 — Document Workbench (plan 22)
+
+- Workspaces: projects anyone can start (members by role), personal library, firm template library, beside matters.
+  Documents are stored once and shown in several workspaces by links (tags follow); a link never widens access.
+  Content-addressed storage with garbage collection; uploads into any workspace with a duplicate check.
+- Workbench (`/work/:kind/:id`): explorer, tabs, split, quick open, commands, workspace search, saved layout; the
+  document page runs inside tabs.
+- Versions: Assistant edits from one turn make one version; purge a version (audited, 410 afterwards); replace content
+  from another document.
+- Word editor (`/documents/:id/write`): Folio-based, edits tables, headers, footnotes with tracked changes; the server
+  credits every new change to the signed-in member. Bake-off: `docs/experiments/editor_engine_2026-10.md`.
+- Tabular reviews made durable (leased workers, live fill, stale columns, lawyer overrides, redaction, Excel). Internal
+  baseline 98.3 % on a fresh seed (120 cells, 108/108 quotes verified).
+- Playbooks: shipped, firm (km.publish) and personal; the Assistant follows them; column sets start reviews.
+- Assistant in the workbench: workspace conversations, `search_workspace`, `read_review_cells`.
+- Fixed on the way: project events reached everyone through the live feed; the archive rule was dropped by the first
+  workspace migration for an hour (restored, no document exposed); quick open missed documents beyond 1,000.
+
 ## 2026-10-03 — Entity lifecycle and ingestion (plan 09)
 
 - Matters: close (with outcome and what is still open) and reopen. Team editor by search with make-lead. Clients: edit,

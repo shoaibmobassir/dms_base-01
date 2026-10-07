@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.chat.models import FileAttachment
-from app.api.acl import ACL_CLAUSE, doc_acl
+from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 
 MAX_REFERENCE_CHARS = 6000
 MAX_REFERENCES = 5
@@ -80,7 +80,7 @@ def resolve_references(conn, files: list[FileAttachment] | None, member_id: str 
         allowed = conn.execute(
             f"""
             SELECT d.document_id, d.title FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
-            WHERE d.document_id = %(id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
+            WHERE d.document_id = %(id)s AND {doc_read('d')}
             """,
             {"id": f.document_id, "member_id": member_id},
         ).fetchone()
@@ -111,7 +111,7 @@ def outline_note(conn, document_ids: list[str], member_id: str | None) -> str:
         row = conn.execute(
             f"""
             SELECT d.document_id, d.title FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
-            WHERE d.document_id = %(id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
+            WHERE d.document_id = %(id)s AND {doc_read('d')}
             """,
             {"id": doc_id, "member_id": member_id},
         ).fetchone()

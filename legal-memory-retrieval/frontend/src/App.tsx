@@ -20,6 +20,9 @@ const PeoplePage = lazy(() => import("@/pages/PeoplePage").then((m) => ({ defaul
 const PersonDetailPage = lazy(() => import("@/pages/PersonDetailPage").then((m) => ({ default: m.PersonDetailPage })));
 const CalendarPage = lazy(() => import("@/pages/CalendarPage").then((m) => ({ default: m.CalendarPage })));
 const ArgumentsPage = lazy(() => import("@/pages/ArgumentsPage").then((m) => ({ default: m.ArgumentsPage })));
+const FullEditorPage = lazy(() => import("@/pages/FullEditorPage").then((m) => ({ default: m.FullEditorPage })));
+const ProjectsPage = lazy(() => import("@/pages/ProjectsPage").then((m) => ({ default: m.ProjectsPage })));
+const WorkbenchPage = lazy(() => import("@/pages/WorkbenchPage").then((m) => ({ default: m.WorkbenchPage })));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 
 function App() {
@@ -34,10 +37,14 @@ function App() {
         <Route path="/assistant" element={<Navigate to="/chat" replace />} />
         <Route path="/matters" element={<MattersPage />} />
         <Route path="/matters/:id" element={<MatterDetailPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/work/:kind/:id" element={<WorkbenchPage />} />
+        <Route path="/library" element={<Navigate to="/work/library/me" replace />} />
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/documents/:id" element={<DocumentDetailPage />} />
         <Route path="/documents/:id/history" element={<DocumentHistoryRedirect />} />
         <Route path="/documents/:id/edit" element={<DocumentEditorPage />} />
+        <Route path="/documents/:id/write" element={<FullEditorPage />} />
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/clients/:id" element={<ClientDetailPage />} />
         <Route path="/people" element={<PeoplePage />} />

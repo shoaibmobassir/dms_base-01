@@ -78,6 +78,10 @@ logger = logging.getLogger(__name__)
 MAX_TOOL_ROUNDS = 10
 _RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 _DB_TOOLS = frozenset({
+    "list_workflows",
+    "read_workflow",
+    "search_workspace",
+    "read_review_cells",
     "review_documents",
     "edit_document",
     "comment_on_document",
@@ -98,8 +102,6 @@ _KNOWN_TOOLS = _DB_TOOLS | frozenset({
     "generate_docx",
     "generate_excel",
     "ask_inputs",
-    "list_workflows",
-    "read_workflow",
 })
 
 
@@ -137,6 +139,7 @@ def dispatch_tool_call(
     nonce: str,
     member_id: str | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """
     Execute a single tool call and return (result, events).
@@ -261,26 +264,47 @@ def dispatch_tool_call(
         return result, events
 
     elif name == "list_workflows":
-        from app.workflows.catalog_loader import get_catalog_loader
+        # The user-facing name is "playbooks" (plan 22, W5): shipped, firm and the member's own.
+        from app.playbooks import for_assistant_list
 
-        return {"workflows": [
-            {"id": wf.id, "title": wf.title, "description": wf.description, "category": wf.category}
-            for wf in get_catalog_loader().list_workflows()
-        ]}, events
+        return {"workflows": for_assistant_list(conn, member_id)}, events
 
     elif name == "read_workflow":
-        from app.workflows.catalog_loader import get_catalog_loader
+        from app.firm import FirmError
+        from app.playbooks import for_assistant_read
 
-        wf = get_catalog_loader().get_workflow(str(arguments.get("workflow_id") or ""))
-        if wf is None:
-            return {"error": f"Unknown workflow: {arguments.get('workflow_id')}"}, events
-        return {
-            "id": wf.id, "title": wf.title, "description": wf.description, "inputs": wf.inputs,
-            "steps": [
-                {k: v for k, v in (("id", st.id), ("type", st.type), ("title", st.title), ("query", st.query), ("prompt", st.prompt)) if v}
-                for st in wf.steps
-            ],
-        }, events
+        try:
+            return for_assistant_read(conn, member_id, str(arguments.get("workflow_id") or ""), nonce), events
+        except FirmError:
+            return {"error": f"Unknown playbook: {arguments.get('workflow_id')}"}, events
+
+    elif name == "search_workspace":
+        if not workspace:
+            return {"error": "This conversation has no workspace; use search_firm_records."}, events
+        from app.firm import FirmError
+        from app.workspaces.documents import search_workspace
+
+        try:
+            found = search_workspace(conn, member_id, workspace["kind"], workspace["id"], str(arguments.get("query") or ""),
+                                     limit=min(int(arguments.get("limit") or 10), 25))
+        except FirmError as exc:
+            return {"error": exc.detail}, events
+        from app.chat.tools.firm_tools import _register
+
+        hits = [{"doc_id": _register(doc_index, h["document_id"], h["title"]), "title": h["title"], "page": h["page_number"],
+                 "snippet": (h["snippet"] or "").replace("{MARK_START}", "").replace("{MARK_END}", "")}
+                for h in found["results"]]
+        return {"query": found["query"], "results": hits}, events
+
+    elif name == "read_review_cells":
+        from app.firm import FirmError
+        from app.tabular.runner import cells_for_assistant
+
+        try:
+            return cells_for_assistant(conn, member_id, str(arguments.get("review_id") or ""),
+                                       arguments.get("row_ids") or None, arguments.get("column_ids") or None), events
+        except FirmError as exc:
+            return {"error": exc.detail}, events
 
     elif name == "ask_inputs":
         items = _named_items(arguments.get("items", []), doc_index)
@@ -317,7 +341,8 @@ def _load_passage_documents(
                 doc_store[slug] = text
 
 
-_RECORD_TOOLS = frozenset({"ask_firm", "resolve_matter", "get_matter_profile", "find_people", "review_documents"})
+_RECORD_TOOLS = frozenset({"ask_firm", "resolve_matter", "get_matter_profile", "find_people", "review_documents",
+                           "read_review_cells", "search_workspace"})
 
 
 # Research results carry the authority's citation, binding label and status: facts the lawyer
@@ -536,7 +561,7 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
             return f"Looking up the team on {arguments['matter']}"
         return f"Finding colleagues for “{query}”" if query else "Finding colleagues"
     if name in {"list_workflows", "read_workflow"}:
-        return "Checking firm workflows"
+        return "Checking the firm's playbooks"
     authority = entry.filename if entry else str(arguments.get("authority") or "").strip()
     if authority in doc_index:
         authority = doc_index[authority].filename
@@ -597,11 +622,12 @@ def _invoke_tool(
     member_id: str | None,
     timeout: float,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Run a tool on a connection this worker created, so the request conn stays put."""
     if name not in _DB_TOOLS:
         return dispatch_tool_call(
-            name, arguments, doc_index, doc_store, None, nonce, member_id=member_id, matter=matter,
+            name, arguments, doc_index, doc_store, None, nonce, member_id=member_id, matter=matter, workspace=workspace,
         )
     with connect() as tool_conn:
         try:
@@ -612,7 +638,7 @@ def _invoke_tool(
         except Exception:
             logger.debug("statement_timeout not set for tool %s", name)
         return dispatch_tool_call(
-            name, arguments, doc_index, doc_store, tool_conn, nonce, member_id=member_id, matter=matter,
+            name, arguments, doc_index, doc_store, tool_conn, nonce, member_id=member_id, matter=matter, workspace=workspace,
         )
 
 
@@ -625,6 +651,7 @@ def dispatch_tool_call_bounded(
     member_id: str | None = None,
     timeout: float | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], bool]:
     """Execute a tool with a wall-clock deadline. Does not retry the tool."""
     bound = tool_deadline_seconds(name) if timeout is None else timeout
@@ -641,6 +668,7 @@ def dispatch_tool_call_bounded(
         member_id,
         bound,
         matter,
+        workspace,
     )
     if outcome is DEADLINE_EXCEEDED:
         CHAT_TOOL_TIMEOUTS.labels(tool=label).inc()
@@ -748,6 +776,7 @@ def build_llm_messages(
     max_pairs: int | None = None,
     mode: str | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
     page_note: str | None = None,
 ) -> list[dict[str, Any]]:
     """Build the LLM message array: system + windowed history + current user."""
@@ -756,6 +785,14 @@ def build_llm_messages(
     found = [d for d in doc_availability if not d.get("attached")]
 
     system_content = build_system_prompt(mode)
+    if workspace:
+        system_content += (
+            f"\n\nTHIS CONVERSATION BELONGS TO A WORKSPACE: {workspace.get('label') or workspace['id']} "
+            f"({'a project' if workspace['kind'] == 'project' else 'a matter' if workspace['kind'] == 'matter' else 'the user\'s own library'})."
+            " Its own documents are not in the firm-wide search: use search_workspace to find words in them, and"
+            " read_review_cells to read a tabular review of this workspace when the user refers to a review or table."
+            " The documents open in the user's workbench are attached below."
+        )
     if matter:
         system_content += (
             f"\n\nTHIS CONVERSATION IS LIMITED TO ONE MATTER: {matter['matter_code']}"
@@ -1057,6 +1094,7 @@ def run_chat_agent(
     mode: str | None = None,
     hit_count: int | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
     page_note: str | None = None,
 ) -> Generator[str, None, dict[str, Any]]:
     """
@@ -1080,8 +1118,8 @@ def run_chat_agent(
     }
     all_events.append(opening)
     yield sse_event("reasoning", {"text": opening["text"], "mode": opening["mode"]})
-    messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode, matter=matter, page_note=page_note)
-    tools = ALL_TOOLS
+    messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode, matter=matter, workspace=workspace, page_note=page_note)
+    tools = ALL_TOOLS if workspace else [t for t in ALL_TOOLS if t["function"]["name"] != "search_workspace"]
     request_id = current_request_id() or "-"
 
     full_text = ""
@@ -1177,7 +1215,7 @@ def run_chat_agent(
                 return {"error": f"{name} is paused for this turn after a timeout"}, [], False
             bound = min(tool_deadline_seconds(name), max(1.0, turn_deadline - time.perf_counter()))
             return dispatch_tool_call_bounded(name, args, doc_index, doc_store, nonce, member_id=member_id,
-                                              timeout=bound, matter=matter)
+                                              timeout=bound, matter=matter, workspace=workspace)
 
         # Independent read-only calls in one round run side by side; their steps are still
         # reported in the order the model asked for them.
@@ -1351,6 +1389,7 @@ def run_chat_agent_sync(
     mode: str | None = None,
     hit_count: int | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
     page_note: str | None = None,
 ) -> dict[str, Any]:
     """
@@ -1368,7 +1407,7 @@ def run_chat_agent_sync(
         member_id=member_id,
         mode=mode,
         hit_count=hit_count,
-        matter=matter,
+        matter=matter, workspace=workspace,
         page_note=page_note,
     )
 

@@ -43,7 +43,7 @@ from app.chat.store import (
     update_assistant_message,
 )
 from app.chat.title_generator import generate_chat_title
-from app.api.acl import ACL_CLAUSE, doc_acl
+from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 from app.chat.tools.document_tools import (
     DocIndex,
     add_documents_to_index,
@@ -171,6 +171,19 @@ def _matter_scope(conn, session: ChatSession) -> dict[str, str] | None:
     return {"matter_id": row["matter_id"], "matter_code": row["matter_code"], "title": row["title"]} if row else None
 
 
+def _workspace_scope(conn, session: ChatSession) -> dict[str, str] | None:
+    """The conversation's workspace for the agent's tools, while the member can still reach it."""
+    if not session.workspace_kind or not session.workspace_id:
+        return None
+    from app import access
+    from app.workspaces import container_label
+
+    if access.container_level(conn, session.member_id, session.workspace_kind, session.workspace_id) == "none":
+        return None
+    return {"kind": session.workspace_kind, "id": session.workspace_id,
+            "label": container_label(conn, session.workspace_kind, session.workspace_id)}
+
+
 def _search(conn, session: ChatSession, query: str) -> list[dict]:
     """Passages for this turn: inside the conversation's matter when it has one, else firm-wide."""
     if session.matter_id:
@@ -188,9 +201,17 @@ def create_chat_session(
 ):
     """Create a new chat session owned by the caller."""
     owned = req.model_copy(update={"member_id": member_id, "model": _resolve_model(req.model)})
+    if owned.workspace_kind == "library" and owned.workspace_id in (None, "me"):
+        owned = owned.model_copy(update={"workspace_id": member_id})
     with connect() as conn:
         if owned.matter_id:
             _require_matter(conn, owned.matter_id, member_id)
+        if owned.workspace_kind:
+            from app import access
+
+            if not owned.workspace_id or access.container_level(conn, member_id, owned.workspace_kind,
+                                                                 owned.workspace_id) == "none":
+                raise HTTPException(status_code=404, detail="Workspace not found or access denied")
         session = create_session(conn, owned)
     return session
 
@@ -199,12 +220,23 @@ def create_chat_session(
 def list_chat_sessions(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    workspace_kind: str | None = Query(default=None, pattern="^(matter|project|library)$"),
+    workspace_id: str | None = None,
     member_id: str | None = Depends(resolve_member),
 ):
-    """List the caller's chat sessions, newest first."""
+    """List the caller's chat sessions, newest first (or only a workspace's, for the workbench's Assistant)."""
     if member_id is None:
         return []
     with connect() as conn:
+        if workspace_kind:
+            wid = member_id if workspace_kind == "library" and workspace_id in (None, "me") else workspace_id
+            rows = conn.execute(
+                """SELECT * FROM chat_sessions WHERE member_id = %s AND workspace_kind = %s AND workspace_id = %s
+                   AND status = 'active' ORDER BY updated_at DESC LIMIT %s OFFSET %s""",
+                (member_id, workspace_kind, wid, limit, offset)).fetchall()
+            from app.chat.store import _row_to_session
+
+            return [_row_to_session(r) for r in rows]
         sessions = list_sessions(conn, member_id=member_id, limit=limit, offset=offset)
     return sessions
 
@@ -314,7 +346,7 @@ def _with_attachments(conn, index: DocIndex, history: list[ChatMessage], member_
         SELECT d.document_id, d.title
         FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = ANY(%(ids)s) AND {ACL_CLAUSE} AND {doc_acl('d')}
+        WHERE d.document_id = ANY(%(ids)s) AND {doc_read('d')}
         """,
         {"ids": ids, "member_id": member_id},
     ).fetchall()
@@ -369,6 +401,7 @@ def send_message(
         # Build document index from retrieval hits
         doc_index = _with_attachments(conn, build_doc_index_from_hits(hits), history, session.member_id)
         matter = _matter_scope(conn, session)
+        workspace = _workspace_scope(conn, session)
         page_note = _page_note(conn, req.files, session.member_id, history)
 
         # Reserve assistant message ID
@@ -411,6 +444,7 @@ def send_message(
                     mode=req.mode.value if req.mode else None,
                     hit_count=len(doc_index),
                     matter=matter,
+                    workspace=workspace,
                     page_note=page_note,
                 )
                 try:
@@ -565,14 +599,15 @@ def _edit_groups(events: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
     return [e for e in (events or []) if e.get("type") == "edit_proposals"]
 
 
-def _apply_to_document(conn, group: dict[str, Any], edits: list[dict[str, Any]], member_id: str | None) -> dict | None:
+def _apply_to_document(conn, group: dict[str, Any], edits: list[dict[str, Any]], member_id: str | None,
+                       turn_id: str | None = None) -> dict | None:
     """Accepting writes the edits into the document as one clean version; each edit records the version it went into
     (``applied_version_id``) or why it could not be placed (``apply_error``)."""
     from app.documents.assistant_apply import apply_accepted
     from app.documents.editing import EditError
 
     try:
-        out = apply_accepted(conn, group["document_id"], member_id, edits, group.get("instruction") or "")
+        out = apply_accepted(conn, group["document_id"], member_id, edits, group.get("instruction") or "", turn_id=turn_id)
     except EditError as exc:
         raise HTTPException(status_code=exc.status, detail=exc.detail)
     for edit in edits:
@@ -618,7 +653,7 @@ def decide_edit(
                        "Restore an earlier version from History to undo it.")
         version = None
         if body.status == "accepted" and not found.get("applied_version_id") and not found_group.get("read_only"):
-            version = _apply_to_document(conn, found_group, [found], member_id)
+            version = _apply_to_document(conn, found_group, [found], member_id, turn_id=message_id)
             if found.get("apply_error"):
                 set_message_events(conn, message_id, events)
                 raise HTTPException(status_code=409, detail=f"Could not apply this edit: {found['apply_error']}")
@@ -661,7 +696,7 @@ def decide_edits_bulk(
             if body.status == "accepted" and not group.get("read_only"):
                 todo = [e for e in edits if not e.get("applied_version_id")]
                 if todo:
-                    version = _apply_to_document(conn, group, todo, member_id) or version
+                    version = _apply_to_document(conn, group, todo, member_id, turn_id=message_id) or version
                 failed.update({e["id"]: e["apply_error"] for e in todo if e.get("apply_error")})
                 for edit in edits:
                     if not edit.get("apply_error"):

@@ -137,3 +137,16 @@ at source before approving.
 | ContractNLI (Koreeda & Manning 2021) — via LegalBench-RAG corpus | same | verify | ? | ⏳ Pending |
 | PrivacyQA (Ravichander et al. 2019) — via LegalBench-RAG corpus | same | verify | ? | ⏳ Pending |
 | Harvey LAB (harveyai/harvey-labs) — tasks + harness | planned (A4) | MIT (repo page, 2026-09-27) | No | ⏳ Pending |
+
+## 2026-10-07 — Folio Word editor (plan 22, X2)
+
+Added to `frontend/package.json`, pinned exactly: `@stll/folio-react` 0.25.0 (pulls `@stll/folio-core`,
+`@stll/docx-core`, `@stll/docx-utils`, `@stll/template-conditions`, `@stll/conditions`) — all **Apache-2.0**, with a
+NOTICE file (fork of Eigenpal docx-editor; original licence and copyright preserved) that must ship with the bundle's
+third-party notices; `use-intl` 4.14.9 — MIT.
+
+Full transitive tree (90 packages, audited from an isolated install): MIT 68, Apache-2.0 7, ISC 3, BSD-3-Clause 1,
+MIT AND Zlib 1, OFL-1.1 8 (bundled document fonts: Arimo, Caladea, Carlito, Cousine, Lato, Noto Sans Arabic,
+Source Sans 3, Tinos — permissive font licence), dual-licensed `dompurify` (MPL-2.0 OR Apache-2.0 → we use Apache-2.0)
+and `jszip` (MIT OR GPL-3.0-or-later → we use MIT). No copyleft-only licence. No server-side code is added; nothing is
+linked into the Python backend.

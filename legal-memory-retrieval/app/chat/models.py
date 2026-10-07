@@ -36,12 +36,17 @@ class ChatSessionCreate(BaseModel):
     matter_id: Optional[str] = None
     model: Optional[str] = None
     member_id: Optional[str] = None
+    # The workbench's Assistant: the workspace (matter / project / library) the conversation belongs to.
+    workspace_kind: Optional[str] = Field(default=None, pattern="^(matter|project|library)$")
+    workspace_id: Optional[str] = None
 
 
 class ChatSession(BaseModel):
     id: str
     title: Optional[str] = None
     matter_id: Optional[str] = None
+    workspace_kind: Optional[str] = None
+    workspace_id: Optional[str] = None
     model: Optional[str] = None
     member_id: Optional[str] = None
     pinned: bool = False

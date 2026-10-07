@@ -160,6 +160,40 @@ def post_restore(document_id: str, body: RestoreBody, token: str | None = LockTo
                 body.note, token)
 
 
+@router.post("/documents/{document_id}/save-docx", status_code=201)
+async def post_save_docx(document_id: str, file: UploadFile = File(...), base_version_id: str = Form(...),
+                         note: str = Form(default=""), token: str | None = LockToken,
+                         member_id: str | None = Depends(resolve_member)) -> dict:
+    """The full Word editor's save: the edited file becomes the next version, its new changes credited to you."""
+    data = await file.read()
+    return _run(editing.save_docx, document_id.upper(), member_id, base_version_id, data, note[:1000], token)
+
+
+class CopyFromBody(BaseModel):
+    source_document_id: str
+    source_version_id: str | None = None
+    base_version_id: str | None = None
+    note: str = Field(default="", max_length=1000)
+
+
+@router.post("/documents/{document_id}/versions/copy-from", status_code=201)
+def post_copy_from(document_id: str, body: CopyFromBody, token: str | None = LockToken,
+                   member_id: str | None = Depends(resolve_member)) -> dict:
+    """Make another document's content this document's next version; the other document is unchanged."""
+    return _run(editing.copy_from, document_id.upper(), member_id, body.source_document_id, body.source_version_id,
+                body.base_version_id, body.note, token)
+
+
+class PurgeBody(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
+
+
+@router.post("/documents/{document_id}/versions/{version_id}/purge")
+def post_purge(document_id: str, version_id: str, body: PurgeBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    """Delete an earlier version's content for good; the history keeps a "deleted" entry (who, when, why)."""
+    return _run(editing.purge_version, document_id.upper(), member_id, version_id, body.reason)
+
+
 @router.get("/documents/{document_id}/blame")
 def get_blame(document_id: str, version_id: str | None = Query(default=None),
               depth: int = Query(default=editing.BLAME_DEPTH, ge=2, le=200),

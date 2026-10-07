@@ -1,5 +1,7 @@
 # Feature: Document Review — Clause-Level Edit Suggestions
 
+> **Superseded by plan 22** (`22_document_workbench.md`, 2026-10-07): the requirements below still stand; the design and the PM gate are replaced there.
+
 **Sprint:** 11  
 **Priority:** P2  
 **Mike observation (product level):** Legal AI platforms can read a document and surface specific clause-level issues and proposed redlines that the user can accept or reject, turning first-pass review from blank-page reading into a decision queue.  

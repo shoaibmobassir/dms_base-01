@@ -89,11 +89,15 @@ def _member_name(conn, member_id: str | None) -> str:
 
 
 def _version(conn, document_id: str, version_id: str | None) -> dict | None:
+    """One version of the document; a purged version is gone (410) for every use that needs its content."""
     if not version_id:
         return None
-    return _one(conn, "SELECT version_id, version_number, storage_uri, mime_type, body, author_name, "
-                      "created_by_member_id, created_at, change_summary FROM document_versions "
-                      "WHERE document_id = %s AND version_id = %s", (document_id, version_id))
+    row = _one(conn, "SELECT version_id, version_number, storage_uri, mime_type, body, author_name, "
+                     "created_by_member_id, created_at, change_summary, deleted_at FROM document_versions "
+                     "WHERE document_id = %s AND version_id = %s", (document_id, version_id))
+    if row and row["deleted_at"] is not None:
+        raise EditError(410, f"Version {row['version_number']} was deleted and cannot be opened, compared or restored")
+    return row
 
 
 def _file_of(doc: dict, ver: dict | None) -> tuple[bytes | None, str]:
@@ -689,9 +693,96 @@ def _edit_docx(data: bytes, ops: list[dict], author: str, mode: str = "tracked")
     return out, stats
 
 
+def _amendable(conn, doc: dict, member_id: str | None, turn_id: str | None) -> dict | None:
+    """The current version, when more edits accepted from the same Assistant turn should amend it rather than make
+    another version (plan 22 W2a, W-R9): it was made by this person from this turn, is still the newest, and nobody
+    has commented on it or reviewed it yet. Anything else makes a new version, so nothing is rewritten under someone
+    else's feet."""
+    if not turn_id or not member_id:
+        return None
+    head = _one(conn, """SELECT v.* FROM document_versions v WHERE v.version_id = %s""", (doc["current_version_id"],))
+    if not head or head.get("source_turn_id") != turn_id or head.get("created_by_member_id") != member_id:
+        return None
+    if head.get("origin") != "assistant" or head.get("deleted_at") is not None:
+        return None
+    attached = _one(conn, """SELECT (EXISTS (SELECT 1 FROM annotations WHERE version_id = %(v)s)
+                                     OR EXISTS (SELECT 1 FROM findings WHERE version_id = %(v)s)) AS used""",
+                    {"v": head["version_id"]})
+    return None if attached and attached["used"] else head
+
+
+def _amend(conn, doc: dict, head: dict, member_id: str, *, text: str, note: str, storage_uri: str | None,
+           size: int | None, page_spans=None, is_clean: bool | None = None) -> dict:
+    """Rewrite the newest version in place (same number): its text, file, and index."""
+    from app.documents import content_sha256, save_canonical_blocks, stored_headings, sync_page_count
+    from app.documents.canonical import parse_canonical_blocks
+    from app.documents.hierarchical_chunks import build_hierarchical_chunks, save_version_chunks
+
+    vid = head["version_id"]
+    summary = head.get("change_summary") or ""
+    if note and note not in summary:
+        summary = f"{summary}; {note.removeprefix('Assistant: ')}" if summary else note
+    conn.execute("SELECT pg_advisory_lock(hashtext(%s))", (_INDEX_LOCK + doc["document_id"],))
+    try:
+        _snapshot_vectors(conn, doc["document_id"])
+        conn.execute(
+            """UPDATE document_versions SET body = %s, content_sha256 = %s, storage_uri = coalesce(%s, storage_uri),
+                      file_size_bytes = coalesce(%s, file_size_bytes), change_summary = %s, is_clean = %s
+               WHERE version_id = %s""",
+            (text[:500_000], content_sha256(text[:500_000]), storage_uri, size, summary, is_clean, vid))
+        conn.execute("UPDATE documents SET body = %s, updated_at = now() WHERE document_id = %s",
+                     (text[:500_000], doc["document_id"]))
+        for table in ("document_blocks", "document_intelligence", "evidence_anchors"):
+            conn.execute(f"DELETE FROM {table} WHERE version_id = %s", (vid,))
+        conn.execute("DELETE FROM version_diffs WHERE source_version_id = %s OR target_version_id = %s", (vid, vid))
+        conn.commit()
+        blocks = parse_canonical_blocks(text[:500_000], doc["document_id"], vid, page_spans=page_spans,
+                                        headings=stored_headings(storage_uri or head.get("storage_uri")))
+        save_canonical_blocks(blocks)
+        save_version_chunks(build_hierarchical_chunks(blocks, document_id=doc["document_id"], version_id=vid,
+                                                      matter_id=doc["matter_id"], folder_path=doc.get("folder_path") or ""))
+    finally:
+        conn.execute("SELECT pg_advisory_unlock(hashtext(%s))", (_INDEX_LOCK + doc["document_id"],))
+    conn.commit()
+    sync_page_count(vid)
+    _index_vectors(conn, doc["document_id"], vid)
+    return {**head, "change_summary": summary}
+
+
+def _add_revision_authors(conn, doc: dict, version_id: str, marked: bytes) -> None:
+    """An amended version: add this save's changes to who-changed-what (the earlier steps are already counted)."""
+    from app.documents import docx_review
+    from app.documents.review import _members_by_name
+
+    people = docx_review.contributors(marked)
+    names = _members_by_name(conn, [p["author"] for p in people])
+    for p in people:
+        conn.execute(
+            """INSERT INTO document_revision_authors (version_id, document_id, author_name, member_id, insertions, deletions,
+                   formats, moves, paragraphs, words_added, words_removed, comments, replies, first_at, last_at)
+               VALUES (%(v)s, %(d)s, %(a)s, %(m)s, %(ins)s, %(del)s, %(fmt)s, %(mov)s, %(par)s, %(wa)s, %(wr)s, 0, 0, %(f)s, %(l)s)
+               ON CONFLICT (version_id, author_name) DO UPDATE SET
+                   insertions = document_revision_authors.insertions + EXCLUDED.insertions,
+                   deletions = document_revision_authors.deletions + EXCLUDED.deletions,
+                   formats = document_revision_authors.formats + EXCLUDED.formats,
+                   moves = document_revision_authors.moves + EXCLUDED.moves,
+                   paragraphs = document_revision_authors.paragraphs + EXCLUDED.paragraphs,
+                   words_added = document_revision_authors.words_added + EXCLUDED.words_added,
+                   words_removed = document_revision_authors.words_removed + EXCLUDED.words_removed,
+                   last_at = greatest(document_revision_authors.last_at, EXCLUDED.last_at)""",
+            {"v": version_id, "d": doc["document_id"], "a": p["author"], "m": names.get(p["author"].lower()),
+             "ins": p["insertions"], "del": p["deletions"], "fmt": p["formats"], "mov": p["moves"], "par": p["paragraphs"],
+             "wa": p["words_added"], "wr": p["words_removed"], "f": p["first_at"], "l": p["last_at"]})
+    conn.commit()
+
+
 def save_edits(conn, document_id: str, member_id: str | None, base_version_id: str, ops: list[dict],
-               note: str = "", mode: str = "tracked", token: str | None = None) -> dict:
-    """Write the editor's paragraph edits as the next version (see module docstring)."""
+               note: str = "", mode: str = "tracked", token: str | None = None, origin: str = "editor",
+               turn_id: str | None = None) -> dict:
+    """Write the editor's paragraph edits as the next version (see module docstring).
+
+    ``origin`` names who made it ("editor", "assistant"); edits accepted from one Assistant turn (``turn_id``) amend
+    that turn's version while it is still the newest (see ``_amendable``)."""
     from app.ingest.extractors.dispatch import extract_from_bytes
 
     doc = _document(conn, document_id)
@@ -711,7 +802,8 @@ def save_edits(conn, document_id: str, member_id: str | None, base_version_id: s
     ver = _version(conn, document_id, base_version_id)
     data, kind = _file_of(doc, ver)
     author = _member_name(conn, member_id)
-    number = _next_number(conn, document_id)
+    head = _amendable(conn, doc, member_id, turn_id) if origin == "assistant" else None
+    number = head["version_number"] if head else _next_number(conn, document_id)
     if kind == "docx":
         from app.documents import docx_review
         from app.documents.review import index_version, sync_comments
@@ -729,10 +821,15 @@ def save_edits(conn, document_id: str, member_id: str | None, base_version_id: s
         name = Path(doc["title"]).stem + ".docx"
         uri = _store_version_file(doc, number, name, out, DOCX_MIME)
         extracted = extract_from_bytes(name, docx_review.accept_everything(out))
-        version = _create(conn, doc, member_id, text=extracted.text, note=note, origin="editor", label=None,
-                          storage_uri=uri, mime=DOCX_MIME, size=len(out), page_spans=extracted.pages,
-                          is_clean=clean)
-        index_version(conn, doc, version["version_id"], marked if clean else out)
+        if head:
+            version = _amend(conn, doc, head, member_id, text=extracted.text, note=note, storage_uri=uri, size=len(out),
+                             page_spans=extracted.pages, is_clean=clean)
+            _add_revision_authors(conn, doc, version["version_id"], marked)
+        else:
+            version = _create(conn, doc, member_id, text=extracted.text, note=note, origin=origin, label=None,
+                              storage_uri=uri, mime=DOCX_MIME, size=len(out), page_spans=extracted.pages,
+                              is_clean=clean)
+            index_version(conn, doc, version["version_id"], marked if clean else out)
     elif kind == "pdf":
         raise EditError(422, "PDFs cannot be edited in the browser; upload a Word version to edit the text")
     else:
@@ -745,14 +842,82 @@ def save_edits(conn, document_id: str, member_id: str | None, base_version_id: s
         new_text = "\n".join(_apply_text_ops(paras, ops))
         stats = {"replaced": sum(o["op"] == "replace" for o in ops), "deleted": sum(o["op"] == "delete" for o in ops),
                  "inserted": sum(o["op"] == "insert_after" for o in ops)}
-        version = _create(conn, doc, member_id, text=new_text, note=note, origin="editor", label=None,
-                          storage_uri=None, mime=None, size=None)
-    conn.execute("DELETE FROM document_drafts WHERE document_id = %s AND member_id = %s", (document_id, member_id))
-    record_event(conn, document_id, member_id, "edit.save", version["version_id"], {"mode": mode, **stats, "note": note})
+        if head:
+            version = _amend(conn, doc, head, member_id, text=new_text, note=note, storage_uri=None, size=None)
+        else:
+            version = _create(conn, doc, member_id, text=new_text, note=note, origin=origin, label=None,
+                              storage_uri=None, mime=None, size=None)
+    if turn_id and not head:
+        conn.execute("UPDATE document_versions SET source_turn_id = %s WHERE version_id = %s", (turn_id, version["version_id"]))
+    if origin == "editor":
+        conn.execute("DELETE FROM document_drafts WHERE document_id = %s AND member_id = %s", (document_id, member_id))
+    from app.observability.metrics import WORKBENCH_SAVES
+
+    WORKBENCH_SAVES.labels(path="assistant_amend" if head else ("assistant" if origin == "assistant" else "paragraph_editor")).inc()
+    record_event(conn, document_id, member_id, "edit.amend" if head else "edit.save", version["version_id"],
+                 {"mode": mode, **stats, "note": note, "origin": origin})
     conn.commit()
     audit.record("document.edit", member_id=member_id, object_type="document", object_id=document_id,
-                 matter_id=doc["matter_id"], detail={"version_id": version["version_id"], "mode": mode, **stats})
-    return {"version_id": version["version_id"], "version_number": version["version_number"], "stats": stats, "mode": mode}
+                 matter_id=doc["matter_id"], detail={"version_id": version["version_id"], "mode": mode, "origin": origin,
+                                                     "amended": bool(head), **stats})
+    return {"version_id": version["version_id"], "version_number": version["version_number"], "stats": stats, "mode": mode,
+            "amended": bool(head)}
+
+
+def save_docx(conn, document_id: str, member_id: str | None, base_version_id: str, data: bytes, note: str = "",
+              token: str | None = None) -> dict:
+    """The full Word editor's save (plan 22, W2b): the edited .docx becomes the next version.
+
+    The editor writes tracked changes in the browser; their author and date are re-stamped here for every change that
+    was not already in the base version (``docx_restamp``), so a browser can never credit a change to someone else.
+    As with every save, the stored file is the clean document when the base was clean, and the tracked form is kept
+    only as the record of who changed what.
+    """
+    from app.config import settings
+    from app.documents import docx_review
+    from app.documents.docx_restamp import restamp_new_revisions
+    from app.documents.review import index_version, sync_comments
+    from app.ingest.extractors.dispatch import extract_from_bytes
+
+    doc = _document(conn, document_id)
+    _require(conn, member_id, doc, "edit")
+    if member_id is None:
+        raise EditError(400, "Sign in to edit documents")
+    if not data or data[:2] != b"PK":
+        raise EditError(422, "The editor did not send a Word file")
+    if len(data) > settings.max_upload_file_mb * 1024 * 1024:
+        raise EditError(413, f"Files are limited to {settings.max_upload_file_mb} MB")
+    _check_can_write(conn, document_id, member_id, token)
+    if base_version_id != doc["current_version_id"]:
+        raise EditError(409, "Someone saved a newer version while you were editing; reload to see it",
+                        {"current_version_id": doc["current_version_id"]})
+    ver = _version(conn, document_id, base_version_id)
+    base, kind = _file_of(doc, ver)
+    if kind not in ("docx", "none"):
+        raise EditError(422, "Only Word documents open in the full editor")
+    author = _member_name(conn, member_id)
+    marked, restamped = restamp_new_revisions(base, data, author)
+    clean = base is None or not docx_review.has_revisions(base)
+    out = docx_review.accept_everything(marked) if clean else marked
+    out = sync_comments(conn, doc, out)
+    number = _next_number(conn, document_id)
+    name = Path(doc["title"]).stem + ".docx"
+    uri = _store_version_file(doc, number, name, out, DOCX_MIME)
+    extracted = extract_from_bytes(name, docx_review.accept_everything(out))
+    version = _create(conn, doc, member_id, text=extracted.text, note=note, origin="editor", label=None,
+                      storage_uri=uri, mime=DOCX_MIME, size=len(out), page_spans=extracted.pages, is_clean=clean)
+    index_version(conn, doc, version["version_id"], marked if clean else out)
+    conn.execute("DELETE FROM document_drafts WHERE document_id = %s AND member_id = %s", (document_id, member_id))
+    from app.observability.metrics import WORKBENCH_SAVES
+
+    WORKBENCH_SAVES.labels(path="word_editor").inc()
+    record_event(conn, document_id, member_id, "edit.save", version["version_id"],
+                 {"mode": "full-editor", "note": note, "changes": restamped})
+    conn.commit()
+    audit.record("document.edit", member_id=member_id, object_type="document", object_id=document_id,
+                 matter_id=doc["matter_id"], detail={"version_id": version["version_id"], "mode": "full-editor",
+                                                     "changes": restamped})
+    return {"version_id": version["version_id"], "version_number": version["version_number"], "changes": restamped}
 
 
 def upload_version(conn, document_id: str, member_id: str | None, filename: str, data: bytes,
@@ -796,6 +961,48 @@ def upload_version(conn, document_id: str, member_id: str | None, filename: str,
     audit.record("document.version.upload", member_id=member_id, object_type="document", object_id=document_id,
                  matter_id=doc["matter_id"], detail={"version_id": version["version_id"], "filename": filename})
     return {"version_id": version["version_id"], "version_number": version["version_number"]}
+
+
+def copy_from(conn, document_id: str, member_id: str | None, source_document_id: str, source_version_id: str | None,
+              base_version_id: str | None, note: str = "", token: str | None = None) -> dict:
+    """Replace this document's content with another document's (a version of it) as this document's next version
+    (plan 22, W-R10). The source document is not changed, moved or deleted; it keeps its own history."""
+    from app import access
+
+    src_id = source_document_id.upper()
+    if src_id == document_id:
+        raise EditError(422, "Choose another document to copy from (use Restore for this document's own versions)")
+    try:
+        access.require_document_level(conn, member_id, src_id, "read", via="copy_from")
+    except access.AccessError as exc:
+        raise EditError(exc.status, exc.detail) from exc
+    src = _document(conn, src_id)
+    ver = _version(conn, src_id, source_version_id or src["current_version_id"])
+    if ver is None:
+        raise EditError(404, "Source version not found")
+    data, kind = _file_of(src, ver)
+    message = note or f"Content replaced with {src['title']} (v{ver['version_number']})"
+    if data:
+        ext = {"docx": ".docx", "pdf": ".pdf"}.get(kind, Path(ver.get("storage_uri") or "").suffix or ".txt")
+        out = upload_version(conn, document_id, member_id, Path(src["title"]).stem + ext, data, base_version_id,
+                             note=message, token=token)
+    else:
+        doc = _document(conn, document_id)
+        _require(conn, member_id, doc, "edit")
+        _check_can_write(conn, document_id, member_id, token)
+        if base_version_id and base_version_id != doc["current_version_id"]:
+            raise EditError(409, "A newer version was saved since you opened this document",
+                            {"current_version_id": doc["current_version_id"]})
+        version = _create(conn, doc, member_id, text=ver.get("body") or "", note=message, origin="copy", label=None,
+                          storage_uri=None, mime=None, size=None)
+        out = {"version_id": version["version_id"], "version_number": version["version_number"]}
+    conn.execute("UPDATE document_versions SET origin = 'copy' WHERE version_id = %s", (out["version_id"],))
+    record_event(conn, document_id, member_id, "version.copy_from", out["version_id"],
+                 {"source_document_id": src_id, "source_version_id": ver["version_id"]})
+    conn.commit()
+    return {**out, "source": {"document_id": src_id, "version_id": ver["version_id"], "title": src["title"],
+                              "unchanged": True,
+                              "note": "The source document is unchanged and keeps its own history."}}
 
 
 def _same_text(a: str, b: str) -> bool:
@@ -1070,17 +1277,93 @@ def commits(conn, document_id: str, member_id: str | None, limit: int = 100) -> 
         """
         SELECT v.version_id, v.version_number, v.version_label, v.change_summary AS message, v.author_name,
                v.created_by_member_id, v.origin, v.created_at, v.parent_version_id, v.restored_from_version_id,
-               v.is_clean, v.mime_type, v.source_storage_uri IS NOT NULL AS has_source_file, length(v.body) AS chars
-        FROM document_versions v WHERE v.document_id = %s ORDER BY v.version_number DESC LIMIT %s
+               v.is_clean, v.mime_type, v.source_storage_uri IS NOT NULL AS has_source_file, length(v.body) AS chars,
+               v.deleted_at, v.delete_reason, dm.name AS deleted_by_name
+        FROM document_versions v LEFT JOIN members dm ON dm.member_id = v.deleted_by
+        WHERE v.document_id = %s ORDER BY v.version_number DESC LIMIT %s
         """, (document_id, limit + 1)).fetchall()]
     older = {r["version_id"]: r for r in rows}
     out = []
     for r in rows[:limit]:
         parent = older.get(r["parent_version_id"] or "")
+        deleted = r["deleted_at"] is not None
         out.append({**r, "is_current": r["version_id"] == doc["current_version_id"],
-                    "kind": r["origin"] or "upload",
-                    "chars_delta": (r["chars"] - parent["chars"]) if parent else None})
+                    "kind": r["origin"] or "upload", "deleted": deleted,
+                    "chars_delta": None if deleted or not parent or parent["deleted_at"] else r["chars"] - parent["chars"]})
     return out
+
+
+def purge_version(conn, document_id: str, member_id: str | None, version_id: str, reason: str) -> dict:
+    """Delete one earlier version's content for good (plan 22 W-R8), e.g. on a client's instruction.
+
+    Its file (unless another version or document still uses the same bytes), raw upload, text, index, comments
+    and computed diffs are removed; the row stays in the history as "deleted — cannot be restored", with who and
+    why. The current version cannot be deleted (restore or save another first). Needs manage access.
+    """
+    from app.storage.blobs import is_referenced
+    from app.storage.object_store import get_object_store
+
+    doc = _document(conn, document_id)
+    _require(conn, member_id, doc, "manage")
+    why = (reason or "").strip()
+    if len(why) < 3:
+        raise EditError(422, "Say why this version is being deleted")
+    ver = _one(conn, "SELECT * FROM document_versions WHERE document_id = %s AND version_id = %s FOR UPDATE",
+               (document_id, version_id))
+    if ver is None:
+        raise EditError(404, "Version not found")
+    if ver["deleted_at"] is not None:
+        raise EditError(409, "This version was already deleted")
+    if version_id == doc["current_version_id"]:
+        raise EditError(409, "The current version cannot be deleted; restore or save another version first")
+    uris = [u for u in (ver["storage_uri"], ver["source_storage_uri"]) if u]
+    store = get_object_store()
+    digests = []
+    for u in uris:
+        try:
+            import hashlib
+
+            digests.append(hashlib.sha256(store.get(u)).hexdigest())
+        except Exception:  # noqa: BLE001 — a missing file is already gone
+            pass
+    conn.execute(
+        """UPDATE document_versions SET body = '', storage_uri = NULL, source_storage_uri = NULL, file_size_bytes = NULL,
+                  page_count = NULL, deleted_at = now(), deleted_by = %s, delete_reason = %s
+           WHERE version_id = %s""", (member_id, why[:500], version_id))
+    for table in ("document_blocks", "document_intelligence", "evidence_anchors", "findings", "document_revision_authors",
+                  "annotations", "chunks"):
+        conn.execute(f"DELETE FROM {table} WHERE version_id = %s", (version_id,))
+    conn.execute("DELETE FROM version_diffs WHERE source_version_id = %s OR target_version_id = %s", (version_id, version_id))
+    if uris:
+        conn.execute("UPDATE documents SET source_uri = NULL WHERE document_id = %s AND source_uri = ANY(%s)",
+                     (document_id, uris))
+        conn.execute("UPDATE upload_batch_files SET storage_uri = 'purged://' || content_sha256 "
+                     "WHERE document_id = %s AND storage_uri = ANY(%s)", (document_id, uris))
+    record_event(conn, document_id, member_id, "version.purge", version_id,
+                 {"version_number": ver["version_number"], "reason": why[:500]})
+    conn.commit()
+    removed = 0
+    for u in uris:
+        if is_referenced(conn, u):
+            continue  # the same bytes are another version's or another document's: they stay
+        try:
+            store.delete(u)
+            removed += 1
+        except FileNotFoundError:
+            pass
+        conn.execute("DELETE FROM blobs WHERE storage_uri = %s", (u,))
+    if removed:
+        from app.documents.pdf_render import _cache_dir
+
+        for d in digests:
+            (_cache_dir() / f"{d}.pdf").unlink(missing_ok=True)
+    conn.commit()
+    for k in [k for k in _BLAME_CACHE if k[0] == document_id]:
+        _BLAME_CACHE.pop(k, None)
+    audit.record("document.version.purge", member_id=member_id, object_type="document", object_id=document_id,
+                 matter_id=doc["matter_id"], detail={"version_id": version_id, "version_number": ver["version_number"],
+                                                     "reason": why[:500], "files_removed": removed})
+    return {"version_id": version_id, "version_number": ver["version_number"], "deleted": True, "files_removed": removed}
 
 
 _BLAME_CACHE: dict[tuple[str, str, int], list[dict]] = {}
@@ -1113,7 +1396,8 @@ def blame(conn, document_id: str, member_id: str | None, version_id: str | None 
                 "depth": depth}
     rows = [dict(r) for r in conn.execute(
         """SELECT version_id, version_number, body, author_name, created_at, change_summary FROM document_versions
-           WHERE document_id = %s AND version_number <= %s ORDER BY version_number DESC LIMIT %s""",
+           WHERE document_id = %s AND version_number <= %s AND deleted_at IS NULL
+           ORDER BY version_number DESC LIMIT %s""",
         (document_id, target["version_number"], depth)).fetchall()][::-1]
     first = rows[0]
     reaches_start = first["version_number"] == min(

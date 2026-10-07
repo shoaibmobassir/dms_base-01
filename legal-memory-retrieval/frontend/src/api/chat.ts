@@ -8,11 +8,16 @@ export function listSessions() {
 }
 
 /** No title: the server titles the conversation from its first question. */
-export function createSession(model?: string, matterId?: string) {
+export function createSession(model?: string, matterId?: string, workspace?: { kind: 'matter' | 'project' | 'library'; id: string }) {
   return apiFetch<ChatSession>('/api/chat/sessions', {
     method: 'POST',
-    body: JSON.stringify({ model, matter_id: matterId || undefined }),
+    body: JSON.stringify({ model, matter_id: matterId || undefined, workspace_kind: workspace?.kind, workspace_id: workspace?.id }),
   })
+}
+
+/** The caller's conversations in one workspace (the workbench's Assistant), newest first. */
+export function listWorkspaceSessions(kind: 'matter' | 'project' | 'library', id: string) {
+  return apiFetch<ChatSession[]>(`/api/chat/sessions?workspace_kind=${kind}&workspace_id=${enc(id)}&limit=20`)
 }
 
 /** Pin or unpin a conversation, or limit it to a matter ("" clears the matter). */

@@ -58,10 +58,11 @@ def test_clients_list() -> None:
     assert resp.json()["service"] == "clients"
 
 
-def test_legacy_projects_unmounted_by_default() -> None:
-    # No UI since the frontend prune; re-enable with ENABLE_LEGACY_PROJECTS=true.
+def test_projects_are_workspaces() -> None:
+    # The legacy matter-bound projects router is gone; /api/projects lists the caller's workspaces (plan 22).
     client = TestClient(app)
-    assert client.get("/api/projects?limit=5", headers=HEADERS).status_code == 404
+    r = client.get("/api/projects?limit=5", headers=HEADERS)
+    assert r.status_code == 200 and "items" in r.json()
 
 
 def test_teams_list() -> None:

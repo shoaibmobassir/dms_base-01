@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from app import access
-from app.api.acl import ACL_CLAUSE, doc_acl
+from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 from app.firm import one
 
 
@@ -30,14 +30,21 @@ def events_since(conn, member_id: str | None, since: int, limit: int = 200) -> l
     docs = [r["document_id"] for r in rows if r["document_id"]]
     readable_docs = {r["document_id"] for r in conn.execute(
         f"""SELECT d.document_id FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
-            WHERE d.document_id = ANY(%(ids)s) AND {ACL_CLAUSE} AND {doc_acl('d')}""",
+            WHERE d.document_id = ANY(%(ids)s) AND {doc_read('d')}""",
         {"ids": docs, "member_id": member_id})} if docs else set()
     risk = access.has_permission(conn, member_id, "conflicts.decide")
+    projects: set[str] = set()
+    if any(r["entity_type"] == "project" for r in rows):
+        from app.workspaces.projects import visible_project_ids
+
+        projects = visible_project_ids(conn, member_id) or set()
     out = []
     for r in rows:
         if r["matter_id"] and r["matter_id"] not in matters:
             continue
         if r["document_id"] and r["document_id"] not in readable_docs:
+            continue
+        if r["entity_type"] == "project" and r["entity_id"] not in projects:
             continue
         if r["entity_type"] == "conflict_check" and not risk and r["actor"] != member_id:
             continue

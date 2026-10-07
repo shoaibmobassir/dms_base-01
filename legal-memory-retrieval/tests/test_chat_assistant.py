@@ -521,7 +521,9 @@ class TestToolSchemas:
         assert len(WORKFLOW_TOOLS) == 2  # list_workflows, read_workflow
 
     def test_all_tools_merged(self):
-        assert len(ALL_TOOLS) == len(CORE_TOOLS) + len(RESEARCH_TOOLS) + len(WORKFLOW_TOOLS)
+        from app.chat.tools.schema import WORKSPACE_TOOLS
+
+        assert len(ALL_TOOLS) == len(CORE_TOOLS) + len(RESEARCH_TOOLS) + len(WORKFLOW_TOOLS) + len(WORKSPACE_TOOLS)
         names = [t["function"]["name"] for t in ALL_TOOLS]
         assert len(names) == len(set(names))
 

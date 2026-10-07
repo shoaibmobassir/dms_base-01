@@ -41,3 +41,9 @@ distribution method changes (e.g. static compilation or bundling).
 ## Adding new dependencies
 
 See `DEPENDENCY_AUDIT.md` for the audit protocol and approval workflow.
+
+## @stll/folio-react, @stll/folio-core (Apache-2.0)
+
+Copyright stella contributors; includes code from Eigenpal docx-editor (Apache-2.0). See the packages' LICENSE and NOTICE.md.
+
+## use-intl (MIT)

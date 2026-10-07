@@ -32,9 +32,17 @@ const LABELS: Record<string, string> = {
   admin: "Admin",
   history: "Draft evolution",
   edit: "Edit",
+  write: "Word editor",
+  projects: "Projects",
 };
 
-const RECORD_KEYS: Record<string, string> = { matters: "matter", documents: "document", clients: "client", people: "person" };
+const RECORD_KEYS: Record<string, string> = {
+  matters: "matter",
+  documents: "document",
+  clients: "client",
+  people: "person",
+  projects: "project",
+};
 
 /** Title of a record the current page has already loaded (no extra request). */
 function useRecordTitle(section: string | undefined, id: string | undefined): string | undefined {
@@ -79,14 +87,25 @@ function Crumbs() {
   const { pathname } = useLocation();
   const { firm } = useApp();
   const segs = pathname.split("/").filter(Boolean);
-  const recordTitle = useRecordTitle(segs[0], segs[1]);
+  // A workbench (/work/:kind/:id) sits under its kind of workspace: Projects, Matters or My library.
+  const work = segs[0] === "work" ? (segs[1] as "matter" | "project" | "library" | "firm" | undefined) : undefined;
+  const recordTitle = useRecordTitle(work ? (work === "project" ? "projects" : work === "matter" ? "matters" : undefined) : segs[0], work ? segs[2] : segs[1]);
   const crumbs: { label: string; to: string }[] = [{ label: firm?.name || "Home", to: "/" }];
-  let acc = "";
-  segs.forEach((s, i) => {
-    acc += `/${s}`;
-    const label = i === 1 && recordTitle ? recordTitle : LABELS[s] || decodeURIComponent(s);
-    crumbs.push({ label, to: acc });
-  });
+  if (work) {
+    if (work === "library") crumbs.push({ label: "My library", to: pathname });
+    else if (work === "firm") crumbs.push({ label: "Firm templates", to: pathname });
+    else {
+      crumbs.push(work === "project" ? { label: "Projects", to: "/projects" } : { label: "Matters", to: "/matters" });
+      crumbs.push({ label: recordTitle ?? decodeURIComponent(segs[2] ?? ""), to: pathname });
+    }
+  } else {
+    let acc = "";
+    segs.forEach((s, i) => {
+      acc += `/${s}`;
+      const label = i === 1 && recordTitle ? recordTitle : LABELS[s] || decodeURIComponent(s);
+      crumbs.push({ label, to: acc });
+    });
+  }
   // The tab title follows the page: "Matters · Precentis", "Acme v. Union · Precentis".
   usePageTitle(segs.length === 0 ? "Home" : crumbs[crumbs.length - 1].label);
   return (

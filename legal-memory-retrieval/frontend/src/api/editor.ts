@@ -81,6 +81,10 @@ export type Commit = {
   chars: number
   /** Size change against the parent (characters); null for the first version. */
   chars_delta: number | null
+  /** The version's content was deleted for good (plan 22); the entry stays in the history. */
+  deleted?: boolean
+  delete_reason?: string | null
+  deleted_by_name?: string | null
 }
 
 export type BlameParagraph = {
@@ -219,6 +223,18 @@ export async function uploadVersion(id: string, file: File, opts: { baseVersionI
   return (await res.json()) as { version_id: string; version_number: number }
 }
 
+/** The full Word editor's save (plan 22, W2b): the edited file becomes the next version; the server credits its new
+ * changes to the signed-in member. */
+export async function saveDocx(id: string, data: ArrayBuffer, opts: { baseVersionId: string; note?: string }) {
+  const form = new FormData()
+  form.append('file', new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), 'document.docx')
+  form.append('base_version_id', opts.baseVersionId)
+  if (opts.note) form.append('note', opts.note)
+  const res = await fetch(`${base(id)}/save-docx`, { method: 'POST', body: form, headers: { ...authHeaders(), ...lockHeaders(id) }, credentials: 'same-origin' })
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  return (await res.json()) as { version_id: string; version_number: number; changes: number }
+}
+
 // ── comments on the exact view (E6) ──────────────────────────────────────────
 
 /** An area of a page, as fractions of its width and height (0..1). */
@@ -347,3 +363,13 @@ export const applyReview = (
 ) => apiFetch<{ version_id: string; version_number: number; changes: number; by_author: Record<string, number>; note: string }>(
   `${base(id)}/review`, withLock(id, json('POST', body)))
 export const downloadWithCommentsUrl = (id: string) => `${base(id)}/download-with-comments`
+
+/** Delete an earlier version's content for good; the history keeps a "deleted" entry (managers only). */
+export const purgeVersion = (id: string, versionId: string, reason: string) =>
+  apiFetch<{ version_id: string; version_number: number; files_removed: number }>(
+    `${base(id)}/versions/${encodeURIComponent(versionId)}/purge`, { method: 'POST', body: JSON.stringify({ reason }) })
+
+/** Make another document's content this document's next version; the other document is unchanged. */
+export const copyContentFrom = (id: string, body: { source_document_id: string; base_version_id?: string; note?: string }) =>
+  apiFetch<{ version_id: string; version_number: number; source: { title: string; note: string } }>(
+    `${base(id)}/versions/copy-from`, { method: 'POST', body: JSON.stringify(body) })

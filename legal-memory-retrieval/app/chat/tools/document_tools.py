@@ -487,11 +487,11 @@ def _readable(conn: Any, member_id: str | None, document_id: str) -> bool:
     documents (e.g. generated files) are left to their own owner check."""
     from psycopg.rows import dict_row
 
-    from app.api.acl import ACL_CLAUSE, doc_acl
+    from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
-            f"""SELECT ({ACL_CLAUSE} AND {doc_acl('d')}) AS ok FROM documents d
+            f"""SELECT ({doc_read('d')}) AS ok FROM documents d
                 LEFT JOIN permissions p ON p.matter_id = d.matter_id WHERE d.document_id = %(id)s""",
             {"id": str(document_id).upper(), "member_id": member_id},
         )

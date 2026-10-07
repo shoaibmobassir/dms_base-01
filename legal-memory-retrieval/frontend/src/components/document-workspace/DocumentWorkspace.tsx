@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useDocument,
@@ -27,6 +27,7 @@ import { FindInDocument } from "@/components/document-workspace/FindInDocument";
 import { CommentsPanel, SelectionComment, useDocComments } from "@/components/comments/DocComments";
 import type { ViewerTarget } from "@/components/viewer/DocumentViewer";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { DocumentPlacesPanel } from "@/components/workbench/DocumentPlacesPanel";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { HistoryPanel } from "@/components/document-workspace/HistoryPanel";
@@ -72,14 +73,45 @@ function parseAddress(params: URLSearchParams): Address {
   };
 }
 
+/** The width of the workbench pane a document is shown in (null outside a workbench, where the window decides). */
+/** The width of the workbench pane a document is shown in (null outside a workbench, where the window decides). */
+function useFrameWidth(enabled: boolean, ref: RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!enabled || !el) return;
+    setWidth(Math.round(el.getBoundingClientRect().width));
+    const ro = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [enabled, ref]);
+  return enabled ? width : null;
+}
+
 function isTypingTarget(el: EventTarget | null) {
   if (!(el instanceof HTMLElement)) return false;
   const tag = el.tagName;
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
 }
 
-export function DocumentWorkspace({ documentId }: { documentId: string }) {
-  const [params, setParams] = useSearchParams();
+export type ParamsState = [URLSearchParams, ReturnType<typeof useSearchParams>[1]];
+
+/**
+ * A document's page. On its own route it keeps its place (version, page, panel) in the URL; inside a workbench
+ * tab the tab passes ``paramsState`` (the same shape, kept in memory per tab) and ``keyboardActive`` so only the
+ * focused editor group answers the page keys.
+ */
+export function DocumentWorkspace({
+  documentId,
+  paramsState,
+  keyboardActive = true,
+}: {
+  documentId: string;
+  paramsState?: ParamsState;
+  keyboardActive?: boolean;
+}) {
+  const urlState = useSearchParams();
+  const [params, setParams] = paramsState ?? urlState;
   const address = parseAddress(params);
   const doc = useDocument(documentId, { lean: true });
 
@@ -103,6 +135,8 @@ export function DocumentWorkspace({ documentId }: { documentId: string }) {
           panelParam={params.get("panel")}
           commentParam={params.get("comment")}
           highlightChunk={address.chunkId}
+          keyboardActive={keyboardActive}
+          embedded={!!paramsState}
         />
       )}
     </QueryState>
@@ -116,6 +150,8 @@ function WorkspaceFrame({
   panelParam,
   commentParam,
   highlightChunk,
+  keyboardActive = true,
+  embedded = false,
 }: {
   doc: DocumentDetail;
   address: Address;
@@ -124,6 +160,9 @@ function WorkspaceFrame({
   /** A comment to open (a link from the Assistant's "comments added" card). */
   commentParam?: string | null;
   highlightChunk?: string;
+  keyboardActive?: boolean;
+  /** Inside a workbench tab: lay out by the pane's width, not the window's. */
+  embedded?: boolean;
 }) {
   const versions = useDocumentVersions(doc.document_id);
   const versionRows = versions.data ?? [];
@@ -204,8 +243,12 @@ function WorkspaceFrame({
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   // Below these widths the rails are drawers, opened from the toolbar.
-  const isMd = useMediaQuery("(min-width: 768px)");
-  const isLg = useMediaQuery("(min-width: 1024px)");
+  const isMdWindow = useMediaQuery("(min-width: 768px)");
+  const isLgWindow = useMediaQuery("(min-width: 1024px)");
+  const frameRef = useRef<HTMLDivElement>(null);
+  const frameWidth = useFrameWidth(embedded, frameRef);
+  const isMd = frameWidth != null ? frameWidth >= 768 : isMdWindow;
+  const isLg = frameWidth != null ? frameWidth >= 1024 : isLgWindow;
   const [leftSheet, setLeftSheet] = useState(false);
   const [rightSheet, setRightSheet] = useState(false);
   // "Review changes" opens History on what the current version changed against the one before it.
@@ -227,6 +270,7 @@ function WorkspaceFrame({
   }, [address.part, part, setAddress]);
 
   useEffect(() => {
+    if (!keyboardActive) return;
     const onKey = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target)) return;
       const meta = e.metaKey || e.ctrlKey;
@@ -262,7 +306,7 @@ function WorkspaceFrame({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [goToPart, part, unitTotal]);
+  }, [goToPart, part, unitTotal, keyboardActive]);
 
   const outline = useDocumentOutline(doc.document_id, openVersionId);
   // Plain files with no headings have no outline: show only the page list.
@@ -417,7 +461,10 @@ function WorkspaceFrame({
 
   return (
     <div
-      ref={workspaceRef}
+      ref={(el) => {
+        workspaceRef.current = el;
+        frameRef.current = el;
+      }}
       tabIndex={-1}
       className="flex h-full min-h-0 flex-col overflow-hidden outline-none"
       data-testid="document-workspace"
@@ -451,6 +498,7 @@ function WorkspaceFrame({
         onToggleRight={() => (isLg ? setRightOpen((v) => !v) : setRightSheet((v) => !v))}
         leftOpen={isMd ? leftOpen : leftSheet}
         rightOpen={isLg ? rightOpen : rightSheet}
+        compact={frameWidth != null && frameWidth < 900}
       />
 
       {findOpen && (
@@ -701,6 +749,7 @@ function Toolbar({
   onToggleRight,
   leftOpen,
   rightOpen,
+  compact = false,
 }: {
   /** What dragging the page being read to the Assistant carries. */
   dragCurrent: PageDrag;
@@ -727,6 +776,8 @@ function Toolbar({
   onToggleRight: () => void;
   leftOpen: boolean;
   rightOpen: boolean;
+  /** A narrow pane: the title takes its own line. */
+  compact?: boolean;
 }) {
   const { toast } = useApp();
   const [draft, setDraft] = useState(String(part));
@@ -765,7 +816,7 @@ function Toolbar({
         <Icon name="view_sidebar" style={{ fontSize: 20 }} />
       </button>
 
-      <div className="min-w-0 flex-1 basis-[calc(100%-3rem)] sm:basis-0">
+      <div className={cn("min-w-0 flex-1", compact ? "basis-[calc(100%-3rem)]" : "basis-[calc(100%-3rem)] sm:basis-0")}>
         <div className="flex flex-wrap items-baseline gap-2">
           <h1 className="truncate font-display text-lg text-ink" data-testid="document-title">
             {doc.title}
@@ -900,6 +951,13 @@ function Toolbar({
         </Button>
       )}
       {doc.matter_id && <ArchiveDocument documentId={doc.document_id} matterId={doc.matter_id} title={doc.title} />}
+      {/word|docx/i.test((doc.mime_type ?? "") + doc.title) && (
+        <Button asChild size="sm" variant="outline" data-testid="document-write" title="Tables, headers, footnotes and tracked changes, as in Word">
+          <Link to={`/documents/${encodeURIComponent(doc.document_id)}/write`}>
+            <Icon name="edit_document" style={{ fontSize: 16 }} /> Word editor
+          </Link>
+        </Button>
+      )}
       <Button asChild size="sm" variant="outline" data-testid="document-edit">
         <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>
           <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit
@@ -1193,6 +1251,7 @@ function InfoPanel({
           </Link>
         </div>
       )}
+      <DocumentPlacesPanel documentId={doc.document_id} title={doc.title} />
     </div>
   );
 }

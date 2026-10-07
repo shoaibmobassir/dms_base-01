@@ -23,7 +23,7 @@ class HierarchicalChunk:
     chunk_id: str
     version_id: str
     document_id: str
-    matter_id: str
+    matter_id: str | None
     folder_path: str
     chunk_index: int
     text: str
@@ -64,7 +64,7 @@ def build_hierarchical_chunks(
     *,
     document_id: str,
     version_id: str,
-    matter_id: str,
+    matter_id: str | None,
     folder_path: str = "",
     max_chars: int = 1200,
 ) -> list[HierarchicalChunk]:
@@ -260,7 +260,7 @@ def build_context_envelope_for_chunk(
                        v.version_number
                 FROM chunks c
                 JOIN documents d ON d.document_id = c.document_id
-                JOIN matters m ON m.matter_id = c.matter_id
+                LEFT JOIN matters m ON m.matter_id = c.matter_id
                 LEFT JOIN document_versions v ON v.version_id = c.version_id
                 WHERE c.chunk_id = %(cid)s
                 """,
