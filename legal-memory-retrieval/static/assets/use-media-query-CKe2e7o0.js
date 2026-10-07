@@ -1,1 +1,0 @@
-import{h as e,p as t}from"./client-5qPyIUzR.js";var n=e(t(),1);function r(e){let[t,r]=(0,n.useState)(()=>window.matchMedia(e).matches);return(0,n.useEffect)(()=>{let t=window.matchMedia(e),n=()=>r(t.matches);return n(),t.addEventListener(`change`,n),()=>t.removeEventListener(`change`,n)},[e]),t}export{r as t};
