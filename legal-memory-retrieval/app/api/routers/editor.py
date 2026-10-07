@@ -169,6 +169,32 @@ async def post_save_docx(document_id: str, file: UploadFile = File(...), base_ve
     return _run(editing.save_docx, document_id.upper(), member_id, base_version_id, data, note[:1000], token)
 
 
+@router.put("/documents/{document_id}/draft-docx")
+async def put_draft_docx(document_id: str, file: UploadFile = File(...), base_version_id: str = Form(...),
+                         token: str | None = LockToken, member_id: str | None = Depends(resolve_member)) -> dict:
+    """Autosave of the Word editor: this person's unsaved file (not a version)."""
+    return _run(editing.save_docx_draft, document_id.upper(), member_id, base_version_id, await file.read(), token)
+
+
+@router.get("/documents/{document_id}/draft-docx/info")
+def get_draft_docx_info(document_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return {"draft": _run(editing.docx_draft_info, document_id.upper(), member_id)}
+
+
+@router.get("/documents/{document_id}/draft-docx")
+def get_draft_docx(document_id: str, member_id: str | None = Depends(resolve_member)):
+    from fastapi.responses import Response
+
+    data = _run(editing.read_docx_draft, document_id.upper(), member_id)
+    return Response(content=data, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers={"Cache-Control": "no-store"})
+
+
+@router.delete("/documents/{document_id}/draft-docx", status_code=204)
+def delete_draft_docx(document_id: str, member_id: str | None = Depends(resolve_member)) -> None:
+    _run(editing.discard_docx_draft, document_id.upper(), member_id)
+
+
 class CopyFromBody(BaseModel):
     source_document_id: str
     source_version_id: str | None = None

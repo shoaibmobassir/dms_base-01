@@ -16,6 +16,7 @@ import {
   type WorkspaceItem,
   type WorkspaceKind,
 } from "@/api/workspaces";
+import { copyContentFrom } from "@/api/editor";
 import { useConfirm } from "@/components/common/Confirm";
 import { Icon } from "@/components/common/primitives";
 import {
@@ -41,7 +42,13 @@ type Ctx = {
   ask: (a: Ask) => void;
   removeFolder: (path: string) => void;
   unlink: (doc: WorkspaceDocument) => void;
+  /** A document dragged onto a folder (or the top level): file it there. */
+  moveDoc: (documentId: string, folder: string) => void;
+  /** A document dragged onto another document: replace the target's content with it (after a confirmation). */
+  replaceFrom: (source: { documentId: string; title: string }, target: WorkspaceDocument) => void;
 };
+
+const DOC_DRAG = "application/x-precentis-explorer-doc";
 
 type Ask =
   | { type: "new-folder"; parent: string }
@@ -100,7 +107,25 @@ export function Explorer({
       if (await confirm({ title: `Remove “${doc.title}” from this workspace?`, description: "The document itself is not deleted; it stays where it lives.", confirmLabel: "Remove" }))
         await unlinkDocument(doc.document_id, kind, id);
     });
-  const ctx: Ctx = { kind, id, canEdit, activeDocumentId, onOpen, onUpload, ask: setAsking, removeFolder, unlink };
+  const moveDoc = (documentId: string, folder: string) =>
+    void guarded(async () => {
+      await placeInFolder(documentId, { kind, id, folder });
+      toast(folder ? `Moved to ${folder}` : "Moved to the top level");
+    });
+  const replaceFrom = (source: { documentId: string; title: string }, target: WorkspaceDocument) =>
+    void guarded(async () => {
+      const ok = await confirm({
+        title: `Replace the content of “${target.title}”?`,
+        description:
+          `“${target.title}” gets a new version with the content of “${source.title}”. ` +
+          `“${source.title}” is not changed and keeps its own history; the earlier versions of “${target.title}” stay in its history and can be restored.`,
+        confirmLabel: "Replace content",
+      });
+      if (!ok) return;
+      const out = await copyContentFrom(target.document_id, { source_document_id: source.documentId });
+      toast(`“${target.title}” is now version ${out.version_number}, with the content of “${source.title}”`);
+    });
+  const ctx: Ctx = { kind, id, canEdit, activeDocumentId, onOpen, onUpload, ask: setAsking, removeFolder, unlink, moveDoc, replaceFrom };
   const close = () => setAsking(null);
 
   const docAsk = asking && "doc" in asking ? asking : null;
@@ -120,7 +145,18 @@ export function Explorer({
         )}
         <IconButton icon="refresh" label="Refresh" onClick={() => void refresh()} />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto py-1" role="tree" aria-label={`${label} files`}>
+      <div
+        className="min-h-0 flex-1 overflow-y-auto py-1"
+        role="tree"
+        aria-label={`${label} files`}
+        onDragOver={(e) => { if (canEdit && e.dataTransfer.types.includes(DOC_DRAG)) e.preventDefault(); }}
+        onDrop={(e) => {
+          const raw = e.dataTransfer.getData(DOC_DRAG);
+          if (!canEdit || !raw) return;
+          e.preventDefault();
+          moveDoc((JSON.parse(raw) as { documentId: string }).documentId, "");
+        }}
+      >
         <FolderContents ctx={ctx} folder="" depth={0} />
       </div>
 
@@ -260,7 +296,7 @@ function FolderNode({ ctx, folder, depth }: { ctx: Ctx; folder: WorkspaceFolder;
         className={cn("group flex items-center gap-1 py-[3px] pr-2 text-[13px] hover:bg-secondary/70", over && "bg-wine-soft")}
         style={{ paddingLeft: 8 + depth * 14 }}
         onDragOver={(e) => {
-          if (ctx.canEdit && e.dataTransfer.types.includes("Files")) {
+          if (ctx.canEdit && (e.dataTransfer.types.includes("Files") || e.dataTransfer.types.includes(DOC_DRAG))) {
             e.preventDefault();
             setOver(true);
           }
@@ -268,6 +304,13 @@ function FolderNode({ ctx, folder, depth }: { ctx: Ctx; folder: WorkspaceFolder;
         onDragLeave={() => setOver(false)}
         onDrop={(e) => {
           setOver(false);
+          const raw = e.dataTransfer.getData(DOC_DRAG);
+          if (ctx.canEdit && raw) {
+            e.preventDefault();
+            e.stopPropagation();
+            ctx.moveDoc((JSON.parse(raw) as { documentId: string }).documentId, folder.path);
+            return;
+          }
           dropFiles(e, ctx, folder.path);
         }}
         data-testid="explorer-folder"
@@ -317,18 +360,46 @@ function DocumentNode({ ctx, item, depth }: { ctx: Ctx; item: WorkspaceItem; dep
       </div>
     );
   }
-  const doc = item;
+  return <DocumentRow ctx={ctx} doc={item} depth={depth} />;
+}
+
+function DocumentRow({ ctx, doc, depth }: { ctx: Ctx; doc: WorkspaceDocument; depth: number }) {
   const active = ctx.activeDocumentId === doc.document_id;
   const open = (e: ReactMouseEvent, preview: boolean) =>
     ctx.onOpen({ documentId: doc.document_id, title: doc.title, preview, toSide: e.altKey || e.metaKey || e.ctrlKey });
   const canFile = ctx.canEdit && doc.home_kind !== "matter" && doc.placement === "home";
+  const [over, setOver] = useState(false);
   return (
     <div
       role="treeitem"
       aria-selected={active}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData(DOC_DRAG, JSON.stringify({ documentId: doc.document_id, title: doc.title }));
+        e.dataTransfer.setData("text/plain", doc.title);
+        e.dataTransfer.effectAllowed = "copyMove";
+      }}
+      onDragOver={(e) => {
+        if (ctx.canEdit && e.dataTransfer.types.includes(DOC_DRAG)) {
+          e.preventDefault();
+          e.stopPropagation();
+          setOver(true);
+        }
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        setOver(false);
+        const raw = e.dataTransfer.getData(DOC_DRAG);
+        if (!ctx.canEdit || !raw) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const source = JSON.parse(raw) as { documentId: string; title: string };
+        if (source.documentId !== doc.document_id) ctx.replaceFrom(source, doc);
+      }}
       className={cn(
         "group flex items-center gap-1.5 py-[3px] pr-2 text-[13px]",
         active ? "bg-wine-soft text-wine" : "hover:bg-secondary/70",
+        over && "outline outline-1 -outline-offset-1 outline-wine",
       )}
       style={{ paddingLeft: 26 + depth * 14 }}
       data-testid="explorer-document"

@@ -88,3 +88,44 @@ def test_stale_unauthorised_and_non_word_saves_are_refused(client, doc, people):
     stale = client.post(f"/api/editor/documents/{doc}/save-docx", headers=as_member(people["editor"]),
                         files={"file": ("x.docx", edited, DOCX)}, data={"base_version_id": base})
     assert stale.status_code == 409
+
+
+def test_autosaved_word_draft_is_private_current_only_and_cleared_by_a_save(client, doc, people):
+    base = _model(client, doc, people["editor"])["base_version_id"]
+    edited = _with_tracked_insert(_file(doc), "x", "draft words")
+    h = as_member(people["editor"])
+    put = client.put(f"/api/editor/documents/{doc}/draft-docx", headers=h, files={"file": ("d.docx", edited, DOCX)},
+                     data={"base_version_id": base})
+    assert put.status_code == 200, put.text
+    info = client.get(f"/api/editor/documents/{doc}/draft-docx/info", headers=h).json()["draft"]
+    assert info["current"] and info["size_bytes"] == len(edited)
+    assert client.get(f"/api/editor/documents/{doc}/draft-docx", headers=h).content == edited
+    # someone else sees no draft and cannot read it
+    other = as_member(people["editor2"])
+    assert client.get(f"/api/editor/documents/{doc}/draft-docx/info", headers=other).json()["draft"] is None
+    assert client.get(f"/api/editor/documents/{doc}/draft-docx", headers=other).status_code == 404
+    assert client.put(f"/api/editor/documents/{doc}/draft-docx", headers=as_member(people["outsider"]),
+                      files={"file": ("d.docx", edited, DOCX)}, data={"base_version_id": base}).status_code in (403, 404)
+    assert client.put(f"/api/editor/documents/{doc}/draft-docx", headers=h, files={"file": ("d.docx", b"nope", DOCX)},
+                      data={"base_version_id": base}).status_code == 422
+    # saving a version removes the draft (and its file)
+    assert client.post(f"/api/editor/documents/{doc}/save-docx", headers=h, files={"file": ("x.docx", edited, DOCX)},
+                       data={"base_version_id": base}).status_code == 201
+    assert client.get(f"/api/editor/documents/{doc}/draft-docx/info", headers=h).json()["draft"] is None
+    with connect() as conn:
+        assert conn.execute("SELECT count(*) AS n FROM document_docx_drafts WHERE document_id = %s", (doc,)).fetchone()["n"] == 0
+
+
+def test_a_draft_on_an_older_version_is_not_offered(client, doc, people):
+    base = _model(client, doc, people["editor"])["base_version_id"]
+    h = as_member(people["editor"])
+    edited = _with_tracked_insert(_file(doc), "x", "late words")
+    assert client.put(f"/api/editor/documents/{doc}/draft-docx", headers=h, files={"file": ("d.docx", edited, DOCX)},
+                      data={"base_version_id": base}).status_code == 200
+    # a colleague saves a newer version
+    assert client.post(f"/api/editor/documents/{doc}/save-docx", headers=as_member(people["editor2"]),
+                       files={"file": ("x.docx", _with_tracked_insert(_file(doc), "y", "newer"), DOCX)},
+                       data={"base_version_id": base}).status_code == 201
+    info = client.get(f"/api/editor/documents/{doc}/draft-docx/info", headers=h).json()["draft"]
+    assert info is not None and info["current"] is False
+    assert client.get(f"/api/editor/documents/{doc}/draft-docx", headers=h).status_code == 404

@@ -908,6 +908,8 @@ def save_docx(conn, document_id: str, member_id: str | None, base_version_id: st
                       storage_uri=uri, mime=DOCX_MIME, size=len(out), page_spans=extracted.pages, is_clean=clean)
     index_version(conn, doc, version["version_id"], marked if clean else out)
     conn.execute("DELETE FROM document_drafts WHERE document_id = %s AND member_id = %s", (document_id, member_id))
+    conn.commit()
+    discard_docx_draft(conn, document_id, member_id)
     from app.observability.metrics import WORKBENCH_SAVES
 
     WORKBENCH_SAVES.labels(path="word_editor").inc()
@@ -918,6 +920,77 @@ def save_docx(conn, document_id: str, member_id: str | None, base_version_id: st
                  matter_id=doc["matter_id"], detail={"version_id": version["version_id"], "mode": "full-editor",
                                                      "changes": restamped})
     return {"version_id": version["version_id"], "version_number": version["version_number"], "changes": restamped}
+
+
+def _docx_draft_key(document_id: str, member_id: str) -> str:
+    from app.config import settings
+    from app.storage.object_store import sanitize_segment
+
+    return f"{sanitize_segment(settings.tenant_id)}/drafts/{sanitize_segment(document_id)}/{sanitize_segment(member_id)}.docx"
+
+
+def save_docx_draft(conn, document_id: str, member_id: str | None, base_version_id: str, data: bytes,
+                    token: str | None = None) -> dict:
+    """Keep the Word editor's unsaved file for this person (autosave). Nothing becomes a version."""
+    from app.config import settings
+    from app.storage.object_store import get_object_store
+
+    doc = _document(conn, document_id)
+    _require(conn, member_id, doc, "edit")
+    if member_id is None:
+        raise EditError(400, "Sign in to edit documents")
+    if not data or data[:2] != b"PK":
+        raise EditError(422, "The editor did not send a Word file")
+    if len(data) > settings.max_upload_file_mb * 1024 * 1024:
+        raise EditError(413, f"Files are limited to {settings.max_upload_file_mb} MB")
+    _check_draft_window(conn, document_id, member_id, token)
+    uri = get_object_store().put(_docx_draft_key(document_id, member_id), data, content_type=DOCX_MIME)
+    conn.execute(
+        """INSERT INTO document_docx_drafts (document_id, member_id, base_version_id, storage_uri, size_bytes, updated_at)
+           VALUES (%s, %s, %s, %s, %s, now())
+           ON CONFLICT (document_id, member_id) DO UPDATE SET base_version_id = EXCLUDED.base_version_id,
+               storage_uri = EXCLUDED.storage_uri, size_bytes = EXCLUDED.size_bytes, updated_at = now()""",
+        (document_id, member_id, base_version_id, uri, len(data)))
+    conn.commit()
+    return {"saved_at": _now().isoformat(), "bytes": len(data)}
+
+
+def docx_draft_info(conn, document_id: str, member_id: str | None) -> dict | None:
+    """The person's saved draft, and whether it still sits on the current version."""
+    doc = _document(conn, document_id)
+    _require(conn, member_id, doc, "edit")
+    row = _one(conn, "SELECT base_version_id, size_bytes, updated_at FROM document_docx_drafts "
+                     "WHERE document_id = %s AND member_id = %s", (document_id, member_id))
+    if row is None:
+        return None
+    return {**row, "current": row["base_version_id"] == doc["current_version_id"]}
+
+
+def read_docx_draft(conn, document_id: str, member_id: str | None) -> bytes:
+    from app.storage.object_store import get_object_store
+
+    info = docx_draft_info(conn, document_id, member_id)
+    if info is None or not info["current"]:
+        raise EditError(404, "No draft on the current version")
+    try:
+        return get_object_store().get(_docx_draft_key(document_id, member_id))
+    except FileNotFoundError:
+        raise EditError(404, "No draft on the current version") from None
+
+
+def discard_docx_draft(conn, document_id: str, member_id: str | None) -> None:
+    from app.storage.object_store import get_object_store
+
+    if member_id is None:
+        return
+    gone = _one(conn, "DELETE FROM document_docx_drafts WHERE document_id = %s AND member_id = %s RETURNING storage_uri",
+                (document_id, member_id))
+    conn.commit()
+    if gone:
+        try:
+            get_object_store().delete(gone["storage_uri"])
+        except FileNotFoundError:
+            pass
 
 
 def upload_version(conn, document_id: str, member_id: str | None, filename: str, data: bytes,

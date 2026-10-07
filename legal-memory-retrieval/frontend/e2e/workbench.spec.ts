@@ -168,3 +168,70 @@ test("the Word editor tracks a change and saves it as a version credited to the 
     await ctx.close();
   }
 });
+
+test("drag a document onto a folder to file it, and onto another document to replace its content (confirmed)", async ({ browser, request }) => {
+  test.setTimeout(120_000);
+  const { owner } = await people(request);
+  const h = { "X-Member-Id": owner };
+  const project = (await (await request.post("/api/projects", { headers: h, data: { title: `${tag()} Drag` } })).json()) as { project_id: string };
+  const pid = project.project_id;
+  const stamp = Date.now().toString(36);
+  const upload = async (name: string, body: string) => {
+    const b = await (await request.post("/api/uploads/batches", { headers: h, multipart: { container_kind: "project", container_id: pid, files: textFile(name, body) } })).json();
+    return (await (await request.post(`/api/uploads/batches/${b.batch_id}/run`, { headers: h })).json()).batch.files[0].document_id as string;
+  };
+  const a = await upload(`source-${stamp}.txt`, `E2E-TMP ${stamp} the source text that should replace the target.`);
+  const b = await upload(`target-${stamp}.txt`, `E2E-TMP ${stamp} the target text that will be replaced.`);
+  await request.post(`/api/workspaces/project/${pid}/folders`, { headers: h, data: { path: "Archive" } });
+
+  const { ctx, page } = await as(browser, owner);
+  try {
+    await page.goto(`/ui/work/project/${pid}`);
+    await expect(page.getByTestId("explorer-document")).toHaveCount(2, { timeout: 30_000 });
+    const row = (id: string) => page.locator(`[data-testid="explorer-document"][data-document-id="${id}"]`);
+    // onto a folder: filed there
+    await row(a).dragTo(page.getByTestId("explorer-folder").filter({ hasText: "Archive" }));
+    await expect.poll(async () => ((await (await request.get(`/api/workspaces/documents/${a}`, { headers: h })).json()) as { places: { folder: string }[] }).places[0].folder).toBe("Archive");
+    // onto another document: asks first, then a new version of the target; the source is unchanged
+    await page.getByTestId("explorer-folder").filter({ hasText: "Archive" }).locator("button").first().click();
+    await expect(row(a)).toBeVisible();
+    await row(a).dragTo(row(b));
+    await expect(page.getByText(/Replace the content of/)).toBeVisible();
+    await page.getByRole("button", { name: "Replace content" }).click();
+    await expect.poll(async () => ((await (await request.get(`/api/editor/documents/${b}/commits`, { headers: h })).json()) as { items: unknown[] }).items.length).toBe(2);
+    const srcCommits = (await (await request.get(`/api/editor/documents/${a}/commits`, { headers: h })).json()) as { items: unknown[] };
+    expect(srcCommits.items.length).toBe(1);
+  } finally {
+    await ctx.close();
+  }
+});
+
+test("the Word editor keeps unsaved changes and offers them back after a reload", async ({ browser, request }) => {
+  test.setTimeout(150_000);
+  const M = "MEM-00001";
+  const h = { "X-Member-Id": M };
+  const docs = (await (await request.get("/api/documents?q=Employment%20Agreement%20-%20CTO&limit=5", { headers: h })).json()) as { items: { document_id: string; title: string }[] };
+  const source = docs.items.find((d) => /\.docx$/i.test(d.title));
+  test.skip(!source, "needs a Word document the member can read");
+  const project = (await (await request.post("/api/projects", { headers: h, data: { title: `${tag()} Word draft` } })).json()) as { project_id: string };
+  const copy = (await (await request.post(`/api/workspaces/documents/${source!.document_id}/copy`, { headers: h, data: { kind: "project", id: project.project_id } })).json()) as { document_id: string };
+  const { ctx, page } = await as(browser, M);
+  await page.addInitScript(() => { (window as unknown as { __autosaveMs: number }).__autosaveMs = 1500; });
+  try {
+    await page.goto(`/ui/documents/${copy.document_id}/write`);
+    await expect(page.getByText("Tracking: On")).toBeVisible({ timeout: 60_000 });
+    await page.getByText("Mr Arvind Rao", { exact: false }).first().click();
+    await page.waitForTimeout(500);
+    await page.keyboard.type(" Unsaved words for the draft.");
+    await expect(page.getByTestId("full-editor-autosaved")).toBeVisible({ timeout: 30_000 });
+    await page.reload();
+    await expect(page.getByTestId("full-editor-draft")).toBeVisible({ timeout: 60_000 });
+    await page.getByTestId("full-editor-restore").click();
+    await expect(page.getByText("Unsaved words for the draft.")).toBeVisible({ timeout: 30_000 });
+    // no version was made by any of this
+    const commits = (await (await request.get(`/api/editor/documents/${copy.document_id}/commits`, { headers: h })).json()) as { items: unknown[] };
+    expect(commits.items.length).toBe(1);
+  } finally {
+    await ctx.close();
+  }
+});

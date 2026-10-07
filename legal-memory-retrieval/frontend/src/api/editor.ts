@@ -235,6 +235,24 @@ export async function saveDocx(id: string, data: ArrayBuffer, opts: { baseVersio
   return (await res.json()) as { version_id: string; version_number: number; changes: number }
 }
 
+/** Autosave of the Word editor: this person's unsaved file, offered back when they reopen the editor. */
+export async function putDocxDraft(id: string, data: ArrayBuffer, baseVersionId: string) {
+  const form = new FormData()
+  form.append('file', new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), 'draft.docx')
+  form.append('base_version_id', baseVersionId)
+  const res = await fetch(`${base(id)}/draft-docx`, { method: 'PUT', body: form, headers: { ...authHeaders(), ...lockHeaders(id) }, credentials: 'same-origin' })
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  return (await res.json()) as { saved_at: string; bytes: number }
+}
+export const getDocxDraftInfo = (id: string) =>
+  apiFetch<{ draft: { base_version_id: string; size_bytes: number; updated_at: string; current: boolean } | null }>(`${base(id)}/draft-docx/info`).then((r) => r.draft)
+export async function getDocxDraft(id: string): Promise<ArrayBuffer> {
+  const res = await fetch(`${base(id)}/draft-docx`, { headers: authHeaders(), credentials: 'same-origin' })
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  return res.arrayBuffer()
+}
+export const deleteDocxDraft = (id: string) => apiFetch<void>(`${base(id)}/draft-docx`, { method: 'DELETE' })
+
 // ── comments on the exact view (E6) ──────────────────────────────────────────
 
 /** An area of a page, as fractions of its width and height (0..1). */

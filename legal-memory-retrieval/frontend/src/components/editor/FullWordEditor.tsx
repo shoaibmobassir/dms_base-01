@@ -7,10 +7,14 @@ import { IntlProvider } from "use-intl";
 import { authHeaders } from "@/api/client";
 import {
   acquireLock,
+  deleteDocxDraft,
   editConflict,
   editErrorMessage,
+  getDocxDraft,
+  getDocxDraftInfo,
   getEditModel,
   heartbeatLock,
+  putDocxDraft,
   releaseLock,
   releaseLockOnUnload,
   saveDocx,
@@ -40,6 +44,9 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
   const [asking, setAsking] = useState(false);
   const [note, setNote] = useState("");
   const [haveLock, setHaveLock] = useState(false);
+  const [draft, setDraft] = useState<{ updated_at: string } | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [editorKey, setEditorKey] = useState(0);
 
   const load = useCallback(async () => {
     setError(null);
@@ -54,6 +61,12 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
         { headers: authHeaders(), credentials: "same-origin" });
       if (!res.ok) throw new Error(`The Word file could not be opened (HTTP ${res.status})`);
       setBuffer(await res.arrayBuffer());
+      setEditorKey((k) => k + 1);
+      setDraft(null);
+      if (m.editable) {
+        const d = await getDocxDraftInfo(documentId).catch(() => null);
+        if (d?.current) setDraft({ updated_at: d.updated_at });
+      }
     } catch (err) {
       setError(editErrorMessage(err));
     }
@@ -87,6 +100,39 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
       void releaseLock(documentId).catch(() => undefined);
     };
   }, [model?.editable, model?.mode, documentId, lock]);
+
+  // Autosave: every 30 s while there are unsaved edits and this window holds the lock.
+  useEffect(() => {
+    if (!model?.editable || !haveLock || draft) return;
+    const t = window.setInterval(async () => {
+      if (!ref.current?.hasPendingChanges()) return;
+      try {
+        const data = await ref.current.save();
+        if (data) {
+          await putDocxDraft(documentId, data, model.base_version_id);
+          setSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+        }
+      } catch {
+        // the next tick tries again; saving a version is what matters
+      }
+    }, (window as unknown as { __autosaveMs?: number }).__autosaveMs ?? 30_000);
+    return () => window.clearInterval(t);
+  }, [model?.editable, model?.base_version_id, haveLock, draft, documentId]);
+
+  const restoreDraft = async () => {
+    try {
+      setBuffer(await getDocxDraft(documentId));
+      setEditorKey((k) => k + 1);
+      setDraft(null);
+      toast("Your unsaved changes are back. Save a version to keep them.");
+    } catch (err) {
+      toast(editErrorMessage(err));
+    }
+  };
+  const discardDraft = async () => {
+    await deleteDocxDraft(documentId).catch(() => undefined);
+    setDraft(null);
+  };
 
   // Leaving with unsaved edits asks first.
   useEffect(() => {
@@ -124,6 +170,7 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
         <Icon name="edit_document" className="text-wine" style={{ fontSize: 20 }} />
         <span className="min-w-0 truncate font-display text-lg text-ink">{model?.title ?? "Opening…"}</span>
         {model?.version_number != null && <span className="rounded-md border border-border px-2 py-0.5 text-xs">editing v{model.version_number}</span>}
+        {savedAt && <span className="text-xs text-muted-foreground" data-testid="full-editor-autosaved">Draft kept at {savedAt}</span>}
         <div className="flex-1" />
         {model?.editable && (
           <div className="flex rounded-md border border-border p-0.5 text-xs" role="radiogroup" aria-label="Changes">
@@ -141,6 +188,14 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
           </Button>
         )}
       </div>
+      {draft && (
+        <div className="flex flex-wrap items-center gap-3 border-b border-border bg-wine-soft px-3 py-2 text-sm text-wine" data-testid="full-editor-draft">
+          <Icon name="history" style={{ fontSize: 16 }} />
+          You have unsaved changes from {new Date(draft.updated_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}.
+          <Button size="sm" onClick={() => void restoreDraft()} data-testid="full-editor-restore">Restore them</Button>
+          <Button size="sm" variant="outline" onClick={() => void discardDraft()} data-testid="full-editor-discard">Discard</Button>
+        </div>
+      )}
       {locked && (
         <div className="flex items-center gap-3 border-b border-border bg-warning-soft px-3 py-2 text-sm text-warning-ink" data-testid="full-editor-locked">
           <Icon name="lock" style={{ fontSize: 16 }} /> {locked.by} is editing this document. You can read it here.
@@ -158,6 +213,7 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
         ) : (
           <IntlProvider locale="en" messages={folioMessages as Record<string, unknown> as never}>
           <DocxEditor
+            key={editorKey}
             ref={ref}
             documentBuffer={buffer}
             author={me?.name ?? "Precentis user"}

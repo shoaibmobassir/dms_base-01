@@ -17,6 +17,8 @@ Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.json
   baseline 98.3 % on a fresh seed (120 cells, 108/108 quotes verified).
 - Playbooks: shipped, firm (km.publish) and personal; the Assistant follows them; column sets start reviews.
 - Assistant in the workbench: workspace conversations, `search_workspace`, `read_review_cells`.
+- Explorer drag-and-drop (onto a folder: file; onto a document: replace its content, confirmed). Word editor autosave
+  with restore after a reload.
 - Fixed on the way: project events reached everyone through the live feed; the archive rule was dropped by the first
   workspace migration for an hour (restored, no document exposed); quick open missed documents beyond 1,000.
 

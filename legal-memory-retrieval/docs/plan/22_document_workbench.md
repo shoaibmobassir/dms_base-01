@@ -276,8 +276,8 @@ W2b — engine (after X1)
       Word add-in and Collabora paths still fit. If TipTap stays: add table cell editing to the paragraph model
       and tracked write-back for table cells (plan 16 "Known v1 limits").
       **Done 2026-10-07:** Folio adopted: `/documents/:id/write` and the workbench "Edit (Word)" tab (`FullWordEditor.tsx`, tracked changes on by default, lock + heartbeat, take-over, save with note); `POST /api/editor/documents/{id}/save-docx` re-stamps new revisions with the session member (`docx_restamp.py`) and stores the clean version. The paragraph editor stays at `/edit`.
-- [~] W2b.2 Draft autosave stores the engine's native draft; recovery after crash tested.
-      **Partly done 2026-10-07:** no server draft for the Word editor (the browser keeps the document; leaving with unsaved edits asks first). Server-side autosave of the Word editor is open.
+- [x] W2b.2 Draft autosave stores the engine's native draft; recovery after crash tested.
+      **Done 2026-10-08:** the browser sends the edited .docx every 30 s while there are unsaved edits (`PUT …/draft-docx`, one per person per document, object store, migration `20261008a`); reopening offers "restore / discard" only when the draft sits on the current version; saving a version clears it. Tests `test_full_editor.py` (+2), e2e "keeps unsaved changes and offers them back after a reload".
 - [~] W2b.3 `editor_roundtrip_eval` extended: tables edited, footnote edited, headers untouched, existing
       tracked changes from others preserved (plan 18 R4); gate 100 % on all checks, 400-page save p95 < 3 s.
       **Partly done 2026-10-07:** `tests/test_full_editor.py` (spoofed author re-stamped, existing changes keep their author, stale/unauthorised/non-Word refused) and e2e "the Word editor tracks a change…"; the bake-off harness covers tables, footnotes and headers. Extending `editor_roundtrip_eval.py` itself to the Word editor is open.
@@ -437,3 +437,7 @@ and the Playwright `app` project must stay green at every phase end.
   from plan 21 on this branch (editor `has_revisions`, review pending chips, "Versions" → "History"), fixed by the
   integrate worktree's uncommitted Oct-4 edits, which were left to their owner. Decision noted: uploading into a
   matter still needs only read access on the matter (unchanged behaviour); projects need editor.
+- 2026-10-08 — Quick-open race fixed (Enter waits for the server's fresh results); drag-and-drop in the explorer (a
+  document onto a folder files it, onto another document replaces that document's content after a confirmation that says
+  the source is unchanged); Word editor autosave (W2b.2). Committed on `feature/document-workbench`. Why the user could
+  not see the work: their app on :8000/:5173 serves the main checkout; the workbench runs on :8021/:5174.
