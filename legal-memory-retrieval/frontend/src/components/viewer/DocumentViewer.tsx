@@ -557,7 +557,7 @@ export function DocumentViewer({
         </>)}
       </div>
 
-      <div ref={scrollRef} onScroll={onScroll} onPointerUp={onPointerUp} className="relative min-h-0 flex-1 overflow-auto bg-muted/60" data-testid="viewer-scroll">
+      <div ref={scrollRef} onScroll={onScroll} onPointerUp={onPointerUp} className="relative min-h-0 flex-1 overflow-auto bg-muted/60" tabIndex={0} aria-label="Document pages" data-testid="viewer-scroll">
         {status === "loading" && <p className="p-6 text-sm text-muted-foreground">Loading the document…</p>}
         {status === "error" && <p className="p-6 text-sm text-destructive">{error}</p>}
         {doc && (

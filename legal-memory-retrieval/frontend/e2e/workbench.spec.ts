@@ -235,3 +235,116 @@ test("the Word editor keeps unsaved changes and offers them back after a reload"
     await ctx.close();
   }
 });
+
+test("an Assistant edit card can suggest its change inside the open Word editor", async ({ browser, request }) => {
+  test.setTimeout(150_000);
+  const M = "MEM-00001";
+  const h = { "X-Member-Id": M };
+  const docs = (await (await request.get("/api/documents?q=Employment%20Agreement%20-%20CTO&limit=5", { headers: h })).json()) as { items: { document_id: string; title: string }[] };
+  const source = docs.items.find((d) => /\.docx$/i.test(d.title));
+  test.skip(!source, "needs a Word document the member can read");
+  const project = (await (await request.post("/api/projects", { headers: h, data: { title: `${tag()} Suggest` } })).json()) as { project_id: string };
+  const pid = project.project_id;
+  const copy = (await (await request.post(`/api/workspaces/documents/${source!.document_id}/copy`, { headers: h, data: { kind: "project", id: pid, title: "CTO agreement (suggest)" } })).json()) as { document_id: string };
+  const model = (await (await request.get(`/api/editor/documents/${copy.document_id}`, { headers: h })).json()) as { paragraphs: { text: string }[] };
+  const para = model.paragraphs.find((p) => /terminate this Agreement by giving/i.test(p.text))!;
+  expect(para).toBeTruthy();
+  const proposed = para.text.replace(/three months/i, "two months");
+  expect(proposed).not.toBe(para.text);
+
+  const now = new Date().toISOString();
+  const session = { id: "mock-suggest", title: "Notice period", matter_id: null, workspace_kind: "project", workspace_id: pid, pinned: false, created_at: now, updated_at: now, status: "active" };
+  const messages = [
+    { id: "u1", role: "user", content: "Shorten the notice period", created_at: now, files: [] },
+    { id: "a1", role: "assistant", created_at: now, content: "Here is the change.", citations: [],
+      events: [{ type: "edit_proposals", document_id: copy.document_id, filename: "CTO agreement (suggest).docx", anchoring: "paragraph",
+        edits: [{ id: "e1", original: para.text, proposed, reason: "Shorter notice", page: 1, located: true, status: "pending" }] }] },
+  ];
+  const { ctx, page } = await as(browser, M);
+  try {
+    await page.route("**/api/chat/sessions?workspace_kind=*", (route) => route.fulfill({ json: [session] }));
+    await page.route("**/api/chat/sessions/mock-suggest", (route) => route.fulfill({ json: { session, messages } }));
+    await page.goto(`/ui/work/project/${pid}`);
+    const row = page.locator(`[data-testid="explorer-document"][data-document-id="${copy.document_id}"]`);
+    await row.hover();
+    await row.getByRole("button", { name: /actions/ }).click();
+    await page.getByTestId("explorer-edit-word").click();
+    await expect(page.getByText("Tracking: On")).toBeVisible({ timeout: 60_000 });
+    await page.getByTestId("activity-assistant").click();
+    await expect(page.getByTestId("edits-suggest-in-editor")).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId("edits-suggest-in-editor").click();
+    await expect(page.getByText(/1 suggestion added to the Word editor/)).toBeVisible();
+    await expect(page.getByText(/two months/).first()).toBeVisible({ timeout: 15_000 });
+    // a suggestion is not a version: nothing was saved
+    const commits = (await (await request.get(`/api/editor/documents/${copy.document_id}/commits`, { headers: h })).json()) as { items: unknown[] };
+    expect(commits.items.length).toBe(1);
+  } finally {
+    await ctx.close();
+  }
+});
+
+test("the explorer shows My library and the firm templates beside the workspace; dragging across adds a link", async ({ browser, request }) => {
+  test.setTimeout(120_000);
+  const { owner } = await people(request);
+  const h = { "X-Member-Id": owner };
+  const project = (await (await request.post("/api/projects", { headers: h, data: { title: `${tag()} Roots` } })).json()) as { project_id: string };
+  const pid = project.project_id;
+  const stamp = Date.now().toString(36);
+  const b = await (await request.post("/api/uploads/batches", { headers: h, multipart: { container_kind: "project", container_id: pid, files: textFile(`roots-${stamp}.txt`, `E2E-TMP ${stamp} a document to share.`) } })).json();
+  const doc = (await (await request.post(`/api/uploads/batches/${b.batch_id}/run`, { headers: h })).json()).batch.files[0].document_id as string;
+  const folder = `E2E-TMP-Precedents-${stamp}`;
+  await request.post(`/api/workspaces/library/me/folders`, { headers: h, data: { path: folder } });
+
+  const { ctx, page } = await as(browser, owner);
+  try {
+    await page.goto(`/ui/work/project/${pid}`);
+    await expect(page.locator(`[data-testid="explorer-document"][data-document-id="${doc}"]`)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("explorer-section-library")).toBeVisible();
+    await expect(page.getByTestId("explorer-section-firm")).toBeVisible();
+    await page.getByTestId("explorer-section-library").click();
+    const target = page.getByTestId("explorer-root-library").getByTestId("explorer-folder").filter({ hasText: folder });
+    await expect(target).toBeVisible();
+    await page.locator(`[data-testid="explorer-document"][data-document-id="${doc}"]`).dragTo(target);
+    await expect.poll(async () => {
+      const r = (await (await request.get(`/api/workspaces/documents/${doc}`, { headers: h })).json()) as { places: { kind: string; folder: string; home: boolean }[] };
+      return r.places.some((p) => p.kind === "library" && p.folder === folder && !p.home);
+    }).toBe(true);
+    // still one document, and still in the project
+    const places = (await (await request.get(`/api/workspaces/documents/${doc}`, { headers: h })).json()) as { places: { kind: string; home: boolean }[] };
+    expect(places.places.find((p) => p.home)?.kind).toBe("project");
+  } finally {
+    await ctx.close();
+    await request.post(`/api/workspaces/documents/${doc}/links/library/me`, { headers: h }).catch(() => undefined);
+    await request.delete(`/api/workspaces/documents/${doc}/links/library/me`, { headers: h });
+    await request.delete(`/api/workspaces/library/me/folders?path=${encodeURIComponent(folder)}`, { headers: h });
+  }
+});
+
+test("a document made from a firm template is handed to the Assistant to fill in", async ({ browser, request }) => {
+  test.setTimeout(120_000);
+  const ADMIN_ID = ADMIN; // a firm administrator holds km.publish
+  const { owner } = await people(request);
+  const stamp = Date.now().toString(36);
+  const name = `E2E-TMP-nda-${stamp}.txt`;
+  const up = await request.post("/api/uploads/batches", { headers: { "X-Member-Id": ADMIN_ID }, multipart: { container_kind: "firm", files: textFile(name, `E2E-TMP ${stamp} Mutual NDA between [PARTY A] and [PARTY B], dated [DATE].`) } });
+  expect(up.ok(), await up.text()).toBeTruthy();
+  const batch = await up.json();
+  await request.post(`/api/uploads/batches/${batch.batch_id}/run`, { headers: { "X-Member-Id": ADMIN_ID } });
+  const h = { "X-Member-Id": owner };
+  const project = (await (await request.post("/api/projects", { headers: h, data: { title: `${tag()} Template` } })).json()) as { project_id: string };
+  const { ctx, page } = await as(browser, owner);
+  try {
+    await page.goto(`/ui/work/project/${project.project_id}`);
+    await page.getByTestId("explorer-from-template").click();
+    await page.getByTestId("template-option").filter({ hasText: name }).click();
+    await expect(page.getByTestId("template-fill")).toBeChecked();
+    await page.getByTestId("template-create").click();
+    await expect(page.getByTestId("workbench-assistant")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("assistant-input")).toHaveValue(/Fill in the blanks of .*square brackets/);
+    // the new document is open in a tab (so it goes with the question) and is an ordinary copy in this project
+    await expect(page.getByTestId("workbench-tab")).toHaveCount(1);
+    await expect(page.getByTestId("assistant-context-doc")).toHaveCount(1);
+  } finally {
+    await ctx.close();
+  }
+});

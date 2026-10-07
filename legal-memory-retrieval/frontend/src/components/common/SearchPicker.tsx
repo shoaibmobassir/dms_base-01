@@ -83,12 +83,12 @@ export function SearchPicker({
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-labelledby={label ? labelId : undefined}
+        aria-labelledby={label ? `${labelId} ${labelId}-value` : undefined}
         aria-label={label ? undefined : emptyLabel}
         data-testid={testId}
         className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left text-sm hover:bg-secondary/60 disabled:opacity-50"
       >
-        <span className={cn("min-w-0 flex-1 truncate", !selectedId && "text-muted-foreground")}>
+        <span id={`${labelId}-value`} className={cn("min-w-0 flex-1 truncate", !selectedId && "text-muted-foreground")}>
           {selectedId ? (selectedLabel ?? selectedId) : allowNone ? noneLabel : emptyLabel}
         </span>
         <Icon name="unfold_more" className="text-muted-foreground" style={{ fontSize: 18 }} />

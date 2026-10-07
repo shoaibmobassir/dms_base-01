@@ -148,7 +148,10 @@ function Table({ review, onOpenSource }: { review: Review; onOpenSource: (r: Ope
             action={canEdit ? <Button onClick={() => setAdding("rows")}>Add rows</Button> : undefined} />
         </div>
       ) : (
-        <div ref={box} className="relative min-h-0 flex-1 overflow-auto" onScroll={onScroll} role="grid"
+        <div ref={box} className="relative min-h-0 flex-1 overflow-auto" onScroll={onScroll} role="grid" tabIndex={0}
+          aria-label={`${review.title}: answers by document and question`}
+          // Focus and scrolling into view keep clear of the sticky name column and header row.
+          style={{ scrollPaddingLeft: FIRST_W, scrollPaddingTop: ROW_H }}
           aria-rowcount={rows.length + 1} aria-colcount={review.columns.length + 1}>
           <div style={{ width: FIRST_W + review.columns.length * COL_W, height: (rows.length + 1) * ROW_H }} className="relative">
             {/* header */}

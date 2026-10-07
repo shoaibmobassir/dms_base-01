@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
+import { useWorkspaceUpload } from "./useWorkspaceUpload";
 import { NewFromTemplateDialog, PromptDialog, TagsDialog, TargetDialog, type TargetChoice } from "./dialogs";
 
 export type OpenRequest = { documentId: string; title: string; preview?: boolean; toSide?: boolean; params?: string; write?: boolean };
@@ -42,13 +43,14 @@ type Ctx = {
   ask: (a: Ask) => void;
   removeFolder: (path: string) => void;
   unlink: (doc: WorkspaceDocument) => void;
-  /** A document dragged onto a folder (or the top level): file it there. */
-  moveDoc: (documentId: string, folder: string) => void;
+  /** A document dragged onto a folder (or the top level): file it there, or — from another workspace — add it there. */
+  moveDoc: (source: DragSource, folder: string) => void;
   /** A document dragged onto another document: replace the target's content with it (after a confirmation). */
   replaceFrom: (source: { documentId: string; title: string }, target: WorkspaceDocument) => void;
 };
 
 const DOC_DRAG = "application/x-precentis-explorer-doc";
+type DragSource = { documentId: string; title: string; kind: WorkspaceKind; id: string };
 
 type Ask =
   | { type: "new-folder"; parent: string }
@@ -65,8 +67,55 @@ export function iconFor(doc: { mime_type?: string | null; title?: string }): str
   return "description";
 }
 
-/** The workspace's folders and documents (home and linked), with the actions a workbench needs. */
-export function Explorer({
+/**
+ * The explorer: the workspace being worked in, then — as collapsible sections — the person's library and the firm's
+ * templates, so documents can be opened, filed and dragged between workspaces without leaving the workbench.
+ */
+export function Explorer(props: {
+  kind: WorkspaceKind;
+  id: string;
+  label: string;
+  canEdit: boolean;
+  activeDocumentId: string | null;
+  onOpen: (r: OpenRequest) => void;
+  onUpload: (folder: string, files?: File[]) => void;
+  /** A document just made from a template: hand it to the Assistant to fill in. */
+  onFill?: (doc: { document_id: string; title: string }) => void;
+}) {
+  const others = ([
+    ["library", "me", "My library"],
+    ["firm", "templates", "Firm templates"],
+  ] as const).filter(([k]) => k !== props.kind);
+  return (
+    <div className="flex h-full min-h-0 flex-col" data-testid="workbench-explorer">
+      <ExplorerRoot {...props} />
+      <div className="max-h-[45%] shrink-0 overflow-y-auto border-t border-border" data-testid="explorer-sections">
+        {others.map(([k, i, l]) => (
+          <SectionRoot key={k} kind={k} id={i} label={l} activeDocumentId={props.activeDocumentId} onOpen={props.onOpen} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** A secondary root (library, templates): collapsed until opened, with its own uploads. */
+function SectionRoot({ kind, id, label, activeDocumentId, onOpen }: {
+  kind: WorkspaceKind; id: string; label: string; activeDocumentId: string | null; onOpen: (r: OpenRequest) => void;
+}) {
+  const root = useWorkspaceItems(kind, id, { folder: "" });
+  const uploader = useWorkspaceUpload(kind, id, undefined, `workspace-upload-input-${kind}`);
+  const canEdit = root.data ? root.data.my_level !== "read" : false;
+  return (
+    <>
+      <ExplorerRoot kind={kind} id={id} label={label} canEdit={canEdit} activeDocumentId={activeDocumentId} onOpen={onOpen}
+        onUpload={(folder, files) => (files ? void uploader.upload(files, folder) : uploader.pick(folder))} section />
+      {uploader.element}
+    </>
+  );
+}
+
+/** One workspace's folders and documents (home and linked), with the actions a workbench needs. */
+function ExplorerRoot({
   kind,
   id,
   label,
@@ -74,6 +123,8 @@ export function Explorer({
   activeDocumentId,
   onOpen,
   onUpload,
+  onFill,
+  section = false,
 }: {
   kind: WorkspaceKind;
   id: string;
@@ -82,7 +133,11 @@ export function Explorer({
   activeDocumentId: string | null;
   onOpen: (r: OpenRequest) => void;
   onUpload: (folder: string, files?: File[]) => void;
+  onFill?: (doc: { document_id: string; title: string }) => void;
+  /** A collapsible section under the main root. */
+  section?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(!section);
   const queryClient = useQueryClient();
   const { toast } = useApp();
   const confirm = useConfirm();
@@ -107,10 +162,16 @@ export function Explorer({
       if (await confirm({ title: `Remove “${doc.title}” from this workspace?`, description: "The document itself is not deleted; it stays where it lives.", confirmLabel: "Remove" }))
         await unlinkDocument(doc.document_id, kind, id);
     });
-  const moveDoc = (documentId: string, folder: string) =>
+  const moveDoc = (source: DragSource, folder: string) =>
     void guarded(async () => {
-      await placeInFolder(documentId, { kind, id, folder });
-      toast(folder ? `Moved to ${folder}` : "Moved to the top level");
+      if (source.kind === kind && source.id === id) {
+        await placeInFolder(source.documentId, { kind, id, folder });
+        toast(folder ? `Moved to ${folder}` : "Moved to the top level");
+      } else {
+        // From another workspace: not a move — the document is added here and stays one document in both places.
+        await linkDocument(source.documentId, { kind, id, folder });
+        toast(`“${source.title}” added to ${label}${folder ? ` / ${folder}` : ""} — the same document in both places`);
+      }
     });
   const replaceFrom = (source: { documentId: string; title: string }, target: WorkspaceDocument) =>
     void guarded(async () => {
@@ -131,37 +192,51 @@ export function Explorer({
   const docAsk = asking && "doc" in asking ? asking : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col" data-testid="workbench-explorer">
-      <div className="flex items-center gap-1 border-b border-border px-3 py-2">
-        <div className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground" title={label}>
-          {label}
-        </div>
-        {canEdit && (
+    <div className={section ? "" : "flex min-h-0 flex-1 flex-col"} data-testid={section ? `explorer-root-${kind}` : "explorer-primary"}>
+      <div className={cn("flex items-center gap-1 px-3 py-2", !section && "border-b border-border", section && "hover:bg-secondary/50")}>
+        {section ? (
+          <button type="button" className="flex min-w-0 flex-1 items-center gap-1 text-left" aria-expanded={expanded}
+            onClick={() => setExpanded((e) => !e)} data-testid={`explorer-section-${kind}`}>
+            <Icon name={expanded ? "expand_more" : "chevron_right"} className="text-muted-foreground" style={{ fontSize: 16 }} />
+            <Icon name={kind === "firm" ? "library_books" : "person_book"} className="text-muted-foreground" style={{ fontSize: 15 }} />
+            <span className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+          </button>
+        ) : (
+          <div className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground" title={label}>
+            {label}
+          </div>
+        )}
+        {(!section || expanded) && canEdit && (
           <>
             <IconButton icon="upload_file" label="Upload files" onClick={() => onUpload("")} testId="explorer-upload" />
             <IconButton icon="create_new_folder" label="New folder" onClick={() => setAsking({ type: "new-folder", parent: "" })} testId="explorer-new-folder" />
             {kind !== "firm" && <IconButton icon="note_add" label="New from template" onClick={() => setFromTemplate(true)} testId="explorer-from-template" />}
           </>
         )}
-        <IconButton icon="refresh" label="Refresh" onClick={() => void refresh()} />
+        {!section && <IconButton icon="refresh" label="Refresh" onClick={() => void refresh()} />}
       </div>
-      <div
-        className="min-h-0 flex-1 overflow-y-auto py-1"
-        role="tree"
+      {expanded && <div
+        className={section ? "py-1" : "min-h-0 flex-1 overflow-y-auto py-1"}
+        role="region"
         aria-label={`${label} files`}
         onDragOver={(e) => { if (canEdit && e.dataTransfer.types.includes(DOC_DRAG)) e.preventDefault(); }}
         onDrop={(e) => {
           const raw = e.dataTransfer.getData(DOC_DRAG);
           if (!canEdit || !raw) return;
           e.preventDefault();
-          moveDoc((JSON.parse(raw) as { documentId: string }).documentId, "");
+          moveDoc(JSON.parse(raw) as DragSource, "");
         }}
       >
         <FolderContents ctx={ctx} folder="" depth={0} />
-      </div>
+      </div>}
 
-      <NewFromTemplateDialog kind={kind} id={id} open={fromTemplate} onOpenChange={setFromTemplate}
-        onCreated={(d) => { void refresh(); toast("Created from the template — it is your own copy"); onOpen({ documentId: d.document_id, title: d.title }); }} />
+      <NewFromTemplateDialog kind={kind} id={id} open={fromTemplate} onOpenChange={setFromTemplate} canFill={!!onFill}
+        onCreated={(d, fill) => {
+          void refresh();
+          toast("Created from the template — it is your own copy");
+          onOpen({ documentId: d.document_id, title: d.title });
+          if (fill) onFill?.(d);
+        }} />
       <PromptDialog
         open={asking?.type === "new-folder"}
         onOpenChange={(o) => !o && close()}
@@ -273,7 +348,7 @@ function FolderContents({ ctx, folder, depth }: { ctx: Ctx; folder: string; dept
     );
   }
   return (
-    <div role="group">
+    <div>
       {data.folders.map((f) => <FolderNode key={f.path} ctx={ctx} folder={f} depth={depth} />)}
       {data.documents.map((d, i) => <DocumentNode key={d.restricted ? `r${d.link_id}` : d.document_id + i} ctx={ctx} item={d} depth={depth} />)}
     </div>
@@ -291,7 +366,7 @@ function FolderNode({ ctx, folder, depth }: { ctx: Ctx; folder: WorkspaceFolder;
   const [open, setOpen] = useState(false);
   const [over, setOver] = useState(false);
   return (
-    <div role="treeitem" aria-expanded={open} aria-selected={false}>
+    <div>
       <div
         className={cn("group flex items-center gap-1 py-[3px] pr-2 text-[13px] hover:bg-secondary/70", over && "bg-wine-soft")}
         style={{ paddingLeft: 8 + depth * 14 }}
@@ -308,14 +383,14 @@ function FolderNode({ ctx, folder, depth }: { ctx: Ctx; folder: WorkspaceFolder;
           if (ctx.canEdit && raw) {
             e.preventDefault();
             e.stopPropagation();
-            ctx.moveDoc((JSON.parse(raw) as { documentId: string }).documentId, folder.path);
+            ctx.moveDoc(JSON.parse(raw) as DragSource, folder.path);
             return;
           }
           dropFiles(e, ctx, folder.path);
         }}
         data-testid="explorer-folder"
       >
-        <button type="button" className="flex min-w-0 flex-1 items-center gap-1 text-left" onClick={() => setOpen((o) => !o)}>
+        <button type="button" className="flex min-w-0 flex-1 items-center gap-1 text-left" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           <Icon name={open ? "expand_more" : "chevron_right"} className="text-muted-foreground" style={{ fontSize: 16 }} />
           <Icon name={open ? "folder_open" : "folder"} className="text-muted-foreground" style={{ fontSize: 16 }} />
           <span className="truncate">{folder.name}</span>
@@ -348,8 +423,6 @@ function DocumentNode({ ctx, item, depth }: { ctx: Ctx; item: WorkspaceItem; dep
   if (item.restricted) {
     return (
       <div
-        role="treeitem"
-        aria-selected={false}
         className="flex items-center gap-1.5 py-[3px] pr-2 text-[13px] text-muted-foreground"
         style={{ paddingLeft: 26 + depth * 14 }}
         title="A document linked here that you cannot open. Ask the person who added it."
@@ -371,11 +444,9 @@ function DocumentRow({ ctx, doc, depth }: { ctx: Ctx; doc: WorkspaceDocument; de
   const [over, setOver] = useState(false);
   return (
     <div
-      role="treeitem"
-      aria-selected={active}
       draggable
       onDragStart={(e) => {
-        e.dataTransfer.setData(DOC_DRAG, JSON.stringify({ documentId: doc.document_id, title: doc.title }));
+        e.dataTransfer.setData(DOC_DRAG, JSON.stringify({ documentId: doc.document_id, title: doc.title, kind: ctx.kind, id: ctx.id } satisfies DragSource));
         e.dataTransfer.setData("text/plain", doc.title);
         e.dataTransfer.effectAllowed = "copyMove";
       }}
@@ -393,7 +464,7 @@ function DocumentRow({ ctx, doc, depth }: { ctx: Ctx; doc: WorkspaceDocument; de
         if (!ctx.canEdit || !raw) return;
         e.preventDefault();
         e.stopPropagation();
-        const source = JSON.parse(raw) as { documentId: string; title: string };
+        const source = JSON.parse(raw) as DragSource;
         if (source.documentId !== doc.document_id) ctx.replaceFrom(source, doc);
       }}
       className={cn(
@@ -408,6 +479,7 @@ function DocumentRow({ ctx, doc, depth }: { ctx: Ctx; doc: WorkspaceDocument; de
       <button
         type="button"
         className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
+        aria-current={active ? "true" : undefined}
         onClick={(e) => open(e, true)}
         onDoubleClick={(e) => open(e, false)}
         title={`${doc.title}${doc.placement === "link" ? " — linked from where it lives" : ""}`}

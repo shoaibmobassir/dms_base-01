@@ -858,6 +858,7 @@ function Toolbar({
           draggable
           onDragStart={(e) => startPageDrag(e, dragCurrent)}
           title={`Drag this ${unitLabel.toLowerCase()} to the Assistant`}
+          role="img"
           aria-label={`Drag ${unitLabel.toLowerCase()} ${part} to the Assistant`}
           data-testid="page-handle"
           className="inline-flex h-9 cursor-grab items-center rounded-md px-1 text-muted-foreground hover:bg-secondary active:cursor-grabbing"

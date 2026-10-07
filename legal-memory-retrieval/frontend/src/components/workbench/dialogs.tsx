@@ -358,10 +358,13 @@ export function DuplicatesDialog({
  * Start a document from one of the firm's templates: the template is copied into this workspace as a new document
  * (its own history, linked to the template it came from); the template itself is never edited.
  */
-export function NewFromTemplateDialog({ kind, id, open, onOpenChange, onCreated }: {
+export function NewFromTemplateDialog({ kind, id, open, onOpenChange, onCreated, canFill }: {
   kind: WorkspaceKind; id: string; open: boolean; onOpenChange: (o: boolean) => void
-  onCreated: (doc: { document_id: string; title: string }) => void
+  onCreated: (doc: { document_id: string; title: string }, fill: boolean) => void
+  /** Offer to hand the new document to the Assistant to fill in. */
+  canFill?: boolean
 }) {
+  const [fill, setFill] = useState(true);
   const items = useWorkspaceItems("firm", "templates", { recursive: true, enabled: open });
   const [chosen, setChosen] = useState<WorkspaceDocument | null>(null);
   const [name, setName] = useState("");
@@ -379,7 +382,7 @@ export function NewFromTemplateDialog({ kind, id, open, onOpenChange, onCreated 
     try {
       const made = await copyDocument(chosen.document_id, { kind, id, folder: folder.trim(), title: name.trim() || chosen.title });
       onOpenChange(false);
-      onCreated(made);
+      onCreated(made, canFill === true && fill);
     } catch (err) {
       setError(firmError(err));
     } finally {
@@ -420,6 +423,12 @@ export function NewFromTemplateDialog({ kind, id, open, onOpenChange, onCreated 
               {(p) => <input {...p} value={folder} onChange={(e) => setFolder(e.target.value)} maxLength={500} className={fieldControl} />}
             </Field>
           </div>
+        )}
+        {canFill && chosen && (
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={fill} onChange={(e) => setFill(e.target.checked)} data-testid="template-fill" />
+            Then ask the Assistant to fill in the blanks (it asks you for what it needs)
+          </label>
         )}
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

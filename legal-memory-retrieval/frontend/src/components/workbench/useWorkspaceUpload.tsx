@@ -12,7 +12,7 @@ type Pending = { files: File[]; folder: string; dupes: { name: string; sha: stri
  * Upload into a workspace folder. Files that already exist as documents the person can read are offered as a link
  * to the existing document (one copy, one history) instead of a second upload.
  */
-export function useWorkspaceUpload(kind: WorkspaceKind, id: string, onDone?: (documentIds: string[]) => void) {
+export function useWorkspaceUpload(kind: WorkspaceKind, id: string, onDone?: (documentIds: string[]) => void, testId = "workspace-upload-input") {
   const queryClient = useQueryClient();
   const { toast } = useApp();
   const input = useRef<HTMLInputElement | null>(null);
@@ -118,7 +118,7 @@ export function useWorkspaceUpload(kind: WorkspaceKind, id: string, onDone?: (do
         multiple
         accept={ACCEPTED_TYPES}
         className="hidden"
-        data-testid="workspace-upload-input"
+        data-testid={testId}
         onChange={(e) => {
           const files = Array.from(e.target.files ?? []);
           e.target.value = "";

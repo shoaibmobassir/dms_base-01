@@ -1,0 +1,195 @@
+{
+  "projects list": [],
+  "new project dialog": [],
+  "workbench explorer": [
+    {
+      "id": "heading-order",
+      "impact": "moderate",
+      "help": "Heading levels should only increase by one",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "h3",
+          "html": "<h3 class=\"mt-3 font-display text-xl text-ink\">No document open</h3>"
+        }
+      ]
+    },
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".h-dvh > aside",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        }
+      ]
+    }
+  ],
+  "explorer + library section": [
+    {
+      "id": "heading-order",
+      "impact": "moderate",
+      "help": "Heading levels should only increase by one",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "h3",
+          "html": "<h3 class=\"mt-3 font-display text-xl text-ink\">No document open</h3>"
+        }
+      ]
+    },
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".h-dvh > aside",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        }
+      ]
+    }
+  ],
+  "document in a tab": [
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".h-dvh > .lg\\:block",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        }
+      ]
+    }
+  ],
+  "two editor groups": [
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".h-dvh > aside",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        },
+        {
+          "target": ".opacity-\\[0\\.97\\] > .min-h-0.relative.flex-1 > .inset-0.absolute.overflow-hidden > .outline-none.h-full[data-testid=\"document-workspace\"] > .overflow-hidden.min-h-0.flex-1 > .bg-secondary\\/30[data-testid=\"document-canvas\"][aria-label=\"Page 1 of 1\"]",
+          "html": "<section class=\"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-secondary/30\" data-testid=\"document-canvas\" aria-label=\"Page 1 of 1\""
+        }
+      ]
+    }
+  ],
+  "search view": [
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".h-dvh > aside",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        },
+        {
+          "target": ".opacity-\\[0\\.97\\] > .min-h-0.relative.flex-1 > .inset-0.absolute.overflow-hidden > .outline-none.h-full[data-testid=\"document-workspace\"] > .overflow-hidden.min-h-0.flex-1 > .bg-secondary\\/30[data-testid=\"document-canvas\"][aria-label=\"Page 1 of 1\"]",
+          "html": "<section class=\"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-secondary/30\" data-testid=\"document-canvas\" aria-label=\"Page 1 of 1\""
+        }
+      ]
+    }
+  ],
+  "assistant view": [
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".h-dvh > aside",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        },
+        {
+          "target": ".opacity-\\[0\\.97\\] > .min-h-0.relative.flex-1 > .inset-0.absolute.overflow-hidden > .outline-none.h-full[data-testid=\"document-workspace\"] > .overflow-hidden.min-h-0.flex-1 > .bg-secondary\\/30[data-testid=\"document-canvas\"][aria-label=\"Page 1 of 1\"]",
+          "html": "<section class=\"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-secondary/30\" data-testid=\"document-canvas\" aria-label=\"Page 1 of 1\""
+        }
+      ]
+    }
+  ],
+  "reviews view": [
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".h-dvh > aside",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        },
+        {
+          "target": ".opacity-\\[0\\.97\\] > .min-h-0.relative.flex-1 > .inset-0.absolute.overflow-hidden > .outline-none.h-full[data-testid=\"document-workspace\"] > .overflow-hidden.min-h-0.flex-1 > .bg-secondary\\/30[data-testid=\"document-canvas\"][aria-label=\"Page 1 of 1\"]",
+          "html": "<section class=\"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-secondary/30\" data-testid=\"document-canvas\" aria-label=\"Page 1 of 1\""
+        }
+      ]
+    }
+  ],
+  "playbooks view": [
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".h-dvh > aside",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        },
+        {
+          "target": ".opacity-\\[0\\.97\\] > .min-h-0.relative.flex-1 > .inset-0.absolute.overflow-hidden > .outline-none.h-full[data-testid=\"document-workspace\"] > .overflow-hidden.min-h-0.flex-1 > .bg-secondary\\/30[data-testid=\"document-canvas\"][aria-label=\"Page 1 of 1\"]",
+          "html": "<section class=\"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-secondary/30\" data-testid=\"document-canvas\" aria-label=\"Page 1 of 1\""
+        }
+      ]
+    }
+  ],
+  "changes view": [
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".h-dvh > aside",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        },
+        {
+          "target": ".opacity-\\[0\\.97\\] > .min-h-0.relative.flex-1 > .inset-0.absolute.overflow-hidden > .outline-none.h-full[data-testid=\"document-workspace\"] > .overflow-hidden.min-h-0.flex-1 > .bg-secondary\\/30[data-testid=\"document-canvas\"][aria-label=\"Page 1 of 1\"]",
+          "html": "<section class=\"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-secondary/30\" data-testid=\"document-canvas\" aria-label=\"Page 1 of 1\""
+        }
+      ]
+    }
+  ],
+  "tabular review table": [
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".h-dvh > aside",
+          "html": "<aside class=\"relative hidden shrink-0 border-r border-border lg:block\" style=\"width: 256px;\">"
+        }
+      ]
+    }
+  ],
+  "review cell dialog": [],
+  "quick open": [],
+  "command list": []
+}

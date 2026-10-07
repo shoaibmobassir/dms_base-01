@@ -39,10 +39,9 @@ export function EditorGroup({
       data-testid={`editor-group-${index}`}
     >
       <div
-        className={cn("flex h-9 shrink-0 items-stretch overflow-x-auto border-b border-border bg-paper", focused && many && "shadow-[inset_0_-2px_0_0_var(--tw-shadow-color)] shadow-wine/30")}
-        role="tablist"
-        aria-label="Open documents"
+        className={cn("flex h-9 shrink-0 items-stretch border-b border-border bg-paper", focused && many && "shadow-[inset_0_-2px_0_0_var(--tw-shadow-color)] shadow-wine/30")}
       >
+        <div className="flex min-w-0 items-stretch overflow-x-auto" role="group" aria-label="Open documents">
         {group.tabs.map((t) =>
           t.kind === "write" ? (
             <TabButton key={t.id} tab={{ ...t, kind: "document" }} writing active={t.id === group.active} groupFocused={focused} index={index} dispatch={dispatch} />
@@ -52,6 +51,7 @@ export function EditorGroup({
             <TabButton key={t.id} tab={t} active={t.id === group.active} groupFocused={focused} index={index} dispatch={dispatch} />
           ),
         )}
+        </div>
         <div className="flex-1" />
         {active && (
           <div className="flex items-center gap-0.5 px-1.5">
@@ -109,9 +109,7 @@ function TabButton({
   }, [doc.data?.title, tab.title, tab.documentId, dispatch]);
   return (
     <div
-      role="tab"
-      aria-selected={active}
-      tabIndex={active ? 0 : -1}
+      role="presentation"
       className={cn(
         "group relative flex max-w-[240px] shrink-0 cursor-pointer items-center gap-1.5 border-r border-border pl-3 pr-1 text-[13px]",
         active ? "bg-card text-foreground" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
@@ -121,16 +119,14 @@ function TabButton({
       onAuxClick={(e) => {
         if (e.button === 1) dispatch({ type: "close", group: index, tabId: tab.id });
       }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") dispatch({ type: "activate", group: index, tabId: tab.id });
-      }}
-      title={title}
       data-testid="workbench-tab"
       data-document-id={tab.documentId}
     >
       {active && <span className={cn("absolute inset-x-0 top-0 h-0.5", groupFocused ? "bg-wine" : "bg-border")} />}
-      <Icon name={writing ? "edit_document" : iconFor({ mime_type: doc.data?.mime_type, title })} className={writing ? "text-wine" : "text-muted-foreground"} style={{ fontSize: 15 }} />
-      <span className={cn("truncate", tab.preview && "italic")}>{writing ? `${title} (editing)` : title}</span>
+      <button type="button" aria-current={active ? "true" : undefined} title={title} className="flex min-w-0 items-center gap-1.5 py-2 text-left">
+        <Icon name={writing ? "edit_document" : iconFor({ mime_type: doc.data?.mime_type, title })} className={writing ? "text-wine" : "text-muted-foreground"} style={{ fontSize: 15 }} />
+        <span className={cn("truncate", tab.preview && "italic")}>{writing ? `${title} (editing)` : title}</span>
+      </button>
       <button
         type="button"
         aria-label={`Close ${title}`}
@@ -181,22 +177,21 @@ function ReviewTabButton({ tab, active, groupFocused, index, dispatch }: {
   const title = review.data?.title ?? tab.title ?? "Review";
   return (
     <div
-      role="tab"
-      aria-selected={active}
-      tabIndex={active ? 0 : -1}
+      role="presentation"
       className={cn(
         "group relative flex max-w-[240px] shrink-0 cursor-pointer items-center gap-1.5 border-r border-border pl-3 pr-1 text-[13px]",
         active ? "bg-card text-foreground" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
       )}
       onClick={() => dispatch({ type: "activate", group: index, tabId: tab.id })}
       onAuxClick={(e) => { if (e.button === 1) dispatch({ type: "close", group: index, tabId: tab.id }); }}
-      title={title}
       data-testid="workbench-tab"
       data-review-id={tab.reviewId}
     >
       {active && <span className={cn("absolute inset-x-0 top-0 h-0.5", groupFocused ? "bg-wine" : "bg-border")} />}
-      <Icon name="table_chart" className="text-muted-foreground" style={{ fontSize: 15 }} />
-      <span className="truncate">{title}</span>
+      <button type="button" aria-current={active ? "true" : undefined} title={title} className="flex min-w-0 items-center gap-1.5 py-2 text-left">
+        <Icon name="table_chart" className="text-muted-foreground" style={{ fontSize: 15 }} />
+        <span className="truncate">{title}</span>
+      </button>
       <button type="button" aria-label={`Close ${title}`}
         className={cn("ml-0.5 rounded p-0.5 hover:bg-secondary", active ? "opacity-100" : "opacity-0 group-hover:opacity-100")}
         onClick={(e) => { e.stopPropagation(); dispatch({ type: "close", group: index, tabId: tab.id }); }}>

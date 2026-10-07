@@ -241,6 +241,15 @@ function Workbench({ kind, id }: { kind: WorkspaceKind; id: string }) {
                 activeDocumentId={activeDocumentId}
                 onOpen={open}
                 onUpload={(folder, files) => (files ? void uploader.upload(files, folder) : uploader.pick(folder))}
+                onFill={kind === "firm" ? undefined : (d) => {
+                  setSeed({
+                    text: `Fill in the blanks of “${d.title}” (the open document): replace each placeholder in [square brackets], and any ` +
+                      `blank such as “____”, with the right details. Ask me first for anything you need, then propose the edits.`,
+                    nonce: Date.now(),
+                  });
+                  dispatch({ type: "side", side: "assistant" });
+                  if (state.sideWidth < 360) dispatch({ type: "sideWidth", width: 400 });
+                }}
               />
             )}
             {state.side === "search" && <SearchView kind={kind} id={id} onOpen={open} />}

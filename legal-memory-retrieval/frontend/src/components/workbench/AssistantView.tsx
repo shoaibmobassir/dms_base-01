@@ -270,7 +270,7 @@ export function AssistantView({
           {streaming ? (
             <Button type="button" size="sm" variant="outline" onClick={() => abortRef.current?.abort()}>Stop</Button>
           ) : (
-            <Button type="submit" size="sm" disabled={!text.trim()} data-testid="assistant-send">
+            <Button type="submit" size="sm" disabled={!text.trim()} aria-label="Send" data-testid="assistant-send">
               <Icon name="arrow_upward" style={{ fontSize: 16 }} />
             </Button>
           )}

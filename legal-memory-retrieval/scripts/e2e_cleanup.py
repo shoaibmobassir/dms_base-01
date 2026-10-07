@@ -50,6 +50,22 @@ def main() -> int:
     from app.storage.blobs import collect
 
     purge_projects(projects)
+    # Firm templates and library documents the specs made (their titles start with the prefix).
+    from app.ingest.purge import purge_documents
+
+    with connect() as conn, conn.transaction():
+        stray = [r["document_id"] for r in conn.execute(
+            "SELECT document_id FROM documents WHERE home_kind IN ('firm', 'library') AND title LIKE %s", (PREFIX + "%",))]
+        if stray:
+            shas = [r["content_sha256"] for r in conn.execute(
+                "SELECT DISTINCT content_sha256 FROM documents WHERE document_id = ANY(%s) AND content_sha256 IS NOT NULL", (stray,))]
+            purge_documents(conn, stray)
+            projects_shas = shas
+        else:
+            projects_shas = []
+    if projects_shas:
+        with connect() as conn:
+            collect(conn, grace=timedelta(0), only=projects_shas)
     with connect() as conn:
         conn.execute("DELETE FROM workbench_state WHERE scope_key = ANY(%s)", ([f"project:{p}" for p in projects],))
         conn.commit()

@@ -21,6 +21,7 @@ import {
   type EditModel,
 } from "@/api/editor";
 import { Icon } from "@/components/common/primitives";
+import { registerWordEditor, type SuggestEdit, type SuggestResult } from "@/lib/wordEditorBridge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useApp } from "@/context/AppContext";
@@ -164,6 +165,29 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
   };
 
   const readOnly = !model?.editable || !haveLock;
+
+  // The Assistant's edit cards can hand this editor pending suggestions (accepted or rejected in the review sidebar).
+  const suggest = useCallback((edits: SuggestEdit[]): SuggestResult => {
+    const editor = ref.current;
+    editor?.ensureEditorView({ focus: false }); // the view is created lazily; a snapshot needs it
+    const snapshot = editor?.createAIEditSnapshot();
+    if (!editor || !snapshot) return { suggested: 0, skipped: edits.map((e) => ({ id: e.id, reason: "The editor is not ready" })), error: "The editor is not ready" };
+    const norm = (t: string) => t.replace(/\s+/g, " ").trim();
+    const operations: Parameters<DocxEditorRef["applyAIEditOperations"]>[0]["operations"] = [];
+    const skipped: SuggestResult["skipped"] = [];
+    for (const e of edits) {
+      const want = norm(e.original);
+      const blocks = want ? snapshot.blocks.filter((b) => norm(b.text).includes(want)) : [];
+      if (e.op === "insert_after" || !want) skipped.push({ id: e.id, reason: "New paragraphs are not suggested here" });
+      else if (blocks.length !== 1) skipped.push({ id: e.id, reason: blocks.length ? "The passage appears more than once" : "The passage was not found" });
+      else operations.push({ id: e.id, type: "replaceInBlock", blockId: blocks[0].id, find: e.original.trim(), replace: e.proposed });
+    }
+    if (!operations.length) return { suggested: 0, skipped };
+    const out = editor.applyAIEditOperations({ snapshot, operations, mode: "suggested", author: "Assistant" });
+    for (const sk of out.skipped ?? []) skipped.push({ id: String((sk as { id?: string }).id ?? ""), reason: String((sk as { reason?: string }).reason ?? "could not be placed") });
+    return { suggested: (out.applied ?? []).length, skipped };
+  }, []);
+  useEffect(() => (readOnly || !buffer ? undefined : registerWordEditor(documentId, suggest)), [readOnly, buffer, documentId, suggest]);
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="full-word-editor">
       <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2">

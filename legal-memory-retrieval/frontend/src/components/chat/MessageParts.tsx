@@ -23,6 +23,7 @@ import { ApiError, authHeaders } from "@/api/client";
 import { decideAllEdits, decideEdit, exportEdits } from "@/api/chat";
 import { addComment } from "@/api/editor";
 import type { AskInputItem, Attachment, ChatEvent, EditProposal } from "@/api/types";
+import { suggestInWordEditor, useWordEditorOpen } from "@/lib/wordEditorBridge";
 import { cn } from "@/lib/utils";
 
 export function errorText(err: unknown, fallback: string): string {
@@ -372,6 +373,16 @@ export function EditProposalsCard({
   };
 
   const isPdf = readOnly;
+  const wordEditorOpen = useWordEditorOpen(group.document_id);
+  const suggestInEditor = () => {
+    const pending = edits.filter((e) => e.status === "pending" && !e.applied_version_id);
+    const out = suggestInWordEditor(group.document_id, pending.map((e) => ({ id: e.id, original: e.original, proposed: e.proposed })));
+    if (out.error) return void toast.error(out.error);
+    toast.success(
+      `${out.suggested} suggestion${out.suggested === 1 ? "" : "s"} added to the Word editor — accept or reject each there, then save a version.` +
+        (out.skipped.length ? ` ${out.skipped.length} could not be placed (${[...new Set(out.skipped.map((x) => x.reason))].join("; ")}).` : ""),
+    );
+  };
   const [commenting, setCommenting] = useState(false);
   const [commented, setCommented] = useState(0);
   const addAsComments = async () => {
@@ -482,6 +493,13 @@ export function EditProposalsCard({
               Reject all
             </button>
           </div>
+        )}
+        {!isPdf && wordEditorOpen && (
+          <button type="button" onClick={suggestInEditor} data-testid="edits-suggest-in-editor"
+            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-wine/40 bg-wine-soft px-2 py-1 text-xs font-semibold text-wine hover:bg-wine-soft/70"
+            title="Add these as suggestions in the open Word editor, where you accept or reject each one">
+            <PencilLine className="h-3 w-3" /> Suggest in the Word editor
+          </button>
         )}
         {!isPdf && <button
           type="button"
