@@ -18,8 +18,11 @@ def profile_rows(conn, matter_ids: list[str] | None = None) -> list[dict]:
                  m.practice_area || ' ' || m.matter_type,
                  nullif(array_to_string(m.facts, ' '), ''),
                  nullif('Issues: ' || array_to_string(m.legal_issues, '; '), 'Issues: '),
-                 (SELECT 'Documents: ' || string_agg(d.title, '; ' ORDER BY d.doc_date NULLS LAST)
-                    FROM documents d WHERE d.matter_id = m.matter_id AND d.visible_to IS NULL),
+                 -- Distinct titles of live documents, at most 12: duplicates and copies must not drown the matter's identity.
+                 (SELECT 'Documents: ' || string_agg(t.title, '; ' ORDER BY t.first_date NULLS LAST, t.title)
+                    FROM (SELECT d.title, min(d.doc_date) AS first_date FROM documents d
+                          WHERE d.matter_id = m.matter_id AND d.visible_to IS NULL AND d.archived_at IS NULL
+                          GROUP BY d.title ORDER BY min(d.doc_date) NULLS LAST, d.title LIMIT 12) t),
                  (SELECT 'Arguments: ' || string_agg(DISTINCT a.issue, '; ')
                     FROM arguments a WHERE a.matter_id = m.matter_id)
                ) AS profile_text

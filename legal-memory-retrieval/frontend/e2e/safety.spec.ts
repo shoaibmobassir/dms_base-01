@@ -113,7 +113,7 @@ test("the document reader's side panels open as drawers on a phone", async ({ pa
   await expect(page.getByTestId("document-right-rail")).toHaveCount(0);
   await page.getByRole("button", { name: /Show panel/ }).click();
   await expect(page.getByTestId("document-right-sheet")).toBeVisible();
-  await expect(page.getByTestId("document-right-sheet")).toContainText("Versions");
+  await expect(page.getByTestId("document-right-sheet")).toContainText("History");
 });
 
 test("a document hands itself to the Assistant, attached and limited to its matter", async ({ page, request }) => {
@@ -361,9 +361,10 @@ test("switching to another version keeps the page you are on", async ({ page, re
   test.skip(!id, "no document with two versions");
   await page.goto(`/ui/documents/${id}?page=2`);
   await page.getByTestId("document-view-text").click();
-  await page.getByRole("button", { name: "Versions" }).first().click();
+  await page.getByRole("button", { name: "History" }).first().click();
   const before = page.url();
-  await page.locator('[data-testid="version-row"]:not([aria-current="true"])').first().click();
+  // The commit log lists newest first; open an earlier version.
+  await page.getByTestId("commit").nth(1).locator("button").first().click();
   await expect(page).toHaveURL(/version=/);
   expect(new URL(page.url()).searchParams.get("page")).toBe(new URL(before).searchParams.get("page")); // not back to page 1
 });
@@ -400,8 +401,9 @@ test("each version shows what it changed", async ({ page, request }) => {
   }
   test.skip(!id, "no document with two versions");
   await page.goto(`/ui/documents/${id}?panel=versions`);
-  await page.getByTestId("version-changes-toggle").first().click();
-  await expect(page.getByTestId("version-changes")).toContainText(/lines/);
+  await page.getByTestId("commit-changes").first().click();
+  await expect(page.getByTestId("changes-dialog")).toBeVisible();
+  await expect(page.getByTestId("changes-dialog")).toContainText(/compared with version/);
 });
 
 test("suggested edits to a PDF say they cannot be applied and offer comments instead", async ({ page }) => {

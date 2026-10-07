@@ -122,7 +122,8 @@ def test_staffing_dates_control_team_access(client, cast, cleanup):
     assert client.put(url, json={"role": "Junior"}, headers=as_member(cast["associate"])).status_code == 403
     assert client.put(url, json={"role": "Junior"}, headers=as_member(cast["partner"])).status_code == 200
     assert _can_open(client, cast["outsider"], m["matter_id"])
-    ended = (date.today() - timedelta(days=1)).isoformat()
+    # "Yesterday" by the database's clock, which is the one access rules use.
+    ended = _rows("SELECT (current_date - 1)::text AS d")[0]["d"]
     r = client.put(url, json={"role": "Junior", "started_at": "2026-01-01", "ended_at": ended}, headers=as_member(cast["partner"]))
     assert r.status_code == 200
     assert not _can_open(client, cast["outsider"], m["matter_id"])
@@ -327,3 +328,24 @@ def test_my_work(client, cast, cleanup):
     assert set(work) == {"matters", "due", "editing", "comments", "decisions"}
     risk = client.get("/api/home/my-work", headers=as_member(cast["risk"])).json()
     assert "conflict_checks" in risk["decisions"]
+
+
+def test_a_creator_reads_their_new_matter_even_when_the_app_clock_is_a_day_ahead(client, cast, cleanup, monkeypatch):
+    """The start date comes from the database's clock: with the app server's local date a day ahead of the database's
+    (a different time zone), the creator's own assignment must not start 'tomorrow' and lock them out."""
+    import app.firm.matters as matters_mod
+
+    class Tomorrow(date):
+        @classmethod
+        def today(cls):
+            return date.today() + timedelta(days=1)
+
+    monkeypatch.setattr(matters_mod, "date", Tomorrow)
+    r = client.post("/api/matters", headers=as_member(cast["partner"]), json={
+        "title": f"E2E-TMP clock {uuid.uuid4().hex[:6]}", "client_id": CLIENT, "practice_area": "Corporate", "access_mode": "team"})
+    assert r.status_code == 201 or r.status_code == 200, r.text
+    mid = r.json()["matter_id"]
+    cleanup["matters"].append(mid)
+    assert client.get(f"/api/matters/{mid}", headers=as_member(cast["partner"])).status_code == 200
+    started = _rows("SELECT started_at, current_date AS today FROM matter_members WHERE matter_id = %s", (mid,))[0]
+    assert started["started_at"] <= started["today"]

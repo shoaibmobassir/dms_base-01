@@ -97,7 +97,8 @@ test("edit a Word document in the browser and save it as a tracked version", asy
   const after = await json<{ version_number: number; paragraphs: { text: string }[]; has_revisions: boolean }>(
     request, `/api/editor/documents/${doc}`, editor);
   expect(after.version_number).toBe(before.version_number + 1);
-  expect(after.has_revisions).toBe(true);
+  // A save is a clean version (plan 21): the change is in History, not as tracked markup in the stored file.
+  expect(after.has_revisions).toBe(false);
   expect(after.paragraphs.some((p) => p.text === "Either Party may terminate on thirty (30) days' written notice. Notice may be given by email.")).toBe(true);
   const history = await json<{ items: { action: string; member_id: string }[] }>(request, `/api/editor/documents/${doc}/history`, editor);
   // Newest first: the save, then leaving the editor releases the lock — and nothing re-locks it.
@@ -275,7 +276,8 @@ test("bold a clause and restyle a paragraph; the saved Word file carries the for
   }
   const after = await json<{ has_revisions: boolean; paragraphs: { text: string; style: string; runs: { text: string; bold: boolean }[] }[] }>(
     request, `/api/editor/documents/${doc}`, editor);
-  expect(after.has_revisions).toBe(true);
+  // A save is a clean version (plan 21): the change is in History, not as tracked markup in the stored file.
+  expect(after.has_revisions).toBe(false);
   const fees = after.paragraphs.find((p) => p.text.includes("forty-five"))!;
   expect(fees.runs.every((r) => r.bold)).toBe(true);
   expect(after.paragraphs.find((p) => p.text.includes("thirty (30) days"))!.style).toBe("Heading 2");

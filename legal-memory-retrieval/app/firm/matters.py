@@ -6,7 +6,7 @@ from typing import Any
 
 from app import access
 from app.audit import events as audit
-from app.firm import FirmError, check_version, emit, guard, new_id, one, refresh_matter_profile, require_level
+from app.firm import FirmError, check_version, db_today, emit, guard, new_id, one, refresh_matter_profile, require_level
 
 STATUSES = ("Open", "On hold", "Closed")
 ROLES = ("Lead", "Counsel", "Associate", "Junior", "Paralegal", "Knowledge Manager")
@@ -80,7 +80,7 @@ def create_matter(conn, actor: str | None, data: dict) -> dict:
         _member(conn, t.get("member_id", ""))
         if (t.get("role") or "Associate") not in ROLES:
             raise FirmError(422, f"role must be one of {', '.join(ROLES)}")
-    opened = data.get("opened_date") or date.today().isoformat()
+    opened = data.get("opened_date") or db_today(conn)
     year = int(str(opened)[:4])
     number = one(conn, "SELECT nextval('matter_number_seq') AS n")["n"]
     matter_id = f"MTR-{year}-{number:05d}"
@@ -261,7 +261,7 @@ def set_staff(conn, actor: str | None, matter_id: str, member_id: str, role: str
             "AND (ended_at IS NULL OR ended_at >= current_date)", (matter_id,))]
         if leads == [member_id]:
             raise FirmError(409, "The matter needs a lead: make someone else lead first")
-    if role == "Lead" and ended_at and str(ended_at) < date.today().isoformat():
+    if role == "Lead" and ended_at and str(ended_at) < db_today(conn):
         raise FirmError(422, "A lead's assignment cannot have ended")
     if not one(conn, "SELECT 1 AS ok FROM members WHERE member_id = %s AND active", (member_id,)):
         raise FirmError(409, "This person is deactivated and cannot be staffed on a matter")
