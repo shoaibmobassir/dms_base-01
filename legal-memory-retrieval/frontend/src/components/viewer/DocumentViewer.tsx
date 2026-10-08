@@ -166,6 +166,7 @@ export function DocumentViewer({
   const [findTotal, setFindTotal] = useState<number | null>(null);
   const findPage = useRef(0);
   const findRun = useRef(0);
+  const pendingFind = useRef<1 | -1 | null>(null); // Enter pressed before the file finished loading
 
   // Load the PDF and every page's natural size (placeholders keep the right height).
   useEffect(() => {
@@ -422,7 +423,13 @@ export function DocumentViewer({
   const pageCount = doc?.numPages ?? 0;
   const findNext = async (dir: 1 | -1) => {
     const q = findText.trim();
-    if (!doc || q.length < 2) return;
+    if (q.length < 2) return;
+    if (!doc) {
+      pendingFind.current = dir;
+      setFindState("searching");
+      return;
+    }
+    pendingFind.current = null;
     const run = ++findRun.current;
     setFindState("searching");
     const from = findPage.current || current;
@@ -452,6 +459,10 @@ export function DocumentViewer({
     }
     setFindState("none");
   };
+  useEffect(() => {
+    if (doc && pendingFind.current) void findNext(pendingFind.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once when the file arrives
+  }, [doc]);
   const step = (dir: 1 | -1) => {
     const next = [...ZOOM_STEPS].sort((x, y) => (dir === 1 ? x - y : y - x)).find((s) => (dir === 1 ? s > scale + 0.01 : s < scale - 0.01));
     if (next) setZoom({ mode: "custom", scale: next });
@@ -528,6 +539,7 @@ export function DocumentViewer({
             value={findText}
             onChange={(e) => {
               setFindText(e.target.value);
+              pendingFind.current = null;
               findPage.current = 0;
               findRun.current += 1;
               setFindTotal(null);

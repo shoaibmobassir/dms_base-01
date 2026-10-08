@@ -14,6 +14,7 @@ import { NewReviewDialog, ReviewsView } from "@/components/workbench/ReviewDialo
 import { PlaybooksView } from "@/components/workbench/Playbooks";
 import type { PlaybookSummary } from "@/api/playbooks";
 import { AssistantView } from "@/components/workbench/AssistantView";
+import { registerAssistantRequests } from "@/lib/assistantRequest";
 import { useWorkbench, type SideView } from "@/components/workbench/state";
 import { useWorkspaceUpload } from "@/components/workbench/useWorkspaceUpload";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,15 @@ function Workbench({ kind, id }: { kind: WorkspaceKind; id: string }) {
   const [commands, setCommands] = useState(false);
   const [people, setPeople] = useState(false);
   const [details, setDetails] = useState(false);
-  const [seed, setSeed] = useState<{ text: string; nonce: number } | undefined>(undefined);
+  const [seed, setSeed] = useState<{ text: string; nonce: number; send?: boolean } | undefined>(undefined);
+  // A question raised inside an open document (e.g. "compare with precedent") is asked in the side Assistant.
+  useEffect(() => {
+    if (kind === "firm") return undefined;
+    return registerAssistantRequests((r) => {
+      setSeed({ text: r.prompt, nonce: Date.now(), send: true });
+      dispatch({ type: "side", side: "assistant" });
+    });
+  }, [kind]);
   const [reviewPlaybook, setReviewPlaybook] = useState<PlaybookSummary | null>(null);
   const project = useProject(id, kind === "project");
   const queryClient = useQueryClient();

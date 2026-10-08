@@ -35,7 +35,7 @@ export function AssistantView({
   openDocs: OpenDoc[];
   onOpen: (r: OpenRequest) => void;
   /** Text to put in the composer (e.g. "Follow the playbook …"); changes of ``nonce`` re-apply it. */
-  seed?: { text: string; nonce: number };
+  seed?: { text: string; nonce: number; send?: boolean };
 }) {
   const queryClient = useQueryClient();
   const { identityKey } = useApp();
@@ -51,15 +51,15 @@ export function AssistantView({
   const slash = text.startsWith("/") ? text.slice(1).toLowerCase() : null;
   const playbooks = usePlaybooks({ kind: "instructions", enabled: slash !== null });
   const matches = slash === null ? [] : (playbooks.data ?? []).filter((p) => p.title.toLowerCase().includes(slash)).slice(0, 8);
-  useEffect(() => {
-    if (seed?.text) setText(seed.text);
-  }, [seed?.nonce, seed?.text]);
+  const [loaded, setLoaded] = useState(false);
+  const sentSeed = useRef<number | null>(null);
 
   // The latest conversation of this workspace, if there is one.
   useEffect(() => {
     let cancelled = false;
     setMessages([]);
     setSessionId(null);
+    setLoaded(false);
     listWorkspaceSessions(kind, id)
       .then(async (sessions) => {
         if (cancelled || !sessions.length) return;
@@ -68,7 +68,10 @@ export function AssistantView({
         setSessionId(sessions[0].id);
         setMessages(d.messages);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
     return () => {
       cancelled = true;
       abortRef.current?.abort();
@@ -134,6 +137,19 @@ export function AssistantView({
       void queryClient.invalidateQueries({ predicate: (q) => q.queryKey.includes("document") || q.queryKey.includes("doc-commits") });
     }
   };
+
+  // A seed fills the composer; one marked ``send`` is asked straight away, once the conversation has loaded.
+  useEffect(() => {
+    if (!seed?.text || sentSeed.current === seed.nonce) return;
+    if (!seed.send) {
+      sentSeed.current = seed.nonce;
+      setText(seed.text);
+    } else if (loaded && !streaming) {
+      sentSeed.current = seed.nonce;
+      void send(seed.text);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- send reads the latest state
+  }, [seed?.nonce, seed?.text, seed?.send, loaded, streaming]);
 
   const openSource = (s: Omit<PanelSource, "nonce"> | null) => {
     if (!s) return;

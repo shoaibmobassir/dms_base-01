@@ -348,3 +348,72 @@ test("a document made from a firm template is handed to the Assistant to fill in
     await ctx.close();
   }
 });
+
+test("a clause selected in the Word editor is compared with the firm's precedents by the Assistant", async ({ browser, request }) => {
+  test.setTimeout(150_000);
+  const M = "MEM-00001";
+  const h = { "X-Member-Id": M };
+  const docs = (await (await request.get("/api/documents?q=Employment%20Agreement%20-%20CTO&limit=5", { headers: h })).json()) as { items: { document_id: string; title: string }[] };
+  const source = docs.items.find((d) => /\.docx$/i.test(d.title));
+  test.skip(!source, "needs a Word document the member can read");
+  const project = (await (await request.post("/api/projects", { headers: h, data: { title: `${tag()} Precedent` } })).json()) as { project_id: string };
+  const pid = project.project_id;
+  const copy = (await (await request.post(`/api/workspaces/documents/${source!.document_id}/copy`, { headers: h, data: { kind: "project", id: pid, title: "CTO agreement (compare)" } })).json()) as { document_id: string };
+  const now = new Date().toISOString();
+  const session = { id: "mock-compare", title: "Compare", matter_id: null, workspace_kind: "project", workspace_id: pid, pinned: false, created_at: now, updated_at: now, status: "active" };
+  let asked = "";
+  const { ctx, page } = await as(browser, M);
+  try {
+    await page.route("**/api/chat/sessions?workspace_kind=*", (route) => route.fulfill({ json: [] }));
+    await page.route("**/api/chat/sessions", (route) => (route.request().method() === "POST" ? route.fulfill({ json: session }) : route.fallback()));
+    await page.route("**/api/chat/sessions/mock-compare/messages", (route) => {
+      asked = String((route.request().postDataJSON() as { content?: string }).content ?? "");
+      const events = [{ type: "text_delta", text: "The firm's precedents give three months' notice as well." }, { type: "done" }];
+      return route.fulfill({ status: 200, contentType: "text/event-stream", body: events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("") });
+    });
+    await page.goto(`/ui/work/project/${pid}`);
+    const row = page.locator(`[data-testid="explorer-document"][data-document-id="${copy.document_id}"]`);
+    await row.hover();
+    await row.getByRole("button", { name: /actions/ }).click();
+    await page.getByTestId("explorer-edit-word").click();
+    await expect(page.getByText("Tracking: On")).toBeVisible({ timeout: 60_000 });
+    // nothing selected: the editor asks for a selection first
+    await page.getByTestId("full-editor-compare").click();
+    await expect(page.getByText("Select the clause to compare first")).toBeVisible();
+    const line = page.locator(".layout-line").filter({ hasText: /terminate this Agreement by giving/ }).first();
+    await line.scrollIntoViewIfNeeded();
+    await line.click();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Shift+End");
+    await page.getByTestId("full-editor-compare").click();
+    await expect(page.getByTestId("workbench-assistant")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("The firm's precedents give three months' notice as well.")).toBeVisible({ timeout: 15_000 });
+    expect(asked).toContain("Compare this clause from “CTO agreement (compare)");
+    expect(asked).toContain("find_precedents");
+    expect(asked).toMatch(/terminate this Agreement/);
+
+    // the same from the page view: select words on the page, then "Compare with precedent" over the selection
+    asked = "";
+    await page.goto(`/ui/work/project/${pid}`);
+    await row.locator("button").first().dblclick();
+    const span = page.locator(".textLayer span").filter({ hasText: /terminate this Agreement/ }).first();
+    await expect(span).toBeVisible({ timeout: 60_000 });
+    await span.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1500); // the viewer settles on its page; a scroll after selecting hides the buttons
+    // Select the words in the text layer, as a mouse drag would.
+    await span.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      el.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    });
+    await page.getByTestId("compare-precedent-pill").click();
+    await expect(page.getByTestId("workbench-assistant")).toBeVisible({ timeout: 15_000 });
+    await expect.poll(() => asked).toContain("Compare this clause from “CTO agreement (compare)");
+    expect(asked).toMatch(/\(page \d+\)/);
+  } finally {
+    await ctx.close();
+  }
+});

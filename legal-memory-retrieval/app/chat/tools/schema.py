@@ -683,6 +683,27 @@ SEARCH_WORKSPACE = {
     },
 }
 
+FIND_PRECEDENTS = {
+    "type": "function",
+    "function": {
+        "name": "find_precedents",
+        "description": (
+            "Find the firm's precedents for a clause: the closest passages in the firm's template library and in "
+            "documents on the firm's matters (never personal libraries or projects), by meaning. Use it when the user "
+            "asks how a clause compares with what the firm has used before, then compare point by point and cite."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string", "description": "The clause text to compare, verbatim."},
+                "document": {"type": "string", "description": "The doc-N label or DOC id the clause comes from (left out of the results)."},
+                "limit": {"type": "integer", "description": "At most this many documents (default 6, at most 10)."},
+            },
+            "required": ["text"],
+        },
+    },
+}
+
 READ_REVIEW_CELLS = {
     "type": "function",
     "function": {
@@ -724,6 +745,7 @@ CORE_TOOLS = [
     GENERATE_EXCEL,
     ASK_INPUTS,
     PROPOSE_EDITS,
+    FIND_PRECEDENTS,
 ]
 
 WORKFLOW_TOOLS = [LIST_WORKFLOWS, READ_WORKFLOW]

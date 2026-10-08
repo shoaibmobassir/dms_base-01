@@ -25,6 +25,7 @@ import { downloadDocument } from "@/api/resources";
 import { useApp } from "@/context/AppContext";
 import { FindInDocument } from "@/components/document-workspace/FindInDocument";
 import { CommentsPanel, SelectionComment, useDocComments } from "@/components/comments/DocComments";
+import { askAssistant, comparePrompt } from "@/lib/assistantRequest";
 import type { ViewerTarget } from "@/components/viewer/DocumentViewer";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { DocumentPlacesPanel } from "@/components/workbench/DocumentPlacesPanel";
@@ -165,6 +166,11 @@ function WorkspaceFrame({
   embedded?: boolean;
 }) {
   const versions = useDocumentVersions(doc.document_id);
+  const navigateTo = useNavigate();
+  const compareWithPrecedent = (quote: string, page: number) => {
+    const url = askAssistant({ prompt: comparePrompt(doc.title, quote, page), documentId: doc.document_id });
+    if (url) navigateTo(url);
+  };
   const versionRows = versions.data ?? [];
   const currentVersionId = doc.current_version_id ?? versionRows[0]?.version_id;
   const openVersionId = address.versionId ?? currentVersionId;
@@ -595,7 +601,7 @@ function WorkspaceFrame({
         </SheetContent>
       </Sheet>
 
-      <SelectionComment dc={dc} />
+      <SelectionComment dc={dc} onCompare={compareWithPrecedent} />
 
       <GoToDialog
         open={goOpen}

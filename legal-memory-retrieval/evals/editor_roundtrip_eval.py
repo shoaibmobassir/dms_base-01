@@ -6,15 +6,16 @@ tracked version → download the stored file, and check:
 
   read_ok        the edit model's paragraphs are exactly the file's body paragraphs
   accept_ok      the file with all changes accepted equals the expected edited text
-  reject_ok      the file with every change rejected reads as the document first uploaded
-                 (saves keep earlier pending changes, including the editor's own)
+  reject_ok      going back is lossless: the parent version and the first upload still read exactly as before,
+                 and the new version credits the editor with its changes (since plan 21 a save stores the
+                 clean document and records who changed what in document_revision_authors)
   untouched_ok   every paragraph not edited keeps its style and run formatting (100%)
   tables_ok      tables (view-only in the editor) survive unchanged
   next_ok        the next edit model starts from the accepted text (a second round runs on it)
   format_accept_ok  formatting edits (bold a phrase, restyle a paragraph) read back exactly
                  from the saved file with all changes accepted
-  format_reject_ok  rejecting the formatting revisions restores those paragraphs' original
-                 style and run formatting
+  format_reject_ok  the parent version keeps those paragraphs' original style and run formatting,
+                 and the new version records the formatting changes against the editor
   tracked_render_ok the saved tracked file converts in LibreOffice (Gotenberg), an
                  independent check that the Word XML is valid
   vectors_ok     every chunk of the new version gets its vector (unchanged chunks reuse the
@@ -217,6 +218,16 @@ def _expected(texts: list[str], ops: list[dict]) -> tuple[list[str], list[int | 
     return text_out, origin
 
 
+def _credited(version_id: str) -> dict:
+    """The change counts the save recorded against the editor (sum over their revision-author rows)."""
+    with connect() as conn:
+        r = conn.execute(
+            """SELECT coalesce(sum(insertions), 0) AS insertions, coalesce(sum(deletions), 0) AS deletions,
+                      coalesce(sum(formats), 0) AS formats
+               FROM document_revision_authors WHERE version_id = %s AND member_id IS NOT NULL""", (version_id,)).fetchone()
+    return {k: int(v) for k, v in r.items()}
+
+
 def _vector_counts(version_id: str) -> tuple[int, int]:
     """(chunks with a vector, all chunks) of a version."""
     with connect() as conn:
@@ -275,7 +286,8 @@ def run(base_url: str, pages_list: list[int], rounds: int, seed: int) -> dict:
                 row = {"pages": pages, "paragraphs": 0, "upload_s": round(upload_s, 2),
                        "render_s": round(render_s, 2), "render_ok": render_ok, "rounds": []}
                 current = original
-                first_original = text_view(original, "original")
+                first_original_final = text_view(original, "final")
+                first_version_id = http.get(f"/api/editor/documents/{doc_id}/commits").json()["items"][0]["version_id"]
                 for rnd in range(rounds):
                     t0 = time.perf_counter()
                     r = http.get(f"/api/editor/documents/{doc_id}")
@@ -314,10 +326,24 @@ def run(base_url: str, pages_list: list[int], rounds: int, seed: int) -> dict:
                     want, origin = [t for t, _ in kept], [o for _, o in kept]
                     accepted = _accept(out)
                     accept_ok = text_view(out, "final") == want
-                    reject_ok = text_view(out, "original") == first_original
+                    # Since plan 21 a save stores the clean document; "reject" is going back to the parent version, and
+                    # who changed what lives in document_revision_authors. So: the parent and the first version still
+                    # read exactly as before, and the new version credits this editor with the changes.
+                    parent = http.get(f"/api/documents/{doc_id}/download", params={"version_id": model["base_version_id"]}).content
+                    first = http.get(f"/api/documents/{doc_id}/download", params={"version_id": first_version_id}).content
+                    credit = _credited(r.json()["version_id"])
+                    reject_ok = (text_view(parent, "final") == text_view(current, "final")
+                                 and text_view(first, "final") == first_original_final
+                                 and credit["insertions"] + credit["deletions"] > 0)
 
                     touched = {o["pid"] for o in ops if o["op"] in ("replace", "delete", "format")}
-                    format_accept_ok, format_reject_ok, format_checked = _format_checks(base_accepted, out, ops, origin, base_idx)
+                    format_accept_ok, _, format_checked = _format_checks(base_accepted, out, ops, origin, base_idx)
+                    # formatting is undone by the parent version: its reformatted paragraphs keep their old formatting
+                    old_p0 = _body_paragraphs(base_accepted)
+                    par_p = _body_paragraphs(_accept(parent))
+                    format_reject_ok = len(par_p) == len(old_p0) and all(
+                        formatting_signature(par_p[base_idx[o["pid"]]]) == formatting_signature(old_p0[base_idx[o["pid"]]])
+                        for o in ops if o["op"] == "format") and (not format_checked or credit["formats"] > 0)
                     tracked_render_ok = _renders(out) if rnd == 0 else True
                     old_p = _body_paragraphs(base_accepted)
                     new_p = _body_paragraphs(accepted)

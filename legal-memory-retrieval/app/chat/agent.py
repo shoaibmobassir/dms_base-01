@@ -49,6 +49,7 @@ from app.chat.tools.batch_tools import review_documents_tool
 from app.chat.tools.comment_tools import comment_on_document_tool
 from app.chat.tools.edit_tools import edit_document_tool
 from app.chat.context import carried_documents, fit_context, working_set, working_set_note
+from app.chat.tools.precedents import find_precedents_tool
 from app.chat.tools.firm_tools import (
     ask_firm_tool,
     find_people_tool,
@@ -82,6 +83,7 @@ _DB_TOOLS = frozenset({
     "read_workflow",
     "search_workspace",
     "read_review_cells",
+    "find_precedents",
     "review_documents",
     "edit_document",
     "comment_on_document",
@@ -259,7 +261,7 @@ def dispatch_tool_call(
         result = _FIRM_TOOLS[name](arguments, doc_index, conn, member_id)
         if "event" in result:
             events.append(result.pop("event"))
-        if name == "ask_firm":
+        if name in ("ask_firm", "find_precedents"):
             _load_passage_documents(result, doc_index, doc_store, conn, member_id)
         return result, events
 
@@ -483,6 +485,7 @@ def ground_chat_text(
 
 
 _FIRM_TOOLS = {
+    "find_precedents": lambda a, idx, conn, mid: find_precedents_tool(a, idx, conn, mid),
     "ask_firm": lambda a, idx, conn, mid: ask_firm_tool(
         str(a.get("question") or ""), a.get("scope") or None, idx, conn, mid,
     ),
@@ -562,6 +565,8 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
         return f"Finding colleagues for “{query}”" if query else "Finding colleagues"
     if name in {"list_workflows", "read_workflow"}:
         return "Checking the firm's playbooks"
+    if name == "find_precedents":
+        return "Looking for the firm's precedents on this clause"
     authority = entry.filename if entry else str(arguments.get("authority") or "").strip()
     if authority in doc_index:
         authority = doc_index[authority].filename

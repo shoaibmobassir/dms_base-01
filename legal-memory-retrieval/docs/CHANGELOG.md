@@ -10,7 +10,11 @@ Metrics come from `python evals/retrieval_eval.py` on frozen `evals/dataset.json
   written in one batch and the vector-reuse query no longer depends on stale table statistics. New metric
   `precentis_workbench_save_seconds`.
 - Accessibility: axe audit of 14 views, 0 serious/critical. Performance: 20 tabs, 14 MB heap, 60 fps.
-- Evals: `word_editor_roundtrip_eval.py`, `workbench_perf_audit.cjs`, `a11y_audit.cjs`.
+- Evals: `word_editor_roundtrip_eval.py`, `workbench_perf_audit.cjs`, `a11y_audit.cjs`; `editor_roundtrip_eval.py`
+  updated for clean versions (passes again).
+- Compare with precedent: select a clause in a document or the Word editor and the Assistant compares it with the
+  firm's precedents (new tool `find_precedents`, firm material only, cited).
+- PDF find: pressing Enter before the file has loaded now searches once it arrives (it did nothing before).
 
 ## 2026-10-07 — Document Workbench (plan 22)
 

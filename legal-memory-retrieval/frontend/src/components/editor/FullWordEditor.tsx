@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DocxEditor, type DocxEditorRef } from "@stll/folio-react";
@@ -21,6 +22,7 @@ import {
   type EditModel,
 } from "@/api/editor";
 import { Icon } from "@/components/common/primitives";
+import { askAssistant, comparePrompt } from "@/lib/assistantRequest";
 import { registerWordEditor, type SuggestEdit, type SuggestResult } from "@/lib/wordEditorBridge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -35,6 +37,7 @@ import { cn } from "@/lib/utils";
 export function FullWordEditor({ documentId, onSaved }: { documentId: string; onSaved?: (versionNumber: number) => void }) {
   const { me, toast } = useApp();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const ref = useRef<DocxEditorRef | null>(null);
   const [model, setModel] = useState<EditModel | null>(null);
   const [buffer, setBuffer] = useState<ArrayBuffer | null>(null);
@@ -206,6 +209,23 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
             ))}
           </div>
         )}
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!buffer}
+          onClick={() => {
+            const quote = ref.current?.getSelectionText().trim() ?? "";
+            if (quote.length < 20) {
+              toast("Select the clause to compare first");
+              return;
+            }
+            const url = askAssistant({ prompt: comparePrompt(model?.title ?? "this document", quote), documentId });
+            if (url) navigate(url);
+          }}
+          data-testid="full-editor-compare"
+        >
+          Compare with precedent
+        </Button>
         {model?.editable && (
           <Button size="sm" onClick={() => setAsking(true)} disabled={readOnly || saving || !buffer} data-testid="full-editor-save">
             <Icon name="save" style={{ fontSize: 16 }} /> Save version

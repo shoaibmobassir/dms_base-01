@@ -87,3 +87,39 @@ def test_read_review_cells_is_redacted_like_the_page(client, cast, made, model, 
     assert len(insider["cells"]) == 2
     assert [c["document_id"] for c in outsider["cells"]] == [own]
     assert "error" in stranger
+
+
+def test_find_precedents_reads_only_firm_material_the_member_may_read_and_leaves_out_the_source(client, cast, made):
+    from app.chat.tools.precedents import find_precedents
+    from app.embeddings.pending import embed_pending_chunks
+
+    # a firm document the partner can read, with a vector
+    with connect() as conn:
+        row = conn.execute(
+            """SELECT c.document_id, c.text FROM chunks c JOIN documents d USING (document_id)
+               WHERE d.home_kind = 'matter' AND d.archived_at IS NULL AND c.embedding IS NOT NULL
+                 AND NOT coalesce(c.is_parent, false) AND length(c.text) > 200
+                 AND (c.version_id IS NULL OR c.version_id = d.current_version_id)
+                 AND EXISTS (SELECT 1 FROM documents x JOIN permissions p ON p.matter_id = x.matter_id
+                             WHERE x.document_id = d.document_id)
+               ORDER BY c.chunk_id LIMIT 1""").fetchone()
+        assert row, "needs an embedded matter document"
+        partner = "MEM-00001"
+        found = find_precedents(conn, partner, row["text"])
+        assert found and found[0]["similarity"] > 0.5
+        top = found[0]["document_id"]
+        assert top not in {h["document_id"] for h in find_precedents(conn, partner, row["text"], top)}
+        assert all(h["home_kind"] in ("matter", "firm") for h in found)
+
+    # a project document with a distinctive clause is never offered as a firm precedent, even to its owner
+    pid = _project(client, cast["outsider"], made)["project_id"]
+    clause = (f"E2E-TMP The Licensee shall indemnify the Licensor against all claims arising from the use of the "
+              f"Platypus{uuid.uuid4().hex[:6]} software in breach of this licence.")
+    doc, _, _ = _upload(client, cast["outsider"], made, kind="project", cid=pid, body=clause.encode())
+    embed_pending_chunks([doc])
+    with connect() as conn:
+        assert doc not in {h["document_id"] for h in find_precedents(conn, cast["outsider"], clause, limit=10)}
+        result, _ = dispatch_tool_call("find_precedents", {"text": clause}, {}, {}, conn, "n", member_id=cast["outsider"])
+        assert "passages" in result and all(p["kind"] in ("firm template", "matter document") for p in result["passages"])
+        short, _ = dispatch_tool_call("find_precedents", {"text": "too short"}, {}, {}, conn, "n", member_id=cast["outsider"])
+        assert "error" in short
