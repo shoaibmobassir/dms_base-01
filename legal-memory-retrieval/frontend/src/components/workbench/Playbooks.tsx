@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/common/Confirm";
 
 /** The playbooks the member can use: built in, the firm's and their own (side view of the workbench). */
 export function PlaybooksView({ onUse, onStartReview }: {
@@ -35,6 +36,9 @@ export function PlaybooksView({ onUse, onStartReview }: {
   const [q, setQ] = useState("");
   const [kind, setKind] = useState<PlaybookKind | "">("");
   const list = usePlaybooks({ kind: kind || undefined, q });
+  const [area, setArea] = useState("");
+  const areas = [...new Set((list.data ?? []).map((p) => p.practice_area).filter((a): a is string => !!a))].sort();
+  const shown = (list.data ?? []).filter((p) => !area || p.practice_area === area);
   const [open, setOpen] = useState<string | null>(null);
   const [creating, setCreating] = useState<PlaybookKind | null>(null);
   return (
@@ -55,21 +59,31 @@ export function PlaybooksView({ onUse, onStartReview }: {
               className={cn("rounded px-2 py-0.5", kind === k ? "bg-secondary font-medium" : "text-muted-foreground hover:text-foreground")}>{l}</button>
           ))}
         </div>
+        {areas.length > 1 && (
+          <select value={area} onChange={(e) => setArea(e.target.value)} aria-label="Practice area" data-testid="playbooks-area"
+            className="w-full rounded-md border border-border bg-card px-2 py-1 text-xs">
+            <option value="">Every practice area</option>
+            {areas.map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+        )}
       </div>
       <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
-        {(list.data ?? []).map((p) => (
+        {shown.map((p) => (
           <li key={p.playbook_id}>
             <button type="button" className="w-full px-3 py-2 text-left hover:bg-secondary/70" onClick={() => setOpen(p.playbook_id)} data-testid="playbook-item">
               <div className="flex items-center gap-1.5 text-[13px] font-medium">
-                <Icon name={p.kind === "columns" ? "view_column" : "menu_book"} className="text-muted-foreground" style={{ fontSize: 15 }} />
+                <Icon name={p.kind === "columns" ? "view_column" : "menu_book"} className="shrink-0 text-muted-foreground" style={{ fontSize: 15 }} />
                 <span className="truncate">{p.title}</span>
                 <span className="ml-auto shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">{SOURCE_LABEL[p.source]}</span>
               </div>
+              {(p.practice_area || p.jurisdiction) && (
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{[p.practice_area, p.jurisdiction].filter(Boolean).join(" · ")}</p>
+              )}
               {p.summary && <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{p.summary}</p>}
             </button>
           </li>
         ))}
-        {list.data && list.data.length === 0 && <li className="px-3 py-3 text-xs text-muted-foreground">No playbook matches.</li>}
+        {list.data && shown.length === 0 && <li className="px-3 py-3 text-xs text-muted-foreground">No playbook matches.</li>}
       </ul>
       {open && <PlaybookDialog id={open} onClose={() => setOpen(null)} onOpenOther={setOpen}
         onUse={(p) => { setOpen(null); onUse(p); }} onStartReview={(p) => { setOpen(null); onStartReview(p); }} />}
@@ -85,6 +99,7 @@ function PlaybookDialog({ id, onClose, onOpenOther, onUse, onStartReview }: {
   const pb = usePlaybook(id);
   const queryClient = useQueryClient();
   const { toast } = useApp();
+  const confirm = useConfirm();
   const access = useMyAccess();
   const [editing, setEditing] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -151,7 +166,11 @@ function PlaybookDialog({ id, onClose, onOpenOther, onUse, onStartReview }: {
                 </Button>
               )}
               {p.source !== "shipped" && p.my_level === "manage" && (
-                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => void act(() => archivePlaybook(p.playbook_id), "Playbook removed").then(onClose)}>
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={async () => {
+                  if (!(await confirm({ title: `Remove “${p.title}”?`, description: p.source === "firm" ? "It leaves the firm's playbooks for everyone." : "It leaves your playbooks and anyone you shared it with.", confirmLabel: "Remove playbook", destructive: true }))) return;
+                  await act(() => archivePlaybook(p.playbook_id), "Playbook removed");
+                  onClose();
+                }}>
                   Remove
                 </Button>
               )}

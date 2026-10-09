@@ -1,8 +1,9 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AppShell } from "@/components/shell/AppShell";
 import { HomePage } from "@/pages/HomePage";
 import { TableSkeleton } from "@/components/common/primitives";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 
 // Each page loads when first opened, so the first screen does not carry the editor, chat or admin code.
 const AdminPage = lazy(() => import("@/pages/AdminPage").then((m) => ({ default: m.AdminPage })));
@@ -26,8 +27,10 @@ const WorkbenchPage = lazy(() => import("@/pages/WorkbenchPage").then((m) => ({ 
 const SettingsPage = lazy(() => import("@/pages/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 
 function App() {
+  const { pathname } = useLocation();
   return (
     <AppShell>
+      <ErrorBoundary what="This page" resetKey={pathname}>
       <Suspense fallback={<div className="w-full px-6 py-8"><TableSkeleton /></div>}>
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -58,6 +61,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>
+      </ErrorBoundary>
     </AppShell>
   );
 }

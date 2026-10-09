@@ -31,6 +31,8 @@ import { useMediaQuery } from "@/lib/use-media-query";
 import { DocumentPlacesPanel } from "@/components/workbench/DocumentPlacesPanel";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useWorkbenchHost } from "@/lib/workbenchHost";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { HistoryPanel } from "@/components/document-workspace/HistoryPanel";
 import { GripVertical, X } from "lucide-react";
 import type { Attachment } from "@/api/types";
@@ -246,7 +248,9 @@ function WorkspaceFrame({
 
   const [leftTab, setLeftTab] = useState<LeftTab>("outline");
   const [rightTab, setRightTab] = useState<RightTab>(panelParam === "versions" ? "versions" : "comments");
-  const [leftOpen, setLeftOpen] = useState(true);
+  // Inside a workbench tab the explorer already lists the files: the outline starts closed to give the page the width.
+  const inWorkbench = useWorkbenchHost() !== null;
+  const [leftOpen, setLeftOpen] = useState(!inWorkbench);
   const [rightOpen, setRightOpen] = useState(true);
   // Below these widths the rails are drawers, opened from the toolbar.
   const isMdWindow = useMediaQuery("(min-width: 768px)");
@@ -322,11 +326,10 @@ function WorkspaceFrame({
     const items = outline.data?.outline ?? [];
     if (!items.length) return null;
     const match = items.find((o) => unitOf(o, usePages) === part) ?? [...items].reverse().find((o) => unitOf(o, usePages) < part);
-    return match
-      ? match.section_id
-        ? `${match.section_id} — ${match.section_title}`
-        : match.section_title
-      : null;
+    // A clause number ("4.2", "B", "IV") helps; an internal slug ("in-the-matter-of") does not.
+    const ref = match?.section_id && /^[0-9A-Za-z]{1,6}([.\-][0-9A-Za-z]{1,4})*$/.test(match.section_id) && !/^[a-z]+(-[a-z]+)+$/.test(match.section_id)
+      ? match.section_id : null;
+    return match ? (ref ? `${ref} — ${match.section_title}` : match.section_title) : null;
   }, [outline.data, part, usePages]);
 
   const newerAvailable =
@@ -786,6 +789,7 @@ function Toolbar({
   compact?: boolean;
 }) {
   const { toast } = useApp();
+  const host = useWorkbenchHost();
   const [draft, setDraft] = useState(String(part));
   useEffect(() => setDraft(String(part)), [part]);
 
@@ -799,13 +803,11 @@ function Toolbar({
     if (ok === false) setDraft(String(part));
   };
 
+  // One way to name a version everywhere (tab, status bar, history): "v3".
   const versionLabel =
-    openVersion?.version_label ||
-    (openVersion?.version_number != null
+    openVersion?.version_number != null
       ? `v${openVersion.version_number}`
-      : openVersionId
-        ? "Version"
-        : "—");
+      : openVersion?.version_label || (openVersionId ? "Version" : "—");
   const status = openVersion?.version_status;
 
   return (
@@ -835,7 +837,7 @@ function Toolbar({
             data-testid="document-version-chip"
           >
             {versionLabel}
-            {status ? ` · ${status}` : ""}
+            {status && status !== "draft" ? ` · ${status}` : ""}
             {newerAvailable ? " · newer version available" : ""}
           </span>
           {newerAvailable && (
@@ -951,25 +953,51 @@ function Toolbar({
           <Icon name="download" style={{ fontSize: 16 }} /> Download
         </Button>
       )}
-      <PrivacyControl documentId={doc.document_id} />
+      {doc.matter_id && <PrivacyControl documentId={doc.document_id} />}
       {canReview && (
         <Button type="button" size="sm" variant="outline" onClick={onReview} data-testid="document-review-changes">
           <Icon name="difference" style={{ fontSize: 16 }} /> Review changes
         </Button>
       )}
-      {doc.matter_id && <ArchiveDocument documentId={doc.document_id} matterId={doc.matter_id} title={doc.title} />}
-      {/word|docx/i.test((doc.mime_type ?? "") + doc.title) && (
-        <Button asChild size="sm" variant="outline" data-testid="document-write" title="Tables, headers, footnotes and tracked changes, as in Word">
-          <Link to={`/documents/${encodeURIComponent(doc.document_id)}/write`}>
-            <Icon name="edit_document" style={{ fontSize: 16 }} /> Word editor
+      <ArchiveDocument documentId={doc.document_id} matterId={doc.matter_id} title={doc.title} />
+      {/word|docx/i.test((doc.mime_type ?? "") + doc.title) ? (
+        // A Word file has one Edit: the Word editor (tables, footnotes, tracked changes). The text-only editor stays
+        // reachable for quick wording changes.
+        <span className="inline-flex">
+          {host ? (
+            <Button size="sm" variant="outline" className="rounded-r-none" data-testid="document-write"
+              onClick={() => host.openWordEditor(doc.document_id, doc.title)} title="Edit in Word: tables, headers, footnotes and tracked changes">
+              <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit
+            </Button>
+          ) : (
+            <Button asChild size="sm" variant="outline" className="rounded-r-none" data-testid="document-write" title="Edit in Word: tables, headers, footnotes and tracked changes">
+              <Link to={`/documents/${encodeURIComponent(doc.document_id)}/write`}>
+                <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit
+              </Link>
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" className="rounded-l-none border-l-0 px-1.5" aria-label="Other ways to edit">
+                <Icon name="expand_more" style={{ fontSize: 16 }} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuItem asChild data-testid="document-edit">
+                <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>
+                  <Icon name="notes" style={{ fontSize: 16 }} /> Quick text edit (paragraphs only)
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </span>
+      ) : (
+        <Button asChild size="sm" variant="outline" data-testid="document-edit">
+          <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>
+            <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit
           </Link>
         </Button>
       )}
-      <Button asChild size="sm" variant="outline" data-testid="document-edit">
-        <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>
-          <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit
-        </Link>
-      </Button>
 
       <button
         type="button"

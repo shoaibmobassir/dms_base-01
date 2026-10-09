@@ -68,6 +68,11 @@ def get_edit_model(document_id: str, member_id: str | None = Depends(resolve_mem
 LockToken = Header(default=None, alias="X-Edit-Lock", max_length=64)
 
 
+@router.get("/documents/{document_id}/lock")
+def get_lock(document_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(editing.lock_for_reader, document_id.upper(), member_id)
+
+
 @router.post("/documents/{document_id}/lock")
 def post_lock(document_id: str, takeover: bool = Query(default=False), token: str | None = LockToken,
               member_id: str | None = Depends(resolve_member)) -> dict:

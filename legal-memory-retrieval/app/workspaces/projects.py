@@ -91,7 +91,9 @@ def visible_project_ids(conn, actor: str | None) -> set[str] | None:
 
 @guard
 def list_projects(conn, actor: str | None, *, q: str | None = None, archived: bool = False,
-                  limit: int = 100, offset: int = 0) -> dict:
+                  limit: int = 100, offset: int = 0, scope: str = "all", sort: str = "updated",
+                  matter_id: str | None = None) -> dict:
+    """Projects the member can open. ``scope``: all, mine (they own it) or shared (someone else's, they are in it)."""
     ids = visible_project_ids(conn, actor)
     params: dict[str, Any] = {"ids": list(ids) if ids is not None else None, "u": actor, "limit": limit,
                               "offset": offset, "archived": archived}
@@ -100,6 +102,15 @@ def list_projects(conn, actor: str | None, *, q: str | None = None, archived: bo
     if q and q.strip():
         params["q"] = f"%{q.strip()}%"
         where.append("(p.title ILIKE %(q)s OR p.description ILIKE %(q)s)")
+    if scope == "mine" and actor:
+        where.append("p.owner_member_id = %(u)s")
+    elif scope == "shared" and actor:
+        where.append("p.owner_member_id IS DISTINCT FROM %(u)s")
+    if matter_id:
+        params["matter_id"] = matter_id
+        where.append("p.matter_id = %(matter_id)s")
+    order = "lower(p.title), p.project_id" if sort == "title" else "p.updated_at DESC, p.project_id DESC"
+    total = one(conn, f"SELECT count(*) AS n FROM projects p WHERE {' AND '.join(where)}", params)["n"]
     items = rows(conn, f"""
         SELECT p.project_id, p.title, p.description, p.matter_id, p.owner_member_id, o.name AS owner_name,
                p.created_at, p.updated_at, p.archived_at, p.row_version,
@@ -115,13 +126,13 @@ def list_projects(conn, actor: str | None, *, q: str | None = None, archived: bo
                     AND ((pm.principal_type = 'member' AND pm.principal_id = %(u)s) OR tm.member_id = %(u)s)) AS my_level
         FROM projects p LEFT JOIN members o ON o.member_id = p.owner_member_id
         WHERE {' AND '.join(where)}
-        ORDER BY p.updated_at DESC, p.project_id DESC
+        ORDER BY {order}
         LIMIT %(limit)s OFFSET %(offset)s""", params)
     for it in items:
         lvl = it.pop("my_level")
         it["my_role"] = {3: "owner", 2: "editor", 1: "viewer"}.get(lvl) if actor else "owner"
         it["matter"] = _visible_matter(conn, actor, it.pop("matter_id"))
-    return {"items": items, "limit": limit, "offset": offset}
+    return {"items": items, "total": total, "limit": limit, "offset": offset}
 
 
 @guard
@@ -195,6 +206,40 @@ def set_archived(conn, actor: str | None, project_id: str, archived: bool) -> di
     audit.record("project.archive" if archived else "project.restore", member_id=actor,
                  object_type="project", object_id=project_id)
     return get_project(conn, actor, project_id)
+
+
+@guard
+def delete_project(conn, actor: str | None, project_id: str) -> dict:
+    """Delete an empty project (owners only). Anything still in it — documents living there, documents shown there,
+    open reviews — must be moved, filed or removed first, so nothing is lost by a delete."""
+    level = access.container_level(conn, actor, "project", project_id)
+    if level == "none":
+        raise FirmError(404, "Workspace not found or access denied")
+    if level != "manage":
+        raise FirmError(403, "Only a project owner can delete it")
+    held = one(conn, """
+        SELECT (SELECT count(*) FROM documents WHERE home_kind = 'project' AND home_id = %(p)s AND archived_at IS NULL) AS docs,
+               (SELECT count(*) FROM document_links WHERE container_kind = 'project' AND container_id = %(p)s) AS links,
+               (SELECT count(*) FROM tab_reviews WHERE container_kind = 'project' AND container_id = %(p)s AND archived_at IS NULL) AS reviews""",
+        {"p": project_id})
+    if held and (held["docs"] or held["links"] or held["reviews"]):
+        parts = [f"{n} {w}{'' if n == 1 else 's'}" for n, w in
+                 ((held["docs"], "document"), (held["links"], "linked document"), (held["reviews"], "review")) if n]
+        raise FirmError(409, "The project still holds " + ", ".join(parts) + ". Move or remove them first, or archive the project.")
+    if one(conn, "SELECT 1 AS x FROM documents WHERE home_kind = 'project' AND home_id = %s", (project_id,)):
+        # Only archived documents remain: they stay archived (readable by nobody), so the project is kept too.
+        raise FirmError(409, "The project holds archived documents, so it can only be archived.")
+    title = one(conn, "SELECT title FROM projects WHERE project_id = %s", (project_id,))
+    for sql in ("DELETE FROM workspace_folders WHERE container_kind = 'project' AND container_id = %s",
+                "DELETE FROM workbench_state WHERE scope_key = 'project:' || %s",
+                "UPDATE chat_sessions SET workspace_kind = NULL, workspace_id = NULL WHERE workspace_kind = 'project' AND workspace_id = %s",
+                "DELETE FROM projects WHERE project_id = %s"):
+        conn.execute(sql, (project_id,))
+    _event(conn, "project.deleted", project_id, actor)
+    conn.commit()
+    audit.record("project.delete", member_id=actor, object_type="project", object_id=project_id,
+                 detail={"title": title["title"] if title else None})
+    return {"deleted": True, "project_id": project_id}
 
 
 # ── members ──────────────────────────────────────────────────────────────────

@@ -156,6 +156,15 @@ def delete_session(conn, session_id: str) -> bool:
 # Message CRUD
 # ---------------------------------------------------------------------------
 
+def title_from(text: str, limit: int = 70) -> str:
+    """A conversation name from its first question: one line, cut at a word near ``limit`` characters."""
+    line = " ".join((text or "").split())
+    if len(line) <= limit:
+        return line
+    cut = line[:limit].rsplit(" ", 1)[0]
+    return (cut or line[:limit]).rstrip(",.;:") + "…"
+
+
 def append_message(
     conn,
     session_id: str,
@@ -180,10 +189,13 @@ def append_message(
         """,
         (msg_id, session_id, role.value, content, files_json, events_json, citations_json, model, now),
     )
-    # Touch session updated_at
+    # Touch session updated_at; a conversation with no name is named after its first question.
     conn.execute(
-        "UPDATE chat_sessions SET updated_at = %s WHERE id = %s",
-        (now, session_id),
+        """UPDATE chat_sessions SET updated_at = %s,
+                  title = CASE WHEN (title IS NULL OR btrim(title) = '') AND %s = 'user' AND btrim(%s) <> ''
+                               THEN %s ELSE title END
+           WHERE id = %s""",
+        (now, role.value, content, title_from(content), session_id),
     )
     conn.commit()
     return ChatMessage(

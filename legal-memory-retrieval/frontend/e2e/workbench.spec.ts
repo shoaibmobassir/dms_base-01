@@ -113,7 +113,7 @@ test("add a document to a project from its page; it is the same document in both
   test.setTimeout(90_000);
   const { owner } = await people(request);
   const h = { "X-Member-Id": owner };
-  const project = (await (await request.post("/api/projects", { headers: h, data: { title: `${tag()} Bundle` } })).json()) as { project_id: string };
+  const project = (await (await request.post("/api/projects", { headers: h, data: { title: `${tag()} Bundle` } })).json()) as { project_id: string; title: string };
   const lib = await (
     await request.post("/api/uploads/batches", {
       headers: h,
@@ -127,9 +127,10 @@ test("add a document to a project from its page; it is the same document in both
     await page.goto(`/ui/documents/${docId}`);
     await page.getByRole("button", { name: "Info", exact: true }).click();
     await page.getByTestId("document-add-to-workspace").click();
-    await page.getByTestId("target-project").selectOption(project.project_id);
+    await page.getByTestId("target-project").click();
+    await page.getByTestId("target-project-menu").getByRole("option", { name: new RegExp(project.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) }).first().click();
     await page.getByTestId("target-confirm").click();
-    await expect(page.getByTestId("document-places")).toContainText("linked");
+    await expect(page.getByTestId("document-places")).toContainText("also shown here");
     await page.goto(`/ui/work/project/${project.project_id}`);
     await expect(page.locator(`[data-testid="explorer-document"][data-document-id="${docId}"]`)).toBeVisible();
   } finally {
@@ -169,7 +170,7 @@ test("the Word editor tracks a change and saves it as a version credited to the 
   }
 });
 
-test("drag a document onto a folder to file it, and onto another document to replace its content (confirmed)", async ({ browser, request }) => {
+test("drag a document onto a folder to file it; replacing another document's content asks first", async ({ browser, request }) => {
   test.setTimeout(120_000);
   const { owner } = await people(request);
   const h = { "X-Member-Id": owner };
@@ -192,11 +193,19 @@ test("drag a document onto a folder to file it, and onto another document to rep
     // onto a folder: filed there
     await row(a).dragTo(page.getByTestId("explorer-folder").filter({ hasText: "Archive" }));
     await expect.poll(async () => ((await (await request.get(`/api/workspaces/documents/${a}`, { headers: h })).json()) as { places: { folder: string }[] }).places[0].folder).toBe("Archive");
-    // onto another document: asks first, then a new version of the target; the source is unchanged
+    // dropping one document onto another does nothing (it used to replace content by accident)
     await page.getByTestId("explorer-folder").filter({ hasText: "Archive" }).locator("button").first().click();
     await expect(row(a)).toBeVisible();
     await row(a).dragTo(row(b));
-    await expect(page.getByText(/Replace the content of/)).toBeVisible();
+    await expect(page.getByText(/Replace .*content/)).toHaveCount(0);
+    // replacing is an explicit action in Versions, and asks first; the source is unchanged
+    await row(b).locator("button").first().dblclick();
+    await expect(page.locator(`[data-testid="workbench-tab"][data-document-id="${b}"]`)).toBeVisible();
+    await expect(page.locator(`[data-testid="explorer-document"][data-document-id="${b}"] [aria-current="true"]`)).toBeVisible();
+    await page.getByTestId("activity-changes").click();
+    await expect(page.getByTestId("workbench-changes")).toContainText(`target-${stamp}`);
+    await page.getByTestId("changes-replace-from").click();
+    await page.getByTestId("replace-from-dialog").getByRole("option", { name: new RegExp(`source-${stamp}`) }).click();
     await page.getByRole("button", { name: "Replace content" }).click();
     await expect.poll(async () => ((await (await request.get(`/api/editor/documents/${b}/commits`, { headers: h })).json()) as { items: unknown[] }).items.length).toBe(2);
     const srcCommits = (await (await request.get(`/api/editor/documents/${a}/commits`, { headers: h })).json()) as { items: unknown[] };
@@ -305,6 +314,7 @@ test("the explorer shows My library and the firm templates beside the workspace;
     const target = page.getByTestId("explorer-root-library").getByTestId("explorer-folder").filter({ hasText: folder });
     await expect(target).toBeVisible();
     await page.locator(`[data-testid="explorer-document"][data-document-id="${doc}"]`).dragTo(target);
+    await page.getByRole("button", { name: "Add here" }).click();
     await expect.poll(async () => {
       const r = (await (await request.get(`/api/workspaces/documents/${doc}`, { headers: h })).json()) as { places: { kind: string; folder: string; home: boolean }[] };
       return r.places.some((p) => p.kind === "library" && p.folder === folder && !p.home);
@@ -335,6 +345,7 @@ test("a document made from a firm template is handed to the Assistant to fill in
   const { ctx, page } = await as(browser, owner);
   try {
     await page.goto(`/ui/work/project/${project.project_id}`);
+    await page.getByTestId("explorer-new").click();
     await page.getByTestId("explorer-from-template").click();
     await page.getByTestId("template-option").filter({ hasText: name }).click();
     await expect(page.getByTestId("template-fill")).toBeChecked();

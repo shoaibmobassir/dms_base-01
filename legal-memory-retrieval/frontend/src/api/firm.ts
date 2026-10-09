@@ -141,6 +141,11 @@ function staleKeys(e: DomainEvent): unknown[][] {
   if (e.topic.startsWith('client.')) keys.push(['clients'])
   if (e.topic.startsWith('conflict.')) keys.push(['conflicts'], ['my-work'])
   if (e.topic.startsWith('person.')) keys.push(['people'], ['person', e.entity_id])
+  // Workspaces: a colleague's upload, link, rename or move shows in the explorer and lists without a manual refresh.
+  if (e.topic.startsWith('document.') || e.topic.startsWith('upload.') || e.topic.startsWith('project.')) {
+    keys.push(['workspace'], ['documents'], ['document-places'])
+    if (e.topic.startsWith('project.')) keys.push(['projects'], ['project', e.entity_id])
+  }
   return keys
 }
 

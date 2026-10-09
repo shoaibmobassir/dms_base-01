@@ -176,6 +176,12 @@ def run_review(review_id: str, body: RunIn, member_id: str | None = Depends(reso
     return _run(svc.get_review, member_id, review_id)
 
 
+@router.post("/reviews/{review_id}/stop")
+def stop_review(review_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    _run(svc.stop_run, member_id, review_id)
+    return _run(svc.get_review, member_id, review_id)
+
+
 @router.patch("/reviews/{review_id}/cells/{row_id}/{column_id}")
 def override_cell(review_id: str, row_id: str, column_id: str, body: CellIn,
                   member_id: str | None = Depends(resolve_member)) -> dict:

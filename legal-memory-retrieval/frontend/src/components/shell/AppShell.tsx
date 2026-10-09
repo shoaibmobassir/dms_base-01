@@ -83,7 +83,8 @@ const BOTTOM_NAV = [
   { to: "/matters", icon: "gavel", label: "Matters" },
   { to: "/chat", icon: "edit_note", label: "Assistant" },
   { to: "/ask", icon: "manage_search", label: "Ask" },
-  { to: "/documents", icon: "description", label: "Documents" },
+  // "Files" opens Documents, which lists every place a document lives and links to projects and the library.
+  { to: "/documents", icon: "folder_open", label: "Files" },
 ];
 
 function BottomNav() {
@@ -150,6 +151,14 @@ function Shell({ children }: { children: ReactNode }) {
   const section = pathname.split("/")[1] ?? "";
   // Full-bleed workspaces: document viewer and chat (history + thread need the width).
   // Ask the Firm too: its document panel sits beside the answer and needs the full height.
+  // The workbench has its own file list and side panels: the app sidebar starts collapsed there to give documents the
+  // width; the toggle opens it for this visit to the workbench.
+  const inWorkbench = pathname.startsWith("/work/");
+  const [workbenchExpanded, setWorkbenchExpanded] = useState(false);
+  useEffect(() => {
+    if (!inWorkbench) setWorkbenchExpanded(false);
+  }, [inWorkbench]);
+  const sidebarCollapsed = inWorkbench ? !workbenchExpanded : collapsed;
   const fillFrame =
     /^\/documents\/[^/]+/.test(pathname) || pathname.startsWith("/work/") || pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/ask" || pathname.startsWith("/ask/");
 
@@ -159,10 +168,10 @@ function Shell({ children }: { children: ReactNode }) {
       <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
         <aside
           className="relative hidden shrink-0 border-r border-border lg:block"
-          style={{ width: collapsed ? 68 : sidebar.width }}
+          style={{ width: sidebarCollapsed ? 68 : sidebar.width }}
         >
-          <Sidebar collapsed={collapsed} onShortcuts={() => setShortcuts(true)} />
-          {!collapsed && (
+          <Sidebar collapsed={sidebarCollapsed} onShortcuts={() => setShortcuts(true)} />
+          {!sidebarCollapsed && (
             <div
               role="separator"
               aria-orientation="vertical"
@@ -185,8 +194,8 @@ function Shell({ children }: { children: ReactNode }) {
           <Topbar
             onOpenCommand={() => setCmdOpen(true)}
             onOpenSidebar={() => setMobileNav(true)}
-            collapsed={collapsed}
-            onToggleCollapse={() => setCollapsed((c) => !c)}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => (inWorkbench ? setWorkbenchExpanded((e) => !e) : setCollapsed((c) => !c))}
           />
           <main
             key={section}

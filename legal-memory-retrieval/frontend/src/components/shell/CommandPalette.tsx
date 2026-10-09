@@ -9,7 +9,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Icon } from "@/components/common/primitives";
-import { useSearch } from "@/api/resources";
+import { useDocuments, useSearch } from "@/api/resources";
 import type { SearchResult } from "@/api/types";
 import { useDebounced } from "@/lib/use-debounced";
 import { useTheme } from "@/lib/theme";
@@ -21,6 +21,9 @@ const QUICK_LINKS = [
   { label: "Matters", to: "/matters", icon: "gavel" },
   { label: "Clients", to: "/clients", icon: "apartment" },
   { label: "Documents", to: "/documents", icon: "description" },
+  { label: "Projects", to: "/projects", icon: "folder_special" },
+  { label: "My library", to: "/work/library/me", icon: "person_book" },
+  { label: "Firm templates", to: "/work/firm/templates", icon: "library_books" },
   { label: "People", to: "/people", icon: "groups" },
   { label: "Calendar", to: "/calendar", icon: "event" },
   { label: "Arguments", to: "/arguments", icon: "balance" },
@@ -71,6 +74,12 @@ export function CommandPalette({
   const [input, setInput] = useState("");
   const q = useDebounced(input.trim(), 200);
   const search = useSearch(q);
+  // Firm search stays matter-only (plan 22 D3). The person's own projects and library are found separately, by title,
+  // and labelled as theirs.
+  const ownLibrary = useDocuments({ q, homes: "all", home_kind: "library", limit: 5, enabled: q.length >= 2 });
+  const ownProjects = useDocuments({ q, homes: "all", home_kind: "project", limit: 5, enabled: q.length >= 2 });
+  const yours = [...(ownLibrary.data?.items ?? []), ...(ownProjects.data?.items ?? [])]
+    .filter((d) => d.title.toLowerCase().includes(q.toLowerCase()));
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -118,7 +127,7 @@ export function CommandPalette({
           </PaletteNote>
         )}
         {q.length >= 2 && search.isFetching && groups.length === 0 && <PaletteNote>Searching…</PaletteNote>}
-        {q.length >= 2 && !search.isError && !search.isFetching && groups.length === 0 && (
+        {q.length >= 2 && !search.isError && !search.isFetching && groups.length === 0 && yours.length === 0 && (
           <PaletteNote testId="search-empty">No matches in titles or document text within your access scope.</PaletteNote>
         )}
 
@@ -131,6 +140,17 @@ export function CommandPalette({
           </CommandGroup>
         )}
 
+        {yours.length > 0 && (
+          <CommandGroup heading="Your files" data-testid="palette-your-files">
+            {yours.slice(0, 6).map((d) => (
+              <CommandItem key={`own-${d.document_id}`} value={`own-${d.document_id}`} onSelect={() => go(`/documents/${d.document_id}`)}>
+                <Icon name={d.home_kind === "project" ? "folder_special" : "person_book"} className="mr-2 text-muted-foreground" style={{ fontSize: 18 }} />
+                <span className="min-w-0 flex-1 truncate">{d.title}</span>
+                <span className="ml-2 truncate text-xs text-muted-foreground">{d.home_label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
         {groups.map(({ kind, rows }) => (
           <CommandGroup key={kind} heading={KIND[kind].heading}>
             {rows.slice(0, 6).map((r) => (
@@ -153,9 +173,17 @@ export function CommandPalette({
                 <Icon name="edit_note" className="mr-2 text-wine" style={{ fontSize: 18 }} />
                 New Assistant conversation
               </CommandItem>
-              <CommandItem value="add documents upload" onSelect={() => go("/documents?add=1")} data-testid="command-add-documents">
+              <CommandItem value="add documents upload matter" onSelect={() => go("/documents?add=1")} data-testid="command-add-documents">
                 <Icon name="upload_file" className="mr-2 text-wine" style={{ fontSize: 18 }} />
-                Add documents
+                Add documents to a matter
+              </CommandItem>
+              <CommandItem value="new project workspace" onSelect={() => go("/projects?new=1")} data-testid="command-new-project">
+                <Icon name="create_new_folder" className="mr-2 text-wine" style={{ fontSize: 18 }} />
+                New project
+              </CommandItem>
+              <CommandItem value="upload to my library personal files" onSelect={() => go("/work/library/me")}>
+                <Icon name="person_book" className="mr-2 text-wine" style={{ fontSize: 18 }} />
+                Upload to My library
               </CommandItem>
               <CommandItem value="new matter" onSelect={() => go("/matters?new=1")}>
                 <Icon name="add" className="mr-2 text-wine" style={{ fontSize: 18 }} />

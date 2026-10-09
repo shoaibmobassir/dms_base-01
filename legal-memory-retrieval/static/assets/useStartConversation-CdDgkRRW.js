@@ -1,1 +1,0 @@
-import{A as e}from"./AppContext-cNPZfWr1.js";function t(){let t=e();return{start:e=>t(e?`/chat?matter=${encodeURIComponent(e)}`:`/chat`),starting:!1}}export{t};

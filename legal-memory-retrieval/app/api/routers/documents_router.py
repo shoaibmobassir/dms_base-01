@@ -67,12 +67,21 @@ def documents_list(
     author: str | None = Query(default=None),
     sort: str | None = Query(default=None, description="date, title, type, author or matter"),
     dir: str | None = Query(default=None, pattern="^(asc|desc)$"),
+    homes: str = Query(default="matter", pattern="^(matter|all)$",
+                       description="matter: the firm's matter documents (default); all: also projects, your library and templates"),
+    home_kind: str | None = Query(default=None, pattern="^(matter|project|library|firm)$"),
     member_id: str | None = Depends(resolve_member),
     limit: int = Query(default=50, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> dict:
     params: dict = {"member_id": member_id, "limit": limit, "offset": offset}
-    wheres = [ACL_CLAUSE, doc_acl("d"), "d.status IS DISTINCT FROM 'Deleted'"]
+    # "all" is the reader's own list of everything they may open (doc_read is home-aware); firm-wide search, Ask
+    # and retrieval keep the matter-only predicate.
+    wheres = ([doc_read("d"), "d.archived_at IS NULL"] if homes == "all" else [ACL_CLAUSE, doc_acl("d")]) + \
+        ["d.status IS DISTINCT FROM 'Deleted'"]
+    if home_kind:
+        wheres.append("d.home_kind = %(home_kind)s")
+        params["home_kind"] = home_kind
     if q:
         wheres.append(
             "(d.title ILIKE %(q_like)s"
@@ -97,10 +106,16 @@ def documents_list(
     sql = f"""
         SELECT d.document_id, d.matter_id, d.matter_code, d.title,
                d.document_type, d.author_name, d.doc_date, d.status, d.version,
-               d.mime_type, m.title AS matter_title, da.visibility AS privacy
+               d.mime_type, m.title AS matter_title, da.visibility AS privacy,
+               d.home_kind, d.home_id, coalesce(d.folder_path, '') AS folder_path,
+               CASE d.home_kind WHEN 'project' THEN pr.title
+                    WHEN 'library' THEN CASE WHEN d.home_id = %(member_id)s THEN 'My library' ELSE 'Library of ' || lo.name END
+                    WHEN 'firm' THEN 'Firm templates' ELSE m.title END AS home_label
         FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
         LEFT JOIN matters m ON m.matter_id = d.matter_id
+        LEFT JOIN projects pr ON d.home_kind = 'project' AND pr.project_id = d.home_id
+        LEFT JOIN members lo ON d.home_kind = 'library' AND lo.member_id = d.home_id
         LEFT JOIN document_access da ON da.document_id = d.document_id
         WHERE {where}
         {order_by(sort, dir, DOCUMENT_SORT, 'date', 'd.document_id')}

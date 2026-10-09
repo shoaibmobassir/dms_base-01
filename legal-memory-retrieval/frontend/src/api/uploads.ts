@@ -14,6 +14,8 @@ export type UploadOutcome = { file: File; status: 'indexed' | 'duplicate' | 'fai
 /** Accepted file types (the server also checks the file's signature). */
 export const ACCEPTED_TYPES = '.pdf,.docx,.txt'
 export const MAX_FILE_MB = 50
+/** Said wherever files are chosen, so nobody finds the limits by failing. */
+export const ACCEPTED_HINT = `PDF, Word (.docx) or text, up to ${50} MB each`
 
 const WAITING = new Set(['pending', 'queued', 'processing', 'running'])
 
@@ -34,7 +36,8 @@ export const pathOf = (f: File): string => (f as File & { webkitRelativePath?: s
 /** Why a file cannot be uploaded, or null when it can. */
 export function fileProblem(file: File): string | null {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
-  if (!['pdf', 'docx', 'txt'].includes(ext)) return 'Only PDF, Word (.docx) and text files are supported.'
+  if (ext === 'doc') return 'Old Word files (.doc) are not read yet: open it in Word and save it as .docx.'
+  if (!['pdf', 'docx', 'txt'].includes(ext)) return 'Only PDF, Word (.docx) and text files can be uploaded for now.'
   if (file.size === 0) return 'The file is empty.'
   if (file.size > MAX_FILE_MB * 1024 * 1024) return `Larger than ${MAX_FILE_MB} MB.`
   return null

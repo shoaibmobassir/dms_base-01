@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiFetch } from "@/api/client";
 import { useNavigate } from "react-router-dom";
 import { createReview } from "@/api/tabular";
 import { firmError } from "@/api/firm";
@@ -38,18 +39,28 @@ export function ReviewTableCard({
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { toast } = useApp();
-  // Keep it: a durable review in the person's library (same questions, same documents), opened in the workbench.
+  // Keep it as a durable review. When every document belongs to one matter it is made in that matter (shared by the
+  // matter's access); otherwise, or without edit rights there, in the person's own library.
   const openAsTable = async () => {
     setSaving(true);
     try {
-      const review = await createReview({
+      const body = {
         title: `Review: ${table.questions[0]?.slice(0, 60) ?? "documents"}${table.questions.length > 1 ? ` (+${table.questions.length - 1})` : ""}`,
-        kind: "library",
-        id: "me",
         columns: table.questions.map((q) => ({ label: q.length > 60 ? `${q.slice(0, 57)}…` : q, question: q })),
         document_ids: table.rows.map((r) => r.document_id),
         run: true,
-      });
+      };
+      const docs = await Promise.all(table.rows.slice(0, 50).map((r) =>
+        apiFetch<{ matter_id?: string | null }>(`/api/documents/${encodeURIComponent(r.document_id)}?lean=true`).catch(() => null)));
+      const matters = new Set(docs.map((d) => d?.matter_id ?? ""));
+      const matter = matters.size === 1 && table.rows.length <= 50 ? [...matters][0] : "";
+      let review: { review_id: string } | null = null;
+      if (matter) review = await createReview({ ...body, kind: "matter", id: matter }).catch(() => null);
+      if (review) {
+        navigate(`/work/matter/${encodeURIComponent(matter)}?review=${encodeURIComponent(review.review_id)}`);
+        return;
+      }
+      review = await createReview({ ...body, kind: "library", id: "me" });
       navigate(`/work/library/me?review=${encodeURIComponent(review.review_id)}`);
     } catch (err) {
       toast(firmError(err));

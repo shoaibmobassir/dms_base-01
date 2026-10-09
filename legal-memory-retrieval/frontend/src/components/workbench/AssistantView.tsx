@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type DragEvent } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { formatDate } from "@/lib/format";
 import { createSession, getSession, listWorkspaceSessions, streamMessage } from "@/api/chat";
 import { usePlaybooks } from "@/api/playbooks";
 import type { Attachment, Citation } from "@/api/types";
@@ -53,6 +55,19 @@ export function AssistantView({
   const matches = slash === null ? [] : (playbooks.data ?? []).filter((p) => p.title.toLowerCase().includes(slash)).slice(0, 8);
   const [loaded, setLoaded] = useState(false);
   const sentSeed = useRef<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const history = useQuery({
+    queryKey: [identityKey, "workspace-sessions", kind, id],
+    queryFn: () => listWorkspaceSessions(kind, id),
+    enabled: showHistory && identityKey !== null,
+  });
+  const openSession = async (sid: string) => {
+    abortRef.current?.abort();
+    const d = await getSession(sid);
+    setSessionId(sid);
+    setMessages(d.messages);
+    setShowHistory(false);
+  };
 
   // The latest conversation of this workspace, if there is one.
   useEffect(() => {
@@ -180,19 +195,56 @@ export function AssistantView({
     <div className="flex h-full min-h-0 flex-col" data-testid="workbench-assistant">
       <div className="flex items-center gap-1 border-b border-border px-3 py-2">
         <div className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assistant · {label}</div>
+        <button type="button" title="Earlier conversations in this workspace" aria-label="Earlier conversations" aria-expanded={showHistory}
+          className={cn("rounded p-1 hover:bg-secondary hover:text-foreground", showHistory ? "text-wine" : "text-muted-foreground")}
+          onClick={() => setShowHistory((v) => !v)} data-testid="assistant-history">
+          <Icon name="history" style={{ fontSize: 17 }} />
+        </button>
+        {sessionId && (
+          <Link to={`/chat/${encodeURIComponent(sessionId)}`} title="Open in the Assistant page" aria-label="Open in the Assistant page"
+            className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground" data-testid="assistant-open-full">
+            <Icon name="open_in_full" style={{ fontSize: 16 }} />
+          </Link>
+        )}
         <button type="button" title="New conversation" aria-label="New conversation"
           className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
           onClick={() => { abortRef.current?.abort(); setSessionId(null); setMessages([]); }} data-testid="assistant-new">
           <Icon name="add_comment" style={{ fontSize: 17 }} />
         </button>
       </div>
+      {showHistory && (
+        <div className="max-h-56 shrink-0 overflow-y-auto border-b border-border bg-paper" data-testid="assistant-history-list">
+          {history.isPending ? (
+            <p className="px-3 py-2 text-xs text-muted-foreground">Loading…</p>
+          ) : !(history.data ?? []).length ? (
+            <p className="px-3 py-2 text-xs text-muted-foreground">No earlier conversations in this workspace.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {(history.data ?? []).map((h) => (
+                <li key={h.id}>
+                  <button type="button" onClick={() => void openSession(h.id)}
+                    className={cn("w-full px-3 py-1.5 text-left text-xs hover:bg-secondary", h.id === sessionId && "bg-wine-soft text-wine")}>
+                    <span className="block truncate font-medium">{h.title || "Untitled conversation"}</span>
+                    <span className="text-muted-foreground">{formatDate(h.updated_at)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3 text-sm">
         {messages.length === 0 ? (
           <div className="space-y-2 text-xs text-muted-foreground">
             <p>Ask about the documents of this workspace. The ones open in tabs go with your question; drag a page here to point at it.</p>
-            {["Summarise the open documents and what each one argues.", "What deadlines or dates appear in these documents?",
-              "Compare the relief sought in the open documents.",
-              "Compare the open document with the firm's precedents on the same points and note where it departs."].map((s) => (
+            {(openDocs.length === 0
+              ? ["What is in this workspace, and what is each document about?", "List the key dates and deadlines across this workspace's documents.",
+                "Which documents here mention a hearing, an order or a deadline?"]
+              : openDocs.length === 1
+                ? [`Summarise “${openDocs[0].title || "the open document"}” in a page.`, "What deadlines or dates does it set?",
+                  "Compare the open document with the firm's precedents on the same points and note where it departs."]
+                : ["Summarise the open documents and what each one argues.", "What deadlines or dates appear in these documents?",
+                  "Compare the relief sought in the open documents."]).map((s) => (
               <button key={s} type="button" className="block w-full rounded-md border border-border px-2.5 py-1.5 text-left text-[12px] text-foreground hover:bg-secondary"
                 onClick={() => void send(s)} data-testid="assistant-starter">{s}</button>
             ))}
@@ -270,17 +322,23 @@ export function AssistantView({
         <form className="flex items-end gap-1.5" onSubmit={(e) => { e.preventDefault(); void send(text); }}>
           <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              // Grow with the text up to the max height, so a long instruction stays readable.
+              e.target.style.height = "auto";
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 240)}px`;
+            }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              // Enter while an IME is composing (Hindi, Chinese, Japanese …) confirms the word; it must not send.
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
                 e.preventDefault();
                 void send(text);
               }
             }}
-            rows={2}
-            placeholder={dropping ? "Drop the page here" : "Ask about these documents… (/ for a playbook)"}
+            rows={3}
+            placeholder={dropping ? "Drop the page here" : "Ask about these documents, or type / for a playbook"}
             aria-label="Ask the Assistant"
-            className="max-h-40 min-h-[2.5rem] flex-1 resize-y rounded-md border border-border bg-card px-2.5 py-1.5 text-[13px] focus-visible:border-wine/60 focus-visible:outline-none"
+            className="max-h-60 min-h-[4.5rem] flex-1 resize-none rounded-md border border-border bg-card px-2.5 py-1.5 text-[13px] focus-visible:border-wine/60 focus-visible:outline-none"
             data-testid="assistant-input"
           />
           {streaming ? (

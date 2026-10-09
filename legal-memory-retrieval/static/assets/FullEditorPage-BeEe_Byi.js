@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-DKj5X9O4.js";import{j as t}from"./AppContext-XjPq7L4W.js";import{t as n}from"./FullWordEditor-dP46ovFw.js";var r=e();function i(){let{id:e=``}=t();return(0,r.jsx)(n,{documentId:e})}export{i as FullEditorPage};

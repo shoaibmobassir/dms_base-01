@@ -12,6 +12,8 @@ import json
 import uuid
 from typing import Any
 
+import psycopg
+
 from app import access
 
 
@@ -49,12 +51,15 @@ def emit(conn, topic: str, entity_type: str, entity_id: str, *, actor: str | Non
 
 
 def guard(fn):
-    """Turn access errors into FirmErrors so routers map one error type."""
+    """Turn access errors and rejected values into FirmErrors so routers map one error type."""
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
         except access.AccessError as exc:
             raise FirmError(exc.status, exc.detail) from exc
+        except psycopg.errors.CheckViolation as exc:
+            # A value the database refuses is the caller's mistake (422), not a server fault (500).
+            raise FirmError(422, "That value is not allowed here") from exc
     wrapped.__name__ = fn.__name__
     wrapped.__doc__ = fn.__doc__
     return wrapped

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { archiveDocument, firmError } from "@/api/firm";
+import { useDocumentPlaces } from "@/api/workspaces";
 import { useMatter } from "@/api/resources";
 import { Field, fieldControl } from "@/components/common/Field";
 import { Icon } from "@/components/common/primitives";
@@ -10,8 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useApp } from "@/context/AppContext";
 
 /** Archive a document (hide it for everyone; an administrator can restore it). Only for people who manage it. */
-export function ArchiveDocument({ documentId, matterId, title }: { documentId: string; matterId: string; title: string }) {
-  const matter = useMatter(matterId);
+export function ArchiveDocument({ documentId, matterId, title }: { documentId: string; matterId?: string | null; title: string }) {
+  // Matter documents: manage on the matter. Project, library and template documents: manage where they live.
+  const matter = useMatter(matterId ?? "");
+  const places = useDocumentPlaces(documentId, !matterId);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useApp();
@@ -19,7 +22,7 @@ export function ArchiveDocument({ documentId, matterId, title }: { documentId: s
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  if (matter.data?.my_level !== "manage") return null;
+  if ((matterId ? matter.data?.my_level : places.data?.my_level) !== "manage") return null;
 
   const submit = async () => {
     setBusy(true);

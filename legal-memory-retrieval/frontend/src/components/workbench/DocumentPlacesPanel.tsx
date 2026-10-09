@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { copyDocument, linkDocument, moveHome, useDocumentPlaces, workspaceHref, type Place } from "@/api/workspaces";
+import { copyDocument, linkDocument, moveHome, unlinkDocument, useDocumentPlaces, workspaceHref, type Place } from "@/api/workspaces";
+import { useConfirm } from "@/components/common/Confirm";
+import { firmError } from "@/api/firm";
 import { Chip, Icon, SectionLabel } from "@/components/common/primitives";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
-import { TagsDialog, TargetDialog, type TargetChoice } from "./dialogs";
+import { LibraryShareDialog, TagsDialog, TargetDialog, type TargetChoice } from "./dialogs";
 
 const PLACE_ICON: Record<Place["kind"], string> = { matter: "gavel", project: "folder_special", library: "person", firm: "library_books" };
 
@@ -14,12 +16,14 @@ export function DocumentPlacesPanel({ documentId, title }: { documentId: string;
   const places = useDocumentPlaces(documentId);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { toast } = useApp();
-  const [asking, setAsking] = useState<"link" | "copy" | "file" | "tags" | null>(null);
+  const { toast, me } = useApp();
+  const confirm = useConfirm();
+  const [asking, setAsking] = useState<"link" | "copy" | "file" | "tags" | "share" | null>(null);
   const data = places.data;
   if (!data) return null;
   const home = data.places.find((p) => p.home);
   const canFile = data.my_level !== "read" && home && !home.hidden && home.kind !== "matter";
+  const mineInLibrary = home?.kind === "library" && home.id === me?.member_id;
   const refresh = () => queryClient.invalidateQueries({ predicate: (q) => q.queryKey.includes("document-places") || q.queryKey.includes("workspace") });
 
   return (
@@ -34,15 +38,35 @@ export function DocumentPlacesPanel({ documentId, title }: { documentId: string;
           ) : (
             <li key={`${p.kind}:${p.id}`} className="flex items-center gap-1.5">
               <Icon name={PLACE_ICON[p.kind]} className="text-muted-foreground" style={{ fontSize: 15 }} />
-              <Link
-                to={`${workspaceHref(p.kind, p.kind === "library" ? "me" : p.id!)}?doc=${encodeURIComponent(documentId)}`}
-                className="min-w-0 truncate text-wine hover:underline"
-                title="Open in the workbench"
-              >
-                {p.label}
-              </Link>
+              {p.kind === "library" && p.id !== me?.member_id ? (
+                // Someone else's library: it cannot be opened, only this document (shared with you).
+                <span className="min-w-0 truncate">{p.label}</span>
+              ) : (
+                <Link
+                  to={`${workspaceHref(p.kind, p.kind === "library" ? "me" : p.id!)}?doc=${encodeURIComponent(documentId)}`}
+                  className="min-w-0 truncate text-wine hover:underline"
+                  title="Open in the workbench"
+                >
+                  {p.label}
+                </Link>
+              )}
               {p.folder ? <span className="truncate text-xs text-muted-foreground">/ {p.folder}</span> : null}
-              <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">{p.home ? "home" : "linked"}</span>
+              <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">{p.home ? "lives here" : "also shown here"}</span>
+              {!p.home && p.id && (
+                <button type="button" aria-label={`Stop showing it in ${p.label}`} title={`Stop showing it in ${p.label}`}
+                  className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  onClick={async () => {
+                    if (!(await confirm({ title: `Stop showing it in ${p.label}?`, description: "The document is not deleted; it stays where it lives.", confirmLabel: "Remove" }))) return;
+                    try {
+                      await unlinkDocument(documentId, p.kind, p.kind === "library" ? "me" : p.id!);
+                      await refresh();
+                    } catch (err) {
+                      toast(firmError(err));
+                    }
+                  }}>
+                  <Icon name="link_off" style={{ fontSize: 14 }} />
+                </button>
+              )}
             </li>
           ),
         )}
@@ -60,15 +84,20 @@ export function DocumentPlacesPanel({ documentId, title }: { documentId: string;
         {data.tags.user.map((t) => <Chip key={t} tone="accent">#{t}</Chip>)}
       </div>
       <div className="flex flex-wrap gap-1.5 pt-1">
+        {mineInLibrary && (
+          <Button variant="outline" size="sm" onClick={() => setAsking("share")} data-testid="document-share">
+            <Icon name="person_add" style={{ fontSize: 15 }} /> Share
+          </Button>
+        )}
         <Button variant="outline" size="sm" onClick={() => setAsking("link")} data-testid="document-add-to-workspace">
-          <Icon name="add_link" style={{ fontSize: 15 }} /> Add to…
+          <Icon name="add_link" style={{ fontSize: 15 }} /> Show elsewhere…
         </Button>
         <Button variant="outline" size="sm" onClick={() => setAsking("copy")}>
           <Icon name="content_copy" style={{ fontSize: 15 }} /> Copy
         </Button>
         {canFile && (
           <Button variant="outline" size="sm" onClick={() => setAsking("file")}>
-            <Icon name="gavel" style={{ fontSize: 15 }} /> File
+            <Icon name="drive_file_move" style={{ fontSize: 15 }} /> {home?.kind === "library" ? "Move to matter or project…" : "File into a matter…"}
           </Button>
         )}
         <Button variant="ghost" size="sm" onClick={() => setAsking("tags")}>
@@ -79,8 +108,8 @@ export function DocumentPlacesPanel({ documentId, title }: { documentId: string;
       <TargetDialog
         open={asking === "link"}
         onOpenChange={(o) => !o && setAsking(null)}
-        title="Add to another workspace"
-        description="The document is not copied: it shows in both places and stays one document with one history. People there see it only if they can already read it."
+        title="Show in another workspace"
+        description="Nothing is copied: the document shows in both places and stays one document with one history. People there see it only if they can already read it where it lives."
         confirm="Add"
         kinds={["project", "matter", "library"]}
         onConfirm={async (t: TargetChoice) => {
@@ -101,16 +130,15 @@ export function DocumentPlacesPanel({ documentId, title }: { documentId: string;
         onConfirm={async (t: TargetChoice) => {
           const made = await copyDocument(documentId, t);
           await refresh();
-          toast("Copy made");
-          navigate(`/documents/${encodeURIComponent(made.document_id)}`);
+          toast("Copy made", { action: { label: "Open copy", onClick: () => navigate(`/documents/${encodeURIComponent(made.document_id)}`) } });
         }}
       />
       <TargetDialog
         open={asking === "file"}
         onOpenChange={(o) => !o && setAsking(null)}
-        title={home?.kind === "library" ? "Move to a matter or project" : "File into a matter"}
-        description="The matter becomes the document's home and its access rules apply from now on. It stays visible where it was as a link."
-        confirm="File"
+        title={home?.kind === "library" ? "Move it to a matter or project" : "File it into a matter"}
+        description="Its new home decides who can read it from now on. It stays visible where it was, as a link."
+        confirm="Move"
         kinds={home?.kind === "library" ? ["matter", "project"] : ["matter"]}
         onConfirm={async (t: TargetChoice) => {
           await moveHome(documentId, t);
@@ -118,6 +146,7 @@ export function DocumentPlacesPanel({ documentId, title }: { documentId: string;
           toast("Filed");
         }}
       />
+      {asking === "share" && <LibraryShareDialog documentId={documentId} title={title} open onOpenChange={(o) => !o && setAsking(null)} />}
       {asking === "tags" && <TagsDialog documentId={documentId} open onOpenChange={(o) => !o && setAsking(null)} onChanged={() => void refresh()} />}
     </div>
   );

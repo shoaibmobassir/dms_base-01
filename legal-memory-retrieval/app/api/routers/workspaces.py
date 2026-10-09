@@ -67,8 +67,11 @@ def projects_health() -> dict:
 
 @projects_router.get("")
 def list_projects(q: str | None = None, archived: bool = False, limit: int = Query(default=100, ge=1, le=200),
-                  offset: int = Query(default=0, ge=0), member_id: str | None = Depends(resolve_member)) -> dict:
-    return _run(project_svc.list_projects, member_id, q=q, archived=archived, limit=limit, offset=offset)
+                  offset: int = Query(default=0, ge=0), scope: Literal["all", "mine", "shared"] = "all",
+                  sort: Literal["updated", "title"] = "updated", matter_id: str | None = None,
+                  member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(project_svc.list_projects, member_id, q=q, archived=archived, limit=limit, offset=offset,
+                scope=scope, sort=sort, matter_id=matter_id)
 
 
 @projects_router.post("", status_code=201)
@@ -96,6 +99,11 @@ def archive_project(project_id: str, member_id: str | None = Depends(resolve_mem
 @projects_router.post("/{project_id}/restore")
 def restore_project(project_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
     return _run(project_svc.set_archived, member_id, project_id, False)
+
+
+@projects_router.delete("/{project_id}")
+def delete_project(project_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(project_svc.delete_project, member_id, project_id)
 
 
 @projects_router.put("/{project_id}/members")
@@ -128,6 +136,16 @@ class Target(BaseModel):
 
 class CopyBody(Target):
     title: str | None = Field(default=None, max_length=300)
+
+
+class RenameBody(BaseModel):
+    title: str = Field(max_length=300)
+
+
+class ShareBody(BaseModel):
+    principal_type: Literal["member", "team"]
+    principal_id: str = Field(max_length=80)
+    level: Literal["read", "edit"] | None = None
 
 
 class TagBody(BaseModel):
@@ -204,6 +222,26 @@ def tag_suggestions(prefix: str = "", limit: int = Query(default=20, ge=1, le=10
 
 
 # ── a document across workspaces ─────────────────────────────────────────────
+
+@workspaces_router.get("/shared-with-me")
+def shared_with_me(member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(doc_svc.shared_with_me, member_id)
+
+
+@workspaces_router.patch("/documents/{document_id}")
+def rename_document(document_id: str, body: RenameBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(doc_svc.rename_document, member_id, document_id, body.title)
+
+
+@workspaces_router.get("/documents/{document_id}/shares")
+def library_shares(document_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(doc_svc.library_shares, member_id, document_id)
+
+
+@workspaces_router.put("/documents/{document_id}/shares")
+def share_library_document(document_id: str, body: ShareBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(doc_svc.share_library_document, member_id, document_id, body.principal_type, body.principal_id, body.level)
+
 
 @workspaces_router.get("/documents/{document_id}")
 def document_places(document_id: str, member_id: str | None = Depends(resolve_member)) -> dict:

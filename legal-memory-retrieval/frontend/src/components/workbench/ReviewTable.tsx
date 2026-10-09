@@ -7,7 +7,10 @@ import {
   deleteRow,
   exportReview,
   overrideCell,
+  archiveReview,
+  renameReview,
   runReview,
+  stopReview,
   updateColumn,
   useReview,
   type AnswerFormat,
@@ -29,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/context/AppContext";
+import { useConfirm } from "@/components/common/Confirm";
 import { cn } from "@/lib/utils";
 import { AddColumnsDialog, AddRowsDialog } from "./ReviewDialogs";
 import type { OpenRequest } from "./Explorer";
@@ -57,6 +61,8 @@ export function ReviewTable({ reviewId, onOpenSource }: { reviewId: string; onOp
 function Table({ review, onOpenSource }: { review: Review; onOpenSource: (r: OpenRequest) => void }) {
   const queryClient = useQueryClient();
   const { toast } = useApp();
+  const confirm = useConfirm();
+  const [renaming, setRenaming] = useState(false);
   const canEdit = review.my_level !== "read" && !review.archived_at;
   const cells = useMemo(() => new Map(review.cells.map((c) => [`${c.row_id}|${c.column_id}`, c])), [review.cells]);
   const [scrollTop, setScrollTop] = useState(0);
@@ -78,6 +84,39 @@ function Table({ review, onOpenSource }: { review: Review; onOpenSource: (r: Ope
     }
   };
 
+  // What a removal throws away, so the confirmation can say it.
+  const lost = (match: (c: ReviewCell) => boolean) => {
+    const gone = review.cells.filter(match);
+    return { answers: gone.filter((c) => c.status === "done" || c.edited).length, edited: gone.filter((c) => c.edited).length };
+  };
+  const removeColumn = async (c: ReviewColumn) => {
+    const { answers, edited } = lost((x) => x.column_id === c.column_id);
+    const ok = await confirm({
+      title: `Remove the question “${c.label}”?`,
+      description: answers
+        ? `Its ${answers} ${answers === 1 ? "answer goes" : "answers go"}${edited ? `, including ${edited} written by a lawyer` : ""}. This cannot be undone.`
+        : "It has no answers yet.",
+      confirmLabel: "Remove question",
+      destructive: true,
+    });
+    if (ok) await act(() => deleteColumn(review.review_id, c.column_id), "Question removed");
+  };
+  const removeRow = async (r: ReviewRow) => {
+    const { answers, edited } = lost((x) => x.row_id === r.row_id);
+    const ok = await confirm({
+      title: `Remove “${r.title ?? "this row"}” from the review?`,
+      description: answers
+        ? `Its ${answers} ${answers === 1 ? "answer goes" : "answers go"}${edited ? `, including ${edited} written by a lawyer` : ""}. The document itself is not touched.`
+        : "The document itself is not touched.",
+      confirmLabel: "Remove row",
+      destructive: true,
+    });
+    if (ok) await act(() => deleteRow(review.review_id, r.row_id), "Row removed");
+  };
+  const archive = async () => {
+    const ok = await confirm({ title: `Archive “${review.title}”?`, description: "It leaves the list of reviews for everyone in this workspace.", confirmLabel: "Archive review", destructive: true });
+    if (ok) await act(() => archiveReview(review.review_id), "Review archived");
+  };
   const rows = review.rows.filter((r) => {
     if (filter === "all") return true;
     const mine = review.columns.map((c) => cells.get(`${r.row_id}|${c.column_id}`));
@@ -99,6 +138,12 @@ function Table({ review, onOpenSource }: { review: Review; onOpenSource: (r: Ope
       <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2">
         <Icon name="table_chart" className="text-wine" style={{ fontSize: 20 }} />
         <h2 className="min-w-0 truncate font-display text-lg text-ink">{review.title}</h2>
+        {canEdit && (
+          <button type="button" aria-label="Rename review" title="Rename" onClick={() => setRenaming(true)}
+            className="rounded p-0.5 text-muted-foreground hover:bg-secondary" data-testid="review-rename">
+            <Icon name="edit" style={{ fontSize: 15 }} />
+          </button>
+        )}
         <span className="text-xs text-muted-foreground">
           {review.rows.length} {review.group_by === "folder" ? "folders" : "documents"} × {review.columns.length} questions
         </span>
@@ -108,6 +153,10 @@ function Table({ review, onOpenSource }: { review: Review; onOpenSource: (r: Ope
               <span className="block h-full bg-wine transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
             </span>
             {done} of {total}
+            {canEdit && (
+              <button type="button" onClick={() => void act(() => stopReview(review.review_id), "Stopped — press Run to go on")}
+                className="ml-1 rounded border border-border px-1.5 py-0.5 hover:bg-secondary" data-testid="review-stop">Stop</button>
+            )}
           </span>
         ) : (
           <span className="text-xs text-muted-foreground" data-testid="review-progress">All answered</span>
@@ -138,8 +187,13 @@ function Table({ review, onOpenSource }: { review: Review; onOpenSource: (r: Ope
         </Button>
         <Button size="sm" variant="ghost" title="Keep these questions as a playbook to start the next review with"
           onClick={() => act(() => saveReviewAsPlaybook(review.review_id), "Questions saved to your playbooks")} data-testid="review-save-playbook">
-          <Icon name="bookmark_add" style={{ fontSize: 16 }} />
+          <Icon name="bookmark_add" style={{ fontSize: 16 }} /> Save questions
         </Button>
+        {canEdit && (
+          <Button size="sm" variant="ghost" onClick={() => void archive()} data-testid="review-archive" aria-label="Archive review" title="Archive review">
+            <Icon name="archive" style={{ fontSize: 16 }} />
+          </Button>
+        )}
       </div>
 
       {review.rows.length === 0 ? (
@@ -163,7 +217,7 @@ function Table({ review, onOpenSource }: { review: Review; onOpenSource: (r: Ope
                 <ColumnHeader key={c.column_id} col={c} canEdit={canEdit}
                   onEdit={() => setEditingCol(c)}
                   onRun={() => act(() => runReview(review.review_id, { scope: "column", column_id: c.column_id }), `Running “${c.label}”`)}
-                  onDelete={() => act(() => deleteColumn(review.review_id, c.column_id), "Question removed")} />
+                  onDelete={() => void removeColumn(c)} />
               ))}
             </div>
             {/* body (only the rows in view) */}
@@ -172,7 +226,7 @@ function Table({ review, onOpenSource }: { review: Review; onOpenSource: (r: Ope
                 <RowHeader row={r} canEdit={canEdit}
                   onOpen={() => r.document_id && onOpenSource({ documentId: r.document_id, title: r.title ?? "", toSide: true })}
                   onRun={() => act(() => runReview(review.review_id, { scope: "row", row_id: r.row_id }))}
-                  onRemove={() => act(() => deleteRow(review.review_id, r.row_id), "Row removed")} />
+                  onRemove={() => void removeRow(r)} />
                 {review.columns.map((c) => (
                   <CellView key={c.column_id} cell={cells.get(`${r.row_id}|${c.column_id}`)} rowRestricted={r.restricted}
                     format={c.answer_format} onSelect={() => setSelected({ row: r, col: c })} />
@@ -186,6 +240,10 @@ function Table({ review, onOpenSource }: { review: Review; onOpenSource: (r: Ope
       {selected && (
         <CellDialog review={review} row={selected.row} col={selected.col} cell={cells.get(`${selected.row.row_id}|${selected.col.column_id}`)}
           canEdit={canEdit} onClose={() => setSelected(null)} onOpenSource={onOpenSource} act={act} />
+      )}
+      {renaming && (
+        <RenameReview title={review.title} onClose={() => setRenaming(false)}
+          onSave={(t) => act(() => renameReview(review.review_id, t, review.row_version), "Review renamed")} />
       )}
       {editingCol && <ColumnDialog reviewId={review.review_id} col={editingCol} onClose={() => setEditingCol(null)} act={act} />}
       <AddColumnsDialog reviewId={review.review_id} open={adding === "columns"} onOpenChange={(o) => !o && setAdding(null)} onDone={refresh} />
@@ -202,7 +260,7 @@ function ColumnHeader({ col, canEdit, onEdit, onRun, onDelete }: { col: ReviewCo
         {canEdit && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button type="button" aria-label={`${col.label} options`} className="rounded p-0.5 text-muted-foreground opacity-0 hover:bg-secondary group-hover:opacity-100 data-[state=open]:opacity-100">
+              <button type="button" aria-label={`${col.label} options`} className="rounded p-0.5 text-muted-foreground opacity-0 hover:bg-secondary focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-100">
                 <Icon name="more_horiz" style={{ fontSize: 16 }} />
               </button>
             </DropdownMenuTrigger>
@@ -223,7 +281,7 @@ function ColumnHeader({ col, canEdit, onEdit, onRun, onDelete }: { col: ReviewCo
 function RowHeader({ row, canEdit, onOpen, onRun, onRemove }: { row: ReviewRow; canEdit: boolean; onOpen: () => void; onRun: () => void; onRemove: () => void }) {
   return (
     <div className="group sticky left-0 z-10 flex shrink-0 items-center gap-2 border-b border-r border-border bg-card px-3" style={{ width: FIRST_W }} role="rowheader">
-      <Icon name={row.restricted ? "lock" : row.kind === "folder" ? "folder" : "description"} className="text-muted-foreground" style={{ fontSize: 16 }} />
+      <Icon name={row.restricted ? "lock" : row.kind === "folder" ? "folder" : "description"} className="shrink-0 text-muted-foreground" style={{ fontSize: 16 }} />
       {row.restricted ? (
         <span className="truncate text-[13px] italic text-muted-foreground">Restricted document</span>
       ) : (
@@ -236,7 +294,7 @@ function RowHeader({ row, canEdit, onOpen, onRun, onRemove }: { row: ReviewRow; 
       {canEdit && !row.restricted && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" aria-label="Row options" className="rounded p-0.5 text-muted-foreground opacity-0 hover:bg-secondary group-hover:opacity-100 data-[state=open]:opacity-100">
+            <button type="button" aria-label="Row options" className="rounded p-0.5 text-muted-foreground opacity-0 hover:bg-secondary focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-100">
               <Icon name="more_horiz" style={{ fontSize: 16 }} />
             </button>
           </DropdownMenuTrigger>
@@ -402,6 +460,28 @@ function ColumnDialog({ reviewId, col, onClose, act }: { reviewId: string; col: 
             }), changesMeaning ? "Saved — run the column again to update its answers" : "Saved").then(onClose)}>Save</Button>
           </div>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RenameReview({ title, onClose, onSave }: { title: string; onClose: () => void; onSave: (t: string) => Promise<unknown> }) {
+  const [value, setValue] = useState(title);
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md" data-testid="rename-review-dialog">
+        <DialogHeader>
+          <DialogTitle>Rename review</DialogTitle>
+        </DialogHeader>
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (value.trim()) void onSave(value.trim()).then(onClose); }}>
+          <Field label="Name">
+            {(p) => <input {...p} autoFocus value={value} onChange={(e) => setValue(e.target.value)} maxLength={200} className={fieldControl} />}
+          </Field>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit" disabled={!value.trim()}>Rename</Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

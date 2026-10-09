@@ -96,6 +96,11 @@ export type DocumentItem = {
   /** Document privacy; null/absent = follows the matter. */
   privacy?: 'private' | 'restricted' | null
   matter_title?: string | null
+  /** Where it lives (list view with homes=all). */
+  home_kind?: 'matter' | 'project' | 'library' | 'firm'
+  home_id?: string | null
+  home_label?: string | null
+  folder_path?: string
 }
 
 export type DocumentDetail = DocumentItem & {

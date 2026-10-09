@@ -275,6 +275,12 @@ def lock_status(conn, document_id: str) -> dict | None:
     return row
 
 
+def lock_for_reader(conn, document_id: str, member_id: str | None) -> dict:
+    """Who is editing the document right now, for anyone who may read it (the workbench status bar)."""
+    _require(conn, member_id, _document(conn, document_id), "read")
+    return {"lock": lock_status(conn, document_id)}
+
+
 def _lock_row(conn, document_id: str) -> dict | None:
     return _one(conn, """
         SELECT l.member_id, m.name, l.source, l.acquired_at, l.expires_at, l.lock_token

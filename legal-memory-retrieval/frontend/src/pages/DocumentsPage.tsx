@@ -12,6 +12,20 @@ import { MatterPicker } from "@/components/common/MatterPicker";
 import { UploadFlow } from "@/components/documents/UploadFlow";
 import { RecentUploads } from "@/components/documents/RecentUploads";
 import { formatDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { displayTitle, linkDocument, workspaceHref, type WorkspaceKind } from "@/api/workspaces";
+import { TargetDialog, type TargetChoice } from "@/components/workbench/dialogs";
+import { Link } from "react-router-dom";
+
+type HomeFilter = "" | "matter" | "project" | "library" | "firm";
+const HOMES: { key: HomeFilter; label: string }[] = [
+  { key: "", label: "Everything" },
+  { key: "matter", label: "Matters" },
+  { key: "project", label: "Projects" },
+  { key: "library", label: "Libraries" },
+  { key: "firm", label: "Templates" },
+];
+const HOME_ICON: Record<WorkspaceKind, string> = { matter: "gavel", project: "folder_special", library: "person_book", firm: "library_books" };
 import { useDebounced } from "@/lib/use-debounced";
 
 /** "Uploaded" says where a file came from, not what it is: show the file kind instead. */
@@ -44,6 +58,7 @@ export function DocumentsPage() {
   const [page, setPage] = useState(0);
   const [docType, setDocType] = useState("");
   const [matterId, setMatterId] = useState("");
+  const [linking, setLinking] = useState(false);
   // "Add documents" in the command palette arrives as ?add=1.
   const [params, setParams] = useSearchParams();
   const [showUpload, setShowUpload] = useState(params.get("add") === "1");
@@ -63,13 +78,21 @@ export function DocumentsPage() {
   const sort: TableSort | undefined = params.get("sort")
     ? { key: params.get("sort")!, dir: params.get("dir") === "asc" ? "asc" : "desc" }
     : undefined;
-  const documents = useDocuments({ q, page, sort, doc_type: docType || undefined, matter_id: matterId || undefined });
+  // Where a document lives is a filter in the address bar (shared links and reloads keep it).
+  const home = (params.get("home") ?? "") as HomeFilter;
+  const setHome = (h: HomeFilter) => setParams((prev) => {
+    const next = new URLSearchParams(prev);
+    if (h) next.set("home", h);
+    else next.delete("home");
+    return next;
+  }, { replace: true });
+  const documents = useDocuments({ q, page, sort, doc_type: docType || undefined, matter_id: matterId || undefined, homes: "all", home_kind: home || undefined });
   const facets = useDocumentFacets();
 
   useEffect(() => {
     setPage(0);
     setChosen(new Map());
-  }, [q, docType, matterId]);
+  }, [q, docType, matterId, home]);
   useEffect(() => setPage(0), [params.get("sort"), params.get("dir")]);
 
   const selectClass = "rounded-md border border-border bg-card px-2.5 py-2 text-sm text-foreground focus:border-wine/50 focus:outline-none";
@@ -80,13 +103,25 @@ export function DocumentsPage() {
         compact
         title="Documents"
         count={documents.data ? `${documents.data.total} ${documents.data.total === 1 ? "document" : "documents"}` : undefined}
-        subtitle="Every document is filed to its matter, with its author and versions."
+        subtitle="Every document you can open: matter files, your projects, your library and the firm's templates."
         actions={
-          <Action onClick={() => setShowUpload(true)} icon="upload" testId="add-documents">
-            Add documents
-          </Action>
+          <>
+            <Action to="/projects" icon="folder_special" testId="documents-projects">Projects</Action>
+            <Action to="/work/library/me" icon="person_book" testId="documents-library">My library</Action>
+            <Action onClick={() => setShowUpload(true)} icon="upload" testId="add-documents">
+              Add to a matter
+            </Action>
+          </>
         }
       />
+      <div className="flex flex-wrap gap-1 rounded-md border border-border p-0.5 text-sm sm:w-fit" role="radiogroup" aria-label="Where it lives" data-testid="documents-home">
+        {HOMES.map((h) => (
+          <button key={h.key} type="button" role="radio" aria-checked={home === h.key} onClick={() => setHome(h.key)}
+            className={cn("rounded px-3 py-1", home === h.key ? "bg-secondary font-medium" : "text-muted-foreground hover:text-foreground")}>
+            {h.label}
+          </button>
+        ))}
+      </div>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="flex-1">
           <SearchField value={query} onChange={setQuery} placeholder="Search title, author, id or full text…" testId="documents-search" />
@@ -115,6 +150,9 @@ export function DocumentsPage() {
           testId="bulk-assistant"
         >
           Work on in Assistant
+        </Action>
+        <Action icon="add_link" testId="bulk-link" onClick={() => setLinking(true)}>
+          Add to project or library
         </Action>
         <Action
           icon="download"
@@ -183,8 +221,8 @@ export function DocumentsPage() {
                   sortKey: "title",
                   render: (doc) => (
                     <span className="flex items-center gap-2">
-                      <Icon name="description" className="text-muted-foreground" style={{ fontSize: 16 }} />
-                      {doc.title}
+                      <Icon name="description" className="shrink-0 text-muted-foreground" style={{ fontSize: 16 }} />
+                      {displayTitle(doc.title)}
                       {doc.privacy && (
                         <Icon name={doc.privacy === "private" ? "lock" : "shield_lock"} className="text-warning-ink"
                           style={{ fontSize: 14 }} aria-label={doc.privacy === "private" ? "Private" : "Restricted"} data-testid="doc-privacy-icon" />
@@ -197,14 +235,26 @@ export function DocumentsPage() {
                 {
                   key: "matter",
                   secondary: true,
-                  header: "Matter",
+                  header: "Lives in",
                   sortKey: "matter",
-                  render: (doc) => (
-                    <div className="max-w-[280px]">
-                      <div className="truncate text-sm">{doc.matter_title || "—"}</div>
-                      <MonoId>{doc.matter_code || doc.matter_id || ""}</MonoId>
-                    </div>
-                  ),
+                  render: (doc) => {
+                    const kind = (doc.home_kind ?? "matter") as WorkspaceKind;
+                    const label = kind === "matter" ? doc.matter_title : doc.home_label;
+                    const to = kind === "matter" ? `/matters/${encodeURIComponent(doc.matter_id ?? "")}`
+                      : kind === "library" && doc.home_label !== "My library" ? null
+                      : workspaceHref(kind, kind === "library" ? "me" : kind === "firm" ? "templates" : doc.home_id ?? "");
+                    return (
+                      <div className="flex max-w-[280px] items-start gap-1.5">
+                        <Icon name={HOME_ICON[kind]} className="mt-0.5 shrink-0 text-muted-foreground" style={{ fontSize: 14 }} />
+                        <div className="min-w-0">
+                          {to ? (
+                            <Link to={to} onClick={(e) => e.stopPropagation()} className="block truncate text-sm hover:text-wine hover:underline">{label || "—"}</Link>
+                          ) : <div className="truncate text-sm">{label || "—"}</div>}
+                          {kind === "matter" && <MonoId>{doc.matter_code || doc.matter_id || ""}</MonoId>}
+                        </div>
+                      </div>
+                    );
+                  },
                 },
                 { key: "date", header: "Date", sortKey: "date", align: "right", render: (doc) => <span className="whitespace-nowrap tabular-nums">{formatDate(doc.doc_date)}</span> },
               ]}
@@ -215,6 +265,20 @@ export function DocumentsPage() {
       </QueryState>
       <RecentUploads />
       {showUpload && <UploadFlow onClose={() => setShowUpload(false)} />}
+      <TargetDialog
+        open={linking}
+        onOpenChange={setLinking}
+        title={`Show ${chosen.size} ${chosen.size === 1 ? "document" : "documents"} in a project or your library`}
+        description="Nothing is copied: each stays one document with one history, and keeps the access of where it lives."
+        confirm="Add"
+        kinds={["project", "library", "matter"]}
+        onConfirm={async (t: TargetChoice) => {
+          let failed = 0;
+          for (const d of chosen.values()) await linkDocument(d.document_id, t).catch(() => { failed += 1; });
+          toast(failed ? `${chosen.size - failed} added; ${failed} already there or not allowed` : `${chosen.size} added`);
+          setChosen(new Map());
+        }}
+      />
     </div>
   );
 }

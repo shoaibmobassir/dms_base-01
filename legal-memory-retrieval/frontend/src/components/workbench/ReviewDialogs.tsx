@@ -52,7 +52,7 @@ function ColumnPicker({ presets, setPresets, customs, setCustoms }: {
         {customs.map((c, i) => (
           <div key={i} className="grid grid-cols-[1fr_2fr_auto_auto] items-start gap-1.5">
             <input value={c.label} onChange={(e) => setCustoms(customs.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))}
-              placeholder="Column name" maxLength={120} className={fieldControl} aria-label="Column name" data-testid="review-custom-label" />
+              placeholder="Short name (the column heading)" maxLength={120} className={fieldControl} aria-label="Short name" data-testid="review-custom-label" />
             <input value={c.question} onChange={(e) => setCustoms(customs.map((x, j) => (j === i ? { ...x, question: e.target.value } : x)))}
               placeholder="Question to answer for every document" maxLength={2000} className={fieldControl} aria-label="Question" data-testid="review-custom-question" />
             <select value={c.answer_format} onChange={(e) => setCustoms(customs.map((x, j) => (j === i ? { ...x, answer_format: e.target.value as AnswerFormat } : x)))}
@@ -85,6 +85,15 @@ function columnsFrom(presets: Set<string>, customs: Custom[]): ColumnInput[] {
       choices: c.choices.split(",").map((x) => x.trim()).filter(Boolean),
     })),
   ];
+}
+
+/** "12 questions × 40 rows = 480 answers, about 2 minutes": rows are read four at a time, about 7 s each. */
+function estimate(questions: number, rows: number): string {
+  const answers = questions * rows;
+  if (!answers) return `${questions} ${questions === 1 ? "question" : "questions"} × ${rows} rows`;
+  const seconds = Math.ceil(rows / 4) * 7;
+  const time = seconds < 60 ? "under a minute" : `about ${Math.round(seconds / 60)} ${Math.round(seconds / 60) === 1 ? "minute" : "minutes"}`;
+  return `${answers} ${answers === 1 ? "answer" : "answers"} (${questions} × ${rows}), ${time}`;
 }
 
 /** Choose the rows: documents of this workspace, or its folders. */
@@ -219,7 +228,9 @@ export function NewReviewDialog({ kind, id, open, onOpenChange, onCreated, initi
             <RowPicker kind={kind} id={id} groupBy={groupBy} selected={selected} setSelected={setSelected} open={open} />
           </div>
           <div className="flex items-center justify-end gap-2">
-            <span className="mr-auto text-xs text-muted-foreground">{columns.length + (playbook?.column_count ?? 0)} questions × {selected.size} rows</span>
+            <span className="mr-auto text-xs text-muted-foreground" data-testid="new-review-estimate">
+              {estimate(columns.length + (playbook?.column_count ?? 0), selected.size)}
+            </span>
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button disabled={busy || !title.trim() || columns.length + (playbook?.column_count ?? 0) === 0} onClick={submit} data-testid="new-review-create">
               {selected.size ? "Create and run" : "Create"}

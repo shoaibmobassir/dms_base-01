@@ -31,7 +31,7 @@ test("adding documents needs a matter: nothing is filed by default", async ({ pa
 
   // Unsupported types are refused in the list with the reason.
   await dialog.getByTestId("upload-input").setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: Buffer.from("x") });
-  await expect(dialog.getByTestId("upload-files")).toContainText("Only PDF, Word (.docx) and text files are supported.");
+  await expect(dialog.getByTestId("upload-files")).toContainText("Only PDF, Word (.docx) and text files can be uploaded for now.");
 });
 
 test("a document attached in Assistant asks which matter it belongs to", async ({ page }) => {
@@ -435,6 +435,7 @@ test("resolve a matter: close it with an outcome, see the banner, reopen it", as
   await request.post("/api/calendar/deadlines", { headers, data: { title: "File reply", kind: "filing", matter_id: id, due_date: "2030-01-15" } });
 
   await page.goto(`/ui/matters/${id}`);
+  await page.getByTestId("matter-more").click();
   await page.getByTestId("matter-close").click();
   const dialog = page.getByTestId("close-matter-dialog");
   await expect(dialog.getByTestId("close-open-deadlines")).toContainText("still open");
@@ -444,12 +445,15 @@ test("resolve a matter: close it with an outcome, see the banner, reopen it", as
   await dialog.getByTestId("close-mark-done").check();
   await dialog.getByTestId("close-matter-submit").click();
   await expect(page.getByTestId("matter-closed-banner")).toContainText("Settled on agreed terms");
+  await page.getByTestId("matter-more").click();
   await expect(page.getByTestId("matter-close")).toHaveCount(0);
+  await page.keyboard.press("Escape");
 
   await page.getByTestId("matter-reopen").click();
   await page.getByTestId("reopen-reason").fill("Opposing party appealed");
   await page.getByTestId("reopen-matter-submit").click();
   await expect(page.getByTestId("matter-closed-banner")).toHaveCount(0);
+  await page.getByTestId("matter-more").click();
   await expect(page.getByTestId("matter-close")).toBeVisible();
 });
 
@@ -497,7 +501,7 @@ test("a whole folder can be added and keeps its folder names", async ({ page }) 
   const list = page.getByTestId("upload-files");
   await expect(list).toContainText("Disclosure bundle/cover note.txt");
   await expect(list).toContainText("Disclosure bundle/Schedules/schedule 1.txt");
-  await expect(list).toContainText("Only PDF, Word (.docx) and text files are supported."); // the picture is refused with a reason
+  await expect(list).toContainText("Only PDF, Word (.docx) and text files can be uploaded for now."); // the picture is refused with a reason
   await expect(page.getByTestId("upload-submit")).toBeDisabled(); // still no matter chosen
 });
 

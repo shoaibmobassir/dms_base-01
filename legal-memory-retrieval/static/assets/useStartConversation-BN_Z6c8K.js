@@ -1,0 +1,1 @@
+import{A as e}from"./AppContext-XjPq7L4W.js";function t(){let t=e();return{start:e=>t(e?`/chat?matter=${encodeURIComponent(e)}`:`/chat`),starting:!1}}export{t};

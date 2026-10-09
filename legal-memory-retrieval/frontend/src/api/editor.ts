@@ -168,6 +168,8 @@ export async function acquireLock(id: string, opts: { takeover?: boolean } = {})
   setLockToken(id, lock.lock_token ?? null)
   return lock
 }
+/** Who is editing the document now (null when nobody is); needs only read access. */
+export const getLockStatus = (id: string) => apiFetch<{ lock: EditLock | null }>(`${base(id)}/lock`)
 export const heartbeatLock = (id: string) => apiFetch<{ expires_at: string }>(`${base(id)}/lock/heartbeat`, withLock(id, json('POST')))
 export async function releaseLock(id: string) {
   await apiFetch<void>(`${base(id)}/lock`, withLock(id, json('DELETE')))

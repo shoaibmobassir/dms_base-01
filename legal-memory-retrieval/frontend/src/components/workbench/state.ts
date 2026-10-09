@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { SetURLSearchParams } from "react-router-dom";
 import { getWorkbenchState, putWorkbenchState, type WorkspaceKind } from "@/api/workspaces";
+import { isDocDirty } from "@/lib/dirtyDocs";
 
 // The workbench's layout (plan 22, W1): up to two editor groups of tabs, a side panel, which group has focus.
 // Saved per person per workspace on the server (ids only; the server drops tabs the person can no longer read).
@@ -24,16 +25,19 @@ const sameTab = (a: TabInput | Tab, b: TabInput | Tab) =>
   a.kind === b.kind && (a.kind === "review" ? a.reviewId === (b as ReviewTab).reviewId : a.documentId === (b as DocumentTab | WriteTab).documentId);
 
 export type Group = { tabs: Tab[]; active: string | null };
-export type SideView = "explorer" | "search" | "changes" | "reviews" | "playbooks" | "assistant";
+export type SideView = "explorer" | "search" | "changes" | "reviews" | "playbooks";
 
 export type WorkbenchState = {
   groups: Group[];
   focused: number;
   side: SideView | null;
   sideWidth: number;
+  /** The Assistant has its own panel on the right, so files and the conversation can be seen together. */
+  assistant: boolean;
+  assistantWidth: number;
 };
 
-export const EMPTY: WorkbenchState = { groups: [{ tabs: [], active: null }], focused: 0, side: "explorer", sideWidth: 280 };
+export const EMPTY: WorkbenchState = { groups: [{ tabs: [], active: null }], focused: 0, side: "explorer", sideWidth: 280, assistant: false, assistantWidth: 400 };
 
 export type Action =
   | { type: "load"; state: WorkbenchState }
@@ -48,7 +52,10 @@ export type Action =
   | { type: "params"; group: number; tabId: string; params: string }
   | { type: "title"; documentId: string; title: string }
   | { type: "side"; side: SideView | null }
-  | { type: "sideWidth"; width: number };
+  | { type: "sideWidth"; width: number }
+  | { type: "reorder"; group: number; tabId: string; before: string | null }
+  | { type: "assistant"; open: boolean }
+  | { type: "assistantWidth"; width: number };
 
 let counter = 0;
 const newId = () => `t${Date.now().toString(36)}${(counter++).toString(36)}`;
@@ -90,8 +97,17 @@ function openIn(g: Group, tab: TabInput, preview: boolean): Group {
 
 export function reducer(state: WorkbenchState, a: Action): WorkbenchState {
   switch (a.type) {
-    case "load":
-      return tidy({ ...EMPTY, ...a.state, groups: a.state.groups?.length ? a.state.groups.slice(0, 2) : EMPTY.groups });
+    case "load": {
+      // Layouts saved before the Assistant moved to the right kept it as a side view.
+      const legacy = (a.state.side as string | null) === "assistant";
+      return tidy({
+        ...EMPTY,
+        ...a.state,
+        side: legacy ? "explorer" : a.state.side,
+        assistant: legacy || !!a.state.assistant,
+        groups: a.state.groups?.length ? a.state.groups.slice(0, 2) : EMPTY.groups,
+      });
+    }
     case "open": {
       let s = state;
       let target = state.focused;
@@ -137,6 +153,8 @@ export function reducer(state: WorkbenchState, a: Action): WorkbenchState {
       const g = state.groups[state.focused];
       const tab = g?.tabs.find((t) => t.id === g.active);
       if (!tab) return state;
+      // One Word editor per document (it holds the edit lock): splitting an editor tab moves it instead.
+      if (tab.kind === "write") return reducer(state, { type: "moveToOtherGroup", group: state.focused, tabId: tab.id });
       let s = state.groups.length < 2 ? { ...state, groups: [...state.groups, { tabs: [], active: null }] } : state;
       const other = state.focused === 0 ? 1 : 0;
       s = withGroup(s, other, (og) => openIn(og, { ...tab, preview: false }, false));
@@ -154,13 +172,26 @@ export function reducer(state: WorkbenchState, a: Action): WorkbenchState {
         ...state,
         groups: state.groups.map((g) => ({
           ...g,
-          tabs: g.tabs.map((t) => (t.kind === "document" && t.documentId === a.documentId && t.title !== a.title ? { ...t, title: a.title } : t)),
+          tabs: g.tabs.map((t) => (t.kind !== "review" && t.documentId === a.documentId && t.title !== a.title ? { ...t, title: a.title } : t)),
         })),
       };
     case "side":
       return { ...state, side: a.side };
     case "sideWidth":
       return { ...state, sideWidth: Math.max(200, Math.min(520, Math.round(a.width))) };
+    case "reorder":
+      return withGroup(state, a.group, (g) => {
+        const tab = g.tabs.find((t) => t.id === a.tabId);
+        if (!tab || a.tabId === a.before) return g;
+        const rest = g.tabs.filter((t) => t.id !== a.tabId);
+        const at = a.before ? rest.findIndex((t) => t.id === a.before) : -1;
+        rest.splice(at < 0 ? rest.length : at, 0, tab);
+        return { ...g, tabs: rest };
+      });
+    case "assistant":
+      return { ...state, assistant: a.open };
+    case "assistantWidth":
+      return { ...state, assistantWidth: Math.max(320, Math.min(720, Math.round(a.width))) };
   }
 }
 
@@ -221,4 +252,25 @@ export function useTabParams(params: string | undefined, onChange: (next: string
     [onChange],
   );
   return [current, set];
+}
+
+/** Close tabs, asking first when a tab holds unsaved Word edits (they would only survive as a draft). */
+export function useGuardedClose(state: WorkbenchState, dispatch: (a: Action) => void, confirm: (o: { title: string; description?: string; confirmLabel?: string; destructive?: boolean }) => Promise<boolean>) {
+  return useCallback(
+    async (action: Extract<Action, { type: "close" } | { type: "closeAll" }>) => {
+      const groups = action.type === "closeAll" && action.group === undefined ? state.groups : [state.groups[action.group ?? 0]];
+      const closing = groups.flatMap((g) => g?.tabs ?? []).filter((t) => action.type === "closeAll" || t.id === action.tabId);
+      const dirty = closing.filter((t) => t.kind === "write" && isDocDirty(t.documentId));
+      if (dirty.length) {
+        const ok = await confirm({
+          title: dirty.length === 1 ? `Close “${dirty[0].title || "this document"}” without saving a version?` : `Close ${dirty.length} documents without saving versions?`,
+          description: "Your changes are kept as an unsaved draft and offered back the next time you open the Word editor. Save a version to keep them for everyone.",
+          confirmLabel: "Close anyway",
+        });
+        if (!ok) return;
+      }
+      dispatch(action);
+    },
+    [state.groups, dispatch, confirm],
+  );
 }

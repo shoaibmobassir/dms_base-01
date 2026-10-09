@@ -36,6 +36,14 @@ PRESETS: dict[str, dict[str, Any]] = {
     "change_of_control": {"label": "Change of control", "question": "Is there a change of control clause?", "answer_format": "yes_no"},
     "confidentiality": {"label": "Confidentiality", "question": "Is there a confidentiality obligation, and for how long?", "answer_format": "text"},
     "dispute_resolution": {"label": "Dispute resolution", "question": "How are disputes resolved (courts, arbitration, seat)?", "answer_format": "text"},
+    # Disputes and regulatory filings (the firm's own practice)
+    "forum": {"label": "Forum and case no.", "question": "Before which court, commission or tribunal, and under which case number?", "answer_format": "text"},
+    "filed_by": {"label": "Filed by", "question": "Which party files or issued this document?", "answer_format": "text"},
+    "relief": {"label": "Relief sought", "question": "What relief or prayer is asked for?", "answer_format": "text"},
+    "grounds": {"label": "Main grounds", "question": "What are the main grounds relied on?", "answer_format": "list"},
+    "provisions": {"label": "Provisions relied on", "question": "Which statutory sections, regulations and orders are relied on?", "answer_format": "list"},
+    "outcome": {"label": "Outcome", "question": "If this is an order or judgment, what was decided?", "answer_format": "text"},
+    "next_date": {"label": "Next date", "question": "Is a next hearing date or deadline mentioned?", "answer_format": "date"},
 }
 
 
@@ -384,6 +392,21 @@ def mark_for_run(conn, actor: str | None, review_id: str, scope: str, column_id:
                  matter_id=review["container_id"] if review["container_kind"] == "matter" else None,
                  detail={"scope": scope, "column_id": column_id, "row_id": row_id})
     return {"review_id": review_id}
+
+
+@guard
+def stop_run(conn, actor: str | None, review_id: str) -> dict:
+    """Stop filling: cells not started yet go back to open (stale) and are filled by the next "Run"; rows already
+    being read finish, so no answer is left half-written."""
+    review = require_review(conn, actor, review_id, "edit")
+    stopped = conn.execute("""UPDATE tab_cells c SET status = 'stale'
+                              FROM tab_rows r WHERE r.row_id = c.row_id AND r.review_id = %s AND c.status = 'pending'""",
+                           (review_id,)).rowcount
+    conn.commit()
+    audit.record("tabular.stop", member_id=actor, object_type="tab_review", object_id=review_id,
+                 matter_id=review["container_id"] if review["container_kind"] == "matter" else None,
+                 detail={"stopped": stopped})
+    return {"review_id": review_id, "stopped": stopped}
 
 
 @guard

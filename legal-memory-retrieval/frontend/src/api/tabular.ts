@@ -72,6 +72,8 @@ export const runReview = (id: string, body: { scope: 'open' | 'all' | 'column' |
   apiFetch<Review>(`/api/tabular/reviews/${enc(id)}/run`, json('POST', body))
 export const renameReview = (id: string, title: string, row_version?: number) =>
   apiFetch<Review>(`/api/tabular/reviews/${enc(id)}`, json('PATCH', { title, row_version }))
+/** Stop filling: cells not started go back to open; rows being read finish. */
+export const stopReview = (id: string) => apiFetch<Review>(`/api/tabular/reviews/${enc(id)}/stop`, json('POST'))
 export const archiveReview = (id: string) => apiFetch(`/api/tabular/reviews/${enc(id)}`, json('DELETE'))
 export const addColumns = (id: string, columns: ColumnInput[]) =>
   apiFetch<Review>(`/api/tabular/reviews/${enc(id)}/columns`, json('POST', columns))

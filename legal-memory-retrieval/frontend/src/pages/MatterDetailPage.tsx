@@ -28,6 +28,8 @@ import { CreateDialog } from "@/pages/CalendarPage";
 import { useConfirm } from "@/components/common/Confirm";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
+import { useProjectList, workspaceHref } from "@/api/workspaces";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   ArgumentDialog,
   CloseMatterDialog,
@@ -77,9 +79,11 @@ function PinAction({ matterId }: { matterId: string }) {
     }
   };
   return (
-    <Action onClick={busy ? undefined : () => void toggle()} icon="push_pin" testId="matter-pin">
-      {isPinned ? "Unpin" : "Pin"}
-    </Action>
+    <button type="button" onClick={busy ? undefined : () => void toggle()} data-testid="matter-pin" aria-pressed={isPinned}
+      title={isPinned ? "Unpin from the sidebar" : "Pin to the sidebar"}
+      className={cn("inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-2 text-sm hover:bg-secondary", isPinned ? "bg-wine-soft text-wine" : "bg-card")}>
+      <Icon name="push_pin" style={{ fontSize: 18 }} /> {isPinned ? "Unpin" : "Pin"}
+    </button>
   );
 }
 
@@ -87,7 +91,7 @@ function AssistantAction({ matterId }: { matterId: string }) {
   const { start } = useStartConversation();
   return (
     <Action onClick={() => start(matterId)} icon="edit_note" testId="matter-assistant">
-      Work on it in Assistant
+      Draft with the Assistant
     </Action>
   );
 }
@@ -126,23 +130,33 @@ function MatterView({ detail }: { detail: MatterDetail }) {
         subtitle={m.client_name ? <ClientLink id={m.client_id} name={m.client_name} /> : undefined}
         actions={
           <>
-            <Action to={`/ask?scope=${encodeURIComponent(m.matter_code)}&scopeType=matter`} primary icon="manage_search" testId="matter-ask">
-              Ask about this matter
-            </Action>
-            <Action to={`/work/matter/${encodeURIComponent(m.matter_id)}`} icon="folder_copy" testId="matter-workbench">
+            <Action to={`/work/matter/${encodeURIComponent(m.matter_id)}`} primary icon="folder_copy" testId="matter-workbench">
               Open workspace
+            </Action>
+            <Action to={`/ask?scope=${encodeURIComponent(m.matter_code)}&scopeType=matter`} icon="manage_search" testId="matter-ask">
+              Ask about this matter
             </Action>
             <AssistantAction matterId={m.matter_id} />
             <PinAction matterId={m.matter_id} />
             {canManage && (
-              <Action onClick={() => setEditing(true)} icon="edit" testId="matter-edit">
-                Edit
-              </Action>
-            )}
-            {canManage && !closed && (
-              <Action onClick={() => setClosing(true)} icon="task_alt" testId="matter-close">
-                Close matter
-              </Action>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" aria-label="More actions" data-testid="matter-more"
+                    className="inline-flex items-center rounded-md border border-border bg-card px-2 py-2 hover:bg-secondary">
+                    <Icon name="more_horiz" style={{ fontSize: 18 }} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onSelect={() => setEditing(true)} data-testid="matter-edit">
+                    <Icon name="edit" style={{ fontSize: 16 }} /> Edit details
+                  </DropdownMenuItem>
+                  {!closed && (
+                    <DropdownMenuItem onSelect={() => setClosing(true)} data-testid="matter-close">
+                      <Icon name="task_alt" style={{ fontSize: 16 }} /> Close matter
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </>
         }
@@ -212,6 +226,7 @@ function MatterView({ detail }: { detail: MatterDetail }) {
 
 function Overview({ detail, onTab }: { detail: MatterDetail; onTab: (t: Tab) => void }) {
   const { matter: m, team } = detail;
+  const canManage = detail.my_level === "manage";
   const docs = useDocuments({ matter_id: m.matter_id, limit: 1 });
   const upcoming = useDeadlines({ status: "open", matter_id: m.matter_id });
   const openDeadlines = upcoming.data ?? [];
@@ -288,7 +303,7 @@ function Overview({ detail, onTab }: { detail: MatterDetail; onTab: (t: Tab) => 
           </dl>
         </section>
         <section>
-          <SectionLabel right={<button type="button" onClick={() => onTab("People")} className="text-xs font-semibold text-wine hover:underline">Manage</button>}>
+          <SectionLabel right={<button type="button" onClick={() => onTab("People")} className="text-xs font-semibold text-wine hover:underline">{canManage ? "Manage" : "All people"}</button>}>
             Team
           </SectionLabel>
           <div className="divide-y divide-border border-y border-border">
@@ -308,8 +323,37 @@ function Overview({ detail, onTab }: { detail: MatterDetail; onTab: (t: Tab) => 
               ))}
           </div>
         </section>
+        <MatterProjects matterId={m.matter_id} />
       </div>
     </div>
+  );
+}
+
+/** Projects linked to this matter that the reader is in (a project's people may differ from the matter's team). */
+function MatterProjects({ matterId }: { matterId: string }) {
+  const projects = useProjectList({ matterId });
+  const items = projects.data?.items ?? [];
+  return (
+    <section data-testid="matter-projects">
+      <SectionLabel right={<Link to="/projects?new=1" className="text-xs font-semibold text-wine hover:underline">New project</Link>}>
+        Projects
+      </SectionLabel>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No projects of yours are linked to this matter.</p>
+      ) : (
+        <ul className="divide-y divide-border border-y border-border">
+          {items.map((p) => (
+            <li key={p.project_id} className="py-2.5 text-sm">
+              <Link to={workspaceHref("project", p.project_id)} className="flex items-center gap-2 font-medium hover:text-wine">
+                <Icon name="folder_special" className="shrink-0 text-muted-foreground" style={{ fontSize: 16 }} />
+                <span className="truncate">{p.title}</span>
+              </Link>
+              <div className="pl-6 text-xs text-muted-foreground">{p.document_count} {p.document_count === 1 ? "document" : "documents"} · {p.member_count} {p.member_count === 1 ? "person" : "people"}</div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -329,11 +373,16 @@ function DocumentsTab({ matter, canEdit }: { matter: MatterDetail["matter"]; can
   const docs = useDocuments({ matter_id: matter.matter_id, page });
   return (
     <div className="space-y-4">
-      {canEdit && (
-        <Action onClick={() => setAdding(true)} icon="upload" testId="matter-add-documents">
-          Add documents
+      <div className="flex flex-wrap items-center gap-2">
+        {canEdit && (
+          <Action onClick={() => setAdding(true)} icon="upload" testId="matter-add-documents">
+            Add documents
+          </Action>
+        )}
+        <Action to={`/work/matter/${encodeURIComponent(matter.matter_id)}`} icon="folder_copy" testId="matter-docs-workspace">
+          Work with folders in the workspace
         </Action>
-      )}
+      </div>
       {adding && (
         <UploadFlow
           matter={{ matter_id: matter.matter_id, matter_code: matter.matter_code, title: matter.title }}
@@ -364,6 +413,7 @@ function DocumentsTab({ matter, canEdit }: { matter: MatterDetail["matter"]; can
                 </span>
               ),
             },
+            { key: "folder", header: "Folder", secondary: true, render: (doc) => <span className="text-sm text-muted-foreground">{doc.folder_path ? doc.folder_path.split("/").join(" / ") : "—"}</span> },
             { key: "type", header: "Type", render: (doc) => <span className="text-sm text-muted-foreground">{doc.document_type}</span> },
             { key: "author", header: "Author", render: (doc) => <span className="text-sm text-muted-foreground">{doc.author_name || "—"}</span> },
             { key: "date", header: "Date", align: "right", render: (doc) => <span className="whitespace-nowrap tabular-nums">{formatDate(doc.doc_date)}</span> },

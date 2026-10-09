@@ -91,12 +91,16 @@ export const useMatterRelated = (id: string) =>
   )
 
 // ── Documents ─────────────────────────────────────────────────────────────
-export function useDocuments(p: { q?: string; matter_id?: string; doc_type?: string; sort?: Sort; page?: number; limit?: number; enabled?: boolean }) {
+export function useDocuments(p: {
+  q?: string; matter_id?: string; doc_type?: string; sort?: Sort; page?: number; limit?: number; enabled?: boolean
+  /** "all": every document the person may open, wherever it lives (projects, their library, templates). */
+  homes?: 'matter' | 'all'; home_kind?: 'matter' | 'project' | 'library' | 'firm'
+}) {
   const limit = p.limit ?? PAGE_SIZE
   const offset = (p.page ?? 0) * limit
-  return useScopedQuery(['documents', p.q, p.matter_id, p.doc_type, p.sort?.key, p.sort?.dir, offset, limit], () =>
+  return useScopedQuery(['documents', p.q, p.matter_id, p.doc_type, p.sort?.key, p.sort?.dir, offset, limit, p.homes, p.home_kind], () =>
     apiFetch<Paged<DocumentItem>>(
-      `/api/documents${qs({ q: p.q, matter_id: p.matter_id, doc_type: p.doc_type, sort: p.sort?.key, dir: p.sort?.dir, limit, offset })}`,
+      `/api/documents${qs({ q: p.q, matter_id: p.matter_id, doc_type: p.doc_type, sort: p.sort?.key, dir: p.sort?.dir, limit, offset, homes: p.homes, home_kind: p.home_kind })}`,
     ),
     p.enabled ?? true,
   )

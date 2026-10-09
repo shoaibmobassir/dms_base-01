@@ -216,6 +216,17 @@ def document_places(conn, actor: str | None, document_id: str) -> dict:
 
 # ── links ────────────────────────────────────────────────────────────────────
 
+def _keep_folder(conn, kind: str, cid: str, folder: str, actor: str | None) -> None:
+    """A folder named by a move, link or copy is kept (with its parents), like one made with "New folder", so it does
+    not vanish when its last document leaves."""
+    if not folder:
+        return
+    parts = folder.split("/")
+    for i in range(1, len(parts) + 1):
+        conn.execute("INSERT INTO workspace_folders (container_kind, container_id, path, created_by) "
+                     "VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING", (kind, cid, "/".join(parts[:i]), actor))
+
+
 @guard
 def link_document(conn, actor: str | None, document_id: str, kind: str, cid: str, folder: str | None = "",
                   via: str = "link") -> dict:
@@ -228,6 +239,7 @@ def link_document(conn, actor: str | None, document_id: str, kind: str, cid: str
     if home_of(doc) == (kind, cid):
         raise FirmError(409, "The document already lives in this workspace")
     folder = clean_path(folder)
+    _keep_folder(conn, kind, cid, folder, actor)
     link = one(conn, """
         INSERT INTO document_links (document_id, container_kind, container_id, folder_path, added_by, added_via)
         VALUES (%s, %s, %s, %s, %s, %s)
@@ -456,6 +468,7 @@ def place_in_folder(conn, actor: str | None, document_id: str, kind: str, cid: s
     require_container(conn, actor, kind, cid, "edit")
     require_document(conn, actor, doc_id, "read", via="folder")
     folder = clean_path(folder)
+    _keep_folder(conn, kind, cid, folder, actor)
     doc = one(conn, "SELECT home_kind, home_id, matter_id FROM documents WHERE document_id = %s", (doc_id,))
     if home_of(doc) == (kind, cid):
         conn.execute("UPDATE documents SET folder_path = %s, updated_at = now() WHERE document_id = %s", (folder, doc_id))
@@ -594,3 +607,104 @@ def search_workspace(conn, actor: str | None, kind: str, cid: str, q: str, limit
     for r in results:
         r["match_kind"] = "title" if r.pop("title_hit") else "content"
     return {"query": text, "results": results}
+
+
+# ── names and personal sharing ───────────────────────────────────────────────
+
+MAX_TITLE = 300
+
+
+@guard
+def rename_document(conn, actor: str | None, document_id: str, title: str) -> dict:
+    """Rename a document (edit rights where it lives). The stored file and its versions are unchanged."""
+    doc_id = document_id.upper()
+    require_document(conn, actor, doc_id, "edit", via="rename")
+    title = " ".join(str(title or "").split())
+    if not title or len(title) > MAX_TITLE:
+        raise FirmError(422, f"A name is 1–{MAX_TITLE} characters")
+    before = one(conn, "SELECT title, matter_id FROM documents WHERE document_id = %s", (doc_id,))
+    conn.execute("UPDATE documents SET title = %s, updated_at = now() WHERE document_id = %s", (title, doc_id))
+    emit(conn, "document.renamed", "document", doc_id, actor=actor, document_id=doc_id, matter_id=before["matter_id"])
+    conn.commit()
+    audit.record("document.rename", member_id=actor, object_type="document", object_id=doc_id,
+                 matter_id=before["matter_id"], detail={"from": before["title"], "to": title})
+    return {"document_id": doc_id, "title": title}
+
+
+def _library_doc(conn, actor: str | None, doc_id: str) -> dict:
+    doc = one(conn, "SELECT document_id, title, home_kind, home_id FROM documents WHERE document_id = %s AND archived_at IS NULL",
+              (doc_id,))
+    if doc is None or doc["home_kind"] != "library" or doc["home_id"] != actor:
+        raise FirmError(404, "Only a document in your own library can be shared from here")
+    return doc
+
+
+def _library_shares(conn, doc_id: str) -> list[dict]:
+    return rows(conn, """
+        SELECT s.principal_type, s.principal_id, s.level,
+               coalesce(m.name, t.name) AS name
+        FROM document_shares s
+        LEFT JOIN members m ON s.principal_type = 'member' AND m.member_id = s.principal_id
+        LEFT JOIN teams t ON s.principal_type = 'team' AND t.team_id = s.principal_id
+        WHERE s.document_id = %s ORDER BY name""", (doc_id,))
+
+
+@guard
+def library_shares(conn, actor: str | None, document_id: str) -> dict:
+    doc = _library_doc(conn, actor, document_id.upper())
+    return {"document_id": doc["document_id"], "shares": _library_shares(conn, doc["document_id"])}
+
+
+@guard
+def share_library_document(conn, actor: str | None, document_id: str, principal_type: str, principal_id: str,
+                           level: str | None) -> dict:
+    """Share a document of your own library with a person or team (read or edit), or stop sharing (level None)."""
+    doc = _library_doc(conn, actor, document_id.upper())
+    doc_id = doc["document_id"]
+    if principal_type not in ("member", "team"):
+        raise FirmError(422, "Share with a person or a team")
+    if principal_type == "member" and principal_id == actor:
+        raise FirmError(422, "It is already yours")
+    table, col = ("members", "member_id") if principal_type == "member" else ("teams", "team_id")
+    if one(conn, f"SELECT 1 AS ok FROM {table} WHERE {col} = %s", (principal_id,)) is None:
+        raise FirmError(422, "Unknown person or team")
+    if level is None:
+        conn.execute("DELETE FROM document_shares WHERE document_id = %s AND principal_type = %s AND principal_id = %s",
+                     (doc_id, principal_type, principal_id))
+    else:
+        if level not in ("read", "edit"):
+            raise FirmError(422, "Share for reading or editing")
+        conn.execute("""INSERT INTO document_shares (document_id, principal_type, principal_id, level, added_by)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (document_id, principal_type, principal_id) DO UPDATE SET level = EXCLUDED.level""",
+                     (doc_id, principal_type, principal_id, level, actor))
+    conn.commit()
+    audit.record("document.share" if level else "document.unshare", member_id=actor, object_type="document",
+                 object_id=doc_id, detail={"principal_type": principal_type, "principal_id": principal_id, "level": level})
+    return {"document_id": doc_id, "shares": _library_shares(conn, doc_id)}
+
+
+@guard
+def shared_with_me(conn, actor: str | None, limit: int = 200) -> dict:
+    """Documents from other people's libraries shared with this person (directly or through a team)."""
+    if actor is None:
+        return {"documents": []}
+    found = rows(conn, """
+        SELECT DISTINCT ON (d.document_id) d.document_id, d.title, d.document_type, d.mime_type, d.doc_date, d.updated_at,
+               d.author_name, d.home_kind, d.home_id, d.matter_id, FALSE AS private, ''::text AS folder,
+               'link' AS placement, NULL::bigint AS link_id, s.added_at AS placed_at, s.level AS share_level,
+               owner.name AS owner_name,
+               (SELECT dv.version_number FROM document_versions dv WHERE dv.version_id = d.current_version_id) AS version_number
+        FROM document_shares s
+        JOIN documents d ON d.document_id = s.document_id
+        LEFT JOIN members owner ON owner.member_id = d.home_id
+        WHERE d.home_kind = 'library' AND d.home_id <> %(me)s AND d.archived_at IS NULL
+          AND ((s.principal_type = 'member' AND s.principal_id = %(me)s)
+               OR (s.principal_type = 'team' AND s.principal_id IN (SELECT team_id FROM team_members WHERE member_id = %(me)s)))
+        ORDER BY d.document_id, s.added_at DESC
+        LIMIT %(limit)s""", {"me": actor, "limit": limit})
+    tags = document_tags(conn, actor, [d["document_id"] for d in found])
+    for d in found:
+        d["tags"] = tags.get(d["document_id"], {"system": [], "user": []})
+    found.sort(key=lambda d: (d["title"] or "").lower())
+    return {"documents": found}

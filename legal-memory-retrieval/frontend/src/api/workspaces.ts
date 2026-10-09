@@ -131,9 +131,17 @@ function useScoped<T>(key: unknown[], fn: () => Promise<T>, enabled = true) {
 
 // ── projects ─────────────────────────────────────────────────────────────────
 
+export type ProjectScope = 'all' | 'mine' | 'shared'
+export const useProjectList = (p: { q?: string; archived?: boolean; scope?: ProjectScope; sort?: 'updated' | 'title'; matterId?: string; page?: number; enabled?: boolean } = {}) =>
+  useScoped(['projects', p.q ?? '', !!p.archived, p.scope ?? 'all', p.sort ?? 'updated', p.matterId ?? '', p.page ?? 0], () =>
+    apiFetch<{ items: ProjectSummary[]; total: number }>(`/api/projects${qs({
+      q: p.q, archived: p.archived ? 'true' : undefined, scope: p.scope && p.scope !== 'all' ? p.scope : undefined,
+      sort: p.sort && p.sort !== 'updated' ? p.sort : undefined, matter_id: p.matterId, limit: 50, offset: p.page ? p.page * 50 : undefined,
+    })}`), p.enabled !== false)
+
 export const useProjects = (p: { q?: string; archived?: boolean } = {}) =>
   useScoped(['projects', p.q ?? '', !!p.archived], () =>
-    apiFetch<{ items: ProjectSummary[] }>(`/api/projects${qs({ q: p.q, archived: p.archived ? 'true' : undefined })}`).then((r) => r.items),
+    apiFetch<{ items: ProjectSummary[] }>(`/api/projects${qs({ q: p.q, archived: p.archived ? 'true' : undefined, limit: 200 })}`).then((r) => r.items),
   )
 
 export const useProject = (id: string, enabled = true) =>
@@ -155,11 +163,11 @@ export const removeProjectMember = (id: string, type: 'member' | 'team', princip
 export const useWorkspaceItems = (
   kind: WorkspaceKind,
   id: string,
-  p: { folder?: string; recursive?: boolean; q?: string; tag?: string; enabled?: boolean } = {},
+  p: { folder?: string; recursive?: boolean; q?: string; tag?: string; enabled?: boolean; offset?: number; limit?: number } = {},
 ) =>
-  useScoped(['workspace', kind, id, 'items', p.folder ?? '', !!p.recursive, p.q ?? '', p.tag ?? ''], () =>
+  useScoped(['workspace', kind, id, 'items', p.folder ?? '', !!p.recursive, p.q ?? '', p.tag ?? '', p.offset ?? 0, p.limit ?? 1000], () =>
     apiFetch<WorkspaceListing>(
-      `/api/workspaces/${containerPath(kind, id)}/items${qs({ folder: p.folder, recursive: p.recursive ? 'true' : undefined, q: p.q, tag: p.tag, limit: 1000 })}`,
+      `/api/workspaces/${containerPath(kind, id)}/items${qs({ folder: p.folder, recursive: p.recursive ? 'true' : undefined, q: p.q, tag: p.tag, limit: p.limit ?? 1000, offset: p.offset || undefined })}`,
     ),
     p.enabled !== false && !!id,
   )
@@ -208,3 +216,29 @@ export async function sha256Hex(file: Blob): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('')
 }
+
+/** Delete an empty project (owners). The server refuses while anything is still in it. */
+export const deleteProject = (id: string) => apiFetch<{ deleted: boolean }>(`/api/projects/${enc(id)}`, json('DELETE'))
+
+export const renameDocument = (documentId: string, title: string) =>
+  apiFetch<{ document_id: string; title: string }>(`/api/workspaces/documents/${enc(documentId)}`, json('PATCH', { title }))
+
+export type LibraryShare = { principal_type: 'member' | 'team'; principal_id: string; level: 'read' | 'edit'; name: string | null }
+export const useLibraryShares = (documentId: string, enabled = true) =>
+  useScoped(['library-shares', documentId], () =>
+    apiFetch<{ shares: LibraryShare[] }>(`/api/workspaces/documents/${enc(documentId)}/shares`).then((r) => r.shares), enabled && !!documentId)
+export const shareLibraryDocument = (documentId: string, body: { principal_type: 'member' | 'team'; principal_id: string; level: 'read' | 'edit' | null }) =>
+  apiFetch<{ shares: LibraryShare[] }>(`/api/workspaces/documents/${enc(documentId)}/shares`, json('PUT', body))
+
+/** Documents other people shared with me from their libraries. */
+export const useSharedWithMe = (enabled = true) =>
+  useScoped(['workspace', 'shared-with-me'], () =>
+    apiFetch<{ documents: (WorkspaceDocument & { owner_name: string | null; share_level: 'read' | 'edit' })[] }>('/api/workspaces/shared-with-me').then((r) => r.documents), enabled)
+
+/** Tags people have used on documents they can read, most used first (for filters and autocomplete). */
+export const useTagSuggestions = (prefix = '', enabled = true) =>
+  useScoped(['workspace', 'tags', prefix], () =>
+    apiFetch<{ tags: { tag: string; n?: number; count?: number }[] }>(`/api/workspaces/tags${qs({ prefix })}`).then((r) => r.tags), enabled)
+
+/** The title shown to people: without the file extension the upload left on it. */
+export const displayTitle = (title: string | null | undefined) => (title ?? '').replace(/\.(pdf|docx?|txt|md|xlsx?|rtf)$/i, '')

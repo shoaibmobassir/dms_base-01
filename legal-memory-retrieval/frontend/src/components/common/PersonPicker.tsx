@@ -10,7 +10,8 @@ export function PersonPicker({
   testId = "person-picker",
 }: {
   value: string | null;
-  onChange: (memberId: string | null) => void;
+  /** The chosen person's id (and name, for lists that show it before saving). */
+  onChange: (memberId: string | null, person?: { name: string }) => void;
   /** People already chosen elsewhere (for example already on the team). */
   exclude?: ReadonlySet<string>;
   label?: string;
@@ -36,7 +37,7 @@ export function PersonPicker({
           .map((p) => ({ id: p.member_id, title: p.name, subtitle: [p.role, p.office].filter(Boolean).join(" · ") }));
         return { options, isPending: people.isPending };
       }}
-      onSelect={(o) => onChange(o?.id ?? null)}
+      onSelect={(o) => onChange(o?.id ?? null, o ? { name: o.title } : undefined)}
     />
   );
 }

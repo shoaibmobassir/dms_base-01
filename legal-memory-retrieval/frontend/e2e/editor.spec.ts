@@ -100,10 +100,12 @@ test("edit a Word document in the browser and save it as a tracked version", asy
   // A save is a clean version (plan 21): the change is in History, not as tracked markup in the stored file.
   expect(after.has_revisions).toBe(false);
   expect(after.paragraphs.some((p) => p.text === "Either Party may terminate on thirty (30) days' written notice. Notice may be given by email.")).toBe(true);
-  const history = await json<{ items: { action: string; member_id: string }[] }>(request, `/api/editor/documents/${doc}/history`, editor);
-  // Newest first: the save, then leaving the editor releases the lock — and nothing re-locks it.
-  expect(history.items.slice(0, 2).map((e) => e.action)).toEqual(["unlock", "edit.save"]);
-  expect(history.items[1].member_id).toBe(editor);
+  // Newest first: the save, then leaving the editor releases the lock — and nothing re-locks it. The release is sent as
+  // the page unmounts, so it may land a moment after the save.
+  const recent = async () =>
+    (await json<{ items: { action: string; member_id: string }[] }>(request, `/api/editor/documents/${doc}/history`, editor)).items.slice(0, 2);
+  await expect.poll(async () => (await recent()).map((e) => e.action), { timeout: 15_000 }).toEqual(["unlock", "edit.save"]);
+  expect((await recent())[1].member_id).toBe(editor);
 });
 
 test("exact view renders the Word file as pages", async ({ page, request }) => {

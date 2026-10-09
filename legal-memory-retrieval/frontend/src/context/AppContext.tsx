@@ -57,7 +57,8 @@ type AppContextValue = {
   signIn: (apiKey: string) => Promise<void>
   signOut: () => void
   retryBoot: () => void
-  toast: (msg: string) => void
+  /** A short message; ``action`` adds one button (e.g. "Open copy"). */
+  toast: (msg: string, opts?: { action?: { label: string; onClick: () => void } }) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -73,8 +74,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [identityKey, setIdentityKey] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
 
-  const toast = useCallback((msg: string) => {
-    sonnerToast(msg)
+  const toast = useCallback((msg: string, opts?: { action?: { label: string; onClick: () => void } }) => {
+    sonnerToast(msg, opts?.action ? { action: opts.action } : undefined)
   }, [])
 
   const adoptIdentity = useCallback(async (key: string) => {

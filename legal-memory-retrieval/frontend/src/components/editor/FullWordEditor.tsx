@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DocxEditor, type DocxEditorRef } from "@stll/folio-react";
 import folioMessages from "@stll/folio-react/messages/en";
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
+import { setDocDirty } from "@/lib/dirtyDocs";
 
 /**
  * The full Word editor (plan 22, W2b): the document as Word lays it out — tables, headers and footers, footnotes,
@@ -138,6 +139,27 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
     setDraft(null);
   };
 
+  // Tell the workbench whether there are unsaved edits (a dot on the tab; closing the tab asks first).
+  useEffect(() => {
+    if (!model?.editable || !haveLock) return;
+    const t = window.setInterval(() => setDocDirty(documentId, !!ref.current?.hasPendingChanges()), 1500);
+    return () => window.clearInterval(t);
+  }, [model?.editable, haveLock, documentId]);
+
+  // Closed with unsaved edits (a tab closed, the page left inside the app): keep them as the draft that is offered
+  // back on the next open. Runs before the editor itself unmounts, so its handle is still there.
+  const baseVersion = useRef<string | null>(null);
+  baseVersion.current = model?.base_version_id ?? null;
+  const holdsLock = useRef(false);
+  holdsLock.current = haveLock;
+  useLayoutEffect(() => () => {
+    const editor = ref.current;
+    const base = baseVersion.current;
+    setDocDirty(documentId, false);
+    if (!editor || !base || !holdsLock.current || !editor.hasPendingChanges()) return;
+    void editor.save().then((data) => (data ? putDocxDraft(documentId, data, base) : undefined)).catch(() => undefined);
+  }, [documentId]);
+
   // Leaving with unsaved edits asks first.
   useEffect(() => {
     const guard = (e: BeforeUnloadEvent) => {
@@ -155,6 +177,7 @@ export function FullWordEditor({ documentId, onSaved }: { documentId: string; on
       if (!data) throw new Error("The editor produced no file");
       const out = await saveDocx(documentId, data, { baseVersionId: model.base_version_id, note: note.trim() });
       await queryClient.invalidateQueries({ predicate: (q) => JSON.stringify(q.queryKey).includes(documentId) });
+      setDocDirty(documentId, false);
       toast(`Saved as version ${out.version_number}${out.changes ? ` · ${out.changes} tracked change${out.changes === 1 ? "" : "s"} credited to you` : ""}`);
       setAsking(false);
       setNote("");
