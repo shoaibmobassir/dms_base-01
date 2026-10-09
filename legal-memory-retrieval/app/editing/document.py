@@ -10,7 +10,7 @@ import io
 import re
 from dataclasses import dataclass
 
-from app.api.acl import ACL_CLAUSE, doc_acl
+from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
@@ -46,7 +46,7 @@ def load_editable(conn, document_id: str, member_id: str | None) -> EditableDocu
         f"""
         SELECT d.document_id, d.title, d.current_version_id
         FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
+        WHERE d.document_id = %(id)s AND {doc_read('d')}
         """,
         {"id": document_id, "member_id": member_id},
     ).fetchone()

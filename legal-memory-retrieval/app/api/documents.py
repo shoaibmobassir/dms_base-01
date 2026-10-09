@@ -4,7 +4,7 @@ import json
 from fastapi import HTTPException
 from psycopg.rows import dict_row
 
-from app.api.acl import ACL_CLAUSE, doc_acl
+from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 from app.audit import events as audit
 from app.db.chunking import chunk_text
 from app.db.connection import connect
@@ -129,7 +129,7 @@ def document_versions(document_id: str, member_id: str | None) -> dict:
     access_sql = f"""
         SELECT 1 FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
+        WHERE d.document_id = %(doc_id)s AND {doc_read('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -159,7 +159,7 @@ def document_diff(
     access_sql = f"""
         SELECT 1 FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
+        WHERE d.document_id = %(doc_id)s AND {doc_read('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -222,7 +222,7 @@ def document_detail_enriched(
                CASE WHEN %(lean)s THEN NULL ELSE d.body END AS body
         FROM documents d
         LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = %(doc_id)s AND {ACL_CLAUSE} AND {doc_acl('d')}
+        WHERE d.document_id = %(doc_id)s AND {doc_read('d')}
     """
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:

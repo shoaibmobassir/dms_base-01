@@ -25,7 +25,6 @@ from app.caselaw.citation_parser import get_citation_parser
 from app.caselaw.courtlistener_client import get_courtlistener_client
 from app.drafting.clause_diff_service import get_clause_diff_service
 from app.drafting.docx_redline_generator import DocxRedlineGenerator
-from app.review.spreadsheet_exporter import SpreadsheetExporter
 from app.workflows.catalog_loader import get_catalog_loader
 from app.workflows.engine import get_workflow_engine
 
@@ -59,59 +58,7 @@ def test_key_vault_tamper_detection():
 # -----------------------------------------------------------------------------
 # 2. Tabular Reviews & Excel Export
 # -----------------------------------------------------------------------------
-def test_spreadsheet_exporter():
-    columns = [
-        {"id": "c1", "label": "Governing Law"},
-        {"id": "c2", "label": "Liability Cap"},
-    ]
-    rows = [{"document_id": "DOC-001", "title": "Master NDA"}]
-    cells = {
-        "DOC-001": {
-            "c1": {"value": "English Law", "confidence": 0.95, "citations": ["CHK-01"], "reasoning": "Clause 14.1"},
-            "c2": {"value": "£1,000,000", "confidence": 0.90, "citations": ["CHK-02"], "reasoning": "Clause 9.2"},
-        }
-    }
-    xlsx_bytes = SpreadsheetExporter.export_xlsx("Test DD Review", columns, rows, cells)
-    assert len(xlsx_bytes) > 0
-
-    # Verify openpyxl can load and read sheets
-    wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
-    assert "Review Matrix" in wb.sheetnames
-    assert "Evidence & Citations" in wb.sheetnames
-    ws = wb["Review Matrix"]
-    assert ws["A1"].value.startswith("FirmOS Legal Intelligence")
-    assert ws["C4"].value == "English Law"
-
-
-def test_tabular_review_api_workflow(client):
-    create_payload = {
-        "title": "Vendor Contract Audit",
-        "document_ids": ["DOC-00001", "DOC-00002"],
-        "columns": [
-            {"id": "col_law", "label": "Governing Law", "prompt": "Identify governing law"},
-            {"id": "col_cap", "label": "Liability Cap", "prompt": "Extract liability cap", "data_type": "currency"},
-        ],
-    }
-    resp = client.post("/api/tabular/reviews", json=create_payload)
-    assert resp.status_code == 200
-    data = resp.json()
-    review_id = data["review_id"]
-    assert data["title"] == "Vendor Contract Audit"
-    assert "DOC-00001" in data["cells"]
-
-    # Test override
-    patch_resp = client.patch(
-        f"/api/tabular/reviews/{review_id}/cells/DOC-00001/col_law",
-        json={"value": "New York Law", "reasoning": "Senior Partner review"},
-    )
-    assert patch_resp.status_code == 200
-    assert patch_resp.json()["value"] == "New York Law"
-    assert patch_resp.json()["is_overridden"] is True
-
-    # Test Excel download
-    export_resp = client.get(f"/api/tabular/reviews/{review_id}/export/xlsx")
-    assert export_resp.status_code == 200
-    assert export_resp.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+# Tabular reviews moved to app/tabular (plan 22, W4); see tests/test_tabular.py.
 
 
 # -----------------------------------------------------------------------------
@@ -221,13 +168,52 @@ def test_citation_parser():
     assert any("42 U.S.C. § 1983" in n for n in normalized)
 
 
+import httpx as _httpx
+
+_REAL_ASYNC_CLIENT = _httpx.AsyncClient
+
+
+def _mock_courtlistener(monkeypatch, handler):
+    from app.caselaw import courtlistener_client as cl
+
+    monkeypatch.setattr(cl.httpx, "AsyncClient",
+                        lambda **kw: _REAL_ASYNC_CLIENT(transport=_httpx.MockTransport(handler), **kw))
+
+
 @pytest.mark.asyncio
-async def test_courtlistener_client():
-    client = get_courtlistener_client()
-    opinion = await client.verify_citation("384 U.S. 436")
-    assert opinion is not None
-    assert opinion.is_good_law is True
-    assert opinion.precedential_status in ("Precedential", "Published")
+async def test_courtlistener_client_resolves_without_claiming_treatment(monkeypatch):
+    import httpx
+    from app.caselaw.courtlistener_client import CourtListenerClient
+
+    _mock_courtlistener(monkeypatch, lambda req: httpx.Response(200, json={"results": [
+        {"caseName": "Miranda v. Arizona", "court": "Supreme Court", "dateFiled": "1966-06-13",
+         "status": "Precedential", "snippet": "...", "absolute_url": "/opinion/1/miranda/"}]}))
+    opinion = await CourtListenerClient(api_token="t").verify_citation("384 U.S. 436")
+    assert opinion.verified
+    assert opinion.case_name == "Miranda v. Arizona"
+    assert opinion.status == {"signal": "unknown", "source": "none"}
+
+
+@pytest.mark.asyncio
+async def test_courtlistener_outage_is_never_verified(monkeypatch):
+    """Design test R13: a provider failure must not produce a verified authority."""
+    import httpx
+    from app.caselaw.courtlistener_client import CourtListenerClient
+
+    def boom(req):
+        raise httpx.ConnectError("offline")
+
+    _mock_courtlistener(monkeypatch, boom)
+    client = CourtListenerClient(api_token="t")
+    opinion = await client.verify_citation("999 U.S. 999")
+    assert not opinion.verified
+    assert opinion.resolution == "provider_error"
+    assert opinion.case_name is None
+    assert opinion.status["signal"] == "unknown"
+    assert "999 U.S. 999" not in client._cache  # transient failures are not cached
+
+    _mock_courtlistener(monkeypatch, lambda req: httpx.Response(200, json={"results": []}))
+    assert (await client.verify_citation("999 U.S. 999")).resolution == "not_found"
 
 
 

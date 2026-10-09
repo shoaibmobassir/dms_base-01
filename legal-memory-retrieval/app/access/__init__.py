@@ -183,14 +183,18 @@ def document_access(conn, member_id: str | None, document_id: str) -> dict[str, 
     Returns {level, matter_id, privacy, privileged}; level "none" for unknown documents.
     """
     doc = _one(conn, """
-        SELECT d.document_id, d.matter_id, d.visible_to, d.archived_at, da.visibility, da.owner_member_id
+        SELECT d.document_id, d.matter_id, d.home_kind, d.home_id, d.visible_to, d.archived_at,
+               da.visibility, da.owner_member_id
         FROM documents d LEFT JOIN document_access da USING (document_id)
         WHERE d.document_id = %s""", (document_id,))
     if doc is None:
         return {"level": "none", "matter_id": None, "privacy": None, "privileged": False}
-    out = {"level": "none", "matter_id": doc["matter_id"], "privacy": doc["visibility"], "privileged": False}
+    out = {"level": "none", "matter_id": doc["matter_id"], "privacy": doc["visibility"], "privileged": False,
+           "home_kind": doc["home_kind"], "home_id": doc["home_id"] or doc["matter_id"]}
     if doc["archived_at"] is not None:  # archived: nobody reaches it until an administrator restores it
         return out
+    if doc["home_kind"] != "matter":
+        return {**out, **_home_document_level(conn, member_id, doc)}
     level = matter_level(conn, member_id, doc["matter_id"])
     if level == "none" or member_id is None or doc["visibility"] is None:
         return {**out, "level": level}
@@ -208,6 +212,60 @@ def document_access(conn, member_id: str | None, document_id: str) -> dict[str, 
     if has_permission(conn, member_id, "walls.manage"):
         return {**out, "level": "read", "privileged": True}
     return out
+
+
+def project_level(conn, member_id: str | None, project_id: str) -> str:
+    """none | read | edit | manage on a project: viewer / editor / owner, directly or through a team."""
+    if member_id is None:
+        return "manage" if _one(conn, "SELECT 1 AS ok FROM projects WHERE project_id = %s", (project_id,)) else "none"
+    row = _one(conn, """
+        SELECT max(CASE pm.role WHEN 'owner' THEN 3 WHEN 'editor' THEN 2 ELSE 1 END) AS lvl
+        FROM project_members pm
+        LEFT JOIN team_members tm ON pm.principal_type = 'team' AND tm.team_id = pm.principal_id
+        WHERE pm.project_id = %(p)s
+          AND ((pm.principal_type = 'member' AND pm.principal_id = %(u)s) OR tm.member_id = %(u)s)
+        """, {"p": project_id, "u": member_id})
+    return LEVELS[row["lvl"]] if row and row["lvl"] else "none"
+
+
+def container_level(conn, member_id: str | None, kind: str, container_id: str) -> str:
+    """The member's level on a workspace: a matter, a project, or a personal library (owner only)."""
+    if kind == "matter":
+        if not _one(conn, "SELECT 1 AS ok FROM matters WHERE matter_id = %s", (container_id,)):
+            return "none"
+        return matter_level(conn, member_id, container_id)
+    if kind == "project":
+        return project_level(conn, member_id, container_id)
+    if kind == "library":
+        return "manage" if member_id is None or member_id == container_id else "none"
+    if kind == "firm" and container_id == "templates":
+        # The firm's template library: every member reads it; km.publish holders curate it.
+        return "manage" if member_id is None or has_permission(conn, member_id, "km.publish") else "read"
+    return "none"
+
+
+def _home_document_level(conn, member_id: str | None, doc: dict) -> dict[str, Any]:
+    """Level on a project- or library-homed document: the home's level, narrowed by document privacy,
+    widened only by an explicit share; walls.manage may read (privileged, audited)."""
+    if member_id is None:
+        return {"level": "manage"}
+    if doc["home_kind"] == "firm" and doc["visibility"] is None:
+        return {"level": container_level(conn, member_id, "firm", doc["home_id"])}
+    if doc["visibility"] is not None:  # made private inside its workspace: only the owner and shares
+        home = "manage" if member_id == doc["owner_member_id"] else "none"
+    else:
+        home = container_level(conn, member_id, doc["home_kind"], doc["home_id"])
+    share = _one(conn, """
+        SELECT max(CASE s.level WHEN 'edit' THEN 2 ELSE 1 END) AS lvl FROM document_shares s
+        LEFT JOIN team_members tm ON s.principal_type = 'team' AND tm.team_id = s.principal_id
+        WHERE s.document_id = %(d)s AND ((s.principal_type = 'member' AND s.principal_id = %(u)s) OR tm.member_id = %(u)s)
+        """, {"d": doc["document_id"], "u": member_id})
+    level = max(LEVELS.index(home), share["lvl"] if share and share["lvl"] else 0)
+    if level:
+        return {"level": LEVELS[level]}
+    if has_permission(conn, member_id, "walls.manage"):
+        return {"level": "read", "privileged": True}
+    return {"level": "none"}
 
 
 def _manages_matter(conn, member_id: str, matter_id: str) -> bool:

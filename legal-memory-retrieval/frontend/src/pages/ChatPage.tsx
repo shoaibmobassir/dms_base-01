@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type WorkMode, createSession, deleteSession, getSession, listModels, listSessions, listSuggestions, renameSession, streamMessage, updateSession } from "@/api/chat";
 import type { Attachment, ChatSession, Citation } from "@/api/types";
@@ -12,6 +12,7 @@ import { useMatter } from "@/api/resources";
 import { errorText } from "@/components/chat/MessageParts";
 import { Icon } from "@/components/common/primitives";
 import { downloadFile } from "@/api/client";
+import { attachmentKey, attachmentLabel, pageAttachment } from "@/lib/pageDrag";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/context/AppContext";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -270,6 +271,21 @@ export function ChatPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [draft, setDraft] = useState<{ text: string; nonce: number }>();
   const nonceRef = useRef(0);
+  // The document page hands over the pages the lawyer dragged to the Assistant. With a question sent at once
+  // (?send=1) they are that message's attachments, in place of the whole document; otherwise they are attached here
+  // and the box is pre-filled.
+  const location = useLocation();
+  const handedPages = (location.state as { handoff?: { pages?: Attachment[]; prompt?: string } } | null)?.handoff?.pages ?? [];
+  useEffect(() => {
+    const hand = (location.state as { handoff?: { pages?: Attachment[]; prompt?: string } } | null)?.handoff;
+    if (!hand) return;
+    if (!handed.current.send) {
+      (hand.pages ?? []).forEach((p) => attach(p));
+      if (hand.prompt) setDraft({ text: hand.prompt, nonce: Date.now() });
+    }
+    navigate(location.pathname + location.search, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
   // Ask the Firm hands a question over with ?q= (and usually ?matter=): pre-fill it, never auto-send.
   const handedQuestion = searchParams.get("q");
   const handedSend = searchParams.get("send") === "1";
@@ -283,7 +299,9 @@ export function ChatPage() {
     q: searchParams.get("q"),
     send: searchParams.get("send") === "1",
     matter: searchParams.get("matter"),
-    files: searchParams.getAll("doc").map((id, i) => ({ document_id: id, filename: searchParams.getAll("docTitle")[i] || id })),
+    files: handedPages.length
+      ? handedPages
+      : searchParams.getAll("doc").map((id, i) => ({ document_id: id, filename: searchParams.getAll("docTitle")[i] || id })),
   });
   const sentHanded = useRef(false);
   useEffect(() => {
@@ -303,7 +321,7 @@ export function ChatPage() {
   }, [handedQuestion]);
 
   useEffect(() => {
-    if (handedDocs.length === 0) return;
+    if (handedDocs.length === 0 || handed.current.send) return; // a sent question carries its documents itself
     setAttachments((list) => {
       const next = [...list];
       handedDocs.forEach((id, i) => {
@@ -364,7 +382,7 @@ export function ChatPage() {
   };
 
   const attach = (att: Attachment) =>
-    setAttachments((list) => (list.some((a) => a.document_id === att.document_id) ? list : [...list, att]));
+    setAttachments((list) => (list.some((a) => attachmentKey(a) === attachmentKey(att)) ? list : [...list, att]));
 
   // A document is never filed into a matter by default: use the conversation's matter, or ask.
   const [matterPrompt, setMatterPrompt] = useState<{ resolve: (m: MatterOption | null) => void } | null>(null);
@@ -509,7 +527,8 @@ export function ChatPage() {
           uploading={uploading}
           attachments={attachments}
           draft={draft}
-          onRemoveAttachment={(id) => setAttachments((list) => list.filter((a) => a.document_id !== id))}
+          onRemoveAttachment={(key) => setAttachments((list) => list.filter((a) => attachmentKey(a) !== key))}
+          onDropPage={(page) => attach(pageAttachment(page))}
           onOpenAttachment={(a) => openSource({ documentId: a.document_id, title: a.filename, label: "Attached document", quotes: [] })}
           onUpload={(file) => void uploadDocument(file).then((att) => att && attach(att))}
           onPickDocuments={() => setPickerOpen(true)}
@@ -657,7 +676,7 @@ export function ChatPage() {
                     <div className="flex max-w-[85%] flex-wrap justify-end gap-1" data-testid="message-attachments">
                       {(m.files ?? []).map((f) => (
                         <button
-                          key={f.document_id ?? f.filename}
+                          key={`${f.document_id ?? f.filename}:${f.reference ? `${f.reference.unit}${f.reference.number}` : ""}`}
                           type="button"
                           onClick={() =>
                             f.document_id &&
@@ -666,7 +685,7 @@ export function ChatPage() {
                           className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-0.5 text-xs text-foreground hover:bg-secondary"
                         >
                           <FileText className="h-3 w-3 text-muted-foreground" />
-                          <span className="max-w-[220px] truncate">{f.filename}</span>
+                          <span className="max-w-[220px] truncate">{attachmentLabel(f)}</span>
                         </button>
                       ))}
                     </div>

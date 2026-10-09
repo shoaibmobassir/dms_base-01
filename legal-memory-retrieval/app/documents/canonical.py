@@ -12,7 +12,7 @@ import json
 import re
 import uuid
 from dataclasses import asdict, dataclass, field
-from typing import Any, List, Optional, Sequence
+from typing import Collection, Any, List, Optional, Sequence
 
 from psycopg.rows import dict_row
 
@@ -52,8 +52,27 @@ _RE_HEADING = re.compile(
     r"^(?i:ARTICLE|SECTION|CLAUSE|SCHEDULE|EXHIBIT|ANNEX|PART)\s+"
     r"(\d+(?:\.\d+)*|[IVXLCDM]+|[A-Z])(?=$|[\s.:\-—])\.?\s*[:\-—]?\s*(.*)$"
 )
-# Unnumbered headings: the DOCX extractor writes Heading-style paragraphs as "SECTION <text>".
+# Unnumbered headings in text indexed before 2026-10-04, when the DOCX extractor still wrote Heading-style paragraphs
+# as "SECTION <text>". Kept so those stored bodies parse the same until they are re-indexed.
 _RE_UNNUMBERED_HEADING = re.compile(r"^SECTION\s+(\S.{0,158})$")
+# A short numbered line with no closing punctuation is a heading: "5. Remuneration", "2.1 Definitions".
+_RE_NUMBERED_HEADING = re.compile(r"^(\d{1,3}(?:\.\d{1,3})*)\.?\s+([A-Z(][^\n]{0,118}?)\s*$")
+_HEADING_MAX_WORDS = 12
+
+
+def numbered_heading(text: str) -> tuple[str, str] | None:
+    """("5", "Remuneration") for a short numbered heading line; None for a numbered sentence or clause."""
+    m = _RE_NUMBERED_HEADING.match(text)
+    if not m or text.rstrip()[-1] in ".;:," or len(text.split()) > _HEADING_MAX_WORDS:
+        return None
+    return m.group(1), m.group(2).strip()
+
+
+def caps_heading(text: str) -> bool:
+    """A short line in capitals with no closing full stop ("EMPLOYMENT AGREEMENT — CHIEF TECHNOLOGY OFFICER")."""
+    letters = [c for c in text if c.isalpha()]
+    return (len(letters) >= 4 and all(c.isupper() for c in letters) and "\n" not in text
+            and len(text.split()) <= 14 and not text.rstrip().endswith("."))
 _HEADING_MAX_CHARS = 200
 _RE_NUMBERED_CLAUSE = re.compile(
     r"^([0-9]+\.[0-9]+(?:\.[0-9]+)*)\.?\s+(.+)$"
@@ -108,10 +127,13 @@ def parse_canonical_blocks(
     version_id: str,
     approx_chars_per_page: int = 3000,
     page_spans: Sequence[Any] | None = None,
+    headings: Collection[str] | None = None,
 ) -> List[DocumentBlock]:
-    """Parse legal text into AST blocks. ``page_spans`` supplies real PDF/DOCX pages."""
+    """Parse legal text into AST blocks. ``page_spans`` supplies real PDF/DOCX pages; ``headings`` the paragraphs the
+    source file styles as headings (a Word file's Heading styles), which are headings whatever their wording."""
     if not body:
         return []
+    styled = {" ".join(h.split()) for h in headings or ()}
 
     raw_paragraphs: list[str] = []
     for page_part in body.split("\f"):
@@ -151,7 +173,17 @@ def parse_canonical_blocks(
         sig_match = _RE_SIGNATURE.match(cleaned_text)
         footnote_match = _RE_FOOTNOTE.match(cleaned_text)
 
-        if plain_heading and not md_match:
+        styled_heading = bool(styled) and " ".join(cleaned_text.split()) in styled
+        numbered = numbered_heading(cleaned_text) if heading_match is None and not md_match and "\n" not in cleaned_text else None
+        if styled_heading and not heading_match and not md_match:
+            current_section_id, current_section_title = numbered or (_heading_slug(cleaned_text), cleaned_text)
+            block_type = "heading"
+            meta = {"is_header": True, "level": 1, "numbered": numbered is not None, "styled": True}
+        elif numbered and not plain_heading:
+            current_section_id, current_section_title = numbered
+            block_type = "heading"
+            meta = {"is_header": True, "level": 1, "numbered": True}
+        elif plain_heading and not md_match:
             current_section_title = plain_heading.group(1).strip()
             current_section_id = _heading_slug(current_section_title)
             block_type = "heading"
@@ -184,6 +216,11 @@ def parse_canonical_blocks(
         elif cleaned_text.lstrip().startswith(("- ", "* ", "• ")):
             block_type = "list"
             meta = {"is_list": True}
+        elif caps_heading(cleaned_text):
+            current_section_title = cleaned_text.strip()
+            current_section_id = _heading_slug(current_section_title)
+            block_type = "heading"
+            meta = {"is_header": True, "level": 1, "numbered": False}
         else:
             block_type = "paragraph"
             meta = {}
@@ -222,6 +259,7 @@ def parse_from_extracted(
         document_id=document_id,
         version_id=version_id,
         page_spans=getattr(extracted, "pages", None),
+        headings=getattr(extracted, "headings", None),
     )
 
 
@@ -238,8 +276,7 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
 
     with connect() as conn:
         with conn.cursor() as cur:
-            for b in blocks:
-                cur.execute(
+            cur.executemany(
                     """
                     INSERT INTO document_blocks (
                         block_id, version_id, document_id, page_number, sequence,
@@ -265,6 +302,7 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
                         metadata = EXCLUDED.metadata
                     RETURNING block_id
                     """,
+                    [
                     {
                         "bid": b.block_id,
                         "vid": b.version_id,
@@ -279,11 +317,17 @@ def save_canonical_blocks(blocks: List[DocumentBlock]) -> int:
                         "soff": b.start_offset,
                         "eoff": b.end_offset,
                         "meta": json.dumps(b.metadata),
-                    },
+                    }
+                    for b in blocks
+                    ],
+                    returning=True,
                 )
+            # one result set per block, in order: the stored id is kept (an existing row keeps its id)
+            for b in blocks:
                 row = cur.fetchone()
                 if row:
                     b.block_id = row["block_id"] if isinstance(row, dict) else row[0]
+                cur.nextset()
             conn.commit()
     return len(blocks)
 

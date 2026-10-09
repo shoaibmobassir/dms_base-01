@@ -6,7 +6,7 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.api.acl import ACL_CLAUSE, doc_acl
+from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 from app.auth.deps import resolve_member
 from app.db.connection import connect
 from app.review import FEATURE_CATALOG, FastReviewEngine, review_engine
@@ -96,7 +96,7 @@ def _require_job(conn, job_id: str, member_id: str | None) -> dict:
 # Findings are shown only on documents the member may read (matter ACL + document privacy).
 _FINDING_DOC_ACL = f"""
     EXISTS (SELECT 1 FROM documents fd LEFT JOIN permissions p ON p.matter_id = fd.matter_id
-            WHERE fd.document_id = f.document_id AND {ACL_CLAUSE} AND {doc_acl('fd')})
+            WHERE fd.document_id = f.document_id AND {doc_read('fd')})
 """
 
 

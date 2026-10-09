@@ -23,7 +23,7 @@ class HierarchicalChunk:
     chunk_id: str
     version_id: str
     document_id: str
-    matter_id: str
+    matter_id: str | None
     folder_path: str
     chunk_index: int
     text: str
@@ -64,7 +64,7 @@ def build_hierarchical_chunks(
     *,
     document_id: str,
     version_id: str,
-    matter_id: str,
+    matter_id: str | None,
     folder_path: str = "",
     max_chars: int = 1200,
 ) -> list[HierarchicalChunk]:
@@ -189,8 +189,8 @@ def save_version_chunks(chunks: list[HierarchicalChunk]) -> int:
                 return 0
             # Replace whatever the document had indexed (older version or legacy chunks).
             cur.execute("DELETE FROM chunks WHERE document_id = %(did)s", {"did": doc_id})
-            for c in chunks:
-                cur.execute(
+            # one pipelined batch: a 400-page file is ~2,700 rows, and a round trip per row dominated the save
+            cur.executemany(
                     """
                     INSERT INTO chunks (
                         chunk_id, document_id, matter_id, chunk_index, text, tsv,
@@ -210,6 +210,7 @@ def save_version_chunks(chunks: list[HierarchicalChunk]) -> int:
                         block_ids = EXCLUDED.block_ids,
                         is_parent = EXCLUDED.is_parent
                     """,
+                    [
                     {
                         "cid": c.chunk_id,
                         "did": c.document_id,
@@ -224,7 +225,9 @@ def save_version_chunks(chunks: list[HierarchicalChunk]) -> int:
                         "parent": c.parent_chunk_id,
                         "bids": c.block_ids,
                         "is_parent": c.is_parent,
-                    },
+                    }
+                    for c in chunks
+                    ],
                 )
             conn.commit()
     return len(chunks)
@@ -260,7 +263,7 @@ def build_context_envelope_for_chunk(
                        v.version_number
                 FROM chunks c
                 JOIN documents d ON d.document_id = c.document_id
-                JOIN matters m ON m.matter_id = c.matter_id
+                LEFT JOIN matters m ON m.matter_id = c.matter_id
                 LEFT JOIN document_versions v ON v.version_id = c.version_id
                 WHERE c.chunk_id = %(cid)s
                 """,

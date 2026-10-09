@@ -17,7 +17,6 @@ as a whole — deleted and re-inserted — rather than diffed, so nothing is sil
 from __future__ import annotations
 
 import copy
-import difflib
 import io
 import re
 from datetime import datetime, timezone
@@ -26,8 +25,9 @@ from typing import Any
 from docx import Document
 from docx.oxml.ns import qn
 
+from app.documents.tokens import tokenize, word_ops
+
 _SIMPLE_CHILDREN = {qn("w:rPr"), qn("w:t")}
-_TOKEN = re.compile(r"\s+|[^\s]+")
 
 
 class _Ids:
@@ -124,12 +124,12 @@ def _replace(p, new_text: str, ids: _Ids, author: str, date: str) -> bool:
         ins.append(_run(new_text, segs[-1][2] if segs else None))
         p._p.append(ins)
         return False
-    a_tok, b_tok = _TOKEN.findall(old_text), _TOKEN.findall(new_text)
+    a_tok, b_tok = tokenize(old_text), tokenize(new_text)
     a_pos = [0]
     for tok in a_tok:
         a_pos.append(a_pos[-1] + len(tok))
     pieces = []
-    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, a_tok, b_tok, autojunk=False).get_opcodes():
+    for tag, i1, i2, j1, j2 in word_ops(a_tok, b_tok):
         a, b = a_pos[i1], a_pos[i2]
         if tag == "equal":
             pieces += [_run(old_text[lo:hi], rpr) for lo, hi, rpr in _slices(segs, a, b)]

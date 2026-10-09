@@ -77,7 +77,8 @@ def test_verifier_sees_exact_changes_including_a_corrupted_number():
     from app.editing.engine import show_changes
 
     shown = show_changes("99.9 Subject to Clause 9, the Supplier", "910.9 Subject to Clause 10, the Supplier")
-    assert "[-99.9-]{+910.9+}" in shown and "[-9,-]{+10,+}" in shown
+    # The number is shown whole and the comma beside it is not part of the change (it used to read "[-9,-]{+10,+}").
+    assert "[-99.9-]{+910.9+}" in shown and "[-9-]{+10+}," in shown
 
 
 def test_lowercase_twin_of_a_defined_term_is_never_substituted():
@@ -157,3 +158,20 @@ def test_ambiguous_append_lands_at_the_end_of_the_clause():
     out, rejected = _apply_spans([text], [{"op": "span", "pid": 0, "old": "Agree improvements.",
                                           "new": "Agree improvements. Time is of the essence."}])
     assert rejected == 0 and out[0] == "9.1 Agree improvements. Meet. Agree improvements. Time is of the essence."
+
+
+CTO = ["EMPLOYMENT AGREEMENT", "1. Parties", "The Company and the Executive.", "2. Appointment and Term", "From 7 October.",
+       "5. Remuneration", "INR 2,50,00,000.", "7. Non-Solicitation", "Twelve months.", "8. Termination", "Three months.",
+       "9. Change of Control", "Double trigger."]
+
+
+def test_a_renumbering_reaches_every_heading_whatever_the_planner_searched_for():
+    # The planner's search terms find only one heading; the instruction is about numbering, so all headings are sent.
+    plan = {"search_terms": ["5. Remuneration"], "clause_numbers": [], "sections": []}
+    new = {5: "3", 7: "4", 9: "5", 11: "6"}
+    edits = {pid: [{"op": "span", "pid": pid, "old": CTO[pid].split(".")[0] + ".", "new": n + "."}] for pid, n in new.items()}
+    out = plan_edits(CTO, "Renumber the top-level section headings so they run consecutively from 1", llm=scripted(plan, edits))
+    after = apply_plan(CTO, out.ops)
+    assert [after[i] for i in (1, 3, 5, 7, 9, 11)] == ["1. Parties", "2. Appointment and Term", "3. Remuneration",
+                                                      "4. Non-Solicitation", "5. Termination", "6. Change of Control"]
+    assert [after[i] for i in (2, 4, 6)] == [CTO[2], CTO[4], CTO[6]]  # body text untouched

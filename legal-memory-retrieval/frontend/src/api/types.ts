@@ -276,6 +276,10 @@ export type SearchResult = {
   subtitle: string | null
   meta: string | null
   status: string | null
+  /** Documents only: whether the title/type or the document's text matched. */
+  match_kind?: 'title' | 'content'
+  /** Documents only: a matching passage with the hit words wrapped in << >>. */
+  snippet?: string | null
 }
 
 export type FirmProfile = {
@@ -343,7 +347,10 @@ export type GroundingReport = {
 export type ChatEvent = { type: string; [key: string]: unknown }
 
 /** A document attached to a user message. */
-export type Attachment = { filename: string; document_id: string; content_type?: string }
+/** The page (or part) of the document the lawyer pointed at, addressed as the viewer shows it. */
+export type PageReference = { unit: "page" | "part"; number: number; version_id?: string; part_size?: number; rendered?: boolean }
+
+export type Attachment = { filename: string; document_id: string; content_type?: string; reference?: PageReference }
 
 /** One suggested change to a document, reviewed on a card in the chat. */
 export type EditProposal = {
@@ -354,6 +361,12 @@ export type EditProposal = {
   page: number | null
   located: boolean
   status: 'pending' | 'accepted' | 'rejected'
+  /** Set once accepting wrote the edit into the document: the version it went into. */
+  applied_version_id?: string
+  applied_version_number?: number
+  applied_from_version_id?: string
+  /** Why the last attempt to write it into the document failed. */
+  apply_error?: string
 }
 
 /** Question the assistant needs answered before it continues. */

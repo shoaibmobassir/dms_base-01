@@ -505,6 +505,19 @@ def _finish(
     return base
 
 
+def _end_reads(conn) -> None:
+    """End the evidence reads' transaction before the model is called.
+
+    The model can take a minute, and a streamed answer whose reader goes away leaves its generator suspended inside
+    the caller's ``with connect()``: the open transaction then held its table locks for hours and blocked every
+    migration (an ALTER TABLE waited behind it, and every query on ``documents`` waited behind the ALTER).
+    """
+    try:
+        conn.commit()
+    except Exception:  # noqa: BLE001 — a connection that cannot commit has no transaction worth keeping
+        conn.rollback()
+
+
 def ask_the_firm(
     conn,
     question: str,
@@ -517,6 +530,7 @@ def ask_the_firm(
     if g.done:
         return g.base
     context, allowed, scope_note = g.context()
+    _end_reads(conn)
     parsed = None
     provider = "none"
     model = None
@@ -590,6 +604,7 @@ def ask_the_firm_stream(
         yield {"type": "final", "result": g.base, "replaced": False}
         return
     context, allowed, scope_note = g.context()
+    _end_reads(conn)
     t = time.perf_counter()
     text = ""
     header: re.Match | None = None

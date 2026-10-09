@@ -49,6 +49,7 @@ from app.chat.tools.batch_tools import review_documents_tool
 from app.chat.tools.comment_tools import comment_on_document_tool
 from app.chat.tools.edit_tools import edit_document_tool
 from app.chat.context import carried_documents, fit_context, working_set, working_set_note
+from app.chat.tools.precedents import find_precedents_tool
 from app.chat.tools.firm_tools import (
     ask_firm_tool,
     find_people_tool,
@@ -56,6 +57,8 @@ from app.chat.tools.firm_tools import (
     resolve_matter_tool,
 )
 from app.chat.tools.generation_tools import generate_docx, generate_excel
+from app.chat.tools.edit_guard import scan_only_words, scrub_scan_claims
+from app.chat.tools.research_tools import RESEARCH_TOOLS
 from app.chat.tools.review_tools import propose_edits
 from app.chat.tools.schema import ALL_TOOLS
 from app.chat.verify_citations import verify_document_citation
@@ -76,6 +79,11 @@ logger = logging.getLogger(__name__)
 MAX_TOOL_ROUNDS = 10
 _RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 _DB_TOOLS = frozenset({
+    "list_workflows",
+    "read_workflow",
+    "search_workspace",
+    "read_review_cells",
+    "find_precedents",
     "review_documents",
     "edit_document",
     "comment_on_document",
@@ -91,13 +99,11 @@ _DB_TOOLS = frozenset({
     "fetch_documents",
     "find_in_document",
     "propose_edits",
-})
+}) | frozenset(RESEARCH_TOOLS)
 _KNOWN_TOOLS = _DB_TOOLS | frozenset({
     "generate_docx",
     "generate_excel",
     "ask_inputs",
-    "list_workflows",
-    "read_workflow",
 })
 
 
@@ -135,6 +141,7 @@ def dispatch_tool_call(
     nonce: str,
     member_id: str | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """
     Execute a single tool call and return (result, events).
@@ -245,35 +252,61 @@ def dispatch_tool_call(
             events.append(result.pop("event"))
         return result, events
 
+    elif name in RESEARCH_TOOLS:
+        result, research_events = RESEARCH_TOOLS[name](arguments, doc_index, doc_store, conn, member_id, matter, nonce)
+        events.extend(research_events)
+        return result, events
+
     elif name in _FIRM_TOOLS:
         result = _FIRM_TOOLS[name](arguments, doc_index, conn, member_id)
         if "event" in result:
             events.append(result.pop("event"))
-        if name == "ask_firm":
+        if name in ("ask_firm", "find_precedents"):
             _load_passage_documents(result, doc_index, doc_store, conn, member_id)
         return result, events
 
     elif name == "list_workflows":
-        from app.workflows.catalog_loader import get_catalog_loader
+        # The user-facing name is "playbooks" (plan 22, W5): shipped, firm and the member's own.
+        from app.playbooks import for_assistant_list
 
-        return {"workflows": [
-            {"id": wf.id, "title": wf.title, "description": wf.description, "category": wf.category}
-            for wf in get_catalog_loader().list_workflows()
-        ]}, events
+        return {"workflows": for_assistant_list(conn, member_id)}, events
 
     elif name == "read_workflow":
-        from app.workflows.catalog_loader import get_catalog_loader
+        from app.firm import FirmError
+        from app.playbooks import for_assistant_read
 
-        wf = get_catalog_loader().get_workflow(str(arguments.get("workflow_id") or ""))
-        if wf is None:
-            return {"error": f"Unknown workflow: {arguments.get('workflow_id')}"}, events
-        return {
-            "id": wf.id, "title": wf.title, "description": wf.description, "inputs": wf.inputs,
-            "steps": [
-                {k: v for k, v in (("id", st.id), ("type", st.type), ("title", st.title), ("query", st.query), ("prompt", st.prompt)) if v}
-                for st in wf.steps
-            ],
-        }, events
+        try:
+            return for_assistant_read(conn, member_id, str(arguments.get("workflow_id") or ""), nonce), events
+        except FirmError:
+            return {"error": f"Unknown playbook: {arguments.get('workflow_id')}"}, events
+
+    elif name == "search_workspace":
+        if not workspace:
+            return {"error": "This conversation has no workspace; use search_firm_records."}, events
+        from app.firm import FirmError
+        from app.workspaces.documents import search_workspace
+
+        try:
+            found = search_workspace(conn, member_id, workspace["kind"], workspace["id"], str(arguments.get("query") or ""),
+                                     limit=min(int(arguments.get("limit") or 10), 25))
+        except FirmError as exc:
+            return {"error": exc.detail}, events
+        from app.chat.tools.firm_tools import _register
+
+        hits = [{"doc_id": _register(doc_index, h["document_id"], h["title"]), "title": h["title"], "page": h["page_number"],
+                 "snippet": (h["snippet"] or "").replace("{MARK_START}", "").replace("{MARK_END}", "")}
+                for h in found["results"]]
+        return {"query": found["query"], "results": hits}, events
+
+    elif name == "read_review_cells":
+        from app.firm import FirmError
+        from app.tabular.runner import cells_for_assistant
+
+        try:
+            return cells_for_assistant(conn, member_id, str(arguments.get("review_id") or ""),
+                                       arguments.get("row_ids") or None, arguments.get("column_ids") or None), events
+        except FirmError as exc:
+            return {"error": exc.detail}, events
 
     elif name == "ask_inputs":
         items = _named_items(arguments.get("items", []), doc_index)
@@ -310,7 +343,22 @@ def _load_passage_documents(
                 doc_store[slug] = text
 
 
-_RECORD_TOOLS = frozenset({"ask_firm", "resolve_matter", "get_matter_profile", "find_people", "review_documents"})
+_RECORD_TOOLS = frozenset({"ask_firm", "resolve_matter", "get_matter_profile", "find_people", "review_documents",
+                           "read_review_cells", "search_workspace"})
+
+
+# Research results carry the authority's citation, binding label and status: facts the lawyer
+# must see, which come from rules and lookups, not from a quoted passage. They ground like firm
+# records. Passage text is left out: quotes must still verify against the authority itself.
+_RESEARCH_TEXT_KEYS = frozenset({"text", "snippet", "context", "preamble", "operative_paragraphs", "next", "cite_as", "rule"})
+
+
+def _research_metadata(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: _research_metadata(v) for k, v in value.items() if k not in _RESEARCH_TEXT_KEYS}
+    if isinstance(value, list):
+        return [_research_metadata(v) for v in value]
+    return value
 
 
 def _record_text(value: Any, indent: str = "") -> str:
@@ -331,15 +379,77 @@ def _record_text(value: Any, indent: str = "") -> str:
 
 
 def grounding_sources(doc_index: DocIndex, doc_store: DocStore, records: list[str]) -> list[Source]:
+    from app.chat.doc_nav import _heading
+
     sources = []
     for slug, text in doc_store.items():
         entry = doc_index.get(slug)
         if entry is None or not text or text == "Document could not be read.":
             continue
         sources.append(Source(key=slug, document_id=entry.document_id, title=entry.filename, text=text))
+        # The document's headings together, each line verbatim: a statement about its structure ("sections 1, 2, 5,
+        # 7, 8 and 9") is stated by the headings as a set, which no single retrieved passage holds.
+        heads = [line.strip() for line in text.split("\n") if _heading(line)][:80]
+        if len(heads) >= 2:
+            sources.append(Source(key=f"{slug}#headings", document_id=entry.document_id, title=entry.filename,
+                                  text="\n".join(heads)))
     for i, text in enumerate(records):
         sources.append(Source(key=f"record:{i}", document_id=None, title="Firm records", text=text))
     return sources
+
+
+# The Assistant reporting what it did, or asking the lawyer to review the edit cards. These describe its own actions,
+# not what a document says, so they are not checked against sources (the cards carry the edits themselves).
+_ACTION_REPORT = re.compile(
+    r"^\W*(?:I(?:['’]ll|['’]ve|['’]m| will| have| am|\s+(?:read|renumbered|fixed|proposed|changed|updated|corrected|"
+    r"revised|replaced|prepared|made|found|checked|looked))\b"
+    r"|(?:please|you can|you may|just)\s+(?:accept|review|reject|use)\b"
+    r"|(?:summary of (?:the )?(?:changes?|edits?)|changes? (?:made|proposed)|proposed (?:changes?|edits?))\b"
+    r"|(?:the |these |each |all )?(?:edits?|changes?|cards?)\b.{0,40}\b(?:shown|ready|below|above|proposed|apply|applied|accept))",
+    re.IGNORECASE,
+)
+
+
+_ACTION_ANYWHERE = re.compile(
+    r"\bI(?:['’](?:ll|ve|m)|\s+(?:will|have|need|should|can|am|renumber\w*|fix\w*|propos\w*|chang\w*|updat\w*|correct\w*|"
+    r"revis\w*|replac\w*))\b|\b(?:edit|suggested|proposed|change)\s+cards?\b|\baccept\s+(?:the|these|each|all)\b"
+    r"|\b(?:once|after|when)\s+(?:the\s+\w+\s+(?:is\s+)?)?(?:accepted|applied)\b|\bif you accept\b",
+    re.IGNORECASE,
+)
+
+
+# About the product, not a document: how edit cards, accepting and tracked changes work.
+_APP_STATEMENT = re.compile(
+    r"\b(?:edit cards?|the cards?|accept(?:ing|s)? (?:the|a|an|each|these|all)\b.{0,20}\bcards?|tracked changes|"
+    r"crossed[- ]out|struck[- ]through)\b",
+    re.IGNORECASE,
+)
+_CHANGE_ARROW = re.compile(r"→|->|⇒")
+
+
+def is_question(text: str) -> bool:
+    return text.rstrip(" *_)\"'”").endswith("?")
+
+
+def edit_report_detector(edits: list[dict[str, Any]]):
+    """True for a sentence that is not a statement about the documents, so it is kept as written instead of checked.
+
+    In every answer: a question to the lawyer, and a sentence about how edit cards or tracked changes work. In an
+    answer that made edit cards, also: the Assistant reporting its actions, and a line describing one of the proposed
+    changes (it quotes the new wording, or shows the change with an arrow).
+    """
+    proposed = [str(e.get("proposed") or "").strip() for e in edits]
+    proposed = [p for p in proposed if len(p) >= 6]
+
+    def is_report(text: str) -> bool:
+        if is_question(text) or _APP_STATEMENT.search(text):
+            return True
+        if not edits:
+            return False
+        return bool(_ACTION_REPORT.search(text) or _ACTION_ANYWHERE.search(text) or _CHANGE_ARROW.search(text)) \
+            or any(p in text for p in proposed)
+
+    return is_report
 
 
 def ground_chat_text(
@@ -347,6 +457,7 @@ def ground_chat_text(
     doc_index: DocIndex,
     doc_store: DocStore,
     records: list[str],
+    edits: list[dict[str, Any]] | None = None,
 ) -> tuple[str, list[dict[str, Any]], dict[str, Any]]:
     """Verify every statement of the final answer; return (text, citations, report)."""
     prose = extract_citations_text(full_text)
@@ -362,6 +473,7 @@ def ground_chat_text(
         offered_quotes=lambda u: [q.quote for c in refs(u) for q in (getattr(c, "quotes", None) or [])],
         sources=grounding_sources(doc_index, doc_store, records),
         llm=verifier_llms(),
+        non_claim=edit_report_detector(edits or []),
     )
     citations = []
     for c in grounded.citations:
@@ -373,6 +485,7 @@ def ground_chat_text(
 
 
 _FIRM_TOOLS = {
+    "find_precedents": lambda a, idx, conn, mid: find_precedents_tool(a, idx, conn, mid),
     "ask_firm": lambda a, idx, conn, mid: ask_firm_tool(
         str(a.get("question") or ""), a.get("scope") or None, idx, conn, mid,
     ),
@@ -451,7 +564,24 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
             return f"Looking up the team on {arguments['matter']}"
         return f"Finding colleagues for “{query}”" if query else "Finding colleagues"
     if name in {"list_workflows", "read_workflow"}:
-        return "Checking firm workflows"
+        return "Checking the firm's playbooks"
+    if name == "find_precedents":
+        return "Looking for the firm's precedents on this clause"
+    authority = entry.filename if entry else str(arguments.get("authority") or "").strip()
+    if authority in doc_index:
+        authority = doc_index[authority].filename
+    if name == "search_authority":
+        return f"Searching legal authorities for “{query}”" if query else "Searching legal authorities"
+    if name == "read_authority":
+        return f"Reading {authority or 'an authority'}"
+    if name == "resolve_citation":
+        return f"Checking the citation {str(arguments.get('citation') or '').strip()}".rstrip()
+    if name == "get_citing_authorities":
+        return f"Finding later authorities citing {authority or 'the authority'}"
+    if name == "check_authority_status":
+        return f"Checking the status of {authority or 'the authority'}"
+    if name == "verify_citations":
+        return "Cite-checking the citations"
     return "Working"
 
 
@@ -463,6 +593,8 @@ def tool_deadline_seconds(name: str) -> float:
         return settings.review_tool_timeout_seconds
     if name == "ask_firm":  # retrieval plus its own grounded LLM answer
         return max(settings.chat_tool_timeout_seconds, 75.0)
+    if name == "verify_citations":  # one resolve + status lookup per citation
+        return max(settings.chat_tool_timeout_seconds, 60.0)
     return settings.chat_tool_timeout_seconds
 
 
@@ -495,11 +627,12 @@ def _invoke_tool(
     member_id: str | None,
     timeout: float,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Run a tool on a connection this worker created, so the request conn stays put."""
     if name not in _DB_TOOLS:
         return dispatch_tool_call(
-            name, arguments, doc_index, doc_store, None, nonce, member_id=member_id, matter=matter,
+            name, arguments, doc_index, doc_store, None, nonce, member_id=member_id, matter=matter, workspace=workspace,
         )
     with connect() as tool_conn:
         try:
@@ -510,7 +643,7 @@ def _invoke_tool(
         except Exception:
             logger.debug("statement_timeout not set for tool %s", name)
         return dispatch_tool_call(
-            name, arguments, doc_index, doc_store, tool_conn, nonce, member_id=member_id, matter=matter,
+            name, arguments, doc_index, doc_store, tool_conn, nonce, member_id=member_id, matter=matter, workspace=workspace,
         )
 
 
@@ -523,6 +656,7 @@ def dispatch_tool_call_bounded(
     member_id: str | None = None,
     timeout: float | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], bool]:
     """Execute a tool with a wall-clock deadline. Does not retry the tool."""
     bound = tool_deadline_seconds(name) if timeout is None else timeout
@@ -539,6 +673,7 @@ def dispatch_tool_call_bounded(
         member_id,
         bound,
         matter,
+        workspace,
     )
     if outcome is DEADLINE_EXCEEDED:
         CHAT_TOOL_TIMEOUTS.labels(tool=label).inc()
@@ -646,6 +781,8 @@ def build_llm_messages(
     max_pairs: int | None = None,
     mode: str | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
+    page_note: str | None = None,
 ) -> list[dict[str, Any]]:
     """Build the LLM message array: system + windowed history + current user."""
     doc_availability = build_doc_availability(doc_index)
@@ -653,6 +790,14 @@ def build_llm_messages(
     found = [d for d in doc_availability if not d.get("attached")]
 
     system_content = build_system_prompt(mode)
+    if workspace:
+        system_content += (
+            f"\n\nTHIS CONVERSATION BELONGS TO A WORKSPACE: {workspace.get('label') or workspace['id']} "
+            f"({'a project' if workspace['kind'] == 'project' else 'a matter' if workspace['kind'] == 'matter' else 'the user\'s own library'})."
+            " Its own documents are not in the firm-wide search: use search_workspace to find words in them, and"
+            " read_review_cells to read a tabular review of this workspace when the user refers to a review or table."
+            " The documents open in the user's workbench are attached below."
+        )
     if matter:
         system_content += (
             f"\n\nTHIS CONVERSATION IS LIMITED TO ONE MATTER: {matter['matter_code']}"
@@ -665,6 +810,8 @@ def build_llm_messages(
             "or similar, they mean these; work on these, not on similarly named search results):\n"
             + "\n".join(f"- {d['doc_id']}: {d['filename']}" for d in attached)
         )
+    if page_note:
+        system_content += page_note
     if found:
         heading = "OTHER DOCUMENTS FOUND BY SEARCH" if attached else "AVAILABLE DOCUMENTS"
         system_content += f"\n\n{heading}:\n" + "\n".join(f"- {d['doc_id']}: {d['filename']}" for d in found)
@@ -776,9 +923,22 @@ def _call_gateway(
         )
         result = call()
     return {
-        "content": result.get("content") or "",
+        "content": strip_reasoning(result.get("content") or ""),
         "tool_calls": result.get("tool_calls") or [],
     }
+
+
+_THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
+
+
+def strip_reasoning(text: str) -> str:
+    """Drop a model's reasoning that leaked into its answer: whole <think>…</think> blocks, and everything before a
+    closing </think> whose opening tag was not sent (the reasoning then starts the text)."""
+    text = _THINK_BLOCK.sub("", text)
+    end = text.lower().rfind("</think>")
+    if end >= 0:
+        text = text[end + len("</think>"):]
+    return text.lstrip() if text.strip() else ""
 
 
 def _call_gemini(
@@ -908,6 +1068,20 @@ WRAP_UP_PROMPT = (
 )
 
 
+def drop_scan_claims(text: str, doc_index: DocIndex, doc_store: DocStore) -> tuple[str, int]:
+    """Remove answer lines that call a scanned page's OCR reading a spelling/spacing error (see edit_guard)."""
+    words: set[str] = set()
+    texts: list[str] = []
+    for slug, entry in doc_index.items():
+        if entry.scanned_pages and doc_store.get(slug):
+            words |= scan_only_words(doc_store[slug], entry.scanned_pages)
+            texts.append(doc_store[slug])
+    cleaned, removed = scrub_scan_claims(text, words, "\n".join(texts))
+    if removed:
+        logger.info("[chat/agent] removed %d line(s) reporting OCR artifacts as errors", len(removed))
+    return cleaned, len(removed)
+
+
 def _record_working_set(all_events: list[dict[str, Any]]) -> None:
     """Persist (with the message, not streamed) which documents this turn read or searched."""
     docs = working_set(all_events)
@@ -925,6 +1099,8 @@ def run_chat_agent(
     mode: str | None = None,
     hit_count: int | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
+    page_note: str | None = None,
 ) -> Generator[str, None, dict[str, Any]]:
     """
     Execute the multi-round tool-use agent loop.
@@ -947,8 +1123,8 @@ def run_chat_agent(
     }
     all_events.append(opening)
     yield sse_event("reasoning", {"text": opening["text"], "mode": opening["mode"]})
-    messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode, matter=matter)
-    tools = ALL_TOOLS
+    messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode, matter=matter, workspace=workspace, page_note=page_note)
+    tools = ALL_TOOLS if workspace else [t for t in ALL_TOOLS if t["function"]["name"] != "search_workspace"]
     request_id = current_request_id() or "-"
 
     full_text = ""
@@ -1044,7 +1220,7 @@ def run_chat_agent(
                 return {"error": f"{name} is paused for this turn after a timeout"}, [], False
             bound = min(tool_deadline_seconds(name), max(1.0, turn_deadline - time.perf_counter()))
             return dispatch_tool_call_bounded(name, args, doc_index, doc_store, nonce, member_id=member_id,
-                                              timeout=bound, matter=matter)
+                                              timeout=bound, matter=matter, workspace=workspace)
 
         # Independent read-only calls in one round run side by side; their steps are still
         # reported in the order the model asked for them.
@@ -1106,6 +1282,8 @@ def run_chat_agent(
 
             if tool_name in _RECORD_TOOLS and not result.get("error"):
                 records.append(_record_text(result))
+            elif tool_name in RESEARCH_TOOLS and not result.get("error"):
+                records.append(_record_text(_research_metadata(result)))
 
             # Add tool result to messages
             messages.append({
@@ -1140,12 +1318,16 @@ def run_chat_agent(
         yield sse_event("reasoning", {"text": step["text"], "mode": step["mode"]})
         t = time.perf_counter()
         try:
-            clean_text, verified_citations, report = ground_chat_text(full_text, doc_index, doc_store, records)
+            turn_edits = [e for ev in all_events if ev.get("type") == "edit_proposals" for e in ev.get("edits", [])]
+            clean_text, verified_citations, report = ground_chat_text(full_text, doc_index, doc_store, records, turn_edits)
         except Exception as exc:  # never show an unchecked answer as if it were checked
             logger.error("[chat/agent] grounding failed: %s, request_id=%s", exc, request_id)
             clean_text = ("The answer could not be checked against its sources, so it is not shown. "
                           "Please try again.")
             verified_citations, report = [], {"error": "grounding_failed"}
+        clean_text, scan_claims = drop_scan_claims(clean_text, doc_index, doc_store)
+        if scan_claims:
+            timings["scan_claims_removed"] = scan_claims
         timings["grounding_ms"] = round((time.perf_counter() - t) * 1000, 1)
         timings["grounding"] = report.pop("timings", {})
         all_events.append({"type": "grounding", **report})
@@ -1185,6 +1367,7 @@ def run_chat_agent(
 
     # Clean response text (strip CITATIONS block, never show internal doc labels)
     clean_text = name_documents(extract_citations_text(full_text), doc_index)
+    clean_text, _ = drop_scan_claims(clean_text, doc_index, doc_store)
 
     CHAT_TURNS.labels(outcome="completed").inc()
     _record_working_set(all_events)
@@ -1211,6 +1394,8 @@ def run_chat_agent_sync(
     mode: str | None = None,
     hit_count: int | None = None,
     matter: dict[str, str] | None = None,
+    workspace: dict[str, str] | None = None,
+    page_note: str | None = None,
 ) -> dict[str, Any]:
     """
     Run the agent loop synchronously, collecting all SSE events.
@@ -1227,7 +1412,8 @@ def run_chat_agent_sync(
         member_id=member_id,
         mode=mode,
         hit_count=hit_count,
-        matter=matter,
+        matter=matter, workspace=workspace,
+        page_note=page_note,
     )
 
     result = {"full_text": "", "events": [], "citations": []}

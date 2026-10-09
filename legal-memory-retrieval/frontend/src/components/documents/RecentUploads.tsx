@@ -39,7 +39,7 @@ export function RecentUploads() {
         {batches.map((b) => (
           <li key={b.batch_id} className="space-y-1 px-4 py-3 text-sm" data-testid="recent-upload">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="font-medium">{b.matter_title}</span>
+              <span className="font-medium">{b.workspace_title ?? b.matter_title}</span>
               <span className="text-muted-foreground">{formatDate(b.created_at)}</span>
               <span className="text-muted-foreground">
                 {b.indexed} added{b.duplicates > 0 && `, ${b.duplicates} already there`}{b.failed > 0 && `, ${b.failed} failed`}

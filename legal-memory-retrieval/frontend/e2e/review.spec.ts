@@ -62,38 +62,22 @@ async function as(browser: import("@playwright/test").Browser, member: string) {
   return { ctx, page: await ctx.newPage() };
 }
 
-test("see who changed what and accept one reviewer's changes", async ({ browser, request }) => {
+test("an uploaded reviewed file is imported clean, with every reviewer credited", async ({ request }) => {
   test.setTimeout(90_000);
   const { doc, editor } = await setup(request);
-  const before = await json<{ version_number: number }>(request, `/api/editor/documents/${doc}`, editor);
-  const { ctx, page } = await as(browser, editor);
-  try {
-    await page.goto(`/ui/documents/${doc}/edit`);
-    await expect(page.getByTestId("editor-pending-chip")).toContainText("7 pending changes");
-    await page.getByTestId("editor-view-review").click();
-    const panel = page.getByTestId("review-panel");
-    for (const name of ["Ravi Kalra", "Trilegal", "Kunal Lalit Kaistha"]) await expect(panel.getByTestId("review-people")).toContainText(name);
-    await expect(panel.getByTestId("review-people")).toContainText("outside the firm");
-    await expect(panel.getByTestId("review-change")).toHaveCount(6);
-    await page.getByTestId("review-person-select").selectOption("Trilegal");
-    await expect(panel.getByTestId("review-change")).toHaveCount(2);
-    await page.getByTestId("review-accept-shown").click();
-    await page.getByTestId("confirm-accept").click(); // several changes at once ask first
-    // Stays in Review on the new version, without Trilegal's changes.
-    await expect(page.getByTestId("review-panel")).toBeVisible();
-    await expect(page.getByTestId("review-change").filter({ has: page.locator('[data-author="Trilegal"]') })).toHaveCount(0);
-    await expect(page.getByTestId("review-change")).toHaveCount(4, { timeout: 15_000 });
-  } finally {
-    await ctx.close();
-  }
-  const after = await json<{ version_number: number; pending_people: string[] }>(request, `/api/editor/documents/${doc}`, editor);
-  expect(after.version_number).toBe(before.version_number + 1);
-  expect(after.pending_people).not.toContain("Trilegal");
-  const history = await json<{ items: { action: string; member_id: string }[] }>(request, `/api/editor/documents/${doc}/history`, editor);
-  expect(history.items.some((e) => e.action === "review.accept" && e.member_id === editor)).toBe(true);
+  // Plan 21: a Word file with tracked changes becomes commits credited to its reviewers; nothing stays pending.
+  const model = await json<{ pending_changes: number; has_revisions: boolean }>(request, `/api/editor/documents/${doc}`, editor);
+  expect(model.pending_changes).toBe(0);
+  expect(model.has_revisions).toBe(false);
+  const who = await json<{ people: { name: string; external: boolean }[] }>(request, `/api/editor/documents/${doc}/contributors`, editor);
+  const names = who.people.map((p) => p.name);
+  for (const name of ["Ravi Kalra", "Trilegal", "Kunal Lalit Kaistha"]) expect(names).toContain(name);
+  expect(who.people.find((p) => p.name === "Trilegal")?.external).toBe(true);
+  const commits = await json<{ items: { kind: string; message: string | null }[] }>(request, `/api/editor/documents/${doc}/commits`, editor);
+  expect(commits.items.some((c) => c.kind === "import" || /tracked change/i.test(c.message ?? ""))).toBe(true);
 });
 
-test("paragraphs with other reviewers' pending changes are locked in the editor", async ({ browser, request }) => {
+test("an imported reviewed file opens in the editor clean, with nothing locked", async ({ browser, request }) => {
   test.setTimeout(90_000);
   const { doc, editor } = await setup(request);
   const { ctx, page } = await as(browser, editor);
@@ -101,53 +85,15 @@ test("paragraphs with other reviewers' pending changes are locked in the editor"
     await page.goto(`/ui/documents/${doc}/edit`);
     const body = page.getByTestId("editor-body");
     await expect(body).toHaveAttribute("contenteditable", "true");
-    const locked = body.locator("p", { hasText: "within 30 days" });
-    await expect(locked).toHaveAttribute("data-locked-by", /Ravi Kalra/);
-    await locked.click();
+    await expect(page.getByTestId("editor-pending-chip")).toHaveCount(0);
+    const para = body.locator("p", { hasText: "The Supplier shall deliver" });
+    await expect(para).not.toHaveAttribute("data-locked-by", /./);
+    await para.click();
     await page.keyboard.press("End");
     await page.keyboard.type(" and on time");
-    await expect(page.getByTestId("editor-blocked")).toBeVisible();
-    await expect(locked).not.toContainText("and on time");
-    // A clean paragraph edits as usual.
-    const clean = body.locator("p", { hasText: "Termination on notice." });
-    await clean.click();
-    await page.keyboard.press("End");
-    await page.keyboard.type(" Thirty days.");
-    await expect(clean).toContainText("Thirty days.");
+    await expect(para).toContainText("and on time");
     await expect(page.getByTestId("editor-changes")).toContainText("Changed");
   } finally {
     await ctx.close();
   }
-});
-
-test("Word comments show in Precentis and replies go back into the Word file", async ({ browser, request }) => {
-  test.setTimeout(90_000);
-  const { doc, editor } = await setup(request);
-  const { ctx, page } = await as(browser, editor);
-  try {
-    await page.goto(`/ui/documents/${doc}/edit`);
-    await page.getByTestId("editor-view-exact").click();
-    const thread = page.getByTestId("comment-thread").filter({ hasText: "Is 30 days agreed with the client?" });
-    await expect(thread.getByTestId("comment-from-word")).toBeVisible({ timeout: 30_000 });
-    await expect(thread).toContainText("Ravi Kalra");
-    await expect(thread).toContainText("Yes — confirmed on the call.");
-    await thread.getByRole("button").first().click();
-    await page.getByTestId("comment-reply-input").fill("Noted in the engagement letter.");
-    await page.getByTestId("comment-reply-submit").click();
-    await expect(thread).toContainText("Noted in the engagement letter.");
-  } finally {
-    await ctx.close();
-  }
-  const file = await request.get(`/api/editor/documents/${doc}/download-with-comments`, { headers: { "X-Member-Id": editor } });
-  expect(file.ok()).toBeTruthy();
-  // The reply is inside the .docx (comments.xml is zipped: look for its text in the unzipped part via the API round trip).
-  const back = await request.post(`/api/editor/documents/${doc}/versions`, {
-    headers: { "X-Member-Id": editor },
-    multipart: { file: { name: "from-word.docx", mimeType: DOCX, buffer: Buffer.from(await file.body()) } },
-  });
-  expect(back.ok()).toBeTruthy();
-  const listed = await json<{ threads: { body: string; replies: { body: string }[] }[] }>(
-    request, `/api/editor/documents/${doc}/comments`, editor);
-  const replies = listed.threads.flatMap((t) => t.replies.map((r) => r.body));
-  expect(replies.filter((b) => b === "Noted in the engagement letter.")).toHaveLength(1); // round-tripped, not duplicated
 });

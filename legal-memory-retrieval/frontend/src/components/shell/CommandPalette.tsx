@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CommandDialog,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -26,6 +25,32 @@ const QUICK_LINKS = [
   { label: "Calendar", to: "/calendar", icon: "event" },
   { label: "Arguments", to: "/arguments", icon: "balance" },
 ];
+
+/** Render a snippet whose hit words are wrapped in << >> (the search API's markers). */
+function Snippet({ text }: { text: string }) {
+  const parts = text.replace(/\s+/g, " ").trim().split(/(<<.*?>>)/g);
+  return (
+    <span className="block truncate text-xs text-muted-foreground" data-testid="search-snippet">
+      {parts.map((part, i) =>
+        part.startsWith("<<") && part.endsWith(">>") ? (
+          <mark key={i} className="rounded-sm bg-wine-soft px-0.5 text-ink">
+            {part.slice(2, -2)}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </span>
+  );
+}
+
+function PaletteNote({ children, testId }: { children: React.ReactNode; testId?: string }) {
+  return (
+    <div role="status" data-testid={testId} className="px-3 py-3 text-sm text-muted-foreground">
+      {children}
+    </div>
+  );
+}
 
 const KIND: Record<SearchResult["kind"], { heading: string; icon: string; path: string }> = {
   matter: { heading: "Matters", icon: "gavel", path: "/matters" },
@@ -82,8 +107,19 @@ export function CommandPalette({
         data-testid="command-input"
       />
       <CommandList>
-        {q.length >= 2 && !search.isFetching && groups.length === 0 && (
-          <CommandEmpty>No results within your access scope.</CommandEmpty>
+        {/* Plain messages, not CommandEmpty: cmdk hides CommandEmpty whenever an item (the Ask row) is listed. */}
+        {input.trim().length === 1 && <PaletteNote>Type at least 2 characters to search.</PaletteNote>}
+        {q.length >= 2 && search.isError && !search.isFetching && (
+          <PaletteNote testId="search-error">
+            Search failed.{" "}
+            <button type="button" className="font-medium text-wine hover:underline" onClick={() => void search.refetch()}>
+              Try again
+            </button>
+          </PaletteNote>
+        )}
+        {q.length >= 2 && search.isFetching && groups.length === 0 && <PaletteNote>Searching…</PaletteNote>}
+        {q.length >= 2 && !search.isError && !search.isFetching && groups.length === 0 && (
+          <PaletteNote testId="search-empty">No matches in titles or document text within your access scope.</PaletteNote>
         )}
 
         {input.trim() && (
@@ -100,7 +136,10 @@ export function CommandPalette({
             {rows.slice(0, 6).map((r) => (
               <CommandItem key={`${kind}-${r.id}`} value={`${kind}-${r.id}`} onSelect={() => go(`${KIND[kind].path}/${r.id}`)}>
                 <Icon name={KIND[kind].icon} className="mr-2 text-muted-foreground" style={{ fontSize: 18 }} />
-                <span className="flex-1 truncate">{r.title}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{r.title}</span>
+                  {r.match_kind === "content" && r.snippet && <Snippet text={r.snippet} />}
+                </span>
                 {r.subtitle && <span className="ml-2 truncate text-xs text-muted-foreground">{r.subtitle}</span>}
               </CommandItem>
             ))}

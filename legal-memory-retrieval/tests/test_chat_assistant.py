@@ -508,7 +508,7 @@ class TestTitleGenerator:
 # Phase 2: Tool schemas
 # ---------------------------------------------------------------------------
 
-from app.chat.tools.schema import ALL_TOOLS, CORE_TOOLS, WORKFLOW_TOOLS
+from app.chat.tools.schema import ALL_TOOLS, CORE_TOOLS, RESEARCH_TOOLS, WORKFLOW_TOOLS
 
 
 class TestToolSchemas:
@@ -521,7 +521,11 @@ class TestToolSchemas:
         assert len(WORKFLOW_TOOLS) == 2  # list_workflows, read_workflow
 
     def test_all_tools_merged(self):
-        assert len(ALL_TOOLS) == len(CORE_TOOLS) + len(WORKFLOW_TOOLS)
+        from app.chat.tools.schema import WORKSPACE_TOOLS
+
+        assert len(ALL_TOOLS) == len(CORE_TOOLS) + len(RESEARCH_TOOLS) + len(WORKFLOW_TOOLS) + len(WORKSPACE_TOOLS)
+        names = [t["function"]["name"] for t in ALL_TOOLS]
+        assert len(names) == len(set(names))
 
     def test_tool_schema_format(self):
         for tool in ALL_TOOLS:

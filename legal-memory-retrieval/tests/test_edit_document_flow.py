@@ -46,16 +46,16 @@ def test_tool_proposes_paragraph_edits_from_the_original_docx(spa, monkeypatch):
     assert e["pid"] == target and "Longstop Date" in e["proposed"] and e["status"] == "pending"
 
 
-def test_bulk_accept_then_export_writes_tracked_changes_into_the_original(client, spa, monkeypatch):
+def test_legacy_accepted_edits_export_writes_tracked_changes_into_the_original(client, spa, monkeypatch):
     target = next(i for i, t in enumerate(spa.paragraphs) if "Long Stop Date" in t)
     event = {
         "type": "edit_proposals", "document_id": SPA, "version_id": spa.version_id, "filename": "SPA.docx",
         "anchoring": "paragraph", "source": "docx", "instruction": "Rename Long Stop Date",
         "edits": [
             {"id": "e1", "op": "replace", "pid": target, "original": spa.paragraphs[target],
-             "proposed": spa.paragraphs[target].replace("Long Stop Date", "Longstop Date"), "status": "pending"},
+             "proposed": spa.paragraphs[target].replace("Long Stop Date", "Longstop Date"), "status": "accepted"},
             {"id": "e2", "op": "insert_after", "pid": target, "original": "", "proposed": "A new sentence.",
-             "status": "pending"},
+             "status": "accepted"},
         ],
     }
     headers = as_member("MEM-00007")
@@ -91,7 +91,7 @@ def test_bulk_accept_then_export_writes_tracked_changes_into_the_original(client
     monkeypatch.setattr("app.chat.tools.generation_tools.store_generated_bytes", fake_store)
 
     url = f"/api/chat/sessions/{session['id']}/messages/{msg.id}/edits"
-    assert client.patch(url, json={"status": "accepted", "document_id": SPA}, headers=headers).json()["updated"] == 2
+    # Messages accepted before accepting wrote into the document (no applied version) still export as before.
     r = client.post(f"{url}/export?document_id={SPA}", headers=headers)
     assert r.status_code == 200, r.text
     out = r.json()

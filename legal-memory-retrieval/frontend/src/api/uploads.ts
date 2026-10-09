@@ -49,8 +49,24 @@ export async function uploadToMatter(
   files: File[],
   opts: { signal?: AbortSignal; onProgress?: (done: number, total: number) => void } = {},
 ): Promise<UploadOutcome[]> {
+  return uploadToWorkspace('matter', matterId, files, opts)
+}
+
+/**
+ * Files documents into a workspace (plan 22): a matter, a project, or the uploader's own library ("me"). They
+ * become the workspace's own documents, in ``folderPrefix`` (the folder they were dropped into).
+ */
+export async function uploadToWorkspace(
+  kind: 'matter' | 'project' | 'library' | 'firm',
+  containerId: string,
+  files: File[],
+  opts: { signal?: AbortSignal; onProgress?: (done: number, total: number) => void; folderPrefix?: string } = {},
+): Promise<UploadOutcome[]> {
   const body = new FormData()
-  body.append('matter_id', matterId)
+  body.append('container_kind', kind)
+  if (kind === 'matter') body.append('matter_id', containerId)
+  if (!(kind === 'library' && containerId === 'me')) body.append('container_id', containerId)
+  if (opts.folderPrefix) body.append('folder_prefix', opts.folderPrefix)
   for (const f of files) {
     body.append('files', f)
     body.append('relative_paths', pathOf(f))
@@ -88,7 +104,8 @@ export async function uploadToMatter(
 }
 
 export type RecentBatch = {
-  batch_id: string; matter_id: string; matter_title: string; status: string; total_files: number; created_at: string
+  batch_id: string; matter_id: string | null; matter_title: string | null; status: string; total_files: number; created_at: string
+  container_kind?: 'matter' | 'project' | 'library'; container_id?: string | null; workspace_title?: string | null
   indexed: number; duplicates: number; failed: number; retryable: boolean
   files: { relative_path: string; status: string; document_id: string | null; error: string | null }[]
 }

@@ -8,11 +8,16 @@ export function listSessions() {
 }
 
 /** No title: the server titles the conversation from its first question. */
-export function createSession(model?: string, matterId?: string) {
+export function createSession(model?: string, matterId?: string, workspace?: { kind: 'matter' | 'project' | 'library'; id: string }) {
   return apiFetch<ChatSession>('/api/chat/sessions', {
     method: 'POST',
-    body: JSON.stringify({ model, matter_id: matterId || undefined }),
+    body: JSON.stringify({ model, matter_id: matterId || undefined, workspace_kind: workspace?.kind, workspace_id: workspace?.id }),
   })
+}
+
+/** The caller's conversations in one workspace (the workbench's Assistant), newest first. */
+export function listWorkspaceSessions(kind: 'matter' | 'project' | 'library', id: string) {
+  return apiFetch<ChatSession[]>(`/api/chat/sessions?workspace_kind=${kind}&workspace_id=${enc(id)}&limit=20`)
 }
 
 /** Pin or unpin a conversation, or limit it to a matter ("" clears the matter). */
@@ -56,7 +61,14 @@ export function decideEdit(sessionId: string, messageId: string, editId: string,
 
 /** Accept, reject or reset every edit to one document in a message. */
 export function decideAllEdits(sessionId: string, messageId: string, documentId: string, status: EditProposal['status']) {
-  return apiFetch<{ updated: number; status: string }>(
+  return apiFetch<{
+    updated: number
+    status: string
+    /** Edits that could not be placed in the document, by id, with the reason. */
+    failed: Record<string, string>
+    edits: EditProposal[]
+    version_number: number | null
+  }>(
     `/api/chat/sessions/${enc(sessionId)}/messages/${enc(messageId)}/edits`,
     { method: 'PATCH', body: JSON.stringify({ status, document_id: documentId }) },
   )
@@ -71,6 +83,8 @@ export function exportEdits(sessionId: string, messageId: string, documentId: st
     applied: number
     /** Paragraph edits: written into the original Word file, and saved as a new version. */
     tracked_in_original?: boolean
+    /** Edits already in the document: a Word redline of what they changed. */
+    redline?: boolean
     version_label?: string | null
   }>(
     `/api/chat/sessions/${enc(sessionId)}/messages/${enc(messageId)}/edits/export?document_id=${enc(documentId)}`,

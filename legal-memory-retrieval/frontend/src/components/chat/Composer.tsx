@@ -3,6 +3,7 @@ import type { WorkMode } from "@/api/chat";
 import type { Attachment } from "@/api/types";
 import { Icon } from "@/components/common/primitives";
 import { cn } from "@/lib/utils";
+import { attachmentKey, attachmentLabel, hasPageDrag, readPageDrag, type PageDrag } from "@/lib/pageDrag";
 import { Check, FileText, Paperclip, Plus, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -23,6 +24,7 @@ export function Composer({
   attachments,
   draft,
   onRemoveAttachment,
+  onDropPage,
   onOpenAttachment,
   onUpload,
   onPickDocuments,
@@ -43,7 +45,10 @@ export function Composer({
   attachments: Attachment[];
   /** Text placed in the box by a starter card; `nonce` changes on every pick. */
   draft?: { text: string; nonce: number };
-  onRemoveAttachment: (documentId: string) => void;
+  /** Removes one attachment, by ``attachmentKey`` (a document, or one page of it). */
+  onRemoveAttachment: (key: string) => void;
+  /** A page dragged in from the document viewer. */
+  onDropPage?: (page: PageDrag) => void;
   onOpenAttachment: (attachment: Attachment) => void;
   onUpload: (file: File) => void;
   onPickDocuments: () => void;
@@ -51,6 +56,7 @@ export function Composer({
   onStop: () => void;
 }) {
   const [text, setText] = useState("");
+  const [dropping, setDropping] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const current = MODES.find((m) => m.id === mode) ?? MODES[0];
@@ -83,18 +89,43 @@ export function Composer({
     <div className={cn(hero ? "w-full px-4" : "bg-background px-4 pb-3 pt-2 lg:px-8")}>
       <div className="mx-auto max-w-3xl">
         <div
-          onDragOver={(e) => e.preventDefault()}
+          data-testid="composer"
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (hasPageDrag(e)) {
+              e.dataTransfer.dropEffect = "copy";
+              setDropping(true);
+            }
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropping(false);
+          }}
           onDrop={(e) => {
             e.preventDefault();
+            setDropping(false);
+            // A page dragged from the document viewer, else files dropped from the computer.
+            const page = readPageDrag(e);
+            if (page && onDropPage) {
+              onDropPage(page);
+              ref.current?.focus();
+              return;
+            }
             for (const file of Array.from(e.dataTransfer.files)) onUpload(file);
           }}
-          className="flex flex-col rounded-3xl border border-border bg-card shadow-md transition-all focus-within:border-wine/50 focus-within:ring-2 focus-within:ring-wine/10"
+          className={cn(
+            "flex flex-col rounded-3xl border border-border bg-card shadow-md transition-all focus-within:border-wine/50 focus-within:ring-2 focus-within:ring-wine/10",
+            dropping && "border-wine ring-2 ring-wine/30",
+          )}
         >
+          {dropping && (
+            <p className="px-4 pt-3 text-xs font-medium text-wine" data-testid="composer-drop-hint">Drop the page to add it to this message</p>
+          )}
           {(attachments.length > 0 || uploading) && (
             <div className="flex flex-wrap gap-1.5 px-4 pt-3" data-testid="composer-attachments">
               {attachments.map((a) => (
                 <span
-                  key={a.document_id}
+                  key={attachmentKey(a)}
+                  data-testid="composer-attachment"
                   className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 py-1 pl-2.5 pr-1 text-xs text-foreground"
                 >
                   <button
@@ -105,12 +136,12 @@ export function Composer({
                     className="inline-flex items-center gap-1.5 hover:underline"
                   >
                     <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="max-w-[200px] truncate">{a.filename}</span>
+                    <span className="max-w-[200px] truncate">{attachmentLabel(a)}</span>
                   </button>
                   <button
                     type="button"
-                    aria-label={`Remove ${a.filename}`}
-                    onClick={() => onRemoveAttachment(a.document_id)}
+                    aria-label={`Remove ${attachmentLabel(a)}`}
+                    onClick={() => onRemoveAttachment(attachmentKey(a))}
                     className="rounded-full p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
                   >
                     <X className="h-3 w-3" />

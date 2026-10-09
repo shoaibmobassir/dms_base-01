@@ -20,6 +20,22 @@ def doc_acl(alias: str = "d") -> str:
             f" OR %(member_id)s::text = ANY({alias}.visible_to))")
 
 
+def doc_read(alias: str = "d") -> str:
+    """May the member read this one document, wherever it lives (plan 22 W0)?
+
+    For reads of named documents (a document page, "these ids", what a workspace shows). The query must join
+    ``permissions p ON p.matter_id = {alias}.matter_id``, which the matter clause reads.
+    - matter home: the matter ACL narrowed by document privacy (``ACL_CLAUSE`` + ``doc_acl``), as before
+    - project / library home: the compiled reader list, never NULL for these homes, so a missing member
+      means no access
+    Firm-wide lists and retrieval keep ``ACL_CLAUSE`` + ``doc_acl``, which leave project and library
+    documents out (they have no matter).
+    """
+    return (f"(CASE WHEN {alias}.home_kind = 'matter' THEN ({ACL_CLAUSE} AND {doc_acl(alias)})"
+            f" WHEN {alias}.home_kind = 'firm' THEN {doc_acl(alias)}"
+            f" ELSE (%(member_id)s::text IS NULL OR %(member_id)s::text = ANY({alias}.visible_to)) END)")
+
+
 def acl_epoch() -> str:
     """Changes whenever any compiled ACL changes: a matter's (grant, screen, mode, team,
     staffing) or a document's (privacy, shares).

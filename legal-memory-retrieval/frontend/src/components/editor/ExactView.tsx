@@ -26,7 +26,9 @@ export function ExactView({ documentId, currentVersionId, side = { kind: "commen
   /** Offer Markup / Final / Original (Word files with tracked changes). */
   showViews?: boolean;
 }) {
-  const [renderView, setRenderView] = useState<"markup" | "final" | "original">("markup");
+  // A file that still carries tracked changes opens as it now reads (no crossed-out text); "All markup" is one
+  // click away, and comments are added there.
+  const [renderView, setRenderView] = useState<"markup" | "final" | "original">(showViews ? "final" : "markup");
   // null = the current version; otherwise an earlier version opened from a detached thread.
   const [viewing, setViewing] = useState<{ versionId: string; number: number | null } | null>(null);
   // Comments are placed on the pages as filed; the Final / Original renditions lay out differently.

@@ -230,12 +230,14 @@ OPS = [
 ]
 
 
-def test_tracked_save_writes_word_revisions_by_the_editor(client, doc, people):
+def test_save_stores_the_clean_document_and_records_who_changed_it(client, doc, people):
+    """The stored file is the document as it now reads. What the editor changed is the difference to the parent
+    version, shown by compare, not tracked-change markup kept inside the file (a download would leak the trail)."""
     base = _model(client, doc, people["editor"])["base_version_id"]
     original = _docx()
     r = _save(client, doc, people["editor"], base, OPS, note="Longer notice; interest removed")
     assert r.status_code == 201, r.text
-    assert r.json()["version_number"] == 2
+    assert r.json()["version_number"] == 2 and r.json()["mode"] == "clean"
 
     new = _file(doc)
     expected = [t for _, t, _ in PARAS]
@@ -243,15 +245,22 @@ def test_tracked_save_writes_word_revisions_by_the_editor(client, doc, people):
     expected.insert(6, OPS[2]["text"])
     del expected[7]
     assert view(new, accept=True) == expected
-    assert view(new, accept=False) == [t for _, t, _ in PARAS]
+    assert view(new, accept=False) == expected, "no tracked changes are left in the stored file"
+    body = Document(io.BytesIO(new)).element.body
+    assert not list(body.iter(qn("w:ins"))) and not list(body.iter(qn("w:del")))
     with connect() as conn:
         name = conn.execute("SELECT name FROM members WHERE member_id = %s", (people["editor"],)).fetchone()["name"]
-        v = conn.execute("SELECT author_name, created_by_member_id, origin, change_summary FROM document_versions "
+        v = conn.execute("SELECT author_name, created_by_member_id, origin, change_summary, is_clean FROM document_versions "
                          "WHERE document_id = %s AND version_number = 2", (doc,)).fetchone()
     assert (v["author_name"], v["created_by_member_id"], v["origin"]) == (name, people["editor"], "editor")
-    assert v["change_summary"] == "Longer notice; interest removed"
-    body = Document(io.BytesIO(new)).element.body
-    authors = {el.get(qn("w:author")) for tag in ("w:ins", "w:del") for el in body.iter(qn(tag))}
+    assert v["change_summary"] == "Longer notice; interest removed" and v["is_clean"] is True
+
+    # The editor's changes are still attributable: the redline between the versions is authored by them.
+    h = as_member(people["editor"])
+    prev = client.get(f"/api/editor/documents/{doc}/commits", headers=h).json()["items"][1]["version_id"]
+    red = client.get(f"/api/editor/documents/{doc}/compare.docx", params={"from": prev, "to": r.json()["version_id"]}, headers=h)
+    red_body = Document(io.BytesIO(red.content)).element.body
+    authors = {el.get(qn("w:author")) for tag in ("w:ins", "w:del") for el in red_body.iter(qn(tag))}
     assert authors == {name}
 
     # Paragraphs nobody edited keep their exact formatting.
@@ -296,7 +305,7 @@ def test_next_edit_starts_from_the_accepted_text(client, doc, people):
     base = _model(client, doc, people["editor"])["base_version_id"]
     _save(client, doc, people["editor"], base, OPS)
     m = _model(client, doc, people["editor"])
-    assert m["version_number"] == 2 and m["has_revisions"]
+    assert m["version_number"] == 2 and not m["has_revisions"]
     assert m["paragraphs"][3]["text"] == OPS[0]["text"]
 
 
@@ -348,7 +357,9 @@ def test_compare_on_screen_and_as_tracked_word_file(client, doc, people):
     base = _model(client, doc, people["editor"])["base_version_id"]
     new_id = _save(client, doc, people["editor"], base, OPS).json()["version_id"]
     cmp = client.get(f"/api/editor/documents/{doc}/compare", params={"from": base, "to": new_id}, headers=h).json()
-    assert cmp["stats"] == {"inserted": 1, "deleted": 1, "changed": 1, "unchanged": 5}
+    assert {k: cmp["stats"][k] for k in ("inserted", "deleted", "changed", "unchanged")} == {
+        "inserted": 1, "deleted": 1, "changed": 1, "unchanged": 5}
+    assert cmp["stats"]["words_added"] > 0 and cmp["stats"]["words_removed"] > 0
     changed = next(b for b in cmp["blocks"] if b["op"] == "replace")
     assert {"t": "ins", "text": "sixty"} in changed["segments"] or any(s["t"] == "ins" and "sixty" in s["text"] for s in changed["segments"])
     red = client.get(f"/api/editor/documents/{doc}/compare.docx", params={"from": base, "to": new_id}, headers=h)
@@ -368,7 +379,7 @@ def test_history_lists_who_did_what(client, doc, people):
 
 # ── formatting (plan 17, G1) ─────────────────────────────────────────────────
 
-def test_formatting_changes_save_as_tracked_word_formatting(client, doc, people):
+def test_formatting_changes_are_saved_into_the_clean_document(client, doc, people):
     m = _model(client, doc, people["editor"])
     assert {"Normal", "Title", "Heading 1"} <= set(m["styles"])
     fees = m["paragraphs"][5]
@@ -389,12 +400,12 @@ def test_formatting_changes_save_as_tracked_word_formatting(client, doc, people)
     assert any(x["text"] == "forty-five (45) days" and x["italic"] for x in p5["runs"])
     assert after["paragraphs"][6]["style"] == "Heading 2"
     assert after["paragraphs"][7]["style"] == "Heading 1" and after["paragraphs"][7]["runs"][0]["underline"]
-    # The stored file records who formatted what.
+    # The stored file is the clean document: the formatting is in it, no formatting revisions are left behind.
     import zipfile
 
     with zipfile.ZipFile(io.BytesIO(_file(doc))) as z:
         xml = z.read("word/document.xml").decode()
-    assert "w:rPrChange" in xml and "w:pPrChange" in xml
+    assert "w:rPrChange" not in xml and "w:pPrChange" not in xml
 
 
 def test_formatting_ops_are_validated(client, doc, people):

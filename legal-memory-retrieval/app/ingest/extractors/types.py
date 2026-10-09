@@ -22,6 +22,8 @@ class ExtractedDocument:
     pages: list[PageSpan] = field(default_factory=list)
     mime_type: str = "application/octet-stream"
     source_format: str = "text"  # pdf | docx | text
+    # Paragraphs the source styles as headings (DOCX), for the block parser; the text itself is never relabelled.
+    headings: list[str] = field(default_factory=list)
 
     def page_for_offset(self, offset: int) -> int:
         if not self.pages:

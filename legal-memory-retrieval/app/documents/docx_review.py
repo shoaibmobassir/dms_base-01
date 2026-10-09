@@ -581,12 +581,20 @@ def reject_everything(data: bytes) -> bytes:
     return resolve(data, None, accept=False)[0] if has_revisions(data) else data
 
 
+# Revision elements only. The text of a document is not markup: a heading "9. Change of Control" once matched a bare
+# b"Change " here, so that agreement always counted as carrying tracked changes and every save kept them.
+_REVISION_TAG = re.compile(
+    rb"<w:(?:ins|del|moveFrom|moveTo|cellIns|cellDel|cellMerge|"
+    rb"rPrChange|pPrChange|sectPrChange|tblPrChange|tblPrExChange|tblGridChange|trPrChange|tcPrChange|numberingChange)[\s>/]"
+)
+
+
 def has_revisions(data: bytes) -> bool:
     try:
         xml = zipfile.ZipFile(io.BytesIO(data)).read("word/document.xml")
     except Exception:
         return False
-    return any(tag in xml for tag in (b"<w:ins ", b"<w:del ", b"<w:moveFrom ", b"<w:moveTo ", b"Change ", b"<w:cellIns", b"<w:cellDel"))
+    return _REVISION_TAG.search(xml) is not None
 
 
 def text_view(data: bytes, view: str = "final") -> list[str]:

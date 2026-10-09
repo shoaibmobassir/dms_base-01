@@ -123,6 +123,7 @@ async def post_version_upload(
                 base_version_id, note, label, token)
 
 
+@router.get("/documents/{document_id}/diff")
 @router.get("/documents/{document_id}/compare")
 def get_compare(document_id: str, from_: str = Query(alias="from"), to: str = Query(...),
                 member_id: str | None = Depends(resolve_member)) -> dict:
@@ -135,6 +136,97 @@ def get_compare_docx(document_id: str, from_: str = Query(alias="from"), to: str
     data, name = _run(editing.compare_docx, document_id.upper(), member_id, from_, to)
     return Response(content=data, media_type=editing.DOCX_MIME,
                     headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"})
+
+
+class RestoreBody(BaseModel):
+    version_id: str
+    base_version_id: str
+    note: str = Field(default="", max_length=1000)
+
+
+@router.get("/documents/{document_id}/commits")
+def get_commits(document_id: str, limit: int = Query(default=100, le=500),
+                member_id: str | None = Depends(resolve_member)) -> JSONResponse:
+    """The versions as a commit log: message, author, kind (edit/upload/import/restore), size change."""
+    items = _run(editing.commits, document_id.upper(), member_id, limit)
+    return JSONResponse(jsonable_encoder({"items": items}), headers={"Cache-Control": "no-store"})
+
+
+@router.post("/documents/{document_id}/restore", status_code=201)
+def post_restore(document_id: str, body: RestoreBody, token: str | None = LockToken,
+                 member_id: str | None = Depends(resolve_member)) -> dict:
+    """Make an earlier version current again as a new version; history is never rewritten."""
+    return _run(editing.restore_version, document_id.upper(), member_id, body.version_id, body.base_version_id,
+                body.note, token)
+
+
+@router.post("/documents/{document_id}/save-docx", status_code=201)
+async def post_save_docx(document_id: str, file: UploadFile = File(...), base_version_id: str = Form(...),
+                         note: str = Form(default=""), token: str | None = LockToken,
+                         member_id: str | None = Depends(resolve_member)) -> dict:
+    """The full Word editor's save: the edited file becomes the next version, its new changes credited to you."""
+    data = await file.read()
+    return _run(editing.save_docx, document_id.upper(), member_id, base_version_id, data, note[:1000], token)
+
+
+@router.put("/documents/{document_id}/draft-docx")
+async def put_draft_docx(document_id: str, file: UploadFile = File(...), base_version_id: str = Form(...),
+                         token: str | None = LockToken, member_id: str | None = Depends(resolve_member)) -> dict:
+    """Autosave of the Word editor: this person's unsaved file (not a version)."""
+    return _run(editing.save_docx_draft, document_id.upper(), member_id, base_version_id, await file.read(), token)
+
+
+@router.get("/documents/{document_id}/draft-docx/info")
+def get_draft_docx_info(document_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return {"draft": _run(editing.docx_draft_info, document_id.upper(), member_id)}
+
+
+@router.get("/documents/{document_id}/draft-docx")
+def get_draft_docx(document_id: str, member_id: str | None = Depends(resolve_member)):
+    from fastapi.responses import Response
+
+    data = _run(editing.read_docx_draft, document_id.upper(), member_id)
+    return Response(content=data, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers={"Cache-Control": "no-store"})
+
+
+@router.delete("/documents/{document_id}/draft-docx", status_code=204)
+def delete_draft_docx(document_id: str, member_id: str | None = Depends(resolve_member)) -> None:
+    _run(editing.discard_docx_draft, document_id.upper(), member_id)
+
+
+class CopyFromBody(BaseModel):
+    source_document_id: str
+    source_version_id: str | None = None
+    base_version_id: str | None = None
+    note: str = Field(default="", max_length=1000)
+
+
+@router.post("/documents/{document_id}/versions/copy-from", status_code=201)
+def post_copy_from(document_id: str, body: CopyFromBody, token: str | None = LockToken,
+                   member_id: str | None = Depends(resolve_member)) -> dict:
+    """Make another document's content this document's next version; the other document is unchanged."""
+    return _run(editing.copy_from, document_id.upper(), member_id, body.source_document_id, body.source_version_id,
+                body.base_version_id, body.note, token)
+
+
+class PurgeBody(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
+
+
+@router.post("/documents/{document_id}/versions/{version_id}/purge")
+def post_purge(document_id: str, version_id: str, body: PurgeBody, member_id: str | None = Depends(resolve_member)) -> dict:
+    """Delete an earlier version's content for good; the history keeps a "deleted" entry (who, when, why)."""
+    return _run(editing.purge_version, document_id.upper(), member_id, version_id, body.reason)
+
+
+@router.get("/documents/{document_id}/blame")
+def get_blame(document_id: str, version_id: str | None = Query(default=None),
+              depth: int = Query(default=editing.BLAME_DEPTH, ge=2, le=200),
+              member_id: str | None = Depends(resolve_member)) -> JSONResponse:
+    """For each paragraph, the version and person that last changed it."""
+    out = _run(editing.blame, document_id.upper(), member_id, version_id, depth)
+    return JSONResponse(jsonable_encoder(out), headers={"Cache-Control": "no-store"})
 
 
 @router.get("/documents/{document_id}/history")

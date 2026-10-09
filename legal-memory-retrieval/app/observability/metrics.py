@@ -192,3 +192,19 @@ def record_latency_breakdown(
 def prometheus_response() -> tuple[bytes, str]:
     observe_pool_waiting()
     return generate_latest(), CONTENT_TYPE_LATEST
+
+# Workbench (plan 22, W7.3)
+TABULAR_CELLS = Counter(
+    "precentis_tabular_cells_total", "Tabular review cells written by the runner, by outcome", ["status"],
+)
+TABULAR_ROW_SECONDS = Histogram(
+    "precentis_tabular_row_seconds", "Time to fill one tabular review row (screen + one model call)",
+    buckets=(0.5, 1, 2, 4, 8, 16, 32, 64),
+)
+WORKBENCH_SAVE_SECONDS = Histogram(
+    "precentis_workbench_save_seconds", "Server time to save a document version, by path", ["path"],
+    buckets=(0.25, 0.5, 1, 2, 3, 5, 8, 13, 21),
+)
+WORKBENCH_SAVES = Counter(
+    "precentis_workbench_saves_total", "Document saves by path (paragraph editor, Word editor, Assistant amend)", ["path"],
+)

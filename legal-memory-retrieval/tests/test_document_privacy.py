@@ -290,16 +290,28 @@ def test_review_run_skips_documents_outside_access(walls):
     assert [d["document_id"] for d in review_engine._fetch_candidate_documents(None, [w.document_id], w.insider)] == [w.document_id]
 
 
-def test_tabular_reviews_run_as_the_session_member_and_are_private(client, walls):
+def test_tabular_reviews_follow_their_workspace_and_never_take_unreadable_documents(client, walls):
     w = walls[0]
+    # An outsider cannot make a review in the walled matter at all
     r = client.post("/api/tabular/reviews", headers=as_member(w.outsider), json={
-        "title": "wall test", "document_ids": [w.document_id], "columns": []})
-    assert r.status_code == 200, r.text
+        "title": "wall test", "kind": "matter", "id": w.matter_id, "document_ids": [w.document_id],
+        "columns": [{"preset": "parties"}], "run": False})
+    assert r.status_code == 404, r.text
+    # In their own library, the walled document is simply left out
+    r = client.post("/api/tabular/reviews", headers=as_member(w.outsider), json={
+        "title": "wall test", "kind": "library", "id": w.outsider, "document_ids": [w.document_id],
+        "columns": [{"preset": "parties"}], "run": False})
+    assert r.status_code == 201, r.text
     rid = r.json()["review_id"]
-    assert r.json()["document_ids"] == [] and r.json()["member_id"] == w.outsider
-    assert client.get(f"/api/tabular/reviews/{rid}", headers=as_member(w.insider)).status_code == 404
-    assert rid not in {x["review_id"] for x in client.get("/api/tabular/reviews", headers=as_member(w.insider)).json()}
-    assert client.get(f"/api/tabular/reviews/{rid}", headers=as_member(w.outsider)).status_code == 200
+    try:
+        assert r.json()["rows"] == []
+        assert client.get(f"/api/tabular/reviews/{rid}", headers=as_member(w.insider)).status_code == 404
+    finally:
+        from app.db.connection import connect
+
+        with connect() as conn:
+            conn.execute("DELETE FROM tab_reviews WHERE review_id = %s", (rid,))
+            conn.commit()
 
 
 def test_assistant_reader_rechecks_access(walls):

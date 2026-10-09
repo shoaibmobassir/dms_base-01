@@ -20,7 +20,9 @@ export const NAV_GROUPS: { label: string; items: NavItemConfig[] }[] = [
       { to: "/chat", icon: "edit_note", label: "Assistant", hint: "Draft and review documents" },
       { to: "/ask", icon: "manage_search", label: "Ask the Firm", hint: "Find what the firm already knows" },
       { to: "/matters", icon: "gavel", label: "Matters" },
+      { to: "/projects", icon: "folder_special", label: "Projects", hint: "Workspaces anyone can start" },
       { to: "/documents", icon: "description", label: "Documents" },
+      { to: "/work/library/me", icon: "person_book", label: "My library" },
       { to: "/calendar", icon: "event", label: "Calendar" },
     ],
   },
@@ -28,6 +30,7 @@ export const NAV_GROUPS: { label: string; items: NavItemConfig[] }[] = [
     label: "Knowledge",
     items: [
       { to: "/arguments", icon: "balance", label: "Arguments" },
+      { to: "/work/firm/templates", icon: "library_books", label: "Templates", hint: "The firm's templates and precedents" },
       { to: "/clients", icon: "apartment", label: "Clients" },
       { to: "/people", icon: "groups", label: "People" },
     ],

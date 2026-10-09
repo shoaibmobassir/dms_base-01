@@ -1,5 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createReview } from "@/api/tabular";
+import { firmError } from "@/api/firm";
 import type { PanelSource } from "@/components/chat/CitationDocumentPanel";
+import { useApp } from "@/context/AppContext";
 
 export type ReviewCell = {
   question: string;
@@ -31,6 +35,28 @@ export function ReviewTableCard({
   onOpen: (source: Omit<PanelSource, "nonce">) => void;
 }) {
   const [shown, setShown] = useState(PAGE);
+  const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useApp();
+  // Keep it: a durable review in the person's library (same questions, same documents), opened in the workbench.
+  const openAsTable = async () => {
+    setSaving(true);
+    try {
+      const review = await createReview({
+        title: `Review: ${table.questions[0]?.slice(0, 60) ?? "documents"}${table.questions.length > 1 ? ` (+${table.questions.length - 1})` : ""}`,
+        kind: "library",
+        id: "me",
+        columns: table.questions.map((q) => ({ label: q.length > 60 ? `${q.slice(0, 57)}…` : q, question: q })),
+        document_ids: table.rows.map((r) => r.document_id),
+        run: true,
+      });
+      navigate(`/work/library/me?review=${encodeURIComponent(review.review_id)}`);
+    } catch (err) {
+      toast(firmError(err));
+    } finally {
+      setSaving(false);
+    }
+  };
   const [onlyAnswered, setOnlyAnswered] = useState(false);
   const full = table.mode !== "screen";
   const rows = onlyAnswered && full ? table.rows.filter((r) => r.cells?.some((c) => !c.not_found)) : table.rows;
@@ -44,10 +70,16 @@ export function ReviewTableCard({
           {secs && <span className="ml-1.5 text-xs font-normal text-muted-foreground">in {secs}s</span>}
         </span>
         {full && (
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <input type="checkbox" checked={onlyAnswered} onChange={(e) => setOnlyAnswered(e.target.checked)} />
-            Only documents with an answer
-          </label>
+          <span className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <input type="checkbox" checked={onlyAnswered} onChange={(e) => setOnlyAnswered(e.target.checked)} />
+              Only documents with an answer
+            </label>
+            <button type="button" className="text-xs text-wine hover:underline disabled:opacity-50" onClick={() => void openAsTable()}
+              disabled={saving} title="Keep this as a tabular review you can add to, re-run and export" data-testid="review-open-as-table">
+              {saving ? "Opening…" : "Open as table"}
+            </button>
+          </span>
         )}
       </div>
       <div className="max-h-[480px] overflow-auto">

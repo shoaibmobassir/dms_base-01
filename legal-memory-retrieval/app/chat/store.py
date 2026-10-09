@@ -39,16 +39,20 @@ def create_session(conn, req: ChatSessionCreate) -> ChatSession:
     now = _now_utc()
     conn.execute(
         """
-        INSERT INTO chat_sessions (id, title, matter_id, model, member_id, status, created_at, updated_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO chat_sessions (id, title, matter_id, model, member_id, status, created_at, updated_at,
+                                   workspace_kind, workspace_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
-        (session_id, req.title, req.matter_id, req.model, req.member_id, "active", now, now),
+        (session_id, req.title, req.matter_id, req.model, req.member_id, "active", now, now,
+         req.workspace_kind, req.workspace_id),
     )
     conn.commit()
     return ChatSession(
         id=session_id,
         title=req.title,
         matter_id=req.matter_id,
+        workspace_kind=req.workspace_kind,
+        workspace_id=req.workspace_id,
         model=req.model,
         member_id=req.member_id,
         status=SessionStatus.active,
@@ -256,6 +260,8 @@ def _row_to_session(row: dict) -> ChatSession:
         id=row["id"],
         title=row.get("title"),
         matter_id=row.get("matter_id"),
+        workspace_kind=row.get("workspace_kind"),
+        workspace_id=row.get("workspace_id"),
         model=row.get("model"),
         member_id=row.get("member_id"),
         pinned=row.get("pinned_at") is not None,

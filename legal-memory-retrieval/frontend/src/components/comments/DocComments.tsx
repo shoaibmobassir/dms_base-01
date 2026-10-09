@@ -77,7 +77,7 @@ export function useDocComments({
 
   /** From the viewer: the reader selected text (or cleared the selection). */
   const onSelectText = (s: ViewerSelection | null) => {
-    if (!canAdd) return;
+    // kept even when comments are off: other selection actions (compare with precedent) use it too
     if (s) {
       const sel = window.getSelection();
       const rect = sel && sel.rangeCount ? sel.getRangeAt(0).getBoundingClientRect() : null;
@@ -139,8 +139,9 @@ export function useDocComments({
 
 export type DocComments = ReturnType<typeof useDocComments>;
 
-/** The small "Comment" button that appears over selected text, and the box it opens. */
-export function SelectionComment({ dc }: { dc: DocComments }) {
+/** The small "Comment" button that appears over selected text, and the box it opens. ``onCompare`` adds a
+ * "Compare with precedent" button that hands the selected text to the Assistant (plan 22, W3.4). */
+export function SelectionComment({ dc, onCompare }: { dc: DocComments; onCompare?: (quote: string, page: number) => void }) {
   const input = useRef<HTMLTextAreaElement>(null);
   const { selection, anchor, composing, canAdd } = dc;
   useEffect(() => {
@@ -155,23 +156,35 @@ export function SelectionComment({ dc }: { dc: DocComments }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection, composing]);
 
-  if (!canAdd || !selection || !anchor) return null;
-  const left = Math.min(Math.max(anchor.x - (composing ? 150 : 48), 8), window.innerWidth - (composing ? 308 : 104));
-  const top = Math.max(anchor.y - (composing ? 168 : 44), 8);
+  if (!selection || !anchor || (!canAdd && !onCompare)) return null;
+  const pillWidth = (canAdd ? 104 : 0) + (onCompare ? 196 : 0);
+  const left = Math.min(Math.max(anchor.x - (composing ? 150 : pillWidth / 2), 8), window.innerWidth - (composing ? 308 : pillWidth + 8));
+  const top = Math.min(Math.max(anchor.y - (composing ? 168 : 44), 8), window.innerHeight - (composing ? 176 : 44));
+  const pill = "inline-flex items-center gap-1.5 rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs font-medium text-foreground shadow-lg hover:bg-secondary";
 
   if (!composing) {
     return (
-      <button
-        type="button"
-        // Pressing the button must not clear the selection it is about.
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => dc.setComposing(true)}
-        style={{ position: "fixed", left, top, zIndex: 60 }}
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs font-medium text-foreground shadow-lg hover:bg-secondary"
-        data-testid="comment-pill"
-      >
-        <Icon name="add_comment" style={{ fontSize: 16 }} /> Comment
-      </button>
+      // Pressing a button must not clear the selection it is about.
+      <div style={{ position: "fixed", left, top, zIndex: 60 }} className="flex gap-1.5" onMouseDown={(e) => e.preventDefault()}>
+        {canAdd && (
+          <button type="button" onClick={() => dc.setComposing(true)} className={pill} data-testid="comment-pill">
+            <Icon name="add_comment" style={{ fontSize: 16 }} /> Comment
+          </button>
+        )}
+        {onCompare && (
+          <button
+            type="button"
+            onClick={() => {
+              onCompare(selection.quote, selection.page);
+              dc.cancel();
+            }}
+            className={pill}
+            data-testid="compare-precedent-pill"
+          >
+            <Icon name="compare" style={{ fontSize: 16 }} /> Compare with precedent
+          </button>
+        )}
+      </div>
     );
   }
   return (

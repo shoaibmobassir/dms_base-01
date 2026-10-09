@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useDocument,
@@ -21,17 +21,36 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { downloadDocument, useVersionDiff } from "@/api/resources";
+import { downloadDocument } from "@/api/resources";
 import { useApp } from "@/context/AppContext";
 import { FindInDocument } from "@/components/document-workspace/FindInDocument";
 import { CommentsPanel, SelectionComment, useDocComments } from "@/components/comments/DocComments";
+import { askAssistant, comparePrompt } from "@/lib/assistantRequest";
 import type { ViewerTarget } from "@/components/viewer/DocumentViewer";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { DocumentPlacesPanel } from "@/components/workbench/DocumentPlacesPanel";
+import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { HistoryPanel } from "@/components/document-workspace/HistoryPanel";
+import { GripVertical, X } from "lucide-react";
+import type { Attachment } from "@/api/types";
+import { attachmentKey, attachmentLabel, hasPageDrag, pageAttachment, readPageDrag, startPageDrag, type PageDrag } from "@/lib/pageDrag";
 
 /** Chunks (or blocks) shown as one reader "part" when there is no real page count. */
 export const PART_SIZE = 5;
+
+/** The page (or, without real pages, the reader part) an outline item is on. */
+function unitOf(item: DocumentOutlineItem, usePages: boolean) {
+  if (usePages || !item.sequence) return item.page_number || 1;
+  return Math.max(1, Math.ceil(item.sequence / PART_SIZE));
+}
+
+/** "5. Remuneration" for a numbered section; an unnumbered heading's internal id (a slug) is not shown. */
+function outlineLabel(item: DocumentOutlineItem) {
+  const id = item.section_id ?? "";
+  const numbered = /^(?:\d+(?:\.\d+)*|[IVXLCDM]+|[A-Z])$/.test(id);
+  return numbered && !item.section_title.startsWith(id) ? `${id}. ${item.section_title}` : item.section_title;
+}
 
 const DocumentViewer = lazy(() => import("@/components/viewer/DocumentViewer").then((m) => ({ default: m.DocumentViewer })));
 
@@ -55,14 +74,45 @@ function parseAddress(params: URLSearchParams): Address {
   };
 }
 
+/** The width of the workbench pane a document is shown in (null outside a workbench, where the window decides). */
+/** The width of the workbench pane a document is shown in (null outside a workbench, where the window decides). */
+function useFrameWidth(enabled: boolean, ref: RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!enabled || !el) return;
+    setWidth(Math.round(el.getBoundingClientRect().width));
+    const ro = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [enabled, ref]);
+  return enabled ? width : null;
+}
+
 function isTypingTarget(el: EventTarget | null) {
   if (!(el instanceof HTMLElement)) return false;
   const tag = el.tagName;
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
 }
 
-export function DocumentWorkspace({ documentId }: { documentId: string }) {
-  const [params, setParams] = useSearchParams();
+export type ParamsState = [URLSearchParams, ReturnType<typeof useSearchParams>[1]];
+
+/**
+ * A document's page. On its own route it keeps its place (version, page, panel) in the URL; inside a workbench
+ * tab the tab passes ``paramsState`` (the same shape, kept in memory per tab) and ``keyboardActive`` so only the
+ * focused editor group answers the page keys.
+ */
+export function DocumentWorkspace({
+  documentId,
+  paramsState,
+  keyboardActive = true,
+}: {
+  documentId: string;
+  paramsState?: ParamsState;
+  keyboardActive?: boolean;
+}) {
+  const urlState = useSearchParams();
+  const [params, setParams] = paramsState ?? urlState;
   const address = parseAddress(params);
   const doc = useDocument(documentId, { lean: true });
 
@@ -86,6 +136,8 @@ export function DocumentWorkspace({ documentId }: { documentId: string }) {
           panelParam={params.get("panel")}
           commentParam={params.get("comment")}
           highlightChunk={address.chunkId}
+          keyboardActive={keyboardActive}
+          embedded={!!paramsState}
         />
       )}
     </QueryState>
@@ -99,6 +151,8 @@ function WorkspaceFrame({
   panelParam,
   commentParam,
   highlightChunk,
+  keyboardActive = true,
+  embedded = false,
 }: {
   doc: DocumentDetail;
   address: Address;
@@ -107,8 +161,16 @@ function WorkspaceFrame({
   /** A comment to open (a link from the Assistant's "comments added" card). */
   commentParam?: string | null;
   highlightChunk?: string;
+  keyboardActive?: boolean;
+  /** Inside a workbench tab: lay out by the pane's width, not the window's. */
+  embedded?: boolean;
 }) {
   const versions = useDocumentVersions(doc.document_id);
+  const navigateTo = useNavigate();
+  const compareWithPrecedent = (quote: string, page: number) => {
+    const url = askAssistant({ prompt: comparePrompt(doc.title, quote, page), documentId: doc.document_id });
+    if (url) navigateTo(url);
+  };
   const versionRows = versions.data ?? [];
   const currentVersionId = doc.current_version_id ?? versionRows[0]?.version_id;
   const openVersionId = address.versionId ?? currentVersionId;
@@ -187,10 +249,16 @@ function WorkspaceFrame({
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   // Below these widths the rails are drawers, opened from the toolbar.
-  const isMd = useMediaQuery("(min-width: 768px)");
-  const isLg = useMediaQuery("(min-width: 1024px)");
+  const isMdWindow = useMediaQuery("(min-width: 768px)");
+  const isLgWindow = useMediaQuery("(min-width: 1024px)");
+  const frameRef = useRef<HTMLDivElement>(null);
+  const frameWidth = useFrameWidth(embedded, frameRef);
+  const isMd = frameWidth != null ? frameWidth >= 768 : isMdWindow;
+  const isLg = frameWidth != null ? frameWidth >= 1024 : isLgWindow;
   const [leftSheet, setLeftSheet] = useState(false);
   const [rightSheet, setRightSheet] = useState(false);
+  // "Review changes" opens History on what the current version changed against the one before it.
+  const [reviewNonce, setReviewNonce] = useState(0);
   const [goOpen, setGoOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -208,6 +276,7 @@ function WorkspaceFrame({
   }, [address.part, part, setAddress]);
 
   useEffect(() => {
+    if (!keyboardActive) return;
     const onKey = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target)) return;
       const meta = e.metaKey || e.ctrlKey;
@@ -243,7 +312,7 @@ function WorkspaceFrame({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [goToPart, part, unitTotal]);
+  }, [goToPart, part, unitTotal, keyboardActive]);
 
   const outline = useDocumentOutline(doc.document_id, openVersionId);
   // Plain files with no headings have no outline: show only the page list.
@@ -252,13 +321,13 @@ function WorkspaceFrame({
   const sectionLabel = useMemo(() => {
     const items = outline.data?.outline ?? [];
     if (!items.length) return null;
-    const match = [...items].reverse().find((o) => (o.page_number || 1) <= part);
+    const match = items.find((o) => unitOf(o, usePages) === part) ?? [...items].reverse().find((o) => unitOf(o, usePages) < part);
     return match
       ? match.section_id
         ? `${match.section_id} — ${match.section_title}`
         : match.section_title
       : null;
-  }, [outline.data, part]);
+  }, [outline.data, part, usePages]);
 
   const newerAvailable =
     Boolean(currentVersionId) && Boolean(openVersionId) && currentVersionId !== openVersionId;
@@ -278,6 +347,17 @@ function WorkspaceFrame({
     dc.focusThread(thread);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commentParam, dc.threads, pagesMode]);
+
+  // Dragging this page to the Assistant: in Pages mode it is the page as rendered; otherwise the reader's page or part.
+  const dragCurrent: PageDrag = {
+    document_id: doc.document_id,
+    filename: doc.title,
+    unit: usePages || pagesMode ? "page" : "part",
+    number: part,
+    version_id: openVersionId,
+    part_size: PART_SIZE,
+    rendered: pagesMode,
+  };
 
   const leftRail = (
     <>
@@ -300,7 +380,7 @@ function WorkspaceFrame({
             usePages={usePages}
             onJump={(item) => {
               setAddress({
-                part: item.page_number || 1,
+                part: unitOf(item, usePages),
                 blockId: item.block_id,
               });
               if (pagesMode) setJump({ page: item.page_number || 1, quote: "", nonce: Date.now() });
@@ -312,6 +392,7 @@ function WorkspaceFrame({
             current={part}
             unitLabel={unitLabel}
             onJump={(n) => goToPart(n, { allowClamp: true })}
+            dragOf={(n) => ({ ...dragCurrent, number: n })}
           />
         )}
       </div>
@@ -325,7 +406,7 @@ function WorkspaceFrame({
           Comments{openThreads > 0 ? ` ${openThreads}` : ""}
         </RailTab>
         <RailTab active={rightTab === "versions"} onClick={() => setRightTab("versions")}>
-          Versions
+          History
         </RailTab>
         <RailTab active={rightTab === "info"} onClick={() => setRightTab("info")}>
           Info
@@ -349,13 +430,11 @@ function WorkspaceFrame({
           />
         )}
         {rightTab === "versions" && (
-          <VersionsList
+          <HistoryPanel
+            reviewNonce={reviewNonce}
             documentId={doc.document_id}
-            versions={versionRows}
-            currentVersionId={currentVersionId}
             openVersionId={openVersionId}
-            loading={versions.isPending}
-            onOpen={(v) => setAddress({ versionId: v.version_id })}
+            onOpen={(versionId) => setAddress({ versionId })}
           />
         )}
         {rightTab === "info" && (
@@ -366,7 +445,7 @@ function WorkspaceFrame({
             <p className="text-muted-foreground">
               The Assistant reads this document and can add comments, suggest edits and draft changes. It opens with the document attached.
             </p>
-            <AssistantAsk doc={doc} />
+            <AssistantAsk doc={doc} current={dragCurrent} />
             <div className="flex flex-col gap-1.5">
               {AI_TASKS.map((t) => (
                 <Link
@@ -388,7 +467,10 @@ function WorkspaceFrame({
 
   return (
     <div
-      ref={workspaceRef}
+      ref={(el) => {
+        workspaceRef.current = el;
+        frameRef.current = el;
+      }}
       tabIndex={-1}
       className="flex h-full min-h-0 flex-col overflow-hidden outline-none"
       data-testid="document-workspace"
@@ -410,10 +492,19 @@ function WorkspaceFrame({
         viewMode={pagesMode ? "pages" : "text"}
         onViewMode={doc.has_original && !pagesOff ? setViewMode : undefined}
         onShowCurrent={() => currentVersionId && setAddress({ versionId: currentVersionId })}
+        dragCurrent={dragCurrent}
+        canReview={versionRows.length > 1 && !newerAvailable}
+        onReview={() => {
+          setRightTab("versions");
+          if (isLg) setRightOpen(true);
+          else setRightSheet(true);
+          setReviewNonce((n) => n + 1);
+        }}
         onToggleLeft={() => (isMd ? setLeftOpen((v) => !v) : setLeftSheet((v) => !v))}
         onToggleRight={() => (isLg ? setRightOpen((v) => !v) : setRightSheet((v) => !v))}
         leftOpen={isMd ? leftOpen : leftSheet}
         rightOpen={isLg ? rightOpen : rightSheet}
+        compact={frameWidth != null && frameWidth < 900}
       />
 
       {findOpen && (
@@ -510,7 +601,7 @@ function WorkspaceFrame({
         </SheetContent>
       </Sheet>
 
-      <SelectionComment dc={dc} />
+      <SelectionComment dc={dc} onCompare={compareWithPrecedent} />
 
       <GoToDialog
         open={goOpen}
@@ -528,17 +619,64 @@ function WorkspaceFrame({
   );
 }
 
-/** Ask the Assistant anything about this document: it opens with the document attached and answers at once. */
-function AssistantAsk({ doc }: { doc: DocumentDetail }) {
+/**
+ * Ask the Assistant anything about this document: it opens with the document attached and answers at once. Pages
+ * dragged here (from the page list or the grip by the page number) go with the question instead of the whole document,
+ * so "this page" means exactly what was on screen.
+ */
+function AssistantAsk({ doc, current }: { doc: DocumentDetail; current: PageDrag }) {
   const navigate = useNavigate();
   const [text, setText] = useState("");
+  const [pages, setPages] = useState<Attachment[]>([]);
+  const [over, setOver] = useState(false);
+  const add = (p: PageDrag) =>
+    setPages((list) => (list.some((a) => attachmentKey(a) === attachmentKey(pageAttachment(p))) ? list : [...list, pageAttachment(p)]));
   const go = () => {
     const q = text.trim();
     if (!q) return;
-    navigate(assistantLink(doc, q, true));
+    navigate(assistantLink(doc, q, true), pages.length ? { state: { handoff: { pages } } } : undefined);
   };
   return (
-    <div className="rounded-2xl border border-border bg-card p-2 focus-within:border-wine/50 focus-within:ring-2 focus-within:ring-wine/10" data-testid="document-ai-ask">
+    <div
+      onDragOver={(e) => {
+        if (!hasPageDrag(e)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        setOver(true);
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(false);
+      }}
+      onDrop={(e) => {
+        setOver(false);
+        const p = readPageDrag(e);
+        if (!p) return;
+        e.preventDefault();
+        add(p);
+      }}
+      className={cn(
+        "rounded-2xl border border-border bg-card p-2 focus-within:border-wine/50 focus-within:ring-2 focus-within:ring-wine/10",
+        over && "border-wine ring-2 ring-wine/30",
+      )}
+      data-testid="document-ai-ask"
+    >
+      {pages.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5 px-1 pb-1.5" data-testid="assistant-pages">
+          {pages.map((a) => (
+            <li key={attachmentKey(a)} className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 py-0.5 pl-2 pr-0.5 text-xs">
+              <span className="max-w-[180px] truncate">{attachmentLabel(a)}</span>
+              <button
+                type="button"
+                aria-label={`Remove ${attachmentLabel(a)}`}
+                onClick={() => setPages((list) => list.filter((x) => attachmentKey(x) !== attachmentKey(a)))}
+                className="rounded-full p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -549,12 +687,20 @@ function AssistantAsk({ doc }: { doc: DocumentDetail }) {
           }
         }}
         rows={2}
-        placeholder="Ask about this document, or tell the Assistant what to change…"
+        placeholder={over ? "Drop the page to ask about it" : "Ask about this document, or drag a page here and say what to change…"}
         aria-label="Ask the Assistant about this document"
         data-testid="document-ai-input"
         className="w-full resize-none bg-transparent px-2 py-1 text-sm focus:outline-none"
       />
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => add(current)}
+          data-testid="assistant-add-current"
+          className="rounded-full px-2 py-1 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+        >
+          + {current.unit === "page" ? "Page" : "Part"} {current.number}
+        </button>
         <button
           type="button"
           onClick={go}
@@ -572,7 +718,7 @@ function AssistantAsk({ doc }: { doc: DocumentDetail }) {
 
 const AI_TASKS = [
   { label: "Review and add comments", icon: "add_comment", prompt: "Review this document and add comments on the key risks, ambiguities and anything I should confirm. Quote the exact wording each comment is about." },
-  { label: "Suggest edits", icon: "edit_note", prompt: "Suggest edits that improve this document. Show them as tracked changes I can accept or reject." },
+  { label: "Suggest edits", icon: "edit_note", prompt: "Suggest edits that improve this document as cards I can accept or reject; accepting writes the change into the document." },
   { label: "Summarise this document", icon: "summarize", prompt: "Summarise this document: the parties, what it does and anything that needs attention." },
   { label: "List obligations and deadlines", icon: "checklist", prompt: "List every obligation, deadline and condition in this document, with the clause that creates each." },
 ];
@@ -602,11 +748,19 @@ function Toolbar({
   viewMode,
   onViewMode,
   onShowCurrent,
+  dragCurrent,
+  canReview,
+  onReview,
   onToggleLeft,
   onToggleRight,
   leftOpen,
   rightOpen,
+  compact = false,
 }: {
+  /** What dragging the page being read to the Assistant carries. */
+  dragCurrent: PageDrag;
+  canReview: boolean;
+  onReview: () => void;
   doc: DocumentDetail;
   openVersion?: DocVersion | DocumentDetail["current_version"];
   openVersionId?: string;
@@ -628,6 +782,8 @@ function Toolbar({
   onToggleRight: () => void;
   leftOpen: boolean;
   rightOpen: boolean;
+  /** A narrow pane: the title takes its own line. */
+  compact?: boolean;
 }) {
   const { toast } = useApp();
   const [draft, setDraft] = useState(String(part));
@@ -666,7 +822,7 @@ function Toolbar({
         <Icon name="view_sidebar" style={{ fontSize: 20 }} />
       </button>
 
-      <div className="min-w-0 flex-1 basis-[calc(100%-3rem)] sm:basis-0">
+      <div className={cn("min-w-0 flex-1", compact ? "basis-[calc(100%-3rem)]" : "basis-[calc(100%-3rem)] sm:basis-0")}>
         <div className="flex flex-wrap items-baseline gap-2">
           <h1 className="truncate font-display text-lg text-ink" data-testid="document-title">
             {doc.title}
@@ -704,6 +860,17 @@ function Toolbar({
       </div>
 
       <div className="flex items-center gap-1" data-testid="document-page-nav">
+        <span
+          draggable
+          onDragStart={(e) => startPageDrag(e, dragCurrent)}
+          title={`Drag this ${unitLabel.toLowerCase()} to the Assistant`}
+          role="img"
+          aria-label={`Drag ${unitLabel.toLowerCase()} ${part} to the Assistant`}
+          data-testid="page-handle"
+          className="inline-flex h-9 cursor-grab items-center rounded-md px-1 text-muted-foreground hover:bg-secondary active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4" />
+        </span>
         <Button
           type="button"
           variant="outline"
@@ -785,7 +952,19 @@ function Toolbar({
         </Button>
       )}
       <PrivacyControl documentId={doc.document_id} />
+      {canReview && (
+        <Button type="button" size="sm" variant="outline" onClick={onReview} data-testid="document-review-changes">
+          <Icon name="difference" style={{ fontSize: 16 }} /> Review changes
+        </Button>
+      )}
       {doc.matter_id && <ArchiveDocument documentId={doc.document_id} matterId={doc.matter_id} title={doc.title} />}
+      {/word|docx/i.test((doc.mime_type ?? "") + doc.title) && (
+        <Button asChild size="sm" variant="outline" data-testid="document-write" title="Tables, headers, footnotes and tracked changes, as in Word">
+          <Link to={`/documents/${encodeURIComponent(doc.document_id)}/write`}>
+            <Icon name="edit_document" style={{ fontSize: 16 }} /> Word editor
+          </Link>
+        </Button>
+      )}
       <Button asChild size="sm" variant="outline" data-testid="document-edit">
         <Link to={`/documents/${encodeURIComponent(doc.document_id)}/edit`}>
           <Icon name="edit_document" style={{ fontSize: 16 }} /> Edit
@@ -846,7 +1025,7 @@ function ReaderCanvas({
     ? pageBlocks.map((b) => ({
         id: b.block_id,
         text: b.text,
-        heading: b.block_type === "heading" || Boolean(b.section_title),
+        heading: b.block_type === "heading",
         title: b.section_title,
       }))
     : (chunksQuery.data?.chunks ?? []).map((c) => ({
@@ -891,7 +1070,7 @@ function ReaderCanvas({
                   p.id === highlightId && "-mx-3 rounded-md bg-wine-soft px-3 py-2",
                 )}
               >
-                {p.heading && p.title && p.title !== p.text && (
+                {p.heading && p.title && !p.text.toLowerCase().includes(p.title.toLowerCase()) && (
                   <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">{p.title}</div>
                 )}
                 <p className="whitespace-pre-wrap text-[15px] leading-[1.8] text-foreground/90">{p.text}</p>
@@ -931,7 +1110,7 @@ function OutlineList({
       <ul className="space-y-0.5 px-2">
         {items.map((item, idx) => {
           // Only the section the reader is in: the last heading that starts on or before this page.
-          const activeIdx = usePages ? items.reduce((acc, it, i) => ((it.page_number || 1) <= currentPart ? i : acc), -1) : -1;
+          const activeIdx = items.reduce((acc, it, i) => (unitOf(it, usePages) <= currentPart ? i : acc), -1);
           const active = idx === activeIdx;
           return (
             <li key={item.block_id}>
@@ -943,12 +1122,9 @@ function OutlineList({
                   active ? "bg-wine-soft text-wine" : "hover:bg-secondary",
                 )}
               >
-                <div className="truncate font-medium">
-                  {item.section_id ? `${item.section_id} ` : ""}
-                  {item.section_title}
-                </div>
+                <div className="truncate font-medium">{outlineLabel(item)}</div>
                 <div className="text-xs text-muted-foreground">
-                  {usePages ? `Page ${item.page_number}` : "Jump"}
+                  {usePages ? `Page ${item.page_number}` : `Part ${unitOf(item, false)}`}
                 </div>
               </button>
             </li>
@@ -964,11 +1140,14 @@ function ThumbnailList({
   current,
   unitLabel,
   onJump,
+  dragOf,
 }: {
   total: number;
   current: number;
   unitLabel: string;
   onJump: (n: number) => void;
+  /** What dragging page n to the Assistant carries. */
+  dragOf: (n: number) => PageDrag;
 }) {
   const windowSize = 40;
   const start = Math.max(1, current - windowSize);
@@ -994,9 +1173,13 @@ function ThumbnailList({
         <button
           key={n}
           type="button"
+          draggable
+          onDragStart={(e) => startPageDrag(e, dragOf(n))}
+          title={`Drag ${unitLabel.toLowerCase()} ${n} to the Assistant`}
+          data-testid="page-thumb"
           onClick={() => onJump(n)}
           className={cn(
-            "flex w-full items-center gap-2 rounded-md border border-border px-2 py-2 text-left text-xs",
+            "flex w-full cursor-grab items-center gap-2 rounded-md border border-border px-2 py-2 text-left text-xs active:cursor-grabbing",
             n === current ? "border-wine bg-wine-soft text-wine" : "bg-card hover:bg-secondary",
           )}
         >
@@ -1014,136 +1197,6 @@ function ThumbnailList({
         >
           Later…
         </button>
-      )}
-    </div>
-  );
-}
-
-function VersionsList({
-  documentId,
-  versions,
-  currentVersionId,
-  openVersionId,
-  loading,
-  onOpen,
-}: {
-  documentId: string;
-  versions: DocVersion[];
-  currentVersionId?: string | null;
-  openVersionId?: string;
-  loading: boolean;
-  onOpen: (v: DocVersion) => void;
-}) {
-  if (loading) return <p className="text-xs text-muted-foreground">Loading versions…</p>;
-  if (!versions.length) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        Single unversioned text — upload a file to start a version chain.
-      </p>
-    );
-  }
-  return (
-    <div data-testid="document-versions">
-      <SectionLabel>Version history</SectionLabel>
-      <ol className="mt-3 space-y-1">
-        {versions.map((v) => {
-          const isOpen = v.version_id === openVersionId;
-          const isCurrent = v.version_id === currentVersionId;
-          return (
-            <li key={v.version_id}>
-              <button
-                type="button"
-                onClick={() => onOpen(v)}
-                data-testid="version-row"
-                aria-current={isOpen ? "true" : undefined}
-                className={cn(
-                  "w-full rounded-md border border-transparent px-3 py-2 text-left text-sm",
-                  isOpen ? "border-border bg-wine-soft text-wine" : "hover:bg-secondary",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{v.version_label || `Version ${v.version_number ?? ""}`}</span>
-                  {isCurrent && <span className="text-xs uppercase tracking-wide">Current</span>}
-                </div>
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  {[v.author_name, v.version_status, v.created_at ? formatDate(v.created_at) : null].filter(Boolean).join(" · ")}
-                </div>
-                {v.change_summary && (
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{v.change_summary}</p>
-                )}
-              </button>
-              <VersionChanges documentId={documentId} version={v} previous={previousOf(versions, v)} />
-            </li>
-          );
-        })}
-      </ol>
-    </div>
-  );
-}
-
-/** The version just before this one, by version number. */
-function previousOf(versions: DocVersion[], v: DocVersion): DocVersion | undefined {
-  const n = v.version_number ?? 0;
-  return versions
-    .filter((x) => (x.version_number ?? 0) < n)
-    .sort((a, b) => (b.version_number ?? 0) - (a.version_number ?? 0))[0];
-}
-
-/** What this version changed against the one before it: lines added and removed, in the text. */
-function VersionChanges({ documentId, version, previous }: { documentId: string; version: DocVersion; previous?: DocVersion }) {
-  const [open, setOpen] = useState(false);
-  const [all, setAll] = useState(false);
-  const diff = useVersionDiff(documentId, version.version_id, previous?.version_id, open);
-  if (!previous) return null;
-  const lines = (diff.data?.diff ?? []).filter((l) => !l.startsWith("+++") && !l.startsWith("---") && !l.startsWith("@@"));
-  const shown = all ? lines : lines.slice(0, 24);
-  return (
-    <div className="px-3 pb-2">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        data-testid="version-changes-toggle"
-        className="text-xs font-medium text-wine hover:underline"
-      >
-        {open ? "Hide changes" : `What changed since v${previous.version_number ?? "?"}`}
-      </button>
-      {open && (
-        <div className="mt-2 rounded-md border border-border bg-card text-xs" data-testid="version-changes">
-          {diff.isPending && <p className="p-2 text-muted-foreground">Comparing…</p>}
-          {diff.isError && <p className="p-2 text-destructive">The comparison could not be made.</p>}
-          {diff.data && (
-            <>
-              <p className="border-b border-border px-2 py-1.5 text-muted-foreground">
-                <span className="font-medium text-success-ink">+{diff.data.added_lines}</span>{" "}
-                <span className="font-medium text-destructive">−{diff.data.removed_lines}</span> lines
-              </p>
-              {lines.length === 0 ? (
-                <p className="p-2 text-muted-foreground">No change in the text.</p>
-              ) : (
-                <ul className="max-h-72 overflow-y-auto font-mono-id leading-relaxed">
-                  {shown.map((l, i) => (
-                    <li
-                      key={i}
-                      className={cn(
-                        "whitespace-pre-wrap break-words px-2 py-0.5",
-                        l.startsWith("+") && "bg-success-soft text-success-ink",
-                        l.startsWith("-") && "bg-destructive/10 text-destructive",
-                      )}
-                    >
-                      {l}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {lines.length > shown.length && (
-                <button type="button" onClick={() => setAll(true)} className="w-full border-t border-border py-1.5 text-muted-foreground hover:text-foreground">
-                  Show all {lines.length} lines
-                </button>
-              )}
-            </>
-          )}
-        </div>
       )}
     </div>
   );
@@ -1205,6 +1258,7 @@ function InfoPanel({
           </Link>
         </div>
       )}
+      <DocumentPlacesPanel documentId={doc.document_id} title={doc.title} />
     </div>
   );
 }

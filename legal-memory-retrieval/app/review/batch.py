@@ -24,7 +24,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable
 
-from app.api.acl import ACL_CLAUSE, doc_acl
+from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 from app.chat.verify_citations import locate_quote
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ def resolve_documents(conn, document_ids: list[str], member_id: str | None, limi
         f"""
         SELECT d.document_id, d.title, d.document_type, d.doc_date, d.matter_id, d.matter_code
         FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
-        WHERE d.document_id = ANY(%(ids)s) AND {ACL_CLAUSE} AND {doc_acl('d')}
+        WHERE d.document_id = ANY(%(ids)s) AND {doc_read('d')}
         """,
         {"ids": list(dict.fromkeys(document_ids)), "member_id": member_id},
     ).fetchall()

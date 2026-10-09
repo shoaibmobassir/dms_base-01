@@ -48,6 +48,24 @@ def build_storage_key(
     )
 
 
+def blob_key(*, tenant_id: str, content_sha256: str, filename: str) -> str:
+    """Content-addressed key: the same bytes are stored once, wherever they are uploaded (plan 22 W0)."""
+    sha = content_sha256.lower()
+    if len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha):
+        raise ValueError("content_sha256 must be a hex SHA-256")
+    ext = (Path(filename).suffix.lstrip(".") or "bin").lower()
+    return f"{sanitize_segment(tenant_id)}/blobs/sha256/{sha[:2]}/{sha[2:4]}/{sha}.{sanitize_segment(ext)}"
+
+
+def put_blob(store: "ObjectStore", *, tenant_id: str, content_sha256: str, filename: str,
+             fileobj: BinaryIO, content_type: str | None = None) -> tuple[str, bool]:
+    """Store bytes under their content hash unless already there. Returns (storage_uri, written)."""
+    key = blob_key(tenant_id=tenant_id, content_sha256=content_sha256, filename=filename)
+    if store.exists(key):
+        return store.uri_for(key), False
+    return store.put_file(key, fileobj, content_type=content_type), True
+
+
 def guess_mime(filename: str) -> str:
     mime, _ = mimetypes.guess_type(filename)
     return mime or "application/octet-stream"

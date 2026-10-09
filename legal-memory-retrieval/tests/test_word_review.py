@@ -16,10 +16,26 @@ DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 
 def _upload(client, doc_id, member, data=None):
-    r = client.post(f"/api/editor/documents/{doc_id}/versions", headers=as_member(member),
-                    files={"file": ("reviewed.docx", data or build(), DOCX)})
-    assert r.status_code == 201, r.text
-    return r.json()
+    """A version saved BEFORE the commit model: a Word file whose tracked changes are still pending in it.
+
+    A new upload is imported as clean commits (tests/test_document_history.py). Rows saved earlier keep their pending
+    changes until ``scripts/clean_versions.py`` converts them, and this review workflow still serves those rows, so
+    the version is created the way the old upload created it.
+    """
+    from app.documents.editing import DOCX_MIME, _create, _document, _next_number, _store_version_file
+    from app.documents.review import index_version
+    from app.ingest.extractors.dispatch import extract_from_bytes
+
+    data = data or build()
+    with connect() as conn:
+        d = _document(conn, doc_id)
+        extracted = extract_from_bytes("reviewed.docx", R.accept_everything(data))
+        uri = _store_version_file(d, _next_number(conn, doc_id), "reviewed.docx", data, DOCX_MIME)
+        v = _create(conn, d, member, text=extracted.text, note="", origin="upload", label=None, storage_uri=uri,
+                    mime=DOCX_MIME, size=len(data), page_spans=extracted.pages)
+        index_version(conn, d, v["version_id"], data)
+        conn.commit()
+    return {"version_id": v["version_id"], "version_number": v["version_number"]}
 
 
 def _review(client, doc_id, member, version_id=None):

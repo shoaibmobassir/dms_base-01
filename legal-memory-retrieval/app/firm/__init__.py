@@ -23,6 +23,13 @@ class FirmError(Exception):
         self.extra = extra or {}
 
 
+def db_today(conn) -> str:
+    """Today's date as the database sees it (ISO). Access rules compare dates with the database's ``current_date``, so
+    anything stored for them (a matter's start date, a closing date) must come from the same clock — not the app
+    server's local date, which differs from UTC for hours each day in some time zones."""
+    return one(conn, "SELECT current_date::text AS d")["d"]
+
+
 def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:10].upper()}"
 

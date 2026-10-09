@@ -21,7 +21,9 @@ from app.chat.tools.document_tools import (
     page_at,
     resolve_document_text,
 )
+from app.chat.tools.edit_guard import filter_edits
 from app.chat.verify_citations import locate_quote
+from app.documents.text_origin import source_info
 
 MAX_EDITS = 20
 EDIT_STATUSES = ("pending", "accepted", "rejected")
@@ -45,6 +47,7 @@ def propose_edits(
         return {"error": "No edits were provided."}
 
     text = resolve_document_text(entry, doc_store, conn, member_id)
+    info = source_info(conn, entry.document_id)
     proposals: list[dict[str, Any]] = []
     for raw in edits[:MAX_EDITS]:
         if not isinstance(raw, dict):
@@ -67,13 +70,32 @@ def propose_edits(
     if not proposals:
         return {"error": "None of the edits had text to change."}
 
+    # Text read from a PDF (OCR on scanned pages) differs from the printed page in spacing and in look-alike
+    # characters. A "fix" to that is not a fix to the document, so it is dropped here, whatever the model said.
+    proposals, artifacts = filter_edits(proposals, info, text)
+    read_only = info["format"] == "pdf"
+    if not proposals:
+        return {
+            "doc_id": doc_id, "filename": entry.filename, "proposed": 0,
+            "dropped_as_reading_artifacts": artifacts,
+            "note": ("Every suggestion changed only spacing, line breaks or look-alike characters in text that was "
+                     "machine-read from a PDF. Those are not defects in the document. Do not report them. Say that "
+                     "you found no substantive changes to recommend, or give substantive ones."),
+        }
+
     unlocated = [p["id"] for p in proposals if not p["located"]]
     return {
         "doc_id": doc_id,
         "filename": entry.filename,
         "proposed": len(proposals),
         "not_found_in_document": unlocated,
+        **({"dropped_as_reading_artifacts": artifacts,
+            "dropped_note": "These were spacing or OCR differences, not document defects. Do not mention them."}
+           if artifacts else {}),
         "note": (
+            ("This is a PDF, which is read-only: the cards are recommendations, not changes the lawyer can apply to it. "
+             "Say so in one sentence. ") if read_only else ""
+        ) + (
             "The edits are shown to the lawyer as cards to accept or reject. "
             "Summarise them briefly; do not repeat every edit in prose."
         ),
@@ -83,6 +105,8 @@ def propose_edits(
             "version_id": entry.version_id,
             "filename": entry.filename,
             "edits": proposals,
+            "source_format": info["format"],
+            "read_only": read_only,
         },
     }
 

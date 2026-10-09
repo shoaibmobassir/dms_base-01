@@ -70,16 +70,19 @@ Return JSON {"decisions":[{"id":123,"change":true,"why":"<=12 words"}]} with one
 _TOKEN = re.compile(r"\s+|[^\s]+")
 _GLOBAL = re.compile(r"\b(every|everywhere|throughout|all|each|any)\b", re.I)
 _QUOTED = re.compile(r"[“\"'‘][^”\"'’]*[”\"'’]")
+# An instruction about the document's numbering or headings concerns every heading, whatever search terms the
+# planner chose (a renumbering once reached only one of the four headings that needed it).
+_STRUCTURE = re.compile(r"\b(?:re-?number\w*|numbering|headings?|sequential\w*|consecutive\w*)\b", re.I)
 _LEADING_NUMBER = re.compile(r"^\s*(?:[A-Z]?\d+(?:\.\d+)*[A-Z]?\.?|[A-Z]\d+(?:\.\d+)*)\s")
 
 
 def show_changes(before: str, after: str, context: int = 6) -> str:
     """Word-level diff: "…context [-old-]{+new+} context…" for each changed place."""
-    import difflib
+    from app.documents.tokens import tokenize, word_ops
 
-    a, b = _TOKEN.findall(before), _TOKEN.findall(after)
+    a, b = tokenize(before), tokenize(after)
     parts: list[str] = []
-    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, a, b, autojunk=False).get_opcodes():
+    for tag, i1, i2, j1, j2 in word_ops(a, b):
         if tag == "equal":
             continue
         left = "".join(a[max(0, i1 - context):i1]).lstrip()
@@ -338,7 +341,12 @@ def plan_edits(paragraphs: list[str], instruction: str, *, llm: LLM | None = Non
         handled = set(changed) - revert
         notes.append(f"substitutions changed {len(changed)} paragraphs; {len(revert)} not confirmed and reverted")
 
-    cand = sorted(_candidates(work, plan, sections, offsets) - handled)
+    found = _candidates(work, plan, sections, offsets)
+    if _STRUCTURE.search(instruction):
+        from app.chat import doc_nav
+
+        found |= {i for i, t in enumerate(work) if doc_nav._heading(t)}
+    cand = sorted(found - handled)
     ops = _repair_spans(work, instruction, _edit(work, instruction, cand, meter), meter)
     spans = [op for op in ops if op.get("op") == "span"]
     after, rejected = _apply_spans(work, spans)

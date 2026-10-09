@@ -58,6 +58,8 @@ class Settings(BaseSettings):
 
     # Projects/activity APIs have no UI since the frontend prune; off unless needed.
     enable_legacy_projects: bool = False
+    # Plan 22 workbench: projects, workspaces and playbooks APIs (WORKBENCH_ENABLED=false turns them off).
+    workbench_enabled: bool = True
 
     database_url: str = "postgresql://legal:legal@localhost:55432/legal_memory"
     corpus_dir: str = "../dummy-firm/data"

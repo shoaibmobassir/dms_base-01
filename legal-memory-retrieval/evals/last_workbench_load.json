@@ -1,0 +1,17 @@
+{
+  "documents": 10000,
+  "folders": 300,
+  "insert_s": 1.6,
+  "root_ms_p50": 16.7,
+  "root_ms_max": 79.8,
+  "root_folders": 10,
+  "group_ms_p50": 16.3,
+  "group_ms_max": 17.8,
+  "group_children": 30,
+  "leaf_ms_p50": 21.2,
+  "leaf_docs": 34,
+  "title_filter_ms_p50": 51.9,
+  "quick_open_all_ms_p50": 121.0,
+  "quick_open_docs": 200,
+  "gate_first_page_lt_300ms": true
+}

@@ -254,3 +254,35 @@ def test_evidence_ids_in_answers_are_validated():
     out = km_answer._validate(payload, {"DOC-E9058749C1"})
     assert out["citations"] == ["DOC-E9058749C1"]
     assert not re.search(r"MEM-99999", " ".join(out["citations"]))
+
+
+
+# ── no transaction is held while the model answers ────────────────────────────
+
+def test_no_transaction_is_open_while_the_model_answers(staffed_matter, monkeypatch):
+    """A streamed answer whose reader went away kept its read transaction open for hours, holding table locks."""
+    from psycopg.pq import TransactionStatus
+
+    seen: dict[str, object] = {}
+    scope = {"type": "matter", "value": staffed_matter["matter_code"]}
+    with connect() as conn:
+        def fake_llm(*_a, **_k):
+            seen["plain"] = conn.info.transaction_status
+            raise RuntimeError("no model in tests")
+
+        def fake_stream(*_a, **_k):
+            seen["stream"] = conn.info.transaction_status
+            return iter(["**Answered:** a finding", " and more"]), "test-model"
+
+        monkeypatch.setattr(km_answer, "_llm", fake_llm)
+        monkeypatch.setattr(km_answer, "_stream_llm", fake_stream)
+        question = "what are the key facts and arguments in this matter?"
+        ask_the_firm(conn, question, "MEM-00001", scope)
+        gen = km_answer.ask_the_firm_stream(conn, question, "MEM-00001", scope)
+        for ev in gen:
+            if ev["type"] == "delta":
+                break  # the reader goes away mid-answer
+        gen.close()
+    if not seen:
+        pytest.skip("this question was answered from records without the model")
+    assert all(status == TransactionStatus.IDLE for status in seen.values()), seen

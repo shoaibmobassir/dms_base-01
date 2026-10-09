@@ -1,176 +1,209 @@
-"""
-Tabular Review API Router: Endpoints for Matrix Reviews, Real-Time Extraction, and Spreadsheet Exports.
-Clean-room independent implementation.
-"""
+"""Tabular reviews (plan 22, W4): durable, shared by the workspace's access, filled by leased background workers.
 
-from typing import Any, Dict, List, Optional
-import uuid
+Mounted at /api/tabular. Services live in ``app/tabular``.
+"""
+from __future__ import annotations
+
+from typing import Literal
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field
 
+from app import tabular as svc
 from app.auth.deps import resolve_member
-from app.review.spreadsheet_exporter import SpreadsheetExporter
-from app.review.tabular_service import ReviewColumn, get_tabular_service
+from app.db.connection import connect
+from app.firm import FirmError
+from app.tabular import runner
 
 router = APIRouter(tags=["Tabular Reviews"])
 
-# In-memory / cache store for reviews (persisted or in-flight)
-_REVIEWS_DB: Dict[str, Dict[str, Any]] = {}
+
+def _run(fn, *args, **kwargs):
+    with connect() as conn:
+        try:
+            return jsonable_encoder(fn(conn, *args, **kwargs))
+        except FirmError as exc:
+            conn.rollback()
+            raise HTTPException(status_code=exc.status, detail=jsonable_encoder({"message": exc.detail, **exc.extra})) from exc
 
 
-class ColumnSchema(BaseModel):
+class ColumnIn(BaseModel):
+    label: str | None = Field(default=None, max_length=120)
+    question: str | None = Field(default=None, max_length=2000)
+    answer_format: Literal["text", "date", "yes_no", "number", "money", "list", "choice"] | None = None
+    choices: list[str] = Field(default_factory=list, max_length=20)
+    preset: str | None = None
+
+
+class ReviewCreate(BaseModel):
+    title: str = Field(max_length=200)
+    kind: Literal["matter", "project", "library"]
     id: str
-    label: str
-    prompt: str
-    data_type: str = "text"
-    options: List[str] = Field(default_factory=list)
+    columns: list[ColumnIn] = Field(default_factory=list, max_length=svc.MAX_COLUMNS)
+    document_ids: list[str] = Field(default_factory=list, max_length=svc.MAX_ROWS)
+    folders: list[str] = Field(default_factory=list, max_length=200)
+    group_by: Literal["document", "folder"] = "document"
+    model: str | None = None
+    playbook_id: str | None = None
+    run: bool = True
 
 
-class CreateTabularReviewRequest(BaseModel):
-    title: str
-    matter_id: Optional[str] = None
-    document_ids: List[str]
-    columns: List[ColumnSchema]
-    model: Optional[str] = None
-    provider: Optional[str] = None
+class ReviewPatch(BaseModel):
+    title: str | None = Field(default=None, max_length=200)
+    row_version: int | None = None
 
 
-class PatchCellRequest(BaseModel):
-    value: str
-    reasoning: Optional[str] = None
+class ColumnPatch(BaseModel):
+    label: str | None = Field(default=None, max_length=120)
+    question: str | None = Field(default=None, max_length=2000)
+    answer_format: Literal["text", "date", "yes_no", "number", "money", "list", "choice"] | None = None
+    choices: list[str] | None = Field(default=None, max_length=20)
+    position: int | None = Field(default=None, ge=0)
+
+
+class RowsIn(BaseModel):
+    document_ids: list[str] = Field(default_factory=list, max_length=svc.MAX_ROWS)
+    folders: list[str] = Field(default_factory=list, max_length=200)
+    run: bool = True
+
+
+class RunIn(BaseModel):
+    scope: Literal["open", "all", "column", "row", "cell"] = "open"
+    column_id: str | None = None
+    row_id: str | None = None
+
+
+class SaveAsPlaybook(BaseModel):
+    title: str | None = Field(default=None, max_length=200)
+
+
+class CellIn(BaseModel):
+    answer: str | None = Field(default=None, max_length=4000)
+
+
+def _kick(review_id: str) -> None:
+    runner.start(review_id)
 
 
 @router.get("/health")
-async def health():
+def health() -> dict:
     return {"status": "ok", "service": "tabular_reviews"}
 
 
-def _readable_documents(document_ids: List[str], member_id: Optional[str]) -> List[str]:
-    """The requested documents the member may read (matter ACL + document privacy), in order."""
-    from app.api.acl import ACL_CLAUSE, doc_acl
-    from app.db.connection import connect
-
-    with connect() as conn:
-        rows = conn.execute(
-            f"""SELECT d.document_id FROM documents d LEFT JOIN permissions p ON p.matter_id = d.matter_id
-                WHERE d.document_id = ANY(%(ids)s) AND {ACL_CLAUSE} AND {doc_acl('d')}""",
-            {"ids": [i.upper() for i in document_ids], "member_id": member_id},
-        ).fetchall()
-    ok = {r["document_id"] for r in rows}
-    return [i for i in document_ids if i.upper() in ok]
+@router.get("/presets")
+def presets() -> dict:
+    return {"presets": [{"key": k, **v} for k, v in svc.PRESETS.items()]}
 
 
-def _owned(review_id: str, member_id: Optional[str]) -> Dict[str, Any]:
-    """A tabular review belongs to the member who ran it (unknown and others' are both 404)."""
-    rev = _REVIEWS_DB.get(review_id)
-    if rev is None or (member_id is not None and rev.get("member_id") != member_id):
-        raise HTTPException(status_code=404, detail="Review not found")
-    return rev
-
-
-@router.post("/reviews")
-async def create_and_run_tabular_review(
-    req: CreateTabularReviewRequest,
-    member_id: Optional[str] = Depends(resolve_member),
-):
-    """Creates a new tabular review and triggers concurrent cell extraction.
-
-    Runs as the signed-in member; documents they may not read are left out, never extracted.
-    """
-    review_id = f"REV-{uuid.uuid4().hex[:8].upper()}"
-    document_ids = _readable_documents(req.document_ids, member_id)
-    tabular_svc = get_tabular_service()
-
-    col_objs = [
-        ReviewColumn(
-            id=c.id,
-            label=c.label,
-            prompt=c.prompt,
-            data_type=c.data_type,
-            options=c.options,
-        )
-        for c in req.columns
-    ]
-
-    # Execute extraction
-    cells_data = await tabular_svc.run_matrix_extraction(
-        review_id=review_id,
-        title=req.title,
-        document_ids=document_ids,
-        columns=col_objs,
-        member_id=member_id,
-        model=req.model,
-        provider=req.provider,
-    )
-
-    review_record = {
-        "review_id": review_id,
-        "title": req.title,
-        "matter_id": req.matter_id,
-        "document_ids": document_ids,
-        "columns": [c.dict() for c in req.columns],
-        "cells": cells_data,
-        "status": "completed",
-        "member_id": member_id,
-    }
-    _REVIEWS_DB[review_id] = review_record
-
-    return review_record
+@router.post("/reviews", status_code=201)
+def create_review(body: ReviewCreate, member_id: str | None = Depends(resolve_member)) -> dict:
+    data = body.model_dump()
+    if data["kind"] == "library" and data["id"] == "me":
+        data["id"] = member_id
+    out = _run(svc.create_review, member_id, data)
+    if body.run and out["rows"]:
+        _run(svc.mark_for_run, member_id, out["review_id"], "open")
+        _kick(out["review_id"])
+    return out
 
 
 @router.get("/reviews")
-async def list_tabular_reviews(member_id: Optional[str] = Depends(resolve_member)):
-    """The member's tabular reviews."""
-    return [r for r in _REVIEWS_DB.values() if member_id is None or r.get("member_id") == member_id]
+def list_reviews(kind: Literal["matter", "project", "library"], id: str,
+                 member_id: str | None = Depends(resolve_member)) -> dict:
+    cid = member_id if kind == "library" and id == "me" else id
+    return {"items": _run(svc.list_reviews, member_id, kind, cid)}
 
 
 @router.get("/reviews/{review_id}")
-async def get_tabular_review(review_id: str, member_id: Optional[str] = Depends(resolve_member)):
-    """Retrieves detailed matrix review results."""
-    return _owned(review_id, member_id)
+def get_review(review_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    out = _run(svc.get_review, member_id, review_id)
+    with connect() as conn:
+        if runner.needs_workers(conn, review_id):  # a run interrupted by a restart carries on
+            _kick(review_id)
+    return out
 
 
-@router.patch("/reviews/{review_id}/cells/{doc_id}/{col_id}")
-async def patch_cell_value(
-    review_id: str,
-    doc_id: str,
-    col_id: str,
-    req: PatchCellRequest,
-    member_id: Optional[str] = Depends(resolve_member),
-):
-    """Allows lawyers to override or verify an extracted cell value."""
-    rev = _owned(review_id, member_id)
-    if doc_id not in rev["document_ids"]:
-        raise HTTPException(status_code=404, detail="Document is not part of this review")
-    if doc_id not in rev["cells"]:
-        rev["cells"][doc_id] = {}
-    
-    rev["cells"][doc_id][col_id] = {
-        "value": req.value,
-        "confidence": 1.0,
-        "citations": rev["cells"][doc_id].get(col_id, {}).get("citations", []),
-        "reasoning": req.reasoning or "Human lawyer verified override",
-        "is_overridden": True,
-        "status": "completed",
-    }
-    return rev["cells"][doc_id][col_id]
+@router.patch("/reviews/{review_id}")
+def update_review(review_id: str, body: ReviewPatch, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(svc.update_review, member_id, review_id, body.title, body.row_version)
 
 
-@router.get("/reviews/{review_id}/export/xlsx")
-async def export_review_xlsx(review_id: str, member_id: Optional[str] = Depends(resolve_member)):
-    """Exports the tabular review into a styled Excel workbook with citations."""
-    rev = _owned(review_id, member_id)
-    rows = [{"document_id": d_id, "title": d_id} for d_id in rev["document_ids"]]
-    
-    xlsx_bytes = SpreadsheetExporter.export_xlsx(
-        title=rev["title"],
-        columns=rev["columns"],
-        rows=rows,
-        cells=rev["cells"],
-    )
+@router.delete("/reviews/{review_id}")
+def archive_review(review_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(svc.archive_review, member_id, review_id)
 
-    return Response(
-        content=xlsx_bytes,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="{review_id}_review.xlsx"'},
-    )
+
+@router.post("/reviews/{review_id}/columns")
+def add_columns(review_id: str, columns: list[ColumnIn], run: bool = True,
+                member_id: str | None = Depends(resolve_member)) -> dict:
+    out = _run(svc.add_columns, member_id, review_id, [c.model_dump() for c in columns])
+    if run:
+        _run(svc.mark_for_run, member_id, review_id, "open")
+        _kick(review_id)
+    return out
+
+
+@router.patch("/reviews/{review_id}/columns/{column_id}")
+def update_column(review_id: str, column_id: str, body: ColumnPatch, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(svc.update_column, member_id, review_id, column_id, body.model_dump(exclude_none=True))
+
+
+@router.delete("/reviews/{review_id}/columns/{column_id}")
+def delete_column(review_id: str, column_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(svc.delete_column, member_id, review_id, column_id)
+
+
+@router.post("/reviews/{review_id}/rows")
+def add_rows(review_id: str, body: RowsIn, member_id: str | None = Depends(resolve_member)) -> dict:
+    out = _run(svc.add_rows, member_id, review_id, body.document_ids, body.folders)
+    if body.run and out.get("added"):
+        _run(svc.mark_for_run, member_id, review_id, "open")
+        _kick(review_id)
+    return out
+
+
+@router.delete("/reviews/{review_id}/rows/{row_id}")
+def delete_row(review_id: str, row_id: str, member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(svc.delete_row, member_id, review_id, row_id)
+
+
+@router.post("/reviews/{review_id}/run")
+def run_review(review_id: str, body: RunIn, member_id: str | None = Depends(resolve_member)) -> dict:
+    _run(svc.mark_for_run, member_id, review_id, body.scope, body.column_id, body.row_id)
+    _kick(review_id)
+    return _run(svc.get_review, member_id, review_id)
+
+
+@router.patch("/reviews/{review_id}/cells/{row_id}/{column_id}")
+def override_cell(review_id: str, row_id: str, column_id: str, body: CellIn,
+                  member_id: str | None = Depends(resolve_member)) -> dict:
+    return _run(svc.override_cell, member_id, review_id, row_id, column_id, body.answer)
+
+
+@router.get("/reviews/{review_id}/export.xlsx")
+def export_xlsx(review_id: str, member_id: str | None = Depends(resolve_member)) -> Response:
+    from app.audit import events as audit
+    from app.tabular.export import workbook
+
+    view = _run(svc.get_review, member_id, review_id)
+    audit.record("tabular.export", member_id=member_id, object_type="tab_review", object_id=review_id)
+    name = f"{view['title']}.xlsx"
+    return Response(content=workbook(view),
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"})
+
+
+@router.get("/reviews/{review_id}/cells")
+def cells_for_assistant(review_id: str, rows: list[str] | None = Query(default=None),
+                        columns: list[str] | None = Query(default=None),
+                        member_id: str | None = Depends(resolve_member)) -> dict:
+    """The filled table, compact, for the Assistant's ``read_review_cells`` tool (redacted like the page)."""
+    return _run(runner.cells_for_assistant, member_id, review_id, rows, columns)
+
+
+@router.post("/reviews/{review_id}/save-as-playbook", status_code=201)
+def save_as_playbook(review_id: str, body: SaveAsPlaybook, member_id: str | None = Depends(resolve_member)) -> dict:
+    """Keep this review's questions as a playbook to start the next review with."""
+    return _run(svc.save_as_playbook, member_id, review_id, body.title)

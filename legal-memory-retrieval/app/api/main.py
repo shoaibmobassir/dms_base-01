@@ -20,7 +20,6 @@ from app.api.routers import (
     knowledge,
     matters,
     people,
-    projects,
     retrieval,
     search,
     sources,
@@ -66,6 +65,8 @@ SERVICE_CATALOG = {
     "matters": {"prefix": "/api/matters", "health": "/api/matters/health"},
     "documents": {"prefix": "/api/documents", "health": "/api/documents/health"},
     "projects": {"prefix": "/api/projects", "health": "/api/projects/health"},
+    "workspaces": {"prefix": "/api/workspaces", "health": "/api/workspaces/health"},
+    "playbooks": {"prefix": "/api/playbooks", "health": "/api/playbooks/health"},
     "clients": {"prefix": "/api/clients", "health": "/api/clients/health"},
     "people": {"prefix": "/api/people", "health": "/api/people/health"},
     "search": {"prefix": "/api/search", "health": "/api/search/health"},
@@ -176,9 +177,8 @@ _AUTHED_ROUTERS = [
     (sources, "sources"),
 ]
 if settings.enable_legacy_projects:
-    _AUTHED_ROUTERS += [(projects, "projects"), (activity, "activity")]
+    _AUTHED_ROUTERS += [(activity, "activity")]
 else:
-    SERVICE_CATALOG.pop("projects", None)
     SERVICE_CATALOG.pop("activity", None)
 
 for _module, _name in _AUTHED_ROUTERS:
@@ -197,6 +197,17 @@ for _router, _prefix in (
     (firm_routes.calendar_router, "/api/calendar"),
     (firm_routes.imports_router, "/api/imports"),
 ):
+    app.include_router(_router, prefix=_prefix, dependencies=[Depends(resolve_member)])
+
+# Workspaces (plan 22, W0): projects anyone can create, single-copy documents shown in many workspaces.
+from app.api.routers import playbooks as playbook_routes  # noqa: E402
+from app.api.routers import workspaces as workspace_routes  # noqa: E402
+
+for _router, _prefix in (
+    (workspace_routes.projects_router, "/api/projects"),
+    (workspace_routes.workspaces_router, "/api/workspaces"),
+    (playbook_routes.router, "/api/playbooks"),
+) if settings.workbench_enabled else ():
     app.include_router(_router, prefix=_prefix, dependencies=[Depends(resolve_member)])
 # Calendar apps cannot send our headers: the feed's secret token is its only credential.
 app.include_router(firm_routes.calendar_feed_router, prefix="/api/calendar-feed")

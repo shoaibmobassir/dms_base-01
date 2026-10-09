@@ -129,6 +129,9 @@ function MatterView({ detail }: { detail: MatterDetail }) {
             <Action to={`/ask?scope=${encodeURIComponent(m.matter_code)}&scopeType=matter`} primary icon="manage_search" testId="matter-ask">
               Ask about this matter
             </Action>
+            <Action to={`/work/matter/${encodeURIComponent(m.matter_id)}`} icon="folder_copy" testId="matter-workbench">
+              Open workspace
+            </Action>
             <AssistantAction matterId={m.matter_id} />
             <PinAction matterId={m.matter_id} />
             {canManage && (

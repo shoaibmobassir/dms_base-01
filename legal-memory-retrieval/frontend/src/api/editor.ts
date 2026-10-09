@@ -55,9 +55,51 @@ export type CompareResult = {
   document_id: string
   from: VersionMeta
   to: VersionMeta
-  stats: { inserted: number; deleted: number; changed: number; unchanged: number }
+  stats: { inserted: number; deleted: number; changed: number; unchanged: number; words_added?: number; words_removed?: number }
   blocks: CompareBlock[]
 }
+
+// ── versions as commits (plan 21, C2) ────────────────────────────────────────
+
+/** One version in the document's log. The stored file is the clean document; what it changed is the diff to its parent. */
+export type Commit = {
+  version_id: string
+  version_number: number
+  version_label: string | null
+  /** The commit message: what the editor wrote, "Imported 3 tracked changes from …", "Restored version 2". */
+  message: string | null
+  author_name: string | null
+  created_by_member_id: string | null
+  /** editor | upload | import | restore */
+  kind: string
+  created_at: string
+  parent_version_id: string | null
+  restored_from_version_id: string | null
+  is_clean: boolean | null
+  has_source_file: boolean
+  is_current: boolean
+  chars: number
+  /** Size change against the parent (characters); null for the first version. */
+  chars_delta: number | null
+  /** The version's content was deleted for good (plan 22); the entry stays in the history. */
+  deleted?: boolean
+  delete_reason?: string | null
+  deleted_by_name?: string | null
+}
+
+export type BlameParagraph = {
+  pid: number
+  text: string
+  version_id: string
+  version_number: number
+  author: string | null
+  at: string | null
+  message: string | null
+  /** True when the paragraph is older than the versions examined; it is credited to the oldest one. */
+  before_window: boolean
+}
+
+export type RestoreResult = { version_id: string; version_number: number; restored_version_id: string; restored_version_number: number }
 export type VersionMeta = { version_id: string; version_number: number; author: string | null; created_at: string; note: string | null }
 
 export type DocEvent = { seq: number; action: string; version_id: string | null; member_id: string | null; name: string | null; detail: Record<string, unknown>; occurred_at: string }
@@ -152,6 +194,18 @@ export const saveEdits = (id: string, body: { base_version_id: string; ops: Edit
 export const compareVersions = (id: string, from: string, to: string) =>
   apiFetch<CompareResult>(`${base(id)}/compare?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
 
+export const listCommits = (id: string, limit = 100) =>
+  apiFetch<{ items: Commit[] }>(`${base(id)}/commits?limit=${limit}`).then((r) => r.items)
+
+/** Make an earlier version current again as a NEW version; history is not rewritten. */
+export const restoreVersion = (id: string, body: { version_id: string; base_version_id: string; note?: string }) =>
+  apiFetch<RestoreResult>(`${base(id)}/restore`, withLock(id, json('POST', body)))
+
+export const getBlame = (id: string, versionId?: string) =>
+  apiFetch<{ version_id: string; paragraphs: BlameParagraph[] }>(
+    `${base(id)}/blame${versionId ? `?version_id=${encodeURIComponent(versionId)}` : ''}`,
+  )
+
 export const compareDocxUrl = (id: string, from: string, to: string) =>
   `${base(id)}/compare.docx?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
 
@@ -168,6 +222,36 @@ export async function uploadVersion(id: string, file: File, opts: { baseVersionI
   if (!res.ok) throw new ApiError(res.status, await res.text())
   return (await res.json()) as { version_id: string; version_number: number }
 }
+
+/** The full Word editor's save (plan 22, W2b): the edited file becomes the next version; the server credits its new
+ * changes to the signed-in member. */
+export async function saveDocx(id: string, data: ArrayBuffer, opts: { baseVersionId: string; note?: string }) {
+  const form = new FormData()
+  form.append('file', new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), 'document.docx')
+  form.append('base_version_id', opts.baseVersionId)
+  if (opts.note) form.append('note', opts.note)
+  const res = await fetch(`${base(id)}/save-docx`, { method: 'POST', body: form, headers: { ...authHeaders(), ...lockHeaders(id) }, credentials: 'same-origin' })
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  return (await res.json()) as { version_id: string; version_number: number; changes: number }
+}
+
+/** Autosave of the Word editor: this person's unsaved file, offered back when they reopen the editor. */
+export async function putDocxDraft(id: string, data: ArrayBuffer, baseVersionId: string) {
+  const form = new FormData()
+  form.append('file', new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), 'draft.docx')
+  form.append('base_version_id', baseVersionId)
+  const res = await fetch(`${base(id)}/draft-docx`, { method: 'PUT', body: form, headers: { ...authHeaders(), ...lockHeaders(id) }, credentials: 'same-origin' })
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  return (await res.json()) as { saved_at: string; bytes: number }
+}
+export const getDocxDraftInfo = (id: string) =>
+  apiFetch<{ draft: { base_version_id: string; size_bytes: number; updated_at: string; current: boolean } | null }>(`${base(id)}/draft-docx/info`).then((r) => r.draft)
+export async function getDocxDraft(id: string): Promise<ArrayBuffer> {
+  const res = await fetch(`${base(id)}/draft-docx`, { headers: authHeaders(), credentials: 'same-origin' })
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  return res.arrayBuffer()
+}
+export const deleteDocxDraft = (id: string) => apiFetch<void>(`${base(id)}/draft-docx`, { method: 'DELETE' })
 
 // ── comments on the exact view (E6) ──────────────────────────────────────────
 
@@ -297,3 +381,13 @@ export const applyReview = (
 ) => apiFetch<{ version_id: string; version_number: number; changes: number; by_author: Record<string, number>; note: string }>(
   `${base(id)}/review`, withLock(id, json('POST', body)))
 export const downloadWithCommentsUrl = (id: string) => `${base(id)}/download-with-comments`
+
+/** Delete an earlier version's content for good; the history keeps a "deleted" entry (managers only). */
+export const purgeVersion = (id: string, versionId: string, reason: string) =>
+  apiFetch<{ version_id: string; version_number: number; files_removed: number }>(
+    `${base(id)}/versions/${encodeURIComponent(versionId)}/purge`, { method: 'POST', body: JSON.stringify({ reason }) })
+
+/** Make another document's content this document's next version; the other document is unchanged. */
+export const copyContentFrom = (id: string, body: { source_document_id: string; base_version_id?: string; note?: string }) =>
+  apiFetch<{ version_id: string; version_number: number; source: { title: string; note: string } }>(
+    `${base(id)}/versions/copy-from`, { method: 'POST', body: JSON.stringify(body) })

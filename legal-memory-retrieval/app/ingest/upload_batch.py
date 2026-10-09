@@ -25,9 +25,9 @@ from app.ingest.extractors.dispatch import extract_from_bytes
 from app.ingest.jobs import complete_job, create_job, mark_item, register_items
 from app.ingest.upload_policy import ScannedFile, UploadRejected, hash_and_measure, scan_for_malware
 from app.storage.object_store import (
-    build_storage_key,
     get_object_store,
     guess_mime,
+    put_blob,
 )
 
 log = logging.getLogger(__name__)
@@ -42,14 +42,21 @@ def _now() -> datetime:
 
 def create_upload_batch(
     *,
-    matter_id: str,
+    matter_id: str | None = None,
     files: list[tuple[str, bytes | BinaryIO]],
     client_id: str | None = None,
     tenant_id: str | None = None,
     created_by: str | None = None,
+    container_kind: str = "matter",
+    container_id: str | None = None,
+    folder_prefix: str = "",
 ) -> dict:
     """
     Persist raw files to object storage, create upload_batches + ingest_job.
+
+    The batch's workspace becomes each new document's home: a matter (``matter_id``), a project or the
+    uploader's library (``container_kind`` / ``container_id``). ``folder_prefix`` is the workspace folder the
+    files were dropped into. Bytes are stored once per content hash (``put_blob``).
 
     ``files``: list of (relative_path, bytes or a seekable binary file). Paths preserve
     folder hierarchy. Every file is checked (type from its bytes, size, count, batch
@@ -78,17 +85,34 @@ def create_upload_batch(
     tenant = tenant_id or settings.tenant_id
     store = get_object_store()
     batch_id = f"BAT-{uuid.uuid4().hex[:10].upper()}"
+    if container_kind == "matter":
+        container_id = container_id or matter_id
+        matter_id = container_id
+    elif container_kind in ("project", "library", "firm"):
+        matter_id = None
+        if not container_id:
+            raise ValueError(f"A {container_kind} upload needs its {container_kind} id")
+    else:
+        raise ValueError(f"Unknown workspace kind: {container_kind}")
 
     with connect() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                "SELECT matter_id, client_id, title FROM matters WHERE matter_id = %(mid)s",
-                {"mid": matter_id},
-            )
-            matter = cur.fetchone()
-            if not matter:
-                raise ValueError(f"Matter not found: {matter_id}")
-            client = client_id or matter["client_id"] or "CLIENT-UNKNOWN"
+            if container_kind == "matter":
+                cur.execute(
+                    "SELECT matter_id, client_id, title FROM matters WHERE matter_id = %(mid)s",
+                    {"mid": matter_id},
+                )
+                matter = cur.fetchone()
+                if not matter:
+                    raise ValueError(f"Matter not found: {matter_id}")
+                client = client_id or matter["client_id"] or "CLIENT-UNKNOWN"
+            elif container_kind == "project":
+                cur.execute("SELECT project_id FROM projects WHERE project_id = %(p)s", {"p": container_id})
+                if not cur.fetchone():
+                    raise ValueError(f"Project not found: {container_id}")
+                client = client_id
+            else:
+                client = client_id
 
             job_id = create_job(conn, f"upload://{batch_id}", len(files), workers=1)
 
@@ -96,13 +120,18 @@ def create_upload_batch(
                 """
                 INSERT INTO upload_batches (
                     batch_id, tenant_id, matter_id, client_id, status,
-                    total_files, ingest_job_id, created_by, created_at, manifest
+                    total_files, ingest_job_id, created_by, created_at, manifest,
+                    container_kind, container_id, folder_prefix
                 ) VALUES (
                     %(bid)s, %(tid)s, %(mid)s, %(cid)s, 'pending',
-                    %(n)s, %(jid)s, %(by)s, %(ts)s, %(manifest)s::jsonb
+                    %(n)s, %(jid)s, %(by)s, %(ts)s, %(manifest)s::jsonb,
+                    %(ckind)s, %(cont)s, %(prefix)s
                 )
                 """,
                 {
+                    "ckind": container_kind,
+                    "cont": container_id,
+                    "prefix": folder_prefix,
                     "bid": batch_id,
                     "tid": tenant,
                     "mid": matter_id,
@@ -122,17 +151,16 @@ def create_upload_batch(
                 name = Path(rel).name
                 sha = scanned.sha256
                 mime = guess_mime(name)
-                # Provisional document id for key stability (final DOC id may differ)
                 provisional_doc = f"DOC-{uuid.uuid4().hex[:10].upper()}"
-                key = build_storage_key(
-                    tenant_id=tenant,
-                    client_id=client,
-                    matter_id=matter_id,
-                    document_id=provisional_doc,
-                    version_number=1,
-                    filename=name,
+                # Stored once per content: a file already uploaded anywhere is not written again.
+                uri, _written = put_blob(store, tenant_id=tenant, content_sha256=sha, filename=name,
+                                         fileobj=fileobj, content_type=mime)
+                key = uri
+                cur.execute(
+                    """INSERT INTO blobs (content_sha256, storage_uri, byte_size, mime_type)
+                       VALUES (%s, %s, %s, %s) ON CONFLICT (content_sha256) DO NOTHING""",
+                    (sha, uri, scanned.size, mime),
                 )
-                uri = store.put_file(key, fileobj, content_type=mime)
                 entry = {
                     "relative_path": rel,
                     "filename": name,
@@ -178,6 +206,9 @@ def create_upload_batch(
     return {
         "batch_id": batch_id,
         "ingest_job_id": job_id,
+        "container_kind": container_kind,
+        "container_id": container_id,
+        "folder_prefix": folder_prefix,
         "matter_id": matter_id,
         "client_id": client,
         "tenant_id": tenant,
@@ -224,50 +255,6 @@ def _extract_document(filename: str, data: bytes):
     return extract_from_bytes(filename, data)
 
 
-def _ensure_folders(
-    cur,
-    project_id: str | None,
-    folder_path: str,
-    created_by: str | None,
-) -> str | None:
-    """Create nested project_folders for path segments; return leaf folder_id."""
-    parts = [p for p in folder_path.split("/") if p]
-    if not parts or not project_id:
-        return None
-    parent_id: str | None = None
-    built = ""
-    for part in parts:
-        built = f"{built}/{part}" if built else part
-        cur.execute(
-            """
-            SELECT folder_id FROM project_folders
-            WHERE project_id = %(pid)s AND name = %(name)s
-              AND COALESCE(parent_folder_id, '') = COALESCE(%(parent)s, '')
-            """,
-            {"pid": project_id, "name": part, "parent": parent_id},
-        )
-        row = cur.fetchone()
-        if row:
-            parent_id = row["folder_id"]
-            continue
-        fid = f"FLD-{uuid.uuid4().hex[:8].upper()}"
-        cur.execute(
-            """
-            INSERT INTO project_folders (folder_id, project_id, name, parent_folder_id, created_by)
-            VALUES (%(fid)s, %(pid)s, %(name)s, %(parent)s, %(by)s)
-            """,
-            {
-                "fid": fid,
-                "pid": project_id,
-                "name": part,
-                "parent": parent_id,
-                "by": created_by,
-            },
-        )
-        parent_id = fid
-    return parent_id
-
-
 def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dict:
     """Process each file independently: extract → document → version → blocks."""
     batch = get_upload_batch(batch_id)
@@ -278,6 +265,9 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
     matter_id = batch["matter_id"]
     client_id = batch["client_id"]
     job_id = batch["ingest_job_id"]
+    home_kind = batch.get("container_kind") or "matter"
+    home_id = batch.get("container_id") or matter_id
+    prefix = (batch.get("folder_prefix") or "").strip("/")
     indexed = 0
     failed = 0
     skipped = 0
@@ -290,12 +280,6 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
                 "UPDATE upload_batches SET status = 'running', updated_at = %(ts)s WHERE batch_id = %(bid)s",
                 {"ts": _now(), "bid": batch_id},
             )
-            cur.execute(
-                "SELECT project_id FROM projects WHERE matter_id = %(mid)s LIMIT 1",
-                {"mid": matter_id},
-            )
-            proj = cur.fetchone()
-            project_id = proj["project_id"] if proj else None
             conn.commit()
 
     for f in batch["files"]:
@@ -331,17 +315,20 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
             folder_path = str(Path(rel).parent).replace("\\", "/")
             if folder_path in (".", ""):
                 folder_path = ""
+            folder_path = "/".join(p for p in (prefix, folder_path) if p)
 
             with connect() as conn:
                 with conn.cursor(row_factory=dict_row) as cur:
-                    # Duplicate detection by content hash within matter
+                    # Duplicate detection by content hash within the workspace (its home documents)
                     cur.execute(
                         """
                         SELECT document_id FROM documents
-                        WHERE matter_id = %(mid)s AND content_sha256 = %(sha)s
+                        WHERE content_sha256 = %(sha)s
+                          AND CASE WHEN %(kind)s = 'matter' THEN home_kind = 'matter' AND matter_id = %(hid)s
+                                   ELSE home_kind = %(kind)s AND home_id = %(hid)s END
                         LIMIT 1
                         """,
-                        {"mid": matter_id, "sha": f["content_sha256"]},
+                        {"kind": home_kind, "hid": home_id, "sha": f["content_sha256"]},
                     )
                     existing = cur.fetchone()
                     if existing:
@@ -364,7 +351,7 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
                         skipped += 1
                         continue
 
-                    folder_id = _ensure_folders(cur, project_id, folder_path, created_by)
+                    folder_id = None
                     doc_id = f.get("provisional_document_id") or f"DOC-{uuid.uuid4().hex[:10].upper()}"
                     # upload_batch_files may not have provisional in SELECT — use from earlier
                     cur.execute(
@@ -379,9 +366,8 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
                     # Matter code, client and uploader name so the document lists like any other.
                     cur.execute(
                         """
-                        SELECT m.matter_code,
+                        SELECT (SELECT matter_code FROM matters WHERE matter_id = %(mid)s) AS matter_code,
                                (SELECT name FROM members WHERE member_id = %(by)s) AS author
-                        FROM matters m WHERE m.matter_id = %(mid)s
                         """,
                         {"mid": matter_id, "by": created_by},
                     )
@@ -392,15 +378,19 @@ def process_upload_batch(batch_id: str, *, created_by: str | None = None) -> dic
                             document_id, matter_id, matter_code, client_id, title, document_type, body,
                             author_id, author_name, doc_date,
                             status, version, content_sha256, mime_type, folder_id,
-                            folder_path, ingest_job_id, ingested_at, source_uri
+                            folder_path, ingest_job_id, ingested_at, source_uri,
+                            home_kind, home_id
                         ) VALUES (
                             %(did)s, %(mid)s, %(mcode)s, %(cid)s, %(title)s, %(dtype)s, %(body)s,
                             %(author_id)s, %(author)s, CURRENT_DATE,
                             'Draft', 'v1.0', %(sha)s, %(mime)s, %(fid)s,
-                            %(fpath)s, %(jid)s, %(ts)s, %(uri)s
+                            %(fpath)s, %(jid)s, %(ts)s, %(uri)s,
+                            %(home_kind)s, %(home_id)s
                         )
                         """,
                         {
+                            "home_kind": home_kind,
+                            "home_id": None if home_kind == "matter" else home_id,
                             "mcode": meta.get("matter_code"),
                             "cid": client_id,
                             "author_id": created_by if meta.get("author") else None,

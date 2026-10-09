@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 class DocEntry:
     """Metadata for one document available in the chat context."""
-    __slots__ = ("doc_id", "document_id", "filename", "text", "version_id", "version_number", "attached")
+    __slots__ = ("doc_id", "document_id", "filename", "text", "version_id", "version_number", "attached",
+                 "scanned_pages")
 
     def __init__(
         self,
@@ -40,6 +41,7 @@ class DocEntry:
         attached: bool = False,
     ):
         self.attached = attached
+        self.scanned_pages: list[int] = []  # PDF pages whose text was read by OCR (set when the document is read)
         self.doc_id = doc_id
         self.document_id = document_id
         self.filename = filename
@@ -128,6 +130,38 @@ def build_doc_availability(index: DocIndex) -> list[dict[str, str]]:
 # Tool implementations
 # ---------------------------------------------------------------------------
 
+def annotate_scanned(text: str, pages: list[int] | None) -> str:
+    """Mark scanned pages inside the text the model reads, where it cannot overlook the warning.
+
+    Only the copy shown to the model changes; the stored text keeps plain ``[Page N]`` markers, so quotes and
+    citations are still checked against the document as it is.
+    """
+    if not pages:
+        return text
+    scanned = set(pages)
+    return PAGE_MARKER_RE.sub(
+        lambda m: (f"[Page {m.group(1)} - SCANNED PAGE: machine-read text, so spacing and letters may be misread; "
+                   "do not report them as errors]") if int(m.group(1)) in scanned else m.group(0),
+        text)
+
+
+def source_notice(conn: Any, entry: "DocEntry") -> dict[str, Any] | None:
+    """For a PDF: that it is read-only and which pages are scans read by OCR. ``None`` for other files."""
+    from app.documents.text_origin import source_info
+
+    info = source_info(conn, entry.document_id)
+    if info["format"] != "pdf":
+        return None
+    notice: dict[str, Any] = {"format": "pdf", "editable": False,
+                              "note": "A PDF cannot be edited. Suggestions are recommendations; there is no tracked-changes file."}
+    if info["scanned_pages"]:
+        notice["scanned_pages"] = info["scanned_pages"]
+        notice["scanned_note"] = ("Text on the scanned pages was read by OCR. Spacing, line breaks and look-alike "
+                                  "characters in it can be wrong without the printed page being wrong. Never suggest "
+                                  "spacing, hyphenation or spelling corrections to it, and do not call them errors.")
+    return notice
+
+
 def read_document(
     doc_id: str,
     doc_index: DocIndex,
@@ -165,9 +199,14 @@ def read_document(
         "version_number": entry.version_number,
     }
     whole = not (section_id or pages or cursor)
+    notice = source_notice(conn, entry)
+    scanned = (notice or {}).get("scanned_pages")
+    entry.scanned_pages = list(scanned or [])
     if whole and len(text) <= budget:
+        shown = annotate_scanned(text, scanned)
         return {"doc_id": doc_id, "filename": entry.filename, "complete": True,
-                "text": spotlight(text, nonce) if nonce else text, "event": event}
+                "text": spotlight(shown, nonce) if nonce else shown, "event": event,
+                **({"source": notice} if notice else {})}
 
     lo, hi, label = 0, len(text), ""
     if section_id:
@@ -189,8 +228,10 @@ def read_document(
         "total_pages": doc_nav.page_count(text),
         "total_chars": len(text),
         "showing": {"part": label or "document", "pages": f"{win.first_page}–{win.last_page}", "chars": [win.start, win.end]},
-        "text": spotlight(win.text, nonce) if nonce else win.text,
+        "text": spotlight(annotate_scanned(win.text, scanned), nonce) if nonce else annotate_scanned(win.text, scanned),
     }
+    if notice:
+        out["source"] = notice
     if win.next_cursor is not None:
         out["next_cursor"] = win.next_cursor
         out["remaining_chars"] = win.remaining_chars
@@ -446,11 +487,11 @@ def _readable(conn: Any, member_id: str | None, document_id: str) -> bool:
     documents (e.g. generated files) are left to their own owner check."""
     from psycopg.rows import dict_row
 
-    from app.api.acl import ACL_CLAUSE, doc_acl
+    from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
-            f"""SELECT ({ACL_CLAUSE} AND {doc_acl('d')}) AS ok FROM documents d
+            f"""SELECT ({doc_read('d')}) AS ok FROM documents d
                 LEFT JOIN permissions p ON p.matter_id = d.matter_id WHERE d.document_id = %(id)s""",
             {"id": str(document_id).upper(), "member_id": member_id},
         )
@@ -529,6 +570,13 @@ def fetch_document_pages(conn, document_id: str) -> list[tuple[int, str]]:
             """,
             (document_id,),
         ).fetchall()
+        if not rows or all(row["page_number"] is None for row in rows):
+            # Scanned reports often have no page per chunk, but their stored text keeps the PDF's
+            # form-feed page breaks: use those so citations name the real (PDF) page.
+            doc = conn.execute("SELECT body FROM documents WHERE document_id = %s", (document_id,)).fetchone()
+            text = str((doc or {}).get("body") or "")
+            if "\f" in text:
+                return [(i, p.strip()) for i, p in enumerate(text.split("\f"), 1) if p.strip()]
 
     pages: list[tuple[int, list[str]]] = []
     for row in rows:

@@ -1,0 +1,81 @@
+{"type": "retrieval", "id": "p01", "split": "test", "query": "Can restrictions on the independence of States be presumed? Criminal jurisdiction over a collision on the high seas", "expect_any": ["pcij:A:10"]}
+{"type": "retrieval", "id": "p02", "split": "test", "query": "Definition of a dispute as a disagreement on a point of law or fact; a State taking up the claim of its national", "expect_any": ["pcij:A:2"]}
+{"type": "retrieval", "id": "p03", "split": "test", "query": "Can the Court give an advisory opinion on a dispute with a State that is not a member and refuses to take part?", "expect_any": ["pcij:B:5"]}
+{"type": "retrieval", "id": "p04", "split": "dev", "query": "Reparation must wipe out all the consequences of the illegal act and re-establish the situation that would have existed", "expect_any": ["pcij:A:17"]}
+{"type": "retrieval", "id": "p05", "split": "dev", "query": "A party cannot take advantage of its own wrong to deny jurisdiction over a claim for reparation", "expect_any": ["pcij:A:9"]}
+{"type": "retrieval", "id": "p06", "split": "test", "query": "Does an oral declaration by a Foreign Minister bind his State? Sovereignty over a polar territory", "expect_any": ["pcij:A/B:53"]}
+{"type": "retrieval", "id": "p07", "split": "dev", "query": "Freedom of navigation and trade on the river Congo and competition from a subsidised state transport company", "expect_any": ["pcij:A/B:63"]}
+{"type": "retrieval", "id": "p08", "split": "test", "query": "Payment of loan coupons in gold francs; municipal law treated as a fact before the Court", "expect_any": ["pcij:A:20", "pcij:A:21"]}
+{"type": "retrieval", "id": "p09", "split": "test", "query": "A State cannot rely on its own constitution to evade obligations under international law towards nationals of another State", "expect_any": ["pcij:A/B:44"]}
+{"type": "retrieval", "id": "p10", "split": "test", "query": "Is a proposed customs union compatible with the obligation to preserve a State's independence?", "expect_any": ["pcij:A/B:41"]}
+{"type": "retrieval", "id": "p11", "split": "test", "query": "Interim measures: parties must abstain from any measure prejudicial to the execution of the decision to be given", "expect_any": ["pcij:A/B:79"]}
+{"type": "retrieval", "id": "p12", "split": "test", "query": "Whether nationality decrees fall solely within domestic jurisdiction or raise questions of international law", "expect_any": ["pcij:B:4"]}
+{"type": "retrieval", "id": "p13", "split": "test", "query": "Exhaustion of local remedies and the nationality of a claim concerning a railway", "expect_any": ["pcij:A/B:76"]}
+{"type": "retrieval", "id": "p14", "split": "test", "query": "Diversion of water from a river by canals; a party that has itself violated the obligation cannot complain", "expect_any": ["pcij:A/B:70"]}
+{"type": "retrieval", "id": "p15", "split": "test", "query": "Do minority rights require equality in fact and not merely in law for private schools?", "expect_any": ["pcij:A/B:64"]}
+{"type": "retrieval", "id": "p16", "split": "test", "query": "Jurisdiction of an international river commission over tributaries; community of interest of riparian States", "expect_any": ["pcij:A:23"]}
+{"type": "retrieval", "id": "p17", "split": "test", "query": "Can a treaty create rights that individuals may enforce directly in national courts? Railway officials' claims", "expect_any": ["pcij:B:15"]}
+{"type": "retrieval", "id": "p18", "split": "test", "query": "Is the International Labour Organization competent to regulate the conditions of agricultural labour?", "expect_any": ["pcij:B:2", "pcij:B:3"]}
+{"type": "retrieval", "id": "p19", "split": "test", "query": "Do settlers' contracts with the former sovereign survive the cession of territory?", "expect_any": ["pcij:B:6"]}
+{"type": "retrieval", "id": "p20", "split": "test", "query": "Acquisition of nationality by persons whose parents were habitually resident in ceded territory at their birth", "expect_any": ["pcij:B:7"]}
+{"type": "retrieval", "id": "p21", "split": "test", "query": "Customs free zones established by treaty and whether a later treaty article abrogated them", "expect_any": ["pcij:A:22", "pcij:A:24", "pcij:A/B:46"]}
+{"type": "retrieval", "id": "p22", "split": "test", "query": "Validity of lighthouse concessions granted by the Ottoman Empire against its successor State", "expect_any": ["pcij:A/B:62", "pcij:A/B:71"]}
+{"type": "retrieval", "id": "p23", "split": "test", "query": "Jurisdiction ratione temporis: a dispute about a monopoly arising from facts before acceptance of compulsory jurisdiction", "expect_any": ["pcij:A/B:74"]}
+{"type": "retrieval", "id": "p24", "split": "test", "query": "Expropriation of a factory without compensation contrary to a convention protecting private rights in a ceded territory", "expect_any": ["pcij:A:7", "pcij:A:6"]}
+{"type": "retrieval", "id": "p25", "split": "test", "query": "Meaning of 'established' inhabitants in a treaty on the exchange of populations", "expect_any": ["pcij:B:10"]}
+{"type": "retrieval", "id": "p26", "split": "test", "query": "Is a decision of the Council of the League of Nations fixing a frontier binding, and by what vote?", "expect_any": ["pcij:B:12"]}
+{"type": "retrieval", "id": "u01", "split": "dev", "query": "Obligation of all States to freeze terrorist funds and criminalize the financing of terrorism", "expect_any": ["unsc:1373"]}
+{"type": "retrieval", "id": "u02", "split": "dev", "query": "Authorization of Member States to use all necessary means to make Iraq withdraw from Kuwait", "expect_any": ["unsc:678"]}
+{"type": "retrieval", "id": "u03", "split": "test", "query": "Withdrawal of Israeli armed forces from territories occupied in the recent conflict and a just and lasting peace", "expect_any": ["unsc:242"]}
+{"type": "retrieval", "id": "u04", "split": "test", "query": "Referral of the situation in Darfur to the Prosecutor of the International Criminal Court", "expect_any": ["unsc:1593"]}
+{"type": "retrieval", "id": "u05", "split": "test", "query": "Referral of the situation in Libya to the International Criminal Court together with an arms embargo", "expect_any": ["unsc:1970"]}
+{"type": "retrieval", "id": "u06", "split": "test", "query": "Ban on all flights in Libyan airspace and authorization to protect civilians by all necessary measures", "expect_any": ["unsc:1973"]}
+{"type": "retrieval", "id": "u07", "split": "test", "query": "Establishment of an international tribunal for serious violations of humanitarian law in the former Yugoslavia", "expect_any": ["unsc:827", "unsc:808"]}
+{"type": "retrieval", "id": "u08", "split": "test", "query": "Establishment of an international tribunal to prosecute genocide committed in Rwanda", "expect_any": ["unsc:955"]}
+{"type": "retrieval", "id": "u09", "split": "test", "query": "Obligation of States to prevent non-State actors from acquiring nuclear, chemical or biological weapons", "expect_any": ["unsc:1540"]}
+{"type": "retrieval", "id": "u10", "split": "test", "query": "Participation of women in peace processes and protection from gender-based violence in armed conflict", "expect_any": ["unsc:1325"]}
+{"type": "retrieval", "id": "u11", "split": "test", "query": "Measures against foreign terrorist fighters travelling to join terrorist groups", "expect_any": ["unsc:2178"]}
+{"type": "retrieval", "id": "u12", "split": "test", "query": "Endorsement of the Joint Comprehensive Plan of Action on Iran's nuclear programme", "expect_any": ["unsc:2231"]}
+{"type": "retrieval", "id": "u13", "split": "test", "query": "Settlements in the Palestinian territory occupied since 1967 have no legal validity", "expect_any": ["unsc:2334"]}
+{"type": "retrieval", "id": "u14", "split": "test", "query": "Demand for an immediate ceasefire between Iran and Iraq", "expect_any": ["unsc:598"]}
+{"type": "retrieval", "id": "u15", "split": "test", "query": "Ceasefire terms for Iraq: destruction of weapons of mass destruction and a compensation fund", "expect_any": ["unsc:687"]}
+{"type": "retrieval", "id": "u16", "split": "test", "query": "International civil and security presence in Kosovo", "expect_any": ["unsc:1244"]}
+{"type": "retrieval", "id": "u17", "split": "dev", "query": "Sanctions on the Democratic People's Republic of Korea after its 2006 nuclear test", "expect_any": ["unsc:1718"]}
+{"type": "retrieval", "id": "u18", "split": "test", "query": "Iraq in material breach of its disarmament obligations and given a final opportunity to comply with inspections", "expect_any": ["unsc:1441"]}
+{"type": "retrieval", "id": "u19", "split": "test", "query": "Sanctions against the Taliban for harbouring Usama bin Laden", "expect_any": ["unsc:1267", "unsc:1333"]}
+{"type": "retrieval", "id": "u20", "split": "test", "query": "Call on North Korean forces to withdraw to the 38th parallel", "expect_any": ["unsc:82"]}
+{"type": "retrieval", "id": "u21", "split": "test", "query": "Mandatory arms embargo against South Africa", "expect_any": ["unsc:418"]}
+{"type": "retrieval", "id": "u22", "split": "test", "query": "Mandatory economic sanctions against Southern Rhodesia", "expect_any": ["unsc:232", "unsc:253"]}
+{"type": "retrieval", "id": "u23", "split": "test", "query": "Continued presence of South Africa in Namibia declared illegal", "expect_any": ["unsc:276"]}
+{"type": "retrieval", "id": "u24", "split": "test", "query": "Establishment of a United Nations peacekeeping force in Cyprus", "expect_any": ["unsc:186"]}
+{"type": "retrieval", "id": "u25", "split": "test", "query": "Israeli air attack on the Iraqi nuclear research centre", "expect_any": ["unsc:487"]}
+{"type": "retrieval", "id": "u26", "split": "test", "query": "Libya required to surrender the suspects in the Lockerbie bombing, with sanctions", "expect_any": ["unsc:748", "unsc:731"]}
+{"type": "retrieval", "id": "u27", "split": "test", "query": "Authorization of a multinational force to restore the legitimately elected President of Haiti", "expect_any": ["unsc:940"]}
+{"type": "retrieval", "id": "u28", "split": "test", "query": "Safe areas in Bosnia and Herzegovina including Srebrenica", "expect_any": ["unsc:819", "unsc:824"]}
+{"type": "retrieval", "id": "u29", "split": "test", "query": "Use of all necessary means to establish a secure environment for humanitarian relief operations in Somalia", "expect_any": ["unsc:794"]}
+{"type": "retrieval", "id": "u30", "split": "test", "query": "Transitional administration in East Timor", "expect_any": ["unsc:1272"]}
+{"type": "retrieval", "id": "u31", "split": "test", "query": "Verification and destruction of Syria's chemical weapons", "expect_any": ["unsc:2118"]}
+{"type": "retrieval", "id": "u32", "split": "test", "query": "Cross-border humanitarian access into Syria without the consent of the State", "expect_any": ["unsc:2165"]}
+{"type": "binding", "id": "b01", "split": "dev", "citation": "S/RES/1373 (2001)", "para_contains": "freeze without delay", "expect_label": "binding", "note": "decides, Chapter VII"}
+{"type": "binding", "id": "b02", "split": "dev", "citation": "S/RES/1373 (2001)", "para_contains": "Calls upon all States to", "expect_label": "recommendatory"}
+{"type": "binding", "id": "b03", "split": "dev", "citation": "S/RES/678 (1990)", "para_contains": "use all necessary means", "expect_label": "not_binding", "note": "authorization"}
+{"type": "binding", "id": "b04", "split": "test", "citation": "S/RES/1540 (2004)", "para_contains": "shall refrain from providing any form of support", "expect_label": "binding", "note": "decides, Chapter VII"}
+{"type": "binding", "id": "b05", "split": "test", "citation": "S/RES/2178 (2014)", "para_contains": "prevent and suppress the recruiting", "expect_label": "binding", "note": "decides, Chapter VII"}
+{"type": "binding", "id": "b06", "split": "test", "citation": "S/RES/1970 (2011)", "para_contains": "refer the situation", "expect_label": "binding", "note": "decides, Article 41"}
+{"type": "binding", "id": "b07", "split": "test", "citation": "S/RES/1593 (2005)", "para_contains": "refer the situation in Darfur", "expect_label": "binding", "note": "decides, Chapter VII"}
+{"type": "binding", "id": "b08", "split": "test", "citation": "S/RES/242 (1967)", "para_contains": "Requests the Secretary-General to designate", "expect_label": "recommendatory"}
+{"type": "binding", "id": "b09", "split": "test", "citation": "S/RES/2334 (2016)", "para_contains": "has no legal validity", "expect_label": "not_binding", "note": "reaffirms, no Chapter VII"}
+{"type": "binding", "id": "b10", "split": "test", "citation": "S/RES/598 (1987)", "para_contains": "as a first step towards a negotiated settlement", "expect_label": "likely_binding", "note": "demands, acting under Articles 39 and 40"}
+{"type": "binding", "id": "b11", "split": "test", "citation": "S/RES/1325 (2000)", "para_contains": "increased representation of women", "expect_label": "recommendatory", "note": "urges"}
+{"type": "binding", "id": "b12", "split": "test", "citation": "S/RES/1441 (2002)", "para_contains": "material breach", "expect_label": "binding", "note": "decides, Chapter VII"}
+{"type": "binding", "id": "b13", "split": "test", "citation": "S/RES/687 (1991)", "para_contains": "unconditionally accept the destruction", "expect_label": "binding", "note": "decides, Chapter VII"}
+{"type": "binding", "id": "b14", "split": "test", "citation": "S/RES/1973 (2011)", "para_contains": "Authorizes Member States that have notified", "expect_label": "not_binding", "note": "authorization"}
+{"type": "binding", "id": "b15", "split": "test", "citation": "S/RES/1973 (2011)", "para_contains": "ban on all flights", "expect_label": "binding", "note": "decides, Chapter VII"}
+{"type": "binding", "id": "b16", "split": "test", "citation": "S/RES/418 (1977)", "para_contains": "cease forthwith any provision to South Africa of arms", "expect_label": "binding", "note": "decides, Chapter VII"}
+{"type": "binding", "id": "b17", "split": "test", "citation": "S/RES/82 (1950)", "para_contains": "withdraw forthwith their armed forces", "expect_label": "recommendatory", "note": "calls upon"}
+{"type": "binding", "id": "b18", "split": "test", "citation": "S/RES/276 (1970)", "para_contains": "refrain from any dealings", "expect_label": "binding", "hard": true, "note": "ICJ Namibia AO (1971) paras 113-116 held this resolution binding although not adopted under Chapter VII; a verb rule cannot know this"}
+{"type": "binding", "id": "b19", "split": "test", "citation": "S/RES/2334 (2016)", "para_contains": "Calls upon all States", "expect_label": "recommendatory"}
+{"type": "binding", "id": "b20", "split": "test", "citation": "P.C.I.J., Series A, No. 10", "role": "majority", "forum_matter": "other", "expect_label": "persuasive"}
+{"type": "binding", "id": "b21", "split": "test", "citation": "P.C.I.J., Series A, No. 10", "role": "majority", "forum_matter": "same", "expect_label": "binding"}
+{"type": "binding", "id": "b22", "split": "test", "citation": "P.C.I.J., Series B, No. 5", "role": "majority", "forum_matter": "other", "expect_label": "not_binding"}
+{"type": "binding", "id": "b23", "split": "dev", "citation": "P.C.I.J., Series A, No. 9", "role": "dissent", "forum_matter": "same", "expect_label": "not_binding"}

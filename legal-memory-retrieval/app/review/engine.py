@@ -222,7 +222,7 @@ class FastReviewEngine:
         member_id: Optional[str] = None,
     ) -> List[dict]:
         """Documents to review — only those the member may read (matter ACL + document privacy)."""
-        from app.api.acl import ACL_CLAUSE, doc_acl
+        from app.api.acl import ACL_CLAUSE, doc_acl, doc_read
 
         if document_ids:
             scope, params = "d.document_id = ANY(%(doc_ids)s)", {"doc_ids": document_ids}
@@ -244,7 +244,7 @@ class FastReviewEngine:
                         WHERE document_id = d.document_id
                         ORDER BY version_number DESC LIMIT 1
                     ) v ON TRUE
-                    WHERE {scope} AND {ACL_CLAUSE} AND {doc_acl('d')}
+                    WHERE {scope} AND {doc_read('d')}
                     {"" if (document_ids or matter_id) else "LIMIT 150"}
                     """,
                     {**params, "member_id": member_id},

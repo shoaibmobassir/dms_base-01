@@ -17,7 +17,7 @@ Migration path:
 """
 from __future__ import annotations
 
-from app.api.acl import doc_acl
+from app.api.acl import doc_acl, doc_read
 
 from typing import Any
 
@@ -1256,13 +1256,13 @@ class PgHierarchicalStore:
                    ts_rank(c.tsv, plainto_tsquery('english', %(q)s)) AS score
             FROM chunks c
             JOIN documents d ON d.document_id = c.document_id
-            JOIN matters m ON m.matter_id = d.matter_id
-            JOIN clients cl ON cl.client_id = m.client_id
-            JOIN permissions p ON p.matter_id = d.matter_id
+            LEFT JOIN matters m ON m.matter_id = d.matter_id
+            LEFT JOIN clients cl ON cl.client_id = m.client_id
+            LEFT JOIN permissions p ON p.matter_id = d.matter_id
             WHERE c.document_id = ANY(%(doc_ids)s)
               AND c.version_id IS NOT NULL
               {parent_clause}
-              AND {_ACL_WHERE} AND {doc_acl('d')}
+              AND {doc_read('d')}
               AND (
                 c.tsv @@ plainto_tsquery('english', %(q)s)
                 OR c.text ILIKE %(like)s ESCAPE '\\'
@@ -1296,12 +1296,12 @@ class PgHierarchicalStore:
                        ts_rank(c.tsv, plainto_tsquery('english', %(q)s)) AS score
                 FROM chunks c
                 JOIN documents d ON d.document_id = c.document_id
-                JOIN matters m ON m.matter_id = d.matter_id
-                JOIN clients cl ON cl.client_id = m.client_id
-                JOIN permissions p ON p.matter_id = d.matter_id
+                LEFT JOIN matters m ON m.matter_id = d.matter_id
+                LEFT JOIN clients cl ON cl.client_id = m.client_id
+                LEFT JOIN permissions p ON p.matter_id = d.matter_id
                 WHERE c.document_id = ANY(%(doc_ids)s)
                   AND c.version_id IS NULL
-                  AND {_ACL_WHERE} AND {doc_acl('d')}
+                  AND {doc_read('d')}
                   AND (
                     c.tsv @@ plainto_tsquery('english', %(q)s)
                     OR c.text ILIKE %(like)s ESCAPE '\\'

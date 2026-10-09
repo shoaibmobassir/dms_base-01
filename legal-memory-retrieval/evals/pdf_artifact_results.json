@@ -1,0 +1,81 @@
+{
+  "summary": {
+    "artifacts_real": 7,
+    "artifacts_synthetic": 401,
+    "false_correction_rate_real_after": 0.0,
+    "false_correction_rate_before": 1.0,
+    "false_correction_rate_after": 0.0,
+    "controls_kept": {
+      "numbers": 1.0,
+      "word swaps": 1.0,
+      "typos in Word": 1.0,
+      "born-digital": 1.0
+    }
+  },
+  "sets": {
+    "glued": {
+      "n": 1,
+      "shown": 0,
+      "blocked": 1,
+      "examples_shown": []
+    },
+    "look-alike": {
+      "n": 6,
+      "shown": 0,
+      "blocked": 6,
+      "examples_shown": []
+    },
+    "numbers": {
+      "n": 277,
+      "shown": 277,
+      "blocked": 0,
+      "examples_shown": [
+        "'16\\n\\nBEFORE THE CENTRAL' -> '46\\n\\nBEFORE THE CENTRAL'",
+        "'DELHI\\nPETITION NO. 310' -> 'DELHI\\nPETITION NO. 340'",
+        "'2026\\n\\nIN THE MATTER' -> '2056\\n\\nIN THE MATTER'"
+      ]
+    },
+    "word swaps": {
+      "n": 11,
+      "shown": 11,
+      "blocked": 0,
+      "examples_shown": [
+        "'the provided shall' -> 'the provides shall'",
+        "'the granted shall' -> 'the grantee shall'",
+        "'the world shall' -> 'the would shall'"
+      ]
+    },
+    "typos in Word": {
+      "n": 7,
+      "shown": 7,
+      "blocked": 0,
+      "examples_shown": [
+        "'Sr se: ecaiet Fetter clay, cat Fatt,' -> 'Sr se: ecaiet Letter clay, cat Fatt,'",
+        "'false has been states thcrein and no' -> 'false has been stated thcrein and no'",
+        "'competent to depose \\nthereto' -> 'competent to depose \\nthere to'"
+      ]
+    },
+    "born-digital": {
+      "n": 8,
+      "shown": 8,
+      "blocked": 0,
+      "examples_shown": [
+        "'the outset, CTUIL denies and disputes in' -> 'the outset, CTUIL denied and disputes in'",
+        "'applicant, is not \\nentitled to challenge the' -> 'applicant, is not \\nentities to challenge the'",
+        "'was unilateral and \\nunauthorised without any commensurate' -> 'was unilateral and \\nunauthorized without any commensurate'"
+      ]
+    },
+    "synthetic glued": {
+      "n": 196,
+      "shown": 0,
+      "blocked": 196,
+      "examples_shown": []
+    },
+    "synthetic look-alike": {
+      "n": 205,
+      "shown": 0,
+      "blocked": 205,
+      "examples_shown": []
+    }
+  }
+}

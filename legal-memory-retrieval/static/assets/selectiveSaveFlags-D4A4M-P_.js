@@ -1,0 +1,1 @@
+function e(e){return{selectiveSave:e?.selectiveSave??!0,selectiveSaveTripwire:e?.selectiveSaveTripwire??!1,selectiveSaveMaxBytes:e?.selectiveSaveMaxBytes??104857600}}export{e as resolveSelectiveSaveFlags};

@@ -20,9 +20,10 @@ export default defineConfig({
   server: {
     // Bind IPv4 so http://127.0.0.1:5173 works (default is often [::1] only).
     host: "127.0.0.1",
-    port: 5173,
+    port: Number(process.env.VITE_PORT ?? 5173),
     proxy: {
-      "/api": "http://127.0.0.1:8000",
+      // VITE_API_PROXY points a second checkout's dev server at its own API (e.g. a worktree on :8021).
+      "/api": process.env.VITE_API_PROXY ?? "http://127.0.0.1:8000",
     },
   },
 });
