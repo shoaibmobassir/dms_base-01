@@ -860,6 +860,7 @@ def document_page_words(
     document_id: str,
     page_number: int,
     version_id: str | None = Query(default=None),
+    view: str = Query(default="markup", pattern="^(markup|final|original)$"),
     member_id: str | None = Depends(resolve_member),
 ):
     """OCR word boxes for one page, so the viewer can highlight quotes on scanned pages."""
@@ -869,6 +870,10 @@ def document_page_words(
     if page_number < 1:
         raise HTTPException(status_code=422, detail="page_number starts at 1")
     data, mime, filename, _kind, _vid = _original_file(document_id, version_id, member_id)
+    if view != "markup" and filename.lower().endswith(".docx"):  # the words of the page as the viewer shows it
+        from app.documents.docx_review import accept_everything, reject_everything
+
+        data = accept_everything(data) if view == "final" else reject_everything(data)
     try:
         return page_words(to_pdf(data, mime, filename), page_number)
     except (RenderUnavailable, WordsUnavailable) as exc:

@@ -55,6 +55,7 @@ def edit_document_tool(
             "original": original,
             "proposed": op["text"] if op["op"] != "delete" else "",
             "reason": "New paragraph after: " + doc.paragraphs[pid][:80] if op["op"] == "insert_after" else "",
+            "anchor": doc.paragraphs[pid] if op["op"] == "insert_after" else None,
             "page": _page_of(doc.paragraphs, pid),
             "located": True,
             "status": "pending",

@@ -57,7 +57,11 @@ def load_editable(conn, document_id: str, member_id: str | None) -> EditableDocu
         try:
             from docx import Document
 
+            from app.documents.docx_review import accept_everything, has_revisions
+
             data = get_object_store().get(uri)
+            if has_revisions(data):
+                data = accept_everything(data)  # paragraphs as the document now reads
             paras = [p.text for p in Document(io.BytesIO(data)).paragraphs]
             return EditableDocument(document_id, row["title"], paras, "docx", data, row["current_version_id"])
         except Exception:

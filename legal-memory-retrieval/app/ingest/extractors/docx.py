@@ -105,6 +105,13 @@ class DocxExtractor:
         return extracted
 
     def extract_bytes(self, data: bytes) -> ExtractedDocument:
+        # A file with tracked changes is read as it now reads (all changes accepted). python-docx skips the runs inside
+        # w:ins and w:del, so read as it is, inserted words would be missing; this way no path (upload batch, source
+        # sync, generated files) ever stores old and new text together or loses the new.
+        from app.documents.docx_review import accept_everything, has_revisions
+
+        if has_revisions(data):
+            data = accept_everything(data)
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=True) as tmp:
             tmp.write(data)
             tmp.flush()

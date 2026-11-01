@@ -21,14 +21,17 @@ class DocPlan:
     versions: list[dict] = field(default_factory=list)  # {version_id, version_number, before, after, extracted}
 
 
-def affected_documents(conn, document_ids: list[str] | None = None) -> list[dict]:
-    """Word documents with at least one version whose text has a line starting "SECTION "."""
+def affected_documents(conn, document_ids: list[str] | None = None, all_word: bool = False) -> list[dict]:
+    """Word documents with at least one version whose text has a line starting "SECTION " (or, with ``all_word``,
+    every Word document: ``plan`` then keeps only versions whose stored text differs from a fresh reading of the file,
+    e.g. text extracted from a file with tracked changes before extraction accepted them)."""
+    label = "" if all_word else "AND v.body ~ '(^|\\n)SECTION '"
     return [dict(r) for r in conn.execute(
         f"""
         SELECT DISTINCT d.document_id, d.title
         FROM documents d JOIN document_versions v ON v.document_id = d.document_id
         WHERE (v.mime_type ILIKE %(docx)s OR d.mime_type ILIKE %(docx)s OR v.storage_uri ILIKE '%%.docx')
-          AND v.body ~ '(^|\\n)SECTION '
+          {label}
           {"AND d.document_id = ANY(%(ids)s)" if document_ids else ""}
         ORDER BY d.document_id
         """,

@@ -25,11 +25,13 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--doc", action="append", help="limit to these document ids")
+    ap.add_argument("--all-word", action="store_true",
+                    help="check every Word document (re-read any version whose text differs from its file)")
     ap.add_argument("--backup", default=f"data/backups/reindex_docx_{datetime.now():%Y%m%d_%H%M%S}.json")
     a = ap.parse_args()
     with connect() as conn:
-        docs = affected_documents(conn, a.doc)
-        print(f"{len(docs)} Word document(s) with the old heading label")
+        docs = affected_documents(conn, a.doc, all_word=a.all_word)
+        print(f"{len(docs)} Word document(s) " + ("checked" if a.all_word else "with the old heading label"))
         if a.apply and docs:
             # The text being replaced, so the change can be undone (blocks and chunks are rebuilt from it).
             ids = [d["document_id"] for d in docs]

@@ -82,8 +82,9 @@ EDIT_DOCUMENT = {
         "description": (
             "Make a change throughout one document of any length, from a plain instruction (e.g. 'rename Supplier "
             "to Vendor everywhere', 'change every payment period to 45 days', 'delete Schedule 3', 'after clause "
-            "12.4 insert: ...'). It finds every paragraph concerned without you reading the whole document, and "
-            "returns the edits as cards the lawyer accepts or rejects. Prefer it over propose_edits for any change "
+            "12.4 insert: ...'). It finds every paragraph concerned without you reading the whole document and "
+            "writes the change into the document at once, as a new clean version the lawyer can undo. Prefer it over "
+            "propose_edits for any change "
             "that may touch more than a few places, inserts or deletes paragraphs, or concerns a long document. "
             "Quote exact wording to insert; say what must NOT change. It reads the paragraphs itself: state the change "
             "in plain terms (e.g. 'renumber the top-level headings consecutively from 1'), not a list of numbers or "
@@ -93,7 +94,9 @@ EDIT_DOCUMENT = {
             "type": "object",
             "properties": {
                 "doc_id": {"type": "string", "description": "The document ID (e.g. 'doc-0')."},
-                "instruction": {"type": "string", "description": "The change, stated fully and precisely."},
+                "instruction": {"type": "string", "description": "The change, stated fully and precisely. Put related "
+                                "structural changes (new clauses, renumbering, cross-references) in ONE instruction."},
+                "as_tracked_changes": {"type": "boolean", "description": "Only when the lawyer explicitly asks for tracked changes or a redline: also attach a Word redline file. The document itself is always changed as a clean new version."},
             },
             "required": ["doc_id", "instruction"],
         },
@@ -365,8 +368,9 @@ PROPOSE_EDITS = {
     "function": {
         "name": "propose_edits",
         "description": (
-            "Suggest specific changes to one document for the lawyer to accept or "
-            "reject. Read the document first. Each edit replaces an exact passage "
+            "Change specific passages of one document; the change is written into the document at once as a new "
+            "clean version the lawyer can undo (a PDF only gets recommendations). Read the document first. Each edit "
+            "replaces an exact passage "
             "copied verbatim from the document with new wording, and gives a short reason. "
             "Suggest changes of substance only. Never suggest fixing spacing, line breaks, hyphenation or "
             "single-letter spelling in text that came from a PDF (especially scanned pages): that text was "
@@ -376,6 +380,7 @@ PROPOSE_EDITS = {
             "type": "object",
             "properties": {
                 "doc_id": {"type": "string", "description": "The document to edit (e.g. 'doc-0')."},
+                "as_tracked_changes": {"type": "boolean", "description": "Only when the lawyer explicitly asks for tracked changes or a redline: also attach a Word redline file. The document itself is always changed as a clean new version."},
                 "edits": {
                     "type": "array",
                     "minItems": 1,
@@ -665,6 +670,24 @@ VERIFY_CITATIONS = {
 # Composite tool sets
 # ---------------------------------------------------------------------------
 
+UNDO_DOCUMENT_CHANGES = {
+    "type": "function",
+    "function": {
+        "name": "undo_document_changes",
+        "description": (
+            "Undo the changes this conversation made to one document: it goes back to how it read before the latest "
+            "answer that changed it (saved as a new version; History keeps everything). Use it when the lawyer asks to "
+            "undo, revert or roll back your changes. Only this tool undoes anything: never say changes were undone "
+            "unless it returned undone: true."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {"doc_id": {"type": "string", "description": "The document (e.g. 'doc-0')."}},
+            "required": ["doc_id"],
+        },
+    },
+}
+
 CORE_TOOLS = [
     ASK_FIRM,
     RESOLVE_MATTER,
@@ -682,6 +705,7 @@ CORE_TOOLS = [
     GENERATE_EXCEL,
     ASK_INPUTS,
     PROPOSE_EDITS,
+    UNDO_DOCUMENT_CHANGES,
 ]
 
 WORKFLOW_TOOLS = [LIST_WORKFLOWS, READ_WORKFLOW]
