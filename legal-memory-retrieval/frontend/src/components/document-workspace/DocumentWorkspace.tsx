@@ -485,7 +485,7 @@ function WorkspaceFrame({
             <Suspense fallback={<p className="p-6 text-sm text-muted-foreground">Opening the pages…</p>}>
               <DocumentViewer
                 key={openVersionId ?? "current"}
-                src={`/api/documents/${encodeURIComponent(doc.document_id)}/render${openVersionId ? `?version_id=${encodeURIComponent(openVersionId)}` : ""}`}
+                src={`/api/documents/${encodeURIComponent(doc.document_id)}/render?view=final${openVersionId ? `&version_id=${encodeURIComponent(openVersionId)}` : ""}`}
                 startPage={address.part}
                 hideNav
                 target={viewerTarget}

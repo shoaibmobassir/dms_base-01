@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { AskInputItem, Attachment, ChatEvent, Citation, EditProposal } from "@/api/types";
 import type { PanelSource } from "@/components/chat/CitationDocumentPanel";
 import { ReviewTableCard, type ReviewTableEvent } from "@/components/chat/ReviewTableCard";
+import { AppliedEditsCard, type AppliedChange, type AppliedEvent } from "@/components/chat/AppliedEditsCard";
 import { AskInputsCard, CommentsAddedCard, type CommentsAddedEvent, type EditGroup, EditProposalsCard, FileCard, StepTimeline } from "@/components/chat/MessageParts";
 import { Markdown } from "@/components/chat/Markdown";
 import { citationChipClass } from "@/components/common/citation";
@@ -38,6 +39,12 @@ export function AssistantMessage({
   const byRef = (n: number) => citations.find((c) => Number(c.ref) === n);
   const askItems = events.filter((e) => e.type === "ask_inputs").flatMap((e) => (e.items ?? []) as AskInputItem[]);
   const editGroups = events.filter((e) => e.type === "edit_proposals") as unknown as EditGroup[];
+  // The answer's writes into documents, one card per document.
+  const appliedByDoc = new Map<string, AppliedEvent[]>();
+  for (const e of events.filter((ev) => ev.type === "edits_applied") as unknown as AppliedEvent[]) {
+    appliedByDoc.set(e.document_id, [...(appliedByDoc.get(e.document_id) ?? []), e]);
+  }
+  const undoneByTool = events.filter((e) => e.type === "edits_undone");
   const commentGroups = events.filter((e) => e.type === "comments_added") as unknown as CommentsAddedEvent[];
   const reviewTables = events.filter((e) => e.type === "review_table") as unknown as ReviewTableEvent[];
   const files = [
@@ -52,6 +59,14 @@ export function AssistantMessage({
       title: group.filename,
       label: "Suggested edit",
       quotes: [{ page: edit.page, quote: edit.original }],
+    });
+
+  const showChange = (group: AppliedEvent, change: AppliedChange) =>
+    onOpenSource({
+      documentId: group.document_id,
+      title: group.filename,
+      label: "Changed by the Assistant",
+      quotes: [{ page: change.page ?? null, quote: (change.after || change.before).slice(0, 300) }],
     });
 
   const openCitation = (c?: Citation) => onOpenCitation(c);
@@ -131,6 +146,24 @@ export function AssistantMessage({
 
           {commentGroups.map((group, gi) => (
             <CommentsAddedCard key={`${m.id ?? "live"}-comments-${gi}`} event={group} />
+          ))}
+
+          {[...appliedByDoc.values()].map((groups) => (
+            <AppliedEditsCard
+              key={`${m.id ?? "live"}-applied-${groups[0].document_id}`}
+              groups={groups}
+              sessionId={sessionId}
+              messageId={streaming ? undefined : m.id}
+              onView={(change) => showChange(groups[groups.length - 1], change)}
+            />
+          ))}
+
+          {undoneByTool.map((e, ui) => (
+            <p key={`${m.id ?? "live"}-undone-${ui}`} className="mb-3 rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs"
+              data-testid="edits-undone">
+              Undid the changes to {String(e.filename ?? "the document")}: it reads as version {String(e.restored_version_number)} again
+              (saved as version {String(e.version_number)}).
+            </p>
           ))}
 
           {editGroups.map((group, gi) => (

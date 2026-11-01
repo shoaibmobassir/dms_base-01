@@ -98,6 +98,10 @@ function legacyLabel(ev: ChatEvent): string {
       return `Searched firm records for “${String(ev.query ?? "")}”`;
     case "edit_proposals":
       return `Suggested edits to ${name || "a document"}`;
+    case "edits_applied":
+      return `Changed ${name || "a document"} (version ${String(ev.version_number ?? "")})`;
+    case "edits_undone":
+      return `Undid the changes to ${name || "a document"}`;
     default:
       return ev.type.replace(/_/g, " ");
   }

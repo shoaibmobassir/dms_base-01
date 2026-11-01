@@ -69,6 +69,14 @@ export function decideAllEdits(sessionId: string, messageId: string, documentId:
   )
 }
 
+/** Undo the changes one answer wrote into a document: the version before them becomes current again (a new version). */
+export function undoEdits(sessionId: string, messageId: string, documentId: string) {
+  return apiFetch<{ version_id: string; version_number: number; restored_version_id: string; restored_version_number: number }>(
+    `/api/chat/sessions/${enc(sessionId)}/messages/${enc(messageId)}/edits/undo`,
+    { method: 'POST', body: JSON.stringify({ document_id: documentId }) },
+  )
+}
+
 /** Build a tracked-changes Word file from the accepted edits to one document. */
 export function exportEdits(sessionId: string, messageId: string, documentId: string) {
   return apiFetch<{

@@ -77,7 +77,7 @@ export function HistoryPanel({
           <li key={c.version_id} data-testid="commit" data-version={c.version_number}
             className={cn("rounded-md border px-3 py-2 text-sm", c.version_id === openVersionId ? "border-border bg-wine-soft" : "border-transparent hover:bg-secondary")}>
             <div className="flex items-center justify-between gap-2">
-              <button type="button" className="font-medium hover:underline" onClick={() => onOpen(c.version_id)}>
+              <button type="button" className="font-medium hover:underline" onClick={() => onOpen(c.version_id)} data-testid="commit-open">
                 {c.version_label || `Version ${c.version_number}`}
               </button>
               <span className="flex items-center gap-1.5">
@@ -146,7 +146,7 @@ function ChangesDialog({ documentId, commit, onClose }: { documentId: string; co
         <div className="flex items-center gap-1 border-b border-border text-xs" role="tablist">
           {([["changes", "Changes"], ["blame", "Who wrote what"]] as const).map(([k, label]) => (
             <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} data-testid={`changes-tab-${k}`}
-              className={cn("rounded-t px-3 py-1.5", tab === k ? "border-b-2 border-wine font-medium" : "text-muted-foreground hover:bg-secondary")}>
+              className={cn("px-3 py-1.5", tab === k ? "border-b-2 border-wine font-medium" : "text-muted-foreground hover:bg-secondary")}>
               {label}
             </button>
           ))}

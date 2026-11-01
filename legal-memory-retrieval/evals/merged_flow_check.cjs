@@ -35,20 +35,21 @@ const ASK = process.env.ASK || "renumber the sections on this page so they run i
   await page.getByTestId("document-ai-send").click();
   await page.getByTestId("message-attachments").first().waitFor({ timeout: 30000 });
   out.sent_with = await page.getByTestId("message-attachments").first().innerText();
-  await page.getByTestId("edit-proposals").waitFor({ timeout: 240000 });
-  // The answer finishes (it is checked against its sources) before its cards can be decided.
+  // The Assistant changes the document itself: a "changed" card with old → new, and Undo.
+  await page.getByTestId("applied-edits").waitFor({ timeout: 240000 });
   await page.waitForFunction(() => !document.querySelector('button[aria-label="Stop"]'), null, { timeout: 300000 });
   await page.waitForTimeout(500);
-  out.cards = await page.getByTestId("edit-card").evaluateAll((els) => els.map((e) => e.innerText.replace(/\s+/g, " ").slice(0, 90)));
-  await page.screenshot({ path: `${SHOTS}/merged_cards.png` });
-
-  // 3. Accept all: the edits go into the document.
-  const all = page.getByTestId("edits-accept-all");
-  if (await all.count()) await all.click();
-  else await page.getByTestId("edit-accept").first().click();
-  await page.waitForFunction(() => Array.from(document.querySelectorAll('[data-testid="edit-status"]')).some((n) => /In the document/.test(n.textContent)), null, { timeout: 60000 });
-  out.status = await page.getByTestId("edit-status").allInnerTexts();
-  out.struck_left = await page.locator('[data-testid="edit-card"] p.line-through').count();
+  out.card_title = await page.getByTestId("applied-edits-title").innerText();
+  out.changes = await page.getByTestId("applied-change").evaluateAll((els) => els.map((e) => e.innerText.replace(/\s+/g, " ").slice(0, 90)));
+  out.cards_to_accept = await page.getByTestId("edit-proposals").count();
+  out.answer = (await page.getByTestId("assistant-message").last().innerText().catch(() => "")).replace(/\s+/g, " ").slice(0, 400);
+  await page.screenshot({ path: `${SHOTS}/merged_applied.png` });
+  // Show in document: the panel opens at the change, on the new version.
+  await page.getByTestId("applied-change").first().getByText("Show in document").click();
+  await page.getByTestId("citation-document-panel").waitFor({ timeout: 20000 });
+  out.panel_page = await page.getByTestId("panel-page-current").innerText();
+  await page.screenshot({ path: `${SHOTS}/merged_panel.png` });
+  const chatUrl = page.url();
 
   // 4. The document: History has the commit, Review changes shows old → new, the outline reads the new numbers.
   await page.goto(`${BASE}/ui/documents/${DOC}?panel=versions`);
@@ -61,6 +62,14 @@ const ASK = process.env.ASK || "renumber the sections on this page so they run i
   await page.keyboard.press("Escape");
   const outline = page.getByTestId("document-outline");
   if (await outline.count()) out.outline = await outline.locator("button").allInnerTexts().then((x) => x.map((t) => t.split("\n")[0]));
+  // Undo from the answer: the document goes back, the card says so, History records the restore.
+  await page.goto(chatUrl);
+  await page.getByTestId("applied-edits-undo").click();
+  await page.waitForFunction(() => /Undone/.test(document.querySelector('[data-testid="applied-edits-title"]')?.textContent || ""), null, { timeout: 60000 });
+  out.after_undo_title = await page.getByTestId("applied-edits-title").innerText();
+  await page.goto(`${BASE}/ui/documents/${DOC}?panel=versions`);
+  await page.getByTestId("commit-log").waitFor({ timeout: 30000 });
+  out.commits_after_undo = await page.getByTestId("commit-message").allInnerTexts();
   out.page_errors = errors;
   console.log(JSON.stringify(out, null, 2));
   await browser.close();

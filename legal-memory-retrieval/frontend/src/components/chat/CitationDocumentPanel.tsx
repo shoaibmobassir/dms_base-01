@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Download, ExternalLink, FileText, X } from "lucide-react";
 import { apiFetch, authHeaders } from "@/api/client";
+import { useDocument } from "@/api/resources";
 import type { Citation } from "@/api/types";
 import type { LocateResult, ViewerTarget } from "@/components/viewer/DocumentViewer";
 import { firstPage } from "@/components/viewer/findQuote";
@@ -120,9 +121,18 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
   const [status, setStatus] = useState<Status>(null);
   const [jump, setJump] = useState(0);
   const [quoteOpen, setQuoteOpen] = useState(false);
+  // The page in view and the page count, so the reader can move page to page (both views).
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState<number | null>(null);
+  const [pageJump, setPageJump] = useState<ViewerTarget | null>(null);
+  // The current version: when the Assistant changes the document (or a change is undone) the panel shows the new text.
+  const detail = useDocument(source.generated ? "" : documentId, { lean: true });
+  const versionId = detail.data?.current_version_id ?? undefined;
 
   useEffect(() => {
     setActive(source.startAt ?? 0);
+    setPage(source.quotes[source.startAt ?? 0]?.page ?? 1);
+    setPageJump(null);
     setUnavailable(null);
     setView("pages");
     setStatus(null);
@@ -131,10 +141,18 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
   }, [source.nonce, source.startAt, documentId]);
 
   const quote = quotes[active] ?? null;
-  const target: ViewerTarget | null = useMemo(
+  const quoteTarget: ViewerTarget | null = useMemo(
     () => (quote ? { page: quote.page, quote: quote.quote, nonce: source.nonce * 1000 + active * 10 + jump } : null),
     [quote, source.nonce, active, jump],
   );
+  const target = pageJump && (!quoteTarget || pageJump.nonce > quoteTarget.nonce) ? pageJump : quoteTarget;
+  const goTo = (n: number) => {
+    const last = total ?? n;
+    const next = Math.min(Math.max(1, Math.floor(n)), Math.max(1, last));
+    setPage(next);
+    setPageJump({ page: next, quote: "", nonce: Date.now() * 10 });
+  };
+  const versionQuery = versionId ? `&version_id=${encodeURIComponent(versionId)}` : "";
 
   const onLocate = (r: LocateResult) => {
     if (r.found) setStatus({ tone: "ok", text: `Highlighted on page ${r.page}${r.exact ? "" : " (closest match)"}.` });
@@ -159,7 +177,7 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
           <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <FileText className="h-3.5 w-3.5 text-muted-foreground" />
             {source.label}
-            {quote?.page && <span className="font-mono normal-case">· page {quote.page}</span>}
+            <span className="font-mono normal-case" data-testid="panel-page-current">· page {page}{total ? ` of ${total}` : ""}</span>
           </div>
           <h2 className="mt-0.5 truncate font-display text-sm font-normal text-ink" title={source.title ?? documentId}>
             {source.title ?? documentId}
@@ -171,7 +189,7 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
           </IconButton>
           {!source.generated && (
             <Link
-              to={`/documents/${encodeURIComponent(documentId)}`}
+              to={`/documents/${encodeURIComponent(documentId)}?page=${page}`}
               title="Open in document workspace"
               className="mr-1 inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs font-medium text-foreground hover:bg-secondary"
             >
@@ -256,16 +274,22 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
             {v === "pages" ? "Pages" : "Text"}
           </button>
         ))}
+        <PageNav page={page} total={total} onGo={goTo} />
       </div>
       )}
+      {unavailable && <div className="flex justify-end border-b border-border px-3 py-1"><PageNav page={page} total={total} onGo={goTo} /></div>}
 
       <div className="min-h-0 flex-1">
         {view === "pages" && !unavailable ? (
           <Suspense fallback={<p className="p-6 text-sm text-muted-foreground">Loading the viewer…</p>}>
           <DocumentViewer
-            src={`/api/documents/${encodeURIComponent(documentId)}/render`}
-            wordsUrl={(page) => `/api/documents/${encodeURIComponent(documentId)}/pages/${page}/words`}
+            key={versionId ?? "current"}
+            src={`/api/documents/${encodeURIComponent(documentId)}/render?view=final${versionQuery}`}
+            wordsUrl={(n) => `/api/documents/${encodeURIComponent(documentId)}/pages/${n}/words?view=final${versionQuery}`}
             target={target}
+            startPage={page}
+            onPageChange={setPage}
+            onDocument={setTotal}
             onLocate={onLocate}
             onUnavailable={(reason) => {
               setUnavailable(reason);
@@ -274,10 +298,41 @@ export function CitationDocumentPanel({ source, onClose }: { source: PanelSource
           />
           </Suspense>
         ) : (
-          <TextView documentId={documentId} quote={quote} />
+          <TextView documentId={documentId} quote={quote} versionId={versionId} page={page} pageJump={pageJump?.nonce ?? 0}
+            onPages={setTotal} onPage={setPage} />
         )}
       </div>
     </aside>
+  );
+}
+
+/** Page controls for the panel: previous / next and a page box, with the page in view. */
+function PageNav({ page, total, onGo }: { page: number; total: number | null; onGo: (n: number) => void }) {
+  const [draft, setDraft] = useState(String(page));
+  useEffect(() => setDraft(String(page)), [page]);
+  return (
+    <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground" data-testid="panel-page-nav">
+      <button type="button" aria-label="Previous page" disabled={page <= 1} onClick={() => onGo(page - 1)}
+        className="rounded-md border border-border p-1 hover:bg-secondary disabled:opacity-30" data-testid="panel-page-prev">
+        <ChevronLeft className="h-3.5 w-3.5" />
+      </button>
+      <span>Page</span>
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, ""))}
+        onKeyDown={(e) => { if (e.key === "Enter") onGo(Number(draft) || page); }}
+        onBlur={() => setDraft(String(page))}
+        aria-label="Page number"
+        inputMode="numeric"
+        data-testid="panel-page-input"
+        className="w-9 rounded border border-border bg-background px-1 py-0.5 text-center font-mono text-foreground"
+      />
+      <span data-testid="panel-page-total">of {total ?? "…"}</span>
+      <button type="button" aria-label="Next page" disabled={total !== null && page >= total} onClick={() => onGo(page + 1)}
+        className="rounded-md border border-border p-1 hover:bg-secondary disabled:opacity-30" data-testid="panel-page-next">
+        <ChevronRight className="h-3.5 w-3.5" />
+      </button>
+    </div>
   );
 }
 
@@ -308,10 +363,20 @@ function IconButton({
 
 // ── text view: extracted text by page, with the quote marked ──────────────────
 
-function TextView({ documentId, quote }: { documentId: string; quote: SourceQuote | null }) {
+function TextView({ documentId, quote, versionId, page, pageJump, onPages, onPage }: {
+  documentId: string;
+  quote: SourceQuote | null;
+  versionId?: string;
+  page: number;
+  /** Changes when the reader asks for a page (the page buttons). */
+  pageJump: number;
+  onPages: (n: number) => void;
+  onPage: (n: number) => void;
+}) {
   const [doc, setDoc] = useState<DocText | null>(null);
   const [error, setError] = useState<string | null>(null);
   const markRef = useRef<HTMLElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -323,12 +388,29 @@ function TextView({ documentId, quote }: { documentId: string; quote: SourceQuot
     return () => {
       cancelled = true;
     };
-  }, [documentId]);
+  }, [documentId, versionId]);
 
   const pages = useMemo(() => {
     if (!doc) return [];
     return doc.pages?.length ? doc.pages : [{ page: 1, text: doc.text }];
   }, [doc]);
+  useEffect(() => {
+    if (pages.length) onPages(pages[pages.length - 1].page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pages]);
+  useEffect(() => {
+    if (!pageJump) return;
+    scrollRef.current?.querySelector(`[data-page="${page}"]`)?.scrollIntoView({ block: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageJump]);
+  const onScroll = () => {
+    const box = scrollRef.current;
+    if (!box) return;
+    const top = box.getBoundingClientRect().top;
+    const cards = Array.from(box.querySelectorAll<HTMLElement>("[data-page]"));
+    const seen = cards.find((c) => c.getBoundingClientRect().bottom > top + 40);
+    if (seen) onPage(Number(seen.dataset.page));
+  };
 
   // Mark the first page whose text contains the quote, preferring the cited page.
   const hit = useMemo(() => {
@@ -356,13 +438,13 @@ function TextView({ documentId, quote }: { documentId: string; quote: SourceQuot
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-muted/40 px-4 py-4" data-testid="panel-text-view">
+    <div ref={scrollRef} onScroll={onScroll} className="h-full overflow-y-auto bg-muted/40 px-4 py-4" data-testid="panel-text-view">
       {quote && !hit && (
         <p className="mb-3 text-xs text-muted-foreground">The quoted words were not found as a continuous passage.</p>
       )}
       <div className="mx-auto max-w-[70ch] space-y-3">
         {pages.map((p) => (
-          <article key={p.page} className="rounded-md border border-border bg-background px-4 py-3 text-[13.5px] leading-[1.7] text-foreground/90">
+          <article key={p.page} data-page={p.page} className="rounded-md border border-border bg-background px-4 py-3 text-[13.5px] leading-[1.7] text-foreground/90">
             <div className="mb-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">Page {p.page}</div>
             {hit?.page === p.page ? (
               <p className="whitespace-pre-wrap">

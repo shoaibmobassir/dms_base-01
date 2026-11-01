@@ -62,38 +62,31 @@ async function as(browser: import("@playwright/test").Browser, member: string) {
   return { ctx, page: await ctx.newPage() };
 }
 
-test("see who changed what and accept one reviewer's changes", async ({ browser, request }) => {
+test("a reviewed Word file comes in as clean versions credited to its reviewers", async ({ browser, request }) => {
+  // Documents are versioned like commits (plan 21): a file with other people's tracked changes is imported as the
+  // text before the changes, then the accepted result credited to the reviewers. The current version is clean.
   test.setTimeout(90_000);
   const { doc, editor } = await setup(request);
-  const before = await json<{ version_number: number }>(request, `/api/editor/documents/${doc}`, editor);
+  const model = await json<{ pending_changes: number; has_revisions: boolean }>(request, `/api/editor/documents/${doc}`, editor);
+  expect(model.pending_changes).toBe(0);
+  expect(model.has_revisions).toBe(false);
+  const commits = (await json<{ items: { message: string; is_current: boolean }[] }>(request, `/api/editor/documents/${doc}/commits`, editor)).items;
+  expect(commits[0].is_current).toBe(true);
+  expect(commits[0].message).toMatch(/Imported \d+ tracked change/);
+  for (const name of ["Ravi Kalra", "Trilegal", "Kunal Lalit Kaistha"]) expect(commits[0].message).toContain(name);
   const { ctx, page } = await as(browser, editor);
   try {
-    await page.goto(`/ui/documents/${doc}/edit`);
-    await expect(page.getByTestId("editor-pending-chip")).toContainText("7 pending changes");
-    await page.getByTestId("editor-view-review").click();
-    const panel = page.getByTestId("review-panel");
-    for (const name of ["Ravi Kalra", "Trilegal", "Kunal Lalit Kaistha"]) await expect(panel.getByTestId("review-people")).toContainText(name);
-    await expect(panel.getByTestId("review-people")).toContainText("outside the firm");
-    await expect(panel.getByTestId("review-change")).toHaveCount(6);
-    await page.getByTestId("review-person-select").selectOption("Trilegal");
-    await expect(panel.getByTestId("review-change")).toHaveCount(2);
-    await page.getByTestId("review-accept-shown").click();
-    await page.getByTestId("confirm-accept").click(); // several changes at once ask first
-    // Stays in Review on the new version, without Trilegal's changes.
-    await expect(page.getByTestId("review-panel")).toBeVisible();
-    await expect(page.getByTestId("review-change").filter({ has: page.locator('[data-author="Trilegal"]') })).toHaveCount(0);
-    await expect(page.getByTestId("review-change")).toHaveCount(4, { timeout: 15_000 });
+    await page.goto(`/ui/documents/${doc}?panel=versions`);
+    await expect(page.getByTestId("commit-message").first()).toContainText("Imported");
+    await page.getByTestId("commit-changes").first().click();
+    await page.getByTestId("changes-tab-blame").click();
+    await expect(page.getByTestId("blame")).toContainText(/Ravi Kalra|Trilegal|Kunal Lalit Kaistha/);
   } finally {
     await ctx.close();
   }
-  const after = await json<{ version_number: number; pending_people: string[] }>(request, `/api/editor/documents/${doc}`, editor);
-  expect(after.version_number).toBe(before.version_number + 1);
-  expect(after.pending_people).not.toContain("Trilegal");
-  const history = await json<{ items: { action: string; member_id: string }[] }>(request, `/api/editor/documents/${doc}/history`, editor);
-  expect(history.items.some((e) => e.action === "review.accept" && e.member_id === editor)).toBe(true);
 });
 
-test("paragraphs with other reviewers' pending changes are locked in the editor", async ({ browser, request }) => {
+test("an imported reviewed file opens in the editor clean, with nothing locked", async ({ browser, request }) => {
   test.setTimeout(90_000);
   const { doc, editor } = await setup(request);
   const { ctx, page } = await as(browser, editor);
@@ -101,14 +94,8 @@ test("paragraphs with other reviewers' pending changes are locked in the editor"
     await page.goto(`/ui/documents/${doc}/edit`);
     const body = page.getByTestId("editor-body");
     await expect(body).toHaveAttribute("contenteditable", "true");
-    const locked = body.locator("p", { hasText: "within 30 days" });
-    await expect(locked).toHaveAttribute("data-locked-by", /Ravi Kalra/);
-    await locked.click();
-    await page.keyboard.press("End");
-    await page.keyboard.type(" and on time");
-    await expect(page.getByTestId("editor-blocked")).toBeVisible();
-    await expect(locked).not.toContainText("and on time");
-    // A clean paragraph edits as usual.
+    await expect(page.getByTestId("editor-pending-chip")).toHaveCount(0);
+    await expect(body.locator("[data-locked-by]")).toHaveCount(0);
     const clean = body.locator("p", { hasText: "Termination on notice." });
     await clean.click();
     await page.keyboard.press("End");
