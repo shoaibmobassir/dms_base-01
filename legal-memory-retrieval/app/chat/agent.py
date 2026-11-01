@@ -47,6 +47,8 @@ from app.chat.tools.document_tools import (
 )
 from app.chat.tools.batch_tools import review_documents_tool
 from app.chat.tools.comment_tools import comment_on_document_tool
+from app.chat.action_claims import check_action_claims
+from app.chat.apply_edits import history_note
 from app.chat.tools.edit_tools import edit_document_tool
 from app.chat.context import carried_documents, fit_context, working_set, working_set_note
 from app.chat.tools.firm_tools import (
@@ -351,6 +353,133 @@ def _record_text(value: Any, indent: str = "") -> str:
     return f"{indent}{value}"
 
 
+_READ_TOOLS = {"read_document", "get_outline", "find_in_document", "fetch_documents", "search_firm_records"}
+_EDIT_TOOLS = {"edit_document", "propose_edits"}
+
+
+class Progress:
+    """Notices a turn going round in circles: the same call again, or reading after reading once an edit failed.
+
+    The first time, the model is told to act on what it has or say what blocks it; the second time tools stop and
+    the answer is wrapped up from what actually happened.
+    """
+
+    def __init__(self) -> None:
+        self.calls: dict[str, int] = {}
+        self.edit_failed = False
+        self.reads_since_failure = 0
+        self.round_repeat = False
+        self.round_reads_only = True
+        self.nudges = 0
+
+    def record(self, tool: str, args: dict[str, Any], result: dict[str, Any]) -> None:
+        sig = tool + json.dumps(args, sort_keys=True, default=str)
+        self.calls[sig] = self.calls.get(sig, 0) + 1
+        if self.calls[sig] > 1:
+            self.round_repeat = True
+        if tool in _EDIT_TOOLS:
+            self.round_reads_only = False
+            failed = bool(result.get("error") or result.get("not_applied") or result.get("failed"))
+            self.edit_failed = failed
+            self.reads_since_failure = 0
+        elif tool not in _READ_TOOLS:
+            self.round_reads_only = False
+
+    def nudge(self) -> str | None:
+        if self.edit_failed and self.round_reads_only:
+            self.reads_since_failure += 1
+        stuck = self.round_repeat or self.reads_since_failure >= 3
+        self.round_repeat, self.round_reads_only = False, True
+        if not stuck:
+            return None
+        self.nudges += 1
+        self.reads_since_failure = 0
+        if self.nudges >= 2:
+            return "stop"
+        return ("SYSTEM NOTE: you are repeating steps without progress. You already have the document text. Either make "
+                "the change now in one call, quoting paragraphs exactly as the text shows them, or stop and tell the "
+                "lawyer plainly what you could not do and why.")
+
+
+def what_happened(events: list[dict[str, Any]]) -> str:
+    """The document actions of this answer, from its events: what changed, what could not be placed, what was undone."""
+    lines = []
+    for e in events:
+        if e.get("type") == "edits_applied":
+            lines.append(f"- Changed {e.get('filename')}: version {e.get('version_number')}, {len(e.get('changes') or [])} change(s).")
+            for f in e.get("failed") or []:
+                lines.append(f"- Could not place: {str(f.get('after') or f.get('before'))[:80]} ({f.get('reason')}).")
+        elif e.get("type") == "edits_undone":
+            lines.append(f"- Undid the changes to {e.get('filename')} (now version {e.get('version_number')}).")
+        elif e.get("type") == "edit_proposals":
+            lines.append(f"- Suggested {len(e.get('edits') or [])} edit(s) to {e.get('filename')} that were NOT written into it.")
+    return "\n".join(lines) or "- No document was changed."
+
+
+def _apply_now(result: dict[str, Any], events: list[dict[str, Any]], args: dict[str, Any], member_id: str | None,
+               turn_from: dict[str, str]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Write an edit tool's edits into the document now (see app/chat/apply_edits.py). A PDF, or edits the member
+    may not write, stay as suggestion cards; the model is told which happened."""
+    from app.chat.apply_edits import apply_proposals
+
+    out: list[dict[str, Any]] = []
+    result = dict(result)
+    for ev in events:
+        if ev.get("type") != "edit_proposals" or ev.get("read_only"):
+            out.append(ev)
+            continue
+        applied, summary = apply_proposals(ev, member_id, turn_from)
+        if applied is None:
+            out.append(ev)
+            result["not_applied"] = summary.get("reason")
+            result["note"] = (f"These edits could NOT be written into the document ({summary.get('reason')}). They are "
+                              "shown to the lawyer as suggestions only. Say so plainly; never say the document changed.")
+            continue
+        out.append(applied)
+        result.update({k: v for k, v in summary.items() if k != "note"})
+        result["note"] = summary["note"]
+        if args.get("as_tracked_changes"):
+            redline = _redline_file(applied, member_id)
+            if redline:
+                out.append(redline)
+                result["note"] += " A redline Word file (tracked changes) of these edits is attached as a file card."
+    return result, out
+
+
+def _redline_file(applied: dict[str, Any], member_id: str | None) -> dict[str, Any] | None:
+    """Tracked changes only when asked: a Word redline of the answer's changes, as a separate file."""
+    from app.chat.tools.generation_tools import store_generated_bytes
+    from app.documents import editing
+    from app.editing.document import DOCX_MIME
+
+    try:
+        with connect() as conn:
+            data, name = editing.compare_docx(conn, applied["document_id"], member_id, applied["from_version_id"],
+                                              applied["to_version_id"])
+        stored = store_generated_bytes(data, name.rsplit(".", 1)[0], "docx", DOCX_MIME, member_id)
+    except Exception as exc:  # noqa: BLE001 — the change is made; only the extra file is missing
+        logger.warning("[chat/agent] redline failed: %s", exc)
+        return None
+    return {"type": "doc_created", "filename": stored["filename"], "download_url": stored["download_url"],
+            "document_id": stored["document_id"]}
+
+
+def _undo_tool(args: dict[str, Any], doc_index: DocIndex, history: list[ChatMessage], member_id: str | None):
+    from app.chat.apply_edits import undo_latest_in_conversation
+
+    entry = doc_index.get(str(args.get("doc_id") or ""))
+    if entry is None:
+        return {"error": f"Document '{args.get('doc_id')}' not found."}, []
+    session_id = history[-1].session_id if history else None
+    if not session_id:
+        return {"undone": False, "reason": "No conversation to undo in."}, []
+    out = undo_latest_in_conversation(session_id, entry.document_id, member_id)
+    events = [{"type": "edits_undone", "document_id": entry.document_id, "filename": entry.filename,
+               "version_number": out.get("version_number"),
+               "restored_version_number": out.get("restored_version_number")}] if out.get("undone") else []
+    return out, events
+
+
 def grounding_sources(doc_index: DocIndex, doc_store: DocStore, records: list[str]) -> list[Source]:
     from app.chat.doc_nav import _heading
 
@@ -398,24 +527,36 @@ _APP_STATEMENT = re.compile(
     re.IGNORECASE,
 )
 _CHANGE_ARROW = re.compile(r"→|->|⇒")
+# Advice to the lawyer, not a statement about the documents.
+_RECOMMENDATION = re.compile(
+    r"^\W*(?:\d+[.)]\s*)?\W*(?:Add|Consider|Include|Strengthen|Clarify|Define|Specify|Insert|Remove|Replace|Amend|"
+    r"Ensure|Renumber|Introduce|Expand|Require|Limit|Cap|Delete|Move|Restructure|Align|Review|Confirm|Negotiate|"
+    r"Seek|Obtain|Tighten|Narrow|Broaden|State|Set out|Attach|Use|Avoid|Retain|Keep)\b"
+)
 
 
 def is_question(text: str) -> bool:
     return text.rstrip(" *_)\"'”").endswith("?")
 
 
-def edit_report_detector(edits: list[dict[str, Any]]):
+def edit_report_detector(edits: list[dict[str, Any]], acted: bool = False):
     """True for a sentence that is not a statement about the documents, so it is kept as written instead of checked.
 
     In every answer: a question to the lawyer, and a sentence about how edit cards or tracked changes work. In an
     answer that made edit cards, also: the Assistant reporting its actions, and a line describing one of the proposed
-    changes (it quotes the new wording, or shows the change with an arrow).
+    changes (it quotes the new wording, or shows the change with an arrow). In an answer whose tools changed, undid
+    or commented on a document (``acted``), a sentence that cites no source is its report of that action: the
+    "changed" card shows exactly what was done, so the report is not judged against sources; cited sentences still are.
     """
     proposed = [str(e.get("proposed") or "").strip() for e in edits]
     proposed = [p for p in proposed if len(p) >= 6]
 
-    def is_report(text: str) -> bool:
+    def is_report(text: str, cited: bool = False) -> bool:
         if is_question(text) or _APP_STATEMENT.search(text):
+            return True
+        if not cited and _RECOMMENDATION.match(text):
+            return True  # advice ("Add a Notice clause"); a recommendation that cites a source is still checked
+        if acted and not cited:
             return True
         if not edits:
             return False
@@ -431,6 +572,7 @@ def ground_chat_text(
     doc_store: DocStore,
     records: list[str],
     edits: list[dict[str, Any]] | None = None,
+    acted: bool = False,
 ) -> tuple[str, list[dict[str, Any]], dict[str, Any]]:
     """Verify every statement of the final answer; return (text, citations, report)."""
     prose = extract_citations_text(full_text)
@@ -446,7 +588,7 @@ def ground_chat_text(
         offered_quotes=lambda u: [q.quote for c in refs(u) for q in (getattr(c, "quotes", None) or [])],
         sources=grounding_sources(doc_index, doc_store, records),
         llm=verifier_llms(),
-        non_claim=edit_report_detector(edits or []),
+        non_claim=edit_report_detector(edits or [], acted),
     )
     citations = []
     for c in grounded.citations:
@@ -504,7 +646,9 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
     if name == "get_outline":
         return f"Opening the contents of {doc_name}"
     if name == "edit_document":
-        return f"Planning edits to {doc_name}"
+        return f"Editing {doc_name}"
+    if name == "undo_document_changes":
+        return f"Undoing the changes to {doc_name}"
     if name == "comment_on_document":
         return f"Adding comments to {doc_name}"
     if name == "review_documents":
@@ -521,7 +665,7 @@ def tool_step_label(name: str, arguments: dict[str, Any], doc_index: DocIndex) -
     if name == "generate_excel":
         return f"Building {arguments.get('title') or 'a spreadsheet'}"
     if name == "propose_edits":
-        return f"Preparing suggested edits to {doc_name}"
+        return f"Editing {doc_name}"
     if name == "ask_inputs":
         return "Asking you to clarify"
     if name == "ask_firm":
@@ -783,9 +927,14 @@ def build_llm_messages(
     ]
 
     for msg in select_history_messages(history, user_message, max_pairs=max_pairs):
+        content = msg.content
+        if msg.role.value == "assistant":
+            done = history_note(msg.events)
+            if done:
+                content = (content + "\n\n" + done).strip()
         messages.append({
             "role": msg.role.value,
-            "content": msg.content,
+            "content": content,
         })
 
     messages.append({
@@ -1078,6 +1227,8 @@ def run_chat_agent(
     all_events.append(opening)
     yield sse_event("reasoning", {"text": opening["text"], "mode": opening["mode"]})
     messages = build_llm_messages(history, user_message, doc_index, nonce, mode=mode, matter=matter, page_note=page_note)
+    turn_from: dict[str, str] = {}  # document id → its version before this answer's first change (what Undo restores)
+    progress = Progress()
     tools = ALL_TOOLS
     request_id = current_request_id() or "-"
 
@@ -1134,15 +1285,22 @@ def run_chat_agent(
         content = response.get("content", "")
         tool_calls = response.get("tool_calls", [])
 
-        # Stream text content. Separate rounds so narration before a tool call
-        # does not run into the next sentence.
-        if content:
+        # Text that comes with tool calls is narration ("Let me read the document…"): it goes to the step timeline,
+        # not into the answer, so a long run of steps does not fill the answer with "Let me…" lines. The answer is
+        # the text of the round that calls no tool.
+        if content and tool_calls:
+            said = name_documents(extract_citations_text(content), doc_index).strip()
+            if said:
+                note = {"type": "reasoning", "text": said[:300], "mode": "narration"}
+                all_events.append(note)
+                yield sse_event("reasoning", {"text": note["text"], "mode": "narration"})
+        elif content:
             if full_text and not full_text.endswith("\n"):
                 content = "\n\n" + content.lstrip()
             full_text += content
             clean_text = name_documents(extract_citations_text(content), doc_index)
             # With grounding on, the final answer is shown only after it is verified.
-            if clean_text and not (grounding and not tool_calls):
+            if clean_text and not grounding:
                 yield sse_event("text_delta", {"text": clean_text})
 
         # If no tool calls, we're done
@@ -1172,6 +1330,8 @@ def run_chat_agent(
             _tc, name, args, _cid = call
             if name in paused_tools:
                 return {"error": f"{name} is paused for this turn after a timeout"}, [], False
+            if name == "undo_document_changes":
+                return _undo_tool(args, doc_index, history, member_id) + (False,)
             bound = min(tool_deadline_seconds(name), max(1.0, turn_deadline - time.perf_counter()))
             return dispatch_tool_call_bounded(name, args, doc_index, doc_store, nonce, member_id=member_id,
                                               timeout=bound, matter=matter)
@@ -1205,6 +1365,8 @@ def run_chat_agent(
             result, events, timed_out = outcomes[i]
             if timed_out:
                 paused_tools.add(tool_name)
+            if tool_name in ("edit_document", "propose_edits"):
+                result, events = _apply_now(result, events, args, member_id, turn_from)
 
             # Stream tool events, then close the step
             for event in events:
@@ -1246,8 +1408,21 @@ def run_chat_agent(
                 "name": tool_name,
                 "content": json.dumps(result, default=str),
             })
+            progress.record(tool_name, args, result)
+
+        nudge = progress.nudge()
+        if nudge == "stop":
+            timings["stopped_no_progress"] = True
+            logger.warning("[chat/agent] no progress; stopping tools, request_id=%s", request_id)
+            break
+        if nudge:
+            messages.append({"role": "user", "content": nudge})
 
     if not answered:
+        done = what_happened(all_events)
+        if done:
+            messages.append({"role": "user", "content": "WHAT ACTUALLY HAPPENED IN THIS ANSWER (report exactly this, "
+                                                        "nothing more):\n" + done})
         # Out of time or rounds while still gathering: one tool-free call answers from what is in hand.
         timings["wrap_up"] = True
         messages.append({"role": "user", "content": WRAP_UP_PROMPT})
@@ -1272,8 +1447,12 @@ def run_chat_agent(
         yield sse_event("reasoning", {"text": step["text"], "mode": step["mode"]})
         t = time.perf_counter()
         try:
-            turn_edits = [e for ev in all_events if ev.get("type") == "edit_proposals" for e in ev.get("edits", [])]
-            clean_text, verified_citations, report = ground_chat_text(full_text, doc_index, doc_store, records, turn_edits)
+            turn_edits = [e for ev in all_events if ev.get("type") == "edit_proposals" for e in ev.get("edits", [])] + [
+                {"original": c.get("before"), "proposed": c.get("after")}
+                for ev in all_events if ev.get("type") == "edits_applied" for c in ev.get("changes", [])]
+            acted = any(ev.get("type") in ("edits_applied", "edits_undone", "comments_added") for ev in all_events)
+            clean_text, verified_citations, report = ground_chat_text(full_text, doc_index, doc_store, records, turn_edits,
+                                                                      acted)
         except Exception as exc:  # never show an unchecked answer as if it were checked
             logger.error("[chat/agent] grounding failed: %s, request_id=%s", exc, request_id)
             clean_text = ("The answer could not be checked against its sources, so it is not shown. "
@@ -1282,6 +1461,9 @@ def run_chat_agent(
         clean_text, scan_claims = drop_scan_claims(clean_text, doc_index, doc_store)
         if scan_claims:
             timings["scan_claims_removed"] = scan_claims
+        clean_text, false_claims = check_action_claims(clean_text, all_events)
+        if false_claims:
+            timings["action_claims_removed"] = false_claims
         timings["grounding_ms"] = round((time.perf_counter() - t) * 1000, 1)
         timings["grounding"] = report.pop("timings", {})
         all_events.append({"type": "grounding", **report})
@@ -1322,6 +1504,7 @@ def run_chat_agent(
     # Clean response text (strip CITATIONS block, never show internal doc labels)
     clean_text = name_documents(extract_citations_text(full_text), doc_index)
     clean_text, _ = drop_scan_claims(clean_text, doc_index, doc_store)
+    clean_text, _ = check_action_claims(clean_text, all_events)
 
     CHAT_TURNS.labels(outcome="completed").inc()
     _record_working_set(all_events)

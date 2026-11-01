@@ -749,6 +749,38 @@ def _export_paragraph_edits(conn, document_id: str, groups: list[dict], member_i
             "version_id": version.get("version_id"), "version_label": version.get("version_label")}
 
 
+class UndoEdits(BaseModel):
+    document_id: str
+
+
+@router.post("/sessions/{session_id}/messages/{message_id}/edits/undo")
+def undo_edits(
+    session_id: str,
+    message_id: str,
+    body: UndoEdits,
+    member_id: str | None = Depends(resolve_member),
+):
+    """Undo the changes this answer wrote into a document: restore the version before them, as a new version."""
+    from app.chat.apply_edits import undo_message_changes
+    from app.documents.editing import EditError
+
+    with connect() as conn:
+        _owned_session(conn, session_id, member_id)
+        msg = get_message(conn, session_id, message_id)
+        if msg is None:
+            raise HTTPException(status_code=404, detail="Message not found")
+        events = list(msg.events or [])
+        try:
+            out = undo_message_changes(conn, events, body.document_id, member_id)
+        except EditError as exc:
+            raise HTTPException(status_code=exc.status, detail=exc.detail)
+        set_message_events(conn, message_id, events)
+        conn.commit()
+    audit.record("chat.edit_undo", member_id=member_id, object_type="chat_message", object_id=message_id,
+                 detail={"document_id": body.document_id, "version_id": out["version_id"]})
+    return out
+
+
 @router.post("/sessions/{session_id}/messages/{message_id}/edits/export")
 def export_edits(
     session_id: str,

@@ -170,6 +170,21 @@ def _mark_suggestion_lists(text: str, units: list[Unit], claims: list[Claim]) ->
         lead = stripped if stripped.endswith(":") and _SUGGESTION.search(stripped) else None
 
 
+_EMPHASIS = re.compile(r"\*\*|__")
+
+
+def _tidy_after_cut(line: str) -> str | None:
+    """A line that lost a sentence: no unbalanced bold markers, and no leftover fragment ("Change of Control**.")."""
+    if len(_EMPHASIS.findall(line)) % 2:
+        last = max(line.rfind("**"), line.rfind("__"))
+        line = line[:last] + line[last + 2:]
+    body = _BULLET.sub("", line).strip(" |*_")
+    words = re.findall(r"[A-Za-z0-9]+", body)
+    if len(words) < 3 or (body and body[0].islower() and not re.match(r"^[a-z]+\s*[:(]", body)):
+        return None  # a fragment of a removed sentence, not something to show on its own
+    return line
+
+
 def _drop_orphan_lead_ins(lines: list[str | None], emptied: set[int]) -> None:
     """Remove "X includes:" when every list line under it was removed."""
     for i, line in enumerate(lines):
@@ -197,7 +212,7 @@ def ground_answer(
     removed_note: bool = True,
     empty_message: str | None = "The documents and records available to you do not contain a supported answer to this question.",
     full_sources: list[Source] | None = None,
-    non_claim: Callable[[str], bool] | None = None,
+    non_claim: Callable[[str, bool], bool] | None = None,
 ) -> Grounded:
     """Verify every unit of ``text`` and rebuild it with span-level citations.
 
@@ -214,7 +229,7 @@ def ground_answer(
         for u in units
     ]
     _mark_suggestion_lists(text, units, claims)
-    preset = [bool(non_claim and non_claim(c.text)) for c in claims]
+    preset = [bool(non_claim and non_claim(c.text, bool(c.cited))) for c in claims]
     for c, is_preset in zip(claims, preset):
         if is_preset:
             c.kind = "non_claim"
@@ -282,9 +297,12 @@ def ground_answer(
     emptied: set[int] = set()
     for li, changes in edits.items():
         line = lines[li]
+        cut = any(new == "" for _s, _e, new in changes)
         for s, e, new in sorted(changes, key=lambda t: -t[0]):
             line = line[:s] + new + line[e:]
-        if not _BULLET.sub("", line).strip(" |"):
+        if cut:
+            line = _tidy_after_cut(line)
+        if line is None or not _BULLET.sub("", line).strip(" |"):
             line = None  # the whole line was removed
             emptied.add(li)
         else:

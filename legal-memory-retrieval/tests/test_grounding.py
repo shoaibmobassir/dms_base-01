@@ -443,3 +443,48 @@ def test_the_headings_of_a_read_document_are_one_source():
     heads = next(s for s in sources if s.key == "doc-0#headings")
     assert heads.text.split("\n") == ["EMPLOYMENT AGREEMENT", "1. Parties", "5. Remuneration"]
     assert all(line in text for line in heads.text.split("\n"))  # every line is verbatim from the document
+
+
+
+# ── advice is not a claim; a cut sentence leaves no fragments (plan 21, G-C) ──
+
+def test_recommendations_are_kept_unless_they_cite_a_source():
+    from app.chat.agent import edit_report_detector
+
+    is_report = edit_report_detector([])
+    assert is_report("Add a Notice clause specifying addresses and delivery methods.", False)
+    assert is_report("2. Add a Definitions clause (new Section 1)", False)
+    assert is_report("Consider adding a non-disclosure obligation.", False)
+    assert not is_report("Add the SPA's governing law, which is Indian law with arbitration in Mumbai.", True)
+    assert not is_report("The SPA is governed by Indian law.", False)
+
+
+def test_a_removed_sentence_leaves_no_fragment_or_stray_bold():
+    sources = [Source("doc-0", "DOC-06D46C4AD1", "Board Resolution.docx", BOARD)]
+    text = ("1. **Renumber sections sequentially (1-6).** The current order runs 1, 2, 5, 7, 8 and 9, which is confusing "
+            "and risks cross-reference errors. Change of Control**.\n"
+            "2. Add a Notice clause.")
+
+    def judge(messages):
+        units = []
+        for i, _ in enumerate(messages[-1]["content"].split("UNIT ")[1:], start=1):
+            units.append({"i": i, "kind": "claim", "elements": [], "verdict": "unsupported", "missing": "x"})
+        return json.dumps({"units": units})
+
+    from app.chat.agent import edit_report_detector
+    g = ground_answer(text, ref_style="markers", cited_keys=lambda u: [], offered_quotes=lambda u: [], sources=sources,
+                      llm=judge, non_claim=edit_report_detector([]))
+    assert "Change of Control**." not in g.text and "**." not in g.text
+    assert "2. Add a Notice clause." in g.text
+    assert g.text.count("**") % 2 == 0
+
+
+
+def test_in_an_answer_that_changed_a_document_its_uncited_report_is_kept():
+    from app.chat.agent import edit_report_detector
+
+    is_report = edit_report_detector([], acted=True)
+    assert is_report("Added Clause 9 — Notices — Specifies permitted methods and deemed receipt timings", False)
+    assert is_report("The document is back to how version 1 read, saved as version 3.", False)
+    assert not is_report("The SPA is governed by Indian law with arbitration in Mumbai.", True)  # cited: still checked
+    assert not edit_report_detector([], acted=False)("The agreement lacks a governing law provision.", False)
